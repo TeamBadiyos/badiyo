@@ -15,6 +15,8 @@ import {
   type NotServiceableLocation,
 } from "@/components/NotServiceableScreen";
 import { checkServiceability } from "@/lib/serviceability";
+import { hasLoginPin } from "@/lib/auth.functions";
+
 import { LoginScreen } from "@/components/LoginScreen";
 import { OtpVerifyScreen } from "@/components/OtpVerifyScreen";
 import { PinLoginScreen } from "@/components/PinLoginScreen";
@@ -418,10 +420,11 @@ function Index() {
               try {
                 await ensureUserRow(`+91${pendingPhone}`);
                 import("@/lib/referrals").then((m) => m.linkReferralIfAny()).catch(() => {});
-                const { data: hasPin } = await supabase.rpc("has_login_pin", {
-                  p_phone: `+91${pendingPhone}`,
+                const { hasPin } = await hasLoginPin({
+                  data: { phone: pendingPhone },
                 });
-                if (forceResetPin || hasPin !== true) {
+                if (forceResetPin || !hasPin) {
+
                   setForceResetPin(false);
                   await enterAppAfterAuth("pin-set");
                 } else {

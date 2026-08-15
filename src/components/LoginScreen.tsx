@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { captureReferralCode } from "@/lib/referrals";
 import { getErrorMessage } from "@/lib/errorMessage";
 import { hapticImpact } from "@/lib/haptics";
+import { hasLoginPin as checkHasLoginPin } from "@/lib/auth.functions";
+
 
 export function LoginScreen({
   onOtpSent,
@@ -35,15 +37,20 @@ export function LoginScreen({
     setError(null);
     try {
       // If this phone already has a PIN, skip OTP and go straight to
-      // biometric/PIN entry.
-      const { data: hasPin, error: chkErr } = await supabase.rpc("has_login_pin", {
-        p_phone: `+91${phone}`,
-      });
-      if (chkErr) console.warn("has_login_pin check failed", chkErr);
-      if (hasPin === true) {
+      // biometric/PIN entry. Checked server-side (service role) so the
+      // has_login_pin RPC stays inaccessible to anonymous browsers.
+      let hasPin = false;
+      try {
+        const res = await checkHasLoginPin({ data: { phone } });
+        hasPin = res.hasPin;
+      } catch (chkErr) {
+        console.warn("has_login_pin check failed", chkErr);
+      }
+      if (hasPin) {
         onPinLogin?.(phone);
         return;
       }
+
 
       const { data, error: fnErr } = await supabase.functions.invoke("send-otp", {
         body: { phone },
