@@ -15,6 +15,8 @@ import {
   type NotServiceableLocation,
 } from "@/components/NotServiceableScreen";
 import { checkServiceability } from "@/lib/serviceability";
+import { hasLoginPin } from "@/lib/auth.functions";
+
 import { LoginScreen } from "@/components/LoginScreen";
 import { OtpVerifyScreen } from "@/components/OtpVerifyScreen";
 import { PinLoginScreen } from "@/components/PinLoginScreen";
