@@ -170,50 +170,65 @@ export function AddressSelectionScreen({
               {addresses.map((a) => {
                 const active = a.id === selectedId;
                 return (
-                  <button
+                  <SwipeableRow
                     key={a.id}
-                    onClick={() => setSelectedId(a.id)}
-                    className={`flex w-full items-start gap-3 rounded-[18px] border p-4 text-left transition ${
-                      active
-                        ? "border-primary bg-primary/5"
-                        : "border-border bg-card"
-                    }`}
+                    className="rounded-[18px]"
+                    actions={[
+                      {
+                        label: t("address.delete"),
+                        icon: <Trash2 className="h-4 w-4" />,
+                        className: "bg-destructive text-white",
+                        onAction: () => deleteAddress(a.id),
+                      },
+                    ]}
                   >
-                    {a.landmark_photo_url ? (
-                      <img
-                        src={a.landmark_photo_url}
-                        alt={a.label || "Home"}
-                        className="h-10 w-10 shrink-0 rounded-full border border-border object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] bg-primary/10">
-                        <Home className="h-5 w-5 text-primary" />
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-bold text-foreground">
-                        {a.label || t("address.fallbackLabel")}
-                      </div>
-                      <div className="mt-0.5 text-sm text-muted-foreground line-clamp-2">
-                        {a.full_address}
-                      </div>
-                      {a.area && (
-                        <div className="mt-0.5 text-xs text-muted-foreground/80">
-                          {a.area}
-                        </div>
-                      )}
-                    </div>
-                    <span
-                      aria-hidden
-                      className={`mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${
-                        active ? "border-primary" : "border-border"
+                    <button
+                      onClick={() => {
+                        void hapticSelection();
+                        setSelectedId(a.id);
+                      }}
+                      className={`flex w-full items-start gap-3 rounded-[18px] border p-4 text-left transition ${
+                        active
+                          ? "border-primary bg-primary/5"
+                          : "border-border bg-card"
                       }`}
                     >
-                      {active && (
-                        <span className="h-2.5 w-2.5 rounded-full bg-primary" />
+                      {a.landmark_photo_url ? (
+                        <img
+                          src={a.landmark_photo_url}
+                          alt={a.label || "Home"}
+                          className="h-10 w-10 shrink-0 rounded-full border border-border object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] bg-primary/10">
+                          <Home className="h-5 w-5 text-primary" />
+                        </div>
                       )}
-                    </span>
-                  </button>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-bold text-foreground">
+                          {a.label || t("address.fallbackLabel")}
+                        </div>
+                        <div className="mt-0.5 text-sm text-muted-foreground line-clamp-2 selectable">
+                          {a.full_address}
+                        </div>
+                        {a.area && (
+                          <div className="mt-0.5 text-xs text-muted-foreground/80">
+                            {a.area}
+                          </div>
+                        )}
+                      </div>
+                      <span
+                        aria-hidden
+                        className={`mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${
+                          active ? "border-primary" : "border-border"
+                        }`}
+                      >
+                        {active && (
+                          <span className="h-2.5 w-2.5 rounded-full bg-primary" />
+                        )}
+                      </span>
+                    </button>
+                  </SwipeableRow>
                 );
               })}
 
