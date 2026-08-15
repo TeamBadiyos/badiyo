@@ -95,7 +95,7 @@ export function useEdgeSwipeBack(onBack: (() => void) | null, enabled = true) {
           willChange: "transform",
           boxShadow: "-12px 0 28px rgba(0,0,0,0.18)",
         } as const)
-      : ({ transform: "translateX(0px)", transition: "transform 220ms cubic-bezier(0.22,1,0.36,1)" } as const),
+      : ({} as const), // no transform at rest: keeps position:fixed children anchored to the viewport
     progress,
   };
 }
