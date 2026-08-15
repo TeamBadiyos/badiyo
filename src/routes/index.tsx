@@ -1,7 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { initNativeBackButton, setRootBackHandler } from "@/lib/backHandler";
+import {
+  initNativeBackButton,
+  setRootBackHandler,
+  hasOverlayHandler,
+  runTopOverlayHandler,
+} from "@/lib/backHandler";
+import { useEdgeSwipeBack } from "@/lib/useEdgeSwipeBack";
 
 import { BadiyoLogo } from "@/components/BadiyoLogo";
 import {
