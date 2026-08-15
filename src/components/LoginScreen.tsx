@@ -4,6 +4,7 @@ import { GoogleIcon } from "./GoogleIcon";
 import { supabase } from "@/integrations/supabase/client";
 import { captureReferralCode } from "@/lib/referrals";
 import { getErrorMessage } from "@/lib/errorMessage";
+import { hapticImpact } from "@/lib/haptics";
 
 export function LoginScreen({
   onOtpSent,
@@ -143,7 +144,7 @@ export function LoginScreen({
         {/* Google */}
         <button
           type="button"
-          onClick={handleGoogle}
+          onClick={() => { void hapticImpact("light"); handleGoogle(); }}
           className="flex w-full items-center justify-center gap-3 rounded-[14px] border border-border bg-card px-4 py-3.5 text-base font-semibold text-foreground transition hover:bg-muted active:scale-[0.99]"
         >
           <GoogleIcon />

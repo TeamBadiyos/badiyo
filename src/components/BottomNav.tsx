@@ -1,5 +1,6 @@
 import { Home, ClipboardList, Gift, type LucideIcon } from "lucide-react";
 import { useT } from "@/i18n";
+import { hapticSelection } from "@/lib/haptics";
 
 type TabKey = "home" | "orders" | "rewards";
 

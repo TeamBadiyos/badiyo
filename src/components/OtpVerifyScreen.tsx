@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { BadiyoLogo } from "./BadiyoLogo";
 import { supabase } from "@/integrations/supabase/client";
 import { getErrorMessage } from "@/lib/errorMessage";
+import { hapticImpact } from "@/lib/haptics";
 
 export function OtpVerifyScreen({
   phone,
@@ -138,7 +139,7 @@ export function OtpVerifyScreen({
           Didn't get it?{" "}
           <button
             type="button"
-            onClick={handleResend}
+            onClick={() => { void hapticImpact("light"); handleResend(); }}
             disabled={cooldown > 0 || resending}
             className="font-semibold text-primary disabled:text-muted-foreground disabled:cursor-not-allowed"
           >
