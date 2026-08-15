@@ -1,4 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { usePullToRefresh, PullToRefreshIndicator } from "@/lib/usePullToRefresh";
 import { CalendarCheck, MapPin, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { BottomNav } from "./BottomNav";
@@ -64,11 +65,17 @@ export function OrdersScreen({
     queryFn: fetchBookings,
   });
 
+  const queryClient = useQueryClient();
+  const { pull, refreshing } = usePullToRefresh(async () => {
+    await queryClient.refetchQueries({ queryKey: ["my-bookings"] });
+  });
+
   const active = bookings.filter((b) => ACTIVE_TRACKING_STATUSES.includes(b.status));
   const past = bookings.filter((b) => PAST_STATUSES.includes(b.status));
 
   return (
-    <main className="min-h-screen w-full bg-background pb-28">
+    <main className="min-h-screen w-full bg-background pb-28 momentum-scroll">
+      <PullToRefreshIndicator pull={pull} refreshing={refreshing} />
       <div className="mx-auto w-full max-w-md px-5 pt-6">
         <h1 className="text-lg font-bold text-foreground">Your Orders</h1>
         <p className="mt-1 text-sm text-muted-foreground">
