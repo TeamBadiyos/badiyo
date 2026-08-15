@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Home, MapPin, Plus } from "lucide-react";
+import { ArrowLeft, Home, MapPin, Plus, Trash2 } from "lucide-react";
+import { SwipeableRow } from "./SwipeableRow";
+import { hapticSelection, hapticImpact, hapticNotification } from "@/lib/haptics";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { signAddressPhotoUrl } from "@/lib/storageUrl";
 import { AddAddressMapScreen, type PickedAddress } from "./AddAddressMapScreen";
@@ -50,6 +53,20 @@ export function AddressSelectionScreen({
     queryKey: ["addresses"],
     queryFn: fetchAddresses,
   });
+
+  async function deleteAddress(id: string) {
+    void hapticImpact("medium");
+    const { error } = await supabase.from("addresses").delete().eq("id", id);
+    if (error) {
+      void hapticNotification("error");
+      toast.error("Couldn't delete this address.");
+      return;
+    }
+    setSelectedId((cur) => (cur === id ? null : cur));
+    void hapticNotification("success");
+    toast.success("Address deleted");
+    qc.invalidateQueries({ queryKey: ["addresses"] });
+  }
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -175,7 +192,7 @@ export function AddressSelectionScreen({
                     className="rounded-[18px]"
                     actions={[
                       {
-                        label: t("address.delete"),
+                        label: "Delete",
                         icon: <Trash2 className="h-4 w-4" />,
                         className: "bg-destructive text-white",
                         onAction: () => deleteAddress(a.id),
