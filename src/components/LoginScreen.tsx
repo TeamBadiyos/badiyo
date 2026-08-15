@@ -98,7 +98,7 @@ export function LoginScreen({
         </div>
 
         {/* Form */}
-        <form onSubmit={handleContinue} className="mt-10 space-y-4">
+        <form onSubmit={(e) => { void hapticImpact("medium"); handleContinue(e); }} className="mt-10 space-y-4">
           <label className="block">
             <span className="mb-2 block text-sm font-semibold text-foreground">
               Mobile number
