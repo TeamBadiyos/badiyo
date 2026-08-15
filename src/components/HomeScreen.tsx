@@ -229,7 +229,8 @@ export function HomeScreen({
     services.filter((s) => s.segment_id === segment.id);
 
   return (
-    <main className="min-h-screen w-full bg-background pb-28">
+    <main className="min-h-screen w-full bg-background pb-28 momentum-scroll">
+      <PullToRefreshIndicator pull={pull} refreshing={refreshing} />
       <div className="mx-auto w-full max-w-md px-5 pt-6">
         {/* Header */}
         <header className="flex items-center justify-between gap-3">
