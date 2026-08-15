@@ -154,7 +154,7 @@ export function BookingSummaryScreen({
       </div>
 
       {/* Fixed pay button */}
-      <div className="fixed inset-x-0 bottom-0 z-10 border-t border-border bg-card">
+      <div className="fixed inset-x-0 bottom-0 z-10 border-t border-border bg-card safe-bottom">
         <div className="mx-auto flex w-full max-w-md items-center justify-between gap-4 px-5 py-4">
           <div className="flex flex-col">
             <span className="text-xs text-muted-foreground">{t("common.total")}</span>
