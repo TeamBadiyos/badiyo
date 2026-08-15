@@ -7,6 +7,7 @@ import { creditReferralForBooking } from "@/lib/referrals";
 import { getErrorMessage } from "@/lib/errorMessage";
 import { getCurrentCoords } from "@/lib/nativeGeolocation";
 import { useT } from "@/i18n";
+import { hapticImpact } from "@/lib/haptics";
 
 type RazorpayOptions = {
   key: string;
@@ -436,7 +437,7 @@ export function PaymentScreen({
               {errorMsg || t("payment.failedSub")}
             </p>
             <button
-              onClick={startCheckout}
+              onClick={() => { void hapticImpact("medium"); startCheckout(); }}
               className="mt-8 w-full rounded-[14px] bg-primary px-4 py-3.5 text-sm font-bold text-primary-foreground transition active:scale-[0.99]"
             >
               {t("payment.tryAgain")}

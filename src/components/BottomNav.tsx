@@ -1,5 +1,6 @@
 import { Home, ClipboardList, Gift, type LucideIcon } from "lucide-react";
 import { useT } from "@/i18n";
+import { hapticSelection } from "@/lib/haptics";
 
 type TabKey = "home" | "orders" | "rewards";
 
@@ -23,10 +24,14 @@ export function BottomNav({
   onRewards: () => void;
 }) {
   const t = useT();
+  const withHaptic = (fn: () => void) => () => {
+    void hapticSelection();
+    fn();
+  };
   const tabs: Tab[] = [
-    { key: "home", label: t("nav.home"), Icon: Home, onClick: onHome },
-    { key: "orders", label: t("nav.orders"), Icon: ClipboardList, onClick: onOrders, primary: true },
-    { key: "rewards", label: t("nav.rewards"), Icon: Gift, onClick: onRewards },
+    { key: "home", label: t("nav.home"), Icon: Home, onClick: withHaptic(onHome) },
+    { key: "orders", label: t("nav.orders"), Icon: ClipboardList, onClick: withHaptic(onOrders), primary: true },
+    { key: "rewards", label: t("nav.rewards"), Icon: Gift, onClick: withHaptic(onRewards) },
   ];
 
   return (

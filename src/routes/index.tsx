@@ -1,7 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { initNativeBackButton, setRootBackHandler } from "@/lib/backHandler";
+import {
+  initNativeBackButton,
+  setRootBackHandler,
+  hasOverlayHandler,
+  runTopOverlayHandler,
+} from "@/lib/backHandler";
+import { useEdgeSwipeBack } from "@/lib/useEdgeSwipeBack";
 
 import { BadiyoLogo } from "@/components/BadiyoLogo";
 import {
@@ -175,23 +181,30 @@ function Index() {
     setPhase("home");
   }
 
-  // Wire the native Android back button (no-op on web).
-  useEffect(() => {
-    initNativeBackButton();
-    setRootBackHandler(() => {
+  // Shared back logic for the hardware back button and the edge-swipe gesture.
+  const isAtRootPhase = useCallback((p: Phase) => {
+    return (
+      p === "home" ||
+      p === "login" ||
+      p === "otp-verify" ||
+      p === "pin-login" ||
+      p === "pin-set" ||
+      p === "splash" ||
+      p === "splash-out"
+    );
+  }, []);
+
+  const goBack = useCallback(
+    (allowExit: boolean) => {
       const cur = phaseRef.current;
       const hist = historyRef.current;
-      // Login flow: back exits (like a normal auth root).
-      const atRoot =
-        cur === "home" || cur === "login" || cur === "otp-verify" || cur === "pin-login" || cur === "pin-set" || cur === "splash" || cur === "splash-out";
-
-      if (!atRoot && hist.length > 0) {
+      if (!isAtRootPhase(cur) && hist.length > 0) {
         const prev = hist.pop()!;
         phaseRef.current = prev;
         _setPhase(prev);
         return;
       }
-
+      if (!allowExit) return;
       // At root — require a second back press within 2s to exit.
       const now = Date.now();
       if (now - lastBackAtRef.current < 2000) {
@@ -200,9 +213,33 @@ function Index() {
       }
       lastBackAtRef.current = now;
       toast("Press back again to exit", { duration: 2000 });
-    });
+    },
+    [isAtRootPhase],
+  );
+
+  // Wire the native Android back button (no-op on web).
+  useEffect(() => {
+    initNativeBackButton();
+    setRootBackHandler(() => goBack(true));
     return () => setRootBackHandler(null);
-  }, []);
+  }, [goBack]);
+
+  // iOS-style edge swipe from the left to go back (never exits the app).
+  const canSwipeBack = !isAtRootPhase(phase) && historyRef.current.length > 0;
+  const swipeBack = useEdgeSwipeBack(
+    canSwipeBack
+      ? () => {
+          if (hasOverlayHandler()) {
+            runTopOverlayHandler();
+            return;
+          }
+          goBack(false);
+        }
+      : null,
+    canSwipeBack,
+  );
+
+
 
   // Route pushes tapped from a notification (data.route) into an app phase.
   useEffect(() => {
@@ -288,7 +325,16 @@ function Index() {
   }, []);
 
   return (
-    <div className="relative min-h-screen w-full">
+    <div
+      className="relative min-h-screen w-full app-safe-shell momentum-scroll"
+      style={swipeBack.style}
+    >
+      {swipeBack.dragging && (
+        <div
+          className="pointer-events-none fixed inset-0 z-40 bg-foreground"
+          style={{ opacity: Math.max(0, 0.18 * (1 - swipeBack.progress)) }}
+        />
+      )}
       {forceUpdate && <ForceUpdateScreen />}
       {!online && <NoInternetScreen onRetry={() => setOnline(navigator.onLine)} />}
 

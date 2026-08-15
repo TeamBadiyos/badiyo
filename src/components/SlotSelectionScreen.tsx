@@ -6,6 +6,7 @@ import {
   toDateKey,
 } from "@/lib/hourSlots";
 import { useT } from "@/i18n";
+import { hapticSelection } from "@/lib/haptics";
 
 export type SelectedService = {
   duration_label: string;
@@ -84,7 +85,7 @@ export function SlotSelectionScreen({
           {(["now", "later"] as Mode[]).map((m) => (
             <button
               key={m}
-              onClick={() => setMode(m)}
+              onClick={() => { void hapticSelection(); setMode(m); }}
               className={`rounded-[10px] px-4 py-2.5 text-sm font-bold transition ${
                 mode === m
                   ? "bg-primary text-primary-foreground"
@@ -167,7 +168,7 @@ export function SlotSelectionScreen({
                   return (
                     <button
                       key={slot.hour}
-                      onClick={() => setSelectedHour(slot.hour)}
+                      onClick={() => { void hapticSelection(); setSelectedHour(slot.hour); }}
                       className={`rounded-[14px] border px-3 py-3 text-sm font-semibold transition ${
                         active
                           ? "border-primary bg-primary/10 text-primary"
@@ -184,7 +185,7 @@ export function SlotSelectionScreen({
         )}
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-10 border-t border-border bg-card">
+      <div className="fixed inset-x-0 bottom-0 z-10 border-t border-border bg-card safe-bottom">
         <div className="mx-auto w-full max-w-md px-5 py-4">
           <button
             disabled={!canContinue}

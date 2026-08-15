@@ -1,4 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { usePullToRefresh, PullToRefreshIndicator } from "@/lib/usePullToRefresh";
 import { Coins, Gift, Star, Trophy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { BottomNav } from "./BottomNav";
@@ -74,6 +75,11 @@ export function RewardsScreen({
     queryFn: fetchTotalCoins,
   });
 
+  const queryClient = useQueryClient();
+  const { pull, refreshing } = usePullToRefresh(async () => {
+    await queryClient.refetchQueries({ queryKey: ["users_total_coins"] });
+  });
+
   function handleMissionClick(id: MissionAction) {
     if (id === "refer") return onOpenReferrals();
     if (id === "rate") return onOpenBookings();
@@ -82,7 +88,8 @@ export function RewardsScreen({
 
 
   return (
-    <main className="min-h-screen w-full bg-background pb-28">
+    <main className="min-h-screen w-full bg-background pb-28 momentum-scroll">
+      <PullToRefreshIndicator pull={pull} refreshing={refreshing} />
       <div className="mx-auto w-full max-w-md px-5 pt-6">
         <h1 className="text-lg font-bold text-foreground">Rewards & Missions</h1>
 

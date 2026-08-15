@@ -1,4 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { usePullToRefresh, PullToRefreshIndicator } from "@/lib/usePullToRefresh";
 import { ArrowLeft, Coins, Wallet as WalletIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -37,13 +38,19 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
     queryFn: fetchTransactions,
   });
 
+  const queryClient = useQueryClient();
+  const { pull, refreshing } = usePullToRefresh(async () => {
+    await queryClient.refetchQueries({ queryKey: ["wallet_transactions"] });
+  });
+
   const balance = txs.reduce(
     (sum, t) => sum + (t.type === "credit" ? Number(t.amount) : -Number(t.amount)),
     0,
   );
 
   return (
-    <main className="min-h-screen w-full bg-background pb-10">
+    <main className="min-h-screen w-full bg-background pb-10 momentum-scroll">
+      <PullToRefreshIndicator pull={pull} refreshing={refreshing} />
       <div className="mx-auto w-full max-w-md px-5 pt-6">
         <header className="flex items-center gap-3">
           <button

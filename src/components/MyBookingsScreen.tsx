@@ -1,4 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { usePullToRefresh, PullToRefreshIndicator } from "@/lib/usePullToRefresh";
 import { ArrowLeft, CalendarCheck, MapPin } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -105,6 +106,11 @@ export function MyBookingsScreen({
     queryFn: fetchBookings,
   });
 
+  const queryClient = useQueryClient();
+  const { pull, refreshing } = usePullToRefresh(async () => {
+    await queryClient.refetchQueries({ queryKey: ["my-bookings"] });
+  });
+
   const filtered = bookings.filter((b) =>
     tab === "upcoming"
       ? UPCOMING_STATUSES.includes(b.status)
@@ -112,7 +118,8 @@ export function MyBookingsScreen({
   );
 
   return (
-    <main className="min-h-screen w-full bg-background pb-10">
+    <main className="min-h-screen w-full bg-background pb-10 momentum-scroll">
+      <PullToRefreshIndicator pull={pull} refreshing={refreshing} />
       <div className="mx-auto w-full max-w-md px-5 pt-6">
         <header className="flex items-center gap-3">
           <button

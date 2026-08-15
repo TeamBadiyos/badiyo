@@ -90,3 +90,92 @@
   animation: badiyo-slide-up 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+
+/* ---- Native app feel: scrolling, gestures, safe areas ---- */
+
+html {
+  /* Disable body-level rubber-band / browser pull-to-refresh; our own
+     pull-to-refresh gesture handles the refresh interaction. */
+  overscroll-behavior-y: none;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  overscroll-behavior-y: none;
+  /* No double-tap-to-zoom, no long-press callout, no accidental selection
+     of chrome. Readable content re-enables selection via .selectable. */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  scroll-behavior: smooth;
+}
+
+/* Momentum/inertia scrolling inside scroll containers, with bounce allowed
+   locally (only the body-level bounce is suppressed). */
+.momentum-scroll,
+[data-scroll-container] {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
+}
+
+/* Interactive chrome never selects or zooms on double tap. */
+button,
+a,
+[role="button"],
+label,
+nav,
+input[type="button"],
+input[type="submit"] {
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Text inputs must stay selectable/editable. */
+input:not([type="button"]):not([type="submit"]),
+textarea,
+select,
+[contenteditable="true"] {
+  -webkit-user-select: text;
+  user-select: text;
+  touch-action: auto;
+}
+
+@utility no-select {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Opt readable content back into selection (addresses, reviews, help text). */
+@utility selectable {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
+
+@utility safe-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+@utility safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@utility safe-x {
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
+/* Applied once at the app shell so every screen inherits notch + home
+   indicator insets. */
+@utility app-safe-shell {
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+  min-height: 100dvh;
+}

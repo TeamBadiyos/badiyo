@@ -15,6 +15,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { getErrorMessage } from "@/lib/errorMessage";
 import type { BookingRow } from "@/components/MyBookingsScreen";
+import { hapticImpact } from "@/lib/haptics";
 
 type Stage = "searching" | "assigned";
 
@@ -102,7 +103,7 @@ export function CancelBookingButton({
     <>
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={() => { void hapticImpact("light"); setOpen(true); }}
         className="mt-4 w-full rounded-[14px] border border-border bg-background px-4 py-3 text-sm font-bold text-muted-foreground active:scale-[0.99] hover:text-destructive hover:border-destructive/40"
       >
         Cancel booking

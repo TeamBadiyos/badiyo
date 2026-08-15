@@ -1,6 +1,7 @@
 import { ArrowLeft, Clock, Calendar, Home as HomeIcon } from "lucide-react";
 import type { SelectedService, SelectedSlot } from "./SlotSelectionScreen";
 import { useT, type TFunction } from "@/i18n";
+import { hapticImpact } from "@/lib/haptics";
 
 export type SelectedAddress = {
   id: string;
@@ -153,7 +154,7 @@ export function BookingSummaryScreen({
       </div>
 
       {/* Fixed pay button */}
-      <div className="fixed inset-x-0 bottom-0 z-10 border-t border-border bg-card">
+      <div className="fixed inset-x-0 bottom-0 z-10 border-t border-border bg-card safe-bottom">
         <div className="mx-auto flex w-full max-w-md items-center justify-between gap-4 px-5 py-4">
           <div className="flex flex-col">
             <span className="text-xs text-muted-foreground">{t("common.total")}</span>
@@ -162,7 +163,7 @@ export function BookingSummaryScreen({
             </span>
           </div>
           <button
-            onClick={onProceedToPay}
+            onClick={() => { void hapticImpact("medium"); onProceedToPay(); }}
             className="flex-1 rounded-[14px] bg-primary px-4 py-3.5 text-sm font-bold text-primary-foreground transition active:scale-[0.99]"
           >
             {t("summary.proceedToPay")}

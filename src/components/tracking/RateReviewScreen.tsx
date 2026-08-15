@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useT } from "@/i18n";
+import { hapticImpact, hapticSelection } from "@/lib/haptics";
 
 export function RateReviewScreen({
   bookingId,
@@ -45,7 +46,7 @@ export function RateReviewScreen({
             <button
               key={n}
               type="button"
-              onClick={() => setRating(n)}
+              onClick={() => { void hapticSelection(); setRating(n); }}
               aria-label={`Rate ${n} star${n > 1 ? "s" : ""}`}
               className="p-1 transition active:scale-90"
             >
@@ -71,7 +72,7 @@ export function RateReviewScreen({
         <div className="mt-auto pt-10">
           <button
             type="button"
-            onClick={handleSubmit}
+            onClick={() => { void hapticImpact("medium"); handleSubmit(); }}
             disabled={submitting}
             className="w-full rounded-[14px] bg-primary px-4 py-3.5 text-sm font-bold text-primary-foreground transition active:scale-[0.99] disabled:opacity-60"
           >

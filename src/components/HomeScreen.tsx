@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { usePullToRefresh, PullToRefreshIndicator } from "@/lib/usePullToRefresh";
 import { ChevronDown, ChevronRight, Clock, Gift, Home, MapPin, Mic, Search, Sparkles, User, Wind, type LucideIcon } from "lucide-react";
 import { BadiyoLogo } from "./BadiyoLogo";
 import { BottomNav } from "./BottomNav";
@@ -177,6 +178,17 @@ export function HomeScreen({
   const { data: avatarUrl } = useAvatarUrl();
   const t = useT();
 
+  const queryClient = useQueryClient();
+  const { pull, refreshing } = usePullToRefresh(async () => {
+    await Promise.all([
+      queryClient.refetchQueries({ queryKey: ["segments"] }),
+      queryClient.refetchQueries({ queryKey: ["segment_services"] }),
+      queryClient.refetchQueries({ queryKey: ["homepage_sections"] }),
+      queryClient.refetchQueries({ queryKey: ["users_total_coins"] }),
+    ]);
+  });
+
+
   const searchBar = sections.find((s) => s.section_type === "search_bar");
   const promo = sections.find((s) => s.section_type === "promo_banner");
 
@@ -217,7 +229,8 @@ export function HomeScreen({
     services.filter((s) => s.segment_id === segment.id);
 
   return (
-    <main className="min-h-screen w-full bg-background pb-28">
+    <main className="min-h-screen w-full bg-background pb-28 momentum-scroll">
+      <PullToRefreshIndicator pull={pull} refreshing={refreshing} />
       <div className="mx-auto w-full max-w-md px-5 pt-6">
         {/* Header */}
         <header className="flex items-center justify-between gap-3">
