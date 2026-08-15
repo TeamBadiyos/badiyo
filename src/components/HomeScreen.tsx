@@ -177,6 +177,17 @@ export function HomeScreen({
   const { data: avatarUrl } = useAvatarUrl();
   const t = useT();
 
+  const queryClient = useQueryClient();
+  const { pull, refreshing } = usePullToRefresh(async () => {
+    await Promise.all([
+      queryClient.refetchQueries({ queryKey: ["segments"] }),
+      queryClient.refetchQueries({ queryKey: ["segment_services"] }),
+      queryClient.refetchQueries({ queryKey: ["homepage_sections"] }),
+      queryClient.refetchQueries({ queryKey: ["users_total_coins"] }),
+    ]);
+  });
+
+
   const searchBar = sections.find((s) => s.section_type === "search_bar");
   const promo = sections.find((s) => s.section_type === "promo_banner");
 
