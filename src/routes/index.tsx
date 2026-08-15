@@ -325,7 +325,16 @@ function Index() {
   }, []);
 
   return (
-    <div className="relative min-h-screen w-full">
+    <div
+      className="relative min-h-screen w-full app-safe-shell momentum-scroll"
+      style={swipeBack.style}
+    >
+      {swipeBack.dragging && (
+        <div
+          className="pointer-events-none fixed inset-0 z-40 bg-foreground"
+          style={{ opacity: Math.max(0, 0.18 * (1 - swipeBack.progress)) }}
+        />
+      )}
       {forceUpdate && <ForceUpdateScreen />}
       {!online && <NoInternetScreen onRetry={() => setOnline(navigator.onLine)} />}
 
