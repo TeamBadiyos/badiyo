@@ -90,8 +90,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:site", content: "@Lovable" },
       { name: "twitter:title", content: "badiyos — Home cleaning, on demand" },
       { name: "twitter:description", content: "Book trusted home cleaning services in Latur with badiyos. Fast, reliable experts — just a tap away." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/d1299029-ba2b-4ef9-b39f-624dd9620aaf/id-preview-20b3ccfb--cd37bb1e-1ecb-479e-a809-98a8b8ac5de0.lovable.app-1784918033193.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/d1299029-ba2b-4ef9-b39f-624dd9620aaf/id-preview-20b3ccfb--cd37bb1e-1ecb-479e-a809-98a8b8ac5de0.lovable.app-1784918033193.png" },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/f9bedde5ef6dcfdd2c851688eb537fee/id-preview-50189286--cd37bb1e-1ecb-479e-a809-98a8b8ac5de0.lovable.app-1786723702199.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/f9bedde5ef6dcfdd2c851688eb537fee/id-preview-50189286--cd37bb1e-1ecb-479e-a809-98a8b8ac5de0.lovable.app-1786723702199.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
