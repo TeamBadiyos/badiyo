@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { captureReferralCode } from "@/lib/referrals";
 import { getErrorMessage } from "@/lib/errorMessage";
 import { hapticImpact } from "@/lib/haptics";
+import { hasLoginPin as checkHasLoginPin } from "@/lib/auth.functions";
+
 
 export function LoginScreen({
   onOtpSent,
