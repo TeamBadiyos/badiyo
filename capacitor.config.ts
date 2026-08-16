@@ -1,9 +1,9 @@
 // ⚠️ HIGH RISK OF REVERT ⚠️
 // This file has silently reverted during syncs before, taking the status-bar
-// fix with it. Guarded by src/__tests__/capacitor-config.test.ts — if that test
+// fix with it. Guarded by scripts/check-capacitor-config.ts — if that check
 // fails, this file lost `plugins.StatusBar.overlaysWebView: false`, the green
-// background colors, or the `user.badiyos.com` server hostname. Re-apply rather
-// than relaxing the test.
+// background colors, or the `server.url: "https://user.badiyos.com"` live
+// server URL. Re-apply rather than relaxing the test.
 import type { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
@@ -11,17 +11,15 @@ const config: CapacitorConfig = {
   appName: "badiyos",
   webDir: "dist/client",
   backgroundColor: "#00B97A",
-  // The Google Maps browser key is HTTP-referrer restricted. A default
-  // Capacitor WebView serves from https://localhost / capacitor://localhost,
-  // which is NOT in the allowlist -> "This page didn't load Google Maps
-  // correctly". Serving the bundled files under the app's real https origin
-  // makes the WebView send https://user.badiyos.com/ as the referrer, which
-  // is already allowed. (androidScheme https is also required for secure
-  // context APIs like geolocation.)
+  // TRUE LIVE MODE: the WebView loads the app directly from
+  // https://user.badiyos.com at runtime. Every Lovable publish is reflected the
+  // next time the app is opened/reloaded, with no new APK build required for
+  // web-layer changes. The https scheme keeps the WebView in a secure context
+  // so geolocation works and the Google Maps referrer allowlist passes.
   server: {
+    url: "https://user.badiyos.com",
     androidScheme: "https",
     iosScheme: "https",
-    hostname: "user.badiyos.com",
     // Cold start with zero connectivity: the WebView would otherwise show a
     // blank/white page or the system "webpage not available" error. This
     // bundled page renders the branded no-internet screen and auto-recovers.

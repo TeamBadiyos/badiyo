@@ -1,6 +1,7 @@
 /**
  * Guard for capacitor.config.ts, a file that has silently reverted on syncs and
- * taken the status-bar / Google Maps fixes with it. Runs before build:capacitor.
+ * taken the status-bar / Google Maps / live-mode fixes with it.
+ * Runs before build:capacitor.
  */
 import config from "../capacitor.config";
 
@@ -14,7 +15,8 @@ expect("plugins.StatusBar.overlaysWebView", config.plugins?.StatusBar?.overlaysW
 expect("plugins.StatusBar.backgroundColor", config.plugins?.StatusBar?.backgroundColor, "#00B97A");
 expect("backgroundColor", config.backgroundColor, "#00B97A");
 expect("android.backgroundColor", config.android?.backgroundColor, "#00B97A");
-expect("server.hostname", config.server?.hostname, "user.badiyos.com");
+expect("server.url", config.server?.url, "https://user.badiyos.com");
+expect("server.errorPath", config.server?.errorPath, "offline.html");
 expect("server.androidScheme", config.server?.androidScheme, "https");
 expect("webDir", config.webDir, "dist/client");
 
