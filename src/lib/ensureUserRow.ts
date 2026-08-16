@@ -33,6 +33,18 @@ export async function ensureUserRow(phone?: string | null): Promise<string | nul
     .from("users")
     .upsert(payload, { onConflict: "id", ignoreDuplicates: false });
   if (error) {
+    // users.phone is now uniquely indexed. If another profile already owns this
+    // number, never fail the login — write the profile without the phone rather
+    // than creating/patching a second row for the same number.
+    if (error.code === "23505" && payload.phone) {
+      const { phone: _dropped, ...rest } = payload;
+      const { error: retryErr } = await supabase
+        .from("users")
+        .upsert(rest, { onConflict: "id", ignoreDuplicates: false });
+      if (!retryErr) return user.id;
+      console.error("ensureUserRow retry failed:", retryErr);
+      throw retryErr;
+    }
     console.error("ensureUserRow failed:", error);
     throw error;
   }
