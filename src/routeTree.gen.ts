@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as InviteCodeRouteImport } from './routes/invite.$code'
+import { Route as ApiPublicHasLoginPinRouteImport } from './routes/api/public/has-login-pin'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -22,31 +23,40 @@ const InviteCodeRoute = InviteCodeRouteImport.update({
   path: '/invite/$code',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHasLoginPinRoute = ApiPublicHasLoginPinRouteImport.update({
+  id: '/api/public/has-login-pin',
+  path: '/api/public/has-login-pin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/invite/$code': typeof InviteCodeRoute
+  '/api/public/has-login-pin': typeof ApiPublicHasLoginPinRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/invite/$code': typeof InviteCodeRoute
+  '/api/public/has-login-pin': typeof ApiPublicHasLoginPinRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/invite/$code': typeof InviteCodeRoute
+  '/api/public/has-login-pin': typeof ApiPublicHasLoginPinRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/invite/$code'
+  fullPaths: '/' | '/invite/$code' | '/api/public/has-login-pin'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/invite/$code'
-  id: '__root__' | '/' | '/invite/$code'
+  to: '/' | '/invite/$code' | '/api/public/has-login-pin'
+  id: '__root__' | '/' | '/invite/$code' | '/api/public/has-login-pin'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   InviteCodeRoute: typeof InviteCodeRoute
+  ApiPublicHasLoginPinRoute: typeof ApiPublicHasLoginPinRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -65,12 +75,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InviteCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/has-login-pin': {
+      id: '/api/public/has-login-pin'
+      path: '/api/public/has-login-pin'
+      fullPath: '/api/public/has-login-pin'
+      preLoaderRoute: typeof ApiPublicHasLoginPinRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   InviteCodeRoute: InviteCodeRoute,
+  ApiPublicHasLoginPinRoute: ApiPublicHasLoginPinRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
