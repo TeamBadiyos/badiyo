@@ -840,7 +840,7 @@ function Index() {
       )}
       {phase === "about" && (
         <div className="animate-fade-slide-in">
-          <AboutScreen onBack={() => setPhase("profile")} />
+          <AboutScreen onBack={() => setPhase("help")} />
         </div>
       )}
     </div>
