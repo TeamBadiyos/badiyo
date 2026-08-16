@@ -329,9 +329,7 @@ export function HomeScreen({
               return (
                 <section key={segment.id} className="mt-5">
                   <div className="flex items-center justify-between gap-3">
-                    <h2 className="text-lg font-extrabold tracking-tight text-foreground">
-                      {segment.name}
-                    </h2>
+                    <SectionHeading>{segment.name}</SectionHeading>
                     <button
                       onClick={() => setActiveSegmentId(segment.id)}
                       className="flex items-center gap-0.5 text-sm font-bold text-primary"
@@ -355,9 +353,9 @@ export function HomeScreen({
             })}
 
             {/* Expert tiles */}
-            <h2 className="mt-8 text-xl font-extrabold tracking-tight text-foreground">
+            <SectionHeading size="lg" className="mt-8">
               {t("home.oneExpert")}
-            </h2>
+            </SectionHeading>
             <ExpertTiles onOpenTask={openIncluded} />
           </div>
         )}
@@ -366,9 +364,9 @@ export function HomeScreen({
         {promo && (
           <button
             onClick={onOpenRewards}
-            className="mt-10 flex w-full items-center gap-3 rounded-[18px] bg-primary/10 p-4 text-left transition active:scale-[0.98]"
+            className="promo-texture surface-tint mt-10 flex w-full items-center gap-3 overflow-hidden rounded-[18px] border border-primary/15 p-4 text-left shadow-card-m transition active:scale-[0.98]"
           >
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/20">
+            <div className="icon-disc flex h-11 w-11 shrink-0 items-center justify-center rounded-full">
               <Icon name={promo.payload?.icon} className="h-5 w-5 text-primary" />
             </div>
             <p className="flex-1 text-sm font-semibold text-foreground leading-snug">
@@ -443,9 +441,9 @@ function SegmentView({
 
   return (
     <>
-      <h2 className="mt-5 text-lg font-extrabold tracking-tight text-foreground">
+      <SectionHeading className="mt-5">
         {t("home.bookSegment", { segment: segment.name })}
-      </h2>
+      </SectionHeading>
 
       <div className="mt-4 grid grid-cols-3 gap-2.5">
         {services.map((s) => (
@@ -458,9 +456,9 @@ function SegmentView({
         {t("home.scheduleHint")}
       </p>
 
-      <h2 className="mt-6 text-xl font-extrabold tracking-tight text-foreground">
+      <SectionHeading size="lg" className="mt-6">
         {t("home.oneExpert")}
-      </h2>
+      </SectionHeading>
       <ExpertTiles onOpenTask={onOpenTask} />
     </>
   );
