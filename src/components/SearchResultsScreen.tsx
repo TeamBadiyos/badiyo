@@ -68,7 +68,9 @@ export function SearchResultsScreen({
                 <ServiceProductCard
                   key={s.id}
                   service={{
-                    name: s.duration_label,
+                    name: s.service_name || s.duration_label,
+                    imageUrl: s.image_url,
+                    strikePrice: s.strikethrough_price,
                     price: Number(s.price),
                     durationMinutes: s.duration_minutes,
                   }}
@@ -79,6 +81,16 @@ export function SearchResultsScreen({
                       price: Number(s.price),
                       subtitle: s.subtitle,
                       icon: s.icon,
+                      segment_id: s.segment_id,
+                      service_name: s.service_name,
+                      strikethrough_price: s.strikethrough_price,
+                      pricing_type: s.pricing_type,
+                      image_url: s.image_url,
+                      gallery_urls: s.gallery_urls,
+                      video_url: s.video_url,
+                      description: s.description,
+                      inclusions: s.inclusions,
+                      exclusions: s.exclusions,
                     })
                   }
                 />
