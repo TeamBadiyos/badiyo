@@ -117,12 +117,14 @@ export function AddressSelectionScreen({
         p_address_id: input.id,
         p_label: input.label,
         p_full_address: input.full_address,
-        p_area: input.area,
-        p_city: input.city,
+        // The RPC accepts NULLs; generated types widen these to string.
+        p_area: input.area as unknown as string,
+        p_city: input.city as unknown as string,
         p_latitude: input.latitude,
         p_longitude: input.longitude,
-        p_landmark_photo_url: photoUrl,
+        p_landmark_photo_url: photoUrl ?? undefined,
       });
+
       if (error) throw error;
       return input.id;
     },
