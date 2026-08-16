@@ -11,6 +11,7 @@ import {
   Gift,
   LogOut,
   CreditCard,
+  MapPin,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -34,6 +35,7 @@ export function ProfileScreen({
   onOpenHelp,
   onOpenReferrals,
   onOpenPaymentMethods,
+  onOpenAddresses,
   onLogout,
 }: {
   onBack: () => void;
@@ -45,6 +47,7 @@ export function ProfileScreen({
   onOpenHelp: () => void;
   onOpenReferrals: () => void;
   onOpenPaymentMethods: () => void;
+  onOpenAddresses: () => void;
   onLogout: () => void;
 }) {
 
