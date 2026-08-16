@@ -9,6 +9,8 @@ export type ProductCardService = {
   imageUrl?: string | null;
   /** Duration services show minutes inline; flat-priced items omit it. */
   durationMinutes?: number | null;
+  /** Explicit "was" price from the catalogue; falls back to the anchor value. */
+  strikePrice?: number | null;
 };
 
 /**
@@ -24,7 +26,8 @@ export function ServiceProductCard({
 }) {
   const t = useT();
   const price = Number(service.price);
-  const was = anchorPrice(price);
+  const was = service.strikePrice ?? anchorPrice(price);
+
 
   return (
     <article className="surface-tint flex w-full min-w-0 flex-col rounded-[18px] border border-border p-2 shadow-card-m">

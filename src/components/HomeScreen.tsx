@@ -306,14 +306,9 @@ export function HomeScreen({
                 </section>
               );
             })}
-
-            {/* Expert tiles */}
-            <SectionHeading size="lg" className="mt-7">
-              {t("home.oneExpert")}
-            </SectionHeading>
-            <ExpertTiles onOpenTask={openIncluded} />
           </div>
         )}
+
 
         {/* Promo banner — high-emphasis solid brand highlight */}
         {promo && (
@@ -420,10 +415,15 @@ function SegmentView({
         {t("home.scheduleHint")}
       </p>
 
-      <SectionHeading size="lg" className="mt-7">
-        {t("home.oneExpert")}
-      </SectionHeading>
-      <ExpertTiles onOpenTask={onOpenTask} />
+      {segment.slug?.toLowerCase().includes("clean") && (
+        <>
+          <SectionHeading size="lg" className="mt-7">
+            {t("home.oneExpert")}
+          </SectionHeading>
+          <ExpertTiles onOpenTask={onOpenTask} />
+        </>
+      )}
+
     </>
   );
 }
@@ -450,13 +450,15 @@ function CategoryRow({
             service={{
               name: s.duration_label,
               price: Number(s.price),
+              strikePrice: s.strikethrough_price,
               imageUrl: s.image_url,
-              durationMinutes: s.duration_minutes,
+              durationMinutes: s.pricing_type === "flat" ? null : s.duration_minutes,
             }}
             onAdd={() => onBook(s)}
           />
         ))}
       </div>
+
     </div>
   );
 }
