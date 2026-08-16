@@ -32,10 +32,8 @@ export function ProfileScreen({
   onOpenNotifications,
   onOpenSettings,
   onOpenHelp,
-  onOpenAbout,
   onOpenReferrals,
   onOpenPaymentMethods,
-  onOpenLegal,
   onLogout,
 }: {
   onBack: () => void;
