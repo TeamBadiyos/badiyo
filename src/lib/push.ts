@@ -142,7 +142,16 @@ export async function registerPushForCurrentUser() {
             }
           }
         });
+
+        // Deep links from the native full-screen alarm screen:
+        //   badiyos://open/booking/<id>
+        await App.addListener("appUrlOpen", ({ url }) => {
+          if (!url || !url.startsWith("badiyos://open")) return;
+          const route = url.replace("badiyos://open", "") || "/";
+          handleTap({ route });
+        });
       }
+
     } catch (e) {
       console.error("Native push registration failed:", e);
     }
