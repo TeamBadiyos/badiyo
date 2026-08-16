@@ -3,11 +3,11 @@ import { ArrowLeft, Camera, Crosshair, Loader2, MapPin, Search, X } from "lucide
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
-  reverseGeocode,
   searchPlaces,
   getPlaceDetails,
   type PlaceSuggestion,
 } from "@/lib/geocode.functions";
+import { resolveAddress } from "@/lib/reverseGeocode";
 import {
   getCurrentCoords,
   openAppSettings,
