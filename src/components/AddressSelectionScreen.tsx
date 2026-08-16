@@ -54,22 +54,36 @@ export function AddressSelectionScreen({
     queryFn: fetchAddresses,
   });
 
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [editing, setEditing] = useState<Address | null>(null);
+  const [menuFor, setMenuFor] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<Address | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
   async function deleteAddress(id: string) {
     void hapticImpact("medium");
-    const { error } = await supabase.from("addresses").delete().eq("id", id);
+    setDeleting(true);
+    const { error } = await supabase.rpc("customer_delete_address", {
+      p_address_id: id,
+    });
+    setDeleting(false);
     if (error) {
+      console.error("[address] delete failed:", error);
       void hapticNotification("error");
       toast.error("Couldn't delete this address.");
       return;
     }
-    setSelectedId((cur) => (cur === id ? null : cur));
+    setConfirmDelete(null);
+    setMenuFor(null);
+    if (selectedId === id) {
+      setSelectedId(null);
+      toast.info("Pick another delivery address or detect your location.");
+    }
     void hapticNotification("success");
     toast.success("Address deleted");
     qc.invalidateQueries({ queryKey: ["addresses"] });
   }
-
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [sheetOpen, setSheetOpen] = useState(false);
 
   useEffect(() => {
     if (!selectedId && addresses.length > 0) {
@@ -77,6 +91,53 @@ export function AddressSelectionScreen({
       setSelectedId(def.id);
     }
   }, [addresses, selectedId]);
+
+  const editMutation = useMutation({
+    mutationFn: async (input: PickedAddress & { id: string }) => {
+      const { data: userData } = await supabase.auth.getUser();
+      const uid = userData.user?.id;
+      if (!uid) throw new Error("You need to sign in before saving an address.");
+
+      let photoUrl: string | null = null;
+      if (input.photo) {
+        const ext = (input.photo.name.split(".").pop() || "jpg").toLowerCase();
+        const path = `${uid}/${input.id}.${ext}`;
+        const { error: upErr } = await supabase.storage
+          .from("address-photos")
+          .upload(path, input.photo, {
+            upsert: true,
+            contentType: input.photo.type || "image/jpeg",
+          });
+        if (upErr) throw upErr;
+        photoUrl = supabase.storage.from("address-photos").getPublicUrl(path)
+          .data.publicUrl;
+      }
+
+      const { error } = await supabase.rpc("customer_update_address", {
+        p_address_id: input.id,
+        p_label: input.label,
+        p_full_address: input.full_address,
+        p_area: input.area,
+        p_city: input.city,
+        p_latitude: input.latitude,
+        p_longitude: input.longitude,
+        p_landmark_photo_url: photoUrl,
+      });
+      if (error) throw error;
+      return input.id;
+    },
+    onSuccess: (id) => {
+      qc.invalidateQueries({ queryKey: ["addresses"] });
+      setSelectedId(id);
+      setEditing(null);
+      toast.success("Address updated");
+    },
+    onError: (e) => {
+      console.error("[address] update failed:", e);
+      toast.error("Couldn't update this address.");
+    },
+  });
+
 
   const addMutation = useMutation({
     mutationFn: async (input: PickedAddress) => {
