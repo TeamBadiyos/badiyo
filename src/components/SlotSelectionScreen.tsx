@@ -97,7 +97,20 @@ export function SlotSelectionScreen({
 
   const inclusions = (service.inclusions ?? []).filter((x) => x?.trim());
   const exclusions = (service.exclusions ?? []).filter((x) => x?.trim());
-  const hasDetails = inclusions.length > 0 || exclusions.length > 0;
+  const taskTypes = useMemo(
+    () =>
+      (service.task_types ?? [])
+        .map((tt) => ({
+          ...tt,
+          inclusions: (tt.inclusions ?? []).filter((x) => x?.trim()),
+          exclusions: (tt.exclusions ?? []).filter((x) => x?.trim()),
+        }))
+        .filter((tt) => tt.inclusions.length > 0 || tt.exclusions.length > 0),
+    [service.task_types],
+  );
+  const hasFlatDetails = inclusions.length > 0 || exclusions.length > 0;
+  const hasDetails = taskTypes.length > 0 || hasFlatDetails;
+
   const description = service.description?.trim() || null;
   const isFlat = service.pricing_type === "flat";
   const title = service.service_name?.trim() || service.duration_label;
