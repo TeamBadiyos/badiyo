@@ -38,7 +38,46 @@ const FAQS = [
   },
 ];
 
-export function HelpSupportScreen({ onBack }: { onBack: () => void }) {
+export function HelpSupportScreen({
+  onBack,
+  onOpenLegal,
+  onOpenAbout,
+}: {
+  onBack: () => void;
+  onOpenLegal: (slug: LegalSlug) => void;
+  onOpenAbout: () => void;
+}) {
+  const t = useT();
+  const legalItems = [
+    {
+      key: "privacy",
+      label: t("legal.privacy"),
+      desc: t("legal.privacyDesc"),
+      icon: ShieldCheck,
+      onClick: () => onOpenLegal("privacy-policy"),
+    },
+    {
+      key: "terms",
+      label: t("legal.terms"),
+      desc: t("legal.termsDesc"),
+      icon: ScrollText,
+      onClick: () => onOpenLegal("terms"),
+    },
+    {
+      key: "refund",
+      label: t("legal.refund"),
+      desc: t("legal.refundDesc"),
+      icon: ReceiptText,
+      onClick: () => onOpenLegal("refund-policy"),
+    },
+    {
+      key: "about",
+      label: "About badiyos",
+      desc: "App version, company and contact",
+      icon: FileText,
+      onClick: onOpenAbout,
+    },
+  ];
   const [open, setOpen] = useState<number | null>(0);
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
