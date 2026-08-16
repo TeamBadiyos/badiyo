@@ -12,6 +12,15 @@ export type Segment = {
   rank: number;
 };
 
+export type ServiceCategory = {
+  id: string;
+  segment_id: string;
+  name: string;
+  slug: string;
+  icon_url: string | null;
+  rank: number;
+};
+
 export type SegmentService = {
   id: string;
   icon: string | null;
@@ -21,6 +30,8 @@ export type SegmentService = {
   price: number;
   display_order: number | null;
   segment_id: string | null;
+  service_category_id: string | null;
+  image_url: string | null;
 };
 
 export async function fetchSegments(): Promise<Segment[]> {
@@ -33,6 +44,16 @@ export async function fetchSegments(): Promise<Segment[]> {
   return (data ?? []) as Segment[];
 }
 
+export async function fetchServiceCategories(): Promise<ServiceCategory[]> {
+  const { data, error } = await supabase
+    .from("service_categories")
+    .select("id, segment_id, name, slug, icon_url, rank")
+    .eq("is_active", true)
+    .order("rank", { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as ServiceCategory[];
+}
+
 /**
  * Service catalogue rows enriched with the segment they belong to
  * (via service_categories.segment_id). Segment pages / sections filter on
@@ -42,7 +63,7 @@ export async function fetchSegmentServices(): Promise<SegmentService[]> {
   const { data, error } = await supabase
     .from("service_catalogue_config")
     .select(
-      "id, icon, duration_label, duration_minutes, subtitle, price, display_order, service_categories(segment_id)",
+      "id, icon, duration_label, duration_minutes, subtitle, price, display_order, service_category_id, service_categories(segment_id, icon_url)",
     )
     .eq("is_active", true)
     .order("display_order", { ascending: true });
@@ -56,5 +77,7 @@ export async function fetchSegmentServices(): Promise<SegmentService[]> {
     price: r.price,
     display_order: r.display_order,
     segment_id: r.service_categories?.segment_id ?? null,
+    service_category_id: r.service_category_id ?? null,
+    image_url: r.service_categories?.icon_url ?? null,
   }));
 }
