@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Home, MapPin, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Home, MapPin, MoreVertical, Pencil, Plus, Trash2 } from "lucide-react";
 import { SwipeableRow } from "./SwipeableRow";
 import { hapticSelection, hapticImpact, hapticNotification } from "@/lib/haptics";
 import { toast } from "sonner";
