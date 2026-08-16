@@ -36,12 +36,8 @@ export const UPCOMING_STATUSES = [
   "in_progress",
 ];
 export const PAST_STATUSES = ["completed", "cancelled", "rejected"];
-export const ACTIVE_TRACKING_STATUSES = [
-  "confirmed",
-  "accepted",
-  "expert_assigned",
-  "in_progress",
-];
+export { ACTIVE_TRACKING_STATUSES } from "@/lib/bookingStatus";
+
 
 async function fetchBookings(): Promise<BookingRow[]> {
   const { data: userRes } = await supabase.auth.getUser();

@@ -30,21 +30,8 @@ function Icon({ name, className }: { name?: string | null; className?: string })
   return <Cmp className={className} />;
 }
 
-type HomepageSection = {
-  section_type: string;
-  display_order: number;
-  payload: Record<string, any>;
-};
+import { fetchSections } from "@/lib/homeData";
 
-async function fetchSections(): Promise<HomepageSection[]> {
-  const { data, error } = await supabase
-    .from("homepage_sections")
-    .select("section_type, display_order, payload")
-    .eq("is_active", true)
-    .order("display_order", { ascending: true });
-  if (error) throw error;
-  return (data ?? []) as HomepageSection[];
-}
 
 const EXPERT_TILES: { image: string; labelKey: TranslationKey; slug: string }[] = [
   { image: expertHouse, labelKey: "home.tile.houseCleaning", slug: "house-cleaning" },

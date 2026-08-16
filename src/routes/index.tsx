@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, lazy, useCallback, useEffect, useRef, useState, type ComponentType } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   initNativeBackButton,
@@ -11,61 +12,147 @@ import { useEdgeSwipeBack } from "@/lib/useEdgeSwipeBack";
 import { initStatusBar } from "@/lib/statusBar";
 
 import { BadiyoLogo } from "@/components/BadiyoLogo";
-import {
-  NotServiceableScreen,
-  type NotServiceableLocation,
-} from "@/components/NotServiceableScreen";
+import type { NotServiceableLocation } from "@/components/NotServiceableScreen";
 import { checkServiceability } from "@/lib/serviceability";
 import { hasLoginPin } from "@/lib/auth.functions";
+import { prefetchHomeData } from "@/lib/homeData";
 
+// --- Eager: only what the very first paint needs (splash → login). ---
 import { LoginScreen } from "@/components/LoginScreen";
-import { OtpVerifyScreen } from "@/components/OtpVerifyScreen";
-import { PinLoginScreen } from "@/components/PinLoginScreen";
-import { PinSetScreen } from "@/components/PinSetScreen";
-import { HomeScreen } from "@/components/HomeScreen";
-import {
-  SlotSelectionScreen,
-  type SelectedService,
-  type SelectedSlot,
-} from "@/components/SlotSelectionScreen";
-import {
-  AddressSelectionScreen,
-} from "@/components/AddressSelectionScreen";
-import {
-  BookingSummaryScreen,
-  type SelectedAddress,
-} from "@/components/BookingSummaryScreen";
-import { PaymentScreen } from "@/components/PaymentScreen";
-import { ExpertAssignedScreen } from "@/components/tracking/ExpertAssignedScreen";
-import { SearchingForExpertScreen } from "@/components/tracking/SearchingForExpertScreen";
-import { OtpScreen } from "@/components/tracking/OtpScreen";
-import { ServiceInProgressScreen } from "@/components/tracking/ServiceInProgressScreen";
-import { RateReviewScreen } from "@/components/tracking/RateReviewScreen";
-import { MyBookingsScreen, ACTIVE_TRACKING_STATUSES, type BookingRow } from "@/components/MyBookingsScreen";
-import { BookingDetailsScreen } from "@/components/BookingDetailsScreen";
-import { ProfileScreen } from "@/components/ProfileScreen";
-import { WalletScreen } from "@/components/WalletScreen";
-import { RewardsScreen } from "@/components/RewardsScreen";
-import { EditProfileScreen } from "@/components/profile/EditProfileScreen";
-import { NotificationsScreen } from "@/components/profile/NotificationsScreen";
-import { SettingsScreen } from "@/components/profile/SettingsScreen";
-import { HelpSupportScreen } from "@/components/profile/HelpSupportScreen";
-import { AboutScreen } from "@/components/profile/AboutScreen";
-import { LegalPageScreen, type LegalSlug } from "@/components/profile/LegalPageScreen";
-import { ActiveDevicesScreen } from "@/components/profile/ActiveDevicesScreen";
-import { LanguageScreen } from "@/components/profile/LanguageScreen";
-import { DeviceLimitScreen } from "@/components/DeviceLimitScreen";
+
+// --- Lazy: every other screen loads on demand. ---
+function lazyNamed<M, K extends keyof M>(loader: () => Promise<M>, key: K) {
+  type P = M[K] extends ComponentType<infer Props> ? Props : never;
+  return lazy<ComponentType<P>>(() =>
+    loader().then((m) => ({ default: m[key] as unknown as ComponentType<P> })),
+  );
+}
+
+
+const HomeScreen = lazyNamed(() => import("@/components/HomeScreen"), "HomeScreen");
+const OtpVerifyScreen = lazyNamed(() => import("@/components/OtpVerifyScreen"), "OtpVerifyScreen");
+const PinLoginScreen = lazyNamed(() => import("@/components/PinLoginScreen"), "PinLoginScreen");
+const PinSetScreen = lazyNamed(() => import("@/components/PinSetScreen"), "PinSetScreen");
+const NotServiceableScreen = lazyNamed(
+  () => import("@/components/NotServiceableScreen"),
+  "NotServiceableScreen",
+);
+const SlotSelectionScreen = lazyNamed(
+  () => import("@/components/SlotSelectionScreen"),
+  "SlotSelectionScreen",
+);
+const AddressSelectionScreen = lazyNamed(
+  () => import("@/components/AddressSelectionScreen"),
+  "AddressSelectionScreen",
+);
+const BookingSummaryScreen = lazyNamed(
+  () => import("@/components/BookingSummaryScreen"),
+  "BookingSummaryScreen",
+);
+const PaymentScreen = lazyNamed(() => import("@/components/PaymentScreen"), "PaymentScreen");
+const ExpertAssignedScreen = lazyNamed(
+  () => import("@/components/tracking/ExpertAssignedScreen"),
+  "ExpertAssignedScreen",
+);
+const SearchingForExpertScreen = lazyNamed(
+  () => import("@/components/tracking/SearchingForExpertScreen"),
+  "SearchingForExpertScreen",
+);
+const OtpScreen = lazyNamed(() => import("@/components/tracking/OtpScreen"), "OtpScreen");
+const ServiceInProgressScreen = lazyNamed(
+  () => import("@/components/tracking/ServiceInProgressScreen"),
+  "ServiceInProgressScreen",
+);
+const RateReviewScreen = lazyNamed(
+  () => import("@/components/tracking/RateReviewScreen"),
+  "RateReviewScreen",
+);
+const MyBookingsScreen = lazyNamed(
+  () => import("@/components/MyBookingsScreen"),
+  "MyBookingsScreen",
+);
+const BookingDetailsScreen = lazyNamed(
+  () => import("@/components/BookingDetailsScreen"),
+  "BookingDetailsScreen",
+);
+const ProfileScreen = lazyNamed(() => import("@/components/ProfileScreen"), "ProfileScreen");
+const WalletScreen = lazyNamed(() => import("@/components/WalletScreen"), "WalletScreen");
+const RewardsScreen = lazyNamed(() => import("@/components/RewardsScreen"), "RewardsScreen");
+const EditProfileScreen = lazyNamed(
+  () => import("@/components/profile/EditProfileScreen"),
+  "EditProfileScreen",
+);
+const NotificationsScreen = lazyNamed(
+  () => import("@/components/profile/NotificationsScreen"),
+  "NotificationsScreen",
+);
+const SettingsScreen = lazyNamed(
+  () => import("@/components/profile/SettingsScreen"),
+  "SettingsScreen",
+);
+const HelpSupportScreen = lazyNamed(
+  () => import("@/components/profile/HelpSupportScreen"),
+  "HelpSupportScreen",
+);
+const AboutScreen = lazyNamed(() => import("@/components/profile/AboutScreen"), "AboutScreen");
+const LegalPageScreen = lazyNamed(
+  () => import("@/components/profile/LegalPageScreen"),
+  "LegalPageScreen",
+);
+const ActiveDevicesScreen = lazyNamed(
+  () => import("@/components/profile/ActiveDevicesScreen"),
+  "ActiveDevicesScreen",
+);
+const LanguageScreen = lazyNamed(
+  () => import("@/components/profile/LanguageScreen"),
+  "LanguageScreen",
+);
+const DeviceLimitScreen = lazyNamed(
+  () => import("@/components/DeviceLimitScreen"),
+  "DeviceLimitScreen",
+);
+const ReferralDashboardScreen = lazyNamed(
+  () => import("@/components/ReferralDashboardScreen"),
+  "ReferralDashboardScreen",
+);
+const PaymentMethodsScreen = lazyNamed(
+  () => import("@/components/profile/PaymentMethodsScreen"),
+  "PaymentMethodsScreen",
+);
+const SearchResultsScreen = lazyNamed(
+  () => import("@/components/SearchResultsScreen"),
+  "SearchResultsScreen",
+);
+const OrdersScreen = lazyNamed(() => import("@/components/OrdersScreen"), "OrdersScreen");
+const NoInternetScreen = lazyNamed(
+  () => import("@/components/utility/NoInternetScreen"),
+  "NoInternetScreen",
+);
+const ForceUpdateScreen = lazyNamed(
+  () => import("@/components/utility/ForceUpdateScreen"),
+  "ForceUpdateScreen",
+);
+
+import type { SelectedService, SelectedSlot } from "@/components/SlotSelectionScreen";
+import type { SelectedAddress } from "@/components/BookingSummaryScreen";
+import type { BookingRow } from "@/components/MyBookingsScreen";
+import type { LegalSlug } from "@/components/profile/LegalPageScreen";
+import { ACTIVE_TRACKING_STATUSES } from "@/lib/bookingStatus";
 import { registerThisDevice, type DeviceSession } from "@/lib/devices";
-import { ReferralDashboardScreen } from "@/components/ReferralDashboardScreen";
-import { PaymentMethodsScreen } from "@/components/profile/PaymentMethodsScreen";
-import { SearchResultsScreen } from "@/components/SearchResultsScreen";
-import { OrdersScreen } from "@/components/OrdersScreen";
-import { NoInternetScreen } from "@/components/utility/NoInternetScreen";
-import { ForceUpdateScreen } from "@/components/utility/ForceUpdateScreen";
 import { ensureUserRow } from "@/lib/ensureUserRow";
 import { registerPushForCurrentUser, setPushNavigator } from "@/lib/push";
 import { APP_VERSION, fetchMinSupportedVersion, isBelow } from "@/lib/version";
 import { supabase } from "@/integrations/supabase/client";
+
+/** Full-screen brand placeholder shown while a lazy screen chunk loads. */
+function ScreenFallback() {
+  return (
+    <div className="flex min-h-screen w-full items-center justify-center bg-background">
+      <div className="h-9 w-9 animate-spin rounded-full border-[3px] border-primary/25 border-t-primary" />
+    </div>
+  );
+}
+
 
 
 export const Route = createFileRoute("/")({
@@ -161,24 +248,30 @@ function Index() {
 
   const [forceUpdate, setForceUpdate] = useState(false);
   const [limitDevices, setLimitDevices] = useState<DeviceSession[]>([]);
+  const queryClient = useQueryClient();
 
-  // Enforce the max-2-device rule right after any successful login.
+  // Enter the app immediately after a successful login. The max-2-device
+  // check used to block navigation (one extra sequential round-trip between
+  // PIN verification and Home); it now runs in the background and only
+  // interrupts if the limit is actually reached.
   const enterAppAfterAuth = useCallback(
-    async (fallbackPhase: Phase = "home") => {
-      try {
-        const res = await registerThisDevice();
-        if (res.status === "limit_reached") {
-          setLimitDevices(res.devices);
-          setPhase("device-limit");
-          return;
-        }
-      } catch (e) {
-        console.error("device registration failed:", e);
-      }
+    (fallbackPhase: Phase = "home") => {
       setPhase(fallbackPhase);
+      // Home data + Home chunk start loading in parallel with the device call.
+      void prefetchHomeData(queryClient);
+      void import("@/components/HomeScreen");
+      void registerThisDevice()
+        .then((res) => {
+          if (res.status === "limit_reached") {
+            setLimitDevices(res.devices);
+            setPhase("device-limit");
+          }
+        })
+        .catch((e) => console.error("device registration failed:", e));
     },
-    [setPhase],
+    [setPhase, queryClient],
   );
+
 
   function resetAndGoHome() {
     setActiveBookingId(null);
@@ -289,6 +382,10 @@ function Index() {
   useEffect(() => {
     let cancelled = false;
 
+    // Home content is public config data — warm it during the splash so Home
+    // paints from cache the moment the user finishes logging in.
+    void prefetchHomeData(queryClient);
+
     fetchMinSupportedVersion().then((min) => {
       if (!cancelled && min && isBelow(APP_VERSION, min)) setForceUpdate(true);
     });
@@ -298,7 +395,6 @@ function Index() {
     supabase.auth.getSession().then(({ data }) => {
       if (cancelled) return;
       if (data.session?.user && !data.session.user.is_anonymous) {
-        setPhase("home");
         enterAppAfterAuth("home");
         ensureUserRow()
           .then(() => import("@/lib/referrals").then((m) => m.linkReferralIfAny()))
@@ -306,11 +402,16 @@ function Index() {
           .catch((e) => console.error("post-oauth setup failed:", e));
         return;
       }
-      // Otherwise run the normal splash → login flow.
+      // Otherwise run the normal splash → login flow. Warm the screens the
+      // user is about to hit so no chunk download sits on the critical path.
+      void import("@/components/PinLoginScreen");
+      void import("@/components/OtpVerifyScreen");
+      void import("@/components/HomeScreen");
       setTimeout(() => !cancelled && setPhase("splash-out"), 1800);
       setTimeout(() => !cancelled && setPhase("login"), 2300);
       ensureUserRow().catch((e) => console.error("startup ensureUserRow failed:", e));
     });
+
 
     const { data: sub } = supabase.auth.onAuthStateChange(async (event) => {
       if (event === "SIGNED_IN" || event === "USER_UPDATED") {
@@ -347,8 +448,13 @@ function Index() {
           style={{ opacity: Math.max(0, 0.18 * (1 - swipeBack.progress)) }}
         />
       )}
-      {forceUpdate && <ForceUpdateScreen />}
-      {!online && <NoInternetScreen onRetry={() => setOnline(navigator.onLine)} />}
+      <Suspense fallback={null}>
+        {forceUpdate && <ForceUpdateScreen />}
+        {!online && <NoInternetScreen onRetry={() => setOnline(navigator.onLine)} />}
+      </Suspense>
+
+      <Suspense fallback={<ScreenFallback />}>
+
 
       {(phase === "splash" || phase === "splash-out") && (
         <div
@@ -874,6 +980,8 @@ function Index() {
           <AboutScreen onBack={() => setPhase("help")} />
         </div>
       )}
+      </Suspense>
     </div>
+
   );
 }
