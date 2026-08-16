@@ -1,22 +1,17 @@
-import { ArrowLeft, ChevronRight, Globe, Bell, Shield, Smartphone, Trash2, X, ScrollText, ReceiptText } from "lucide-react";
+import { ArrowLeft, ChevronRight, Globe, Bell, Smartphone, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import { useT, useLanguage } from "@/i18n";
-import type { LegalSlug } from "./LegalPageScreen";
 
 export function SettingsScreen({
   onBack,
   onOpenNotifications,
-  onOpenAbout,
   onOpenDevices,
   onOpenLanguage,
-  onOpenLegal,
 }: {
   onBack: () => void;
   onOpenNotifications: () => void;
-  onOpenAbout: () => void;
   onOpenDevices: () => void;
   onOpenLanguage: () => void;
-  onOpenLegal: (slug: LegalSlug) => void;
 }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const t = useT();
