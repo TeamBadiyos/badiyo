@@ -184,9 +184,19 @@ select,
    indicator insets. */
 @utility app-safe-shell {
   /* On native shells Android often reports 0 for the status bar inset, so we
-     guarantee a minimum breathing room via --safe-top-min (set at runtime). */
-  padding-top: max(var(--safe-top-min, 0px), env(safe-area-inset-top, 0px));
+     guarantee a minimum breathing room via --safe-top-min (set at runtime).
+     Exposed as --app-safe-top so full-bleed headers can paint under it. */
+  --app-safe-top: max(var(--safe-top-min, 0px), env(safe-area-inset-top, 0px));
+  padding-top: var(--app-safe-top);
   padding-left: env(safe-area-inset-left, 0px);
   padding-right: env(safe-area-inset-right, 0px);
   min-height: 100dvh;
 }
+
+/* Lets a colored header extend up through the safe-area strip so no
+   background-colored seam appears between the status bar and the header. */
+@utility bleed-safe-top {
+  margin-top: calc(-1 * var(--app-safe-top, 0px));
+  padding-top: calc(var(--app-safe-top, 0px) + var(--bleed-top-extra, 0px));
+}
+
