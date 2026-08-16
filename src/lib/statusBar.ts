@@ -20,8 +20,9 @@
 import { isNativeShell } from "./nativeServerFn";
 
 const BRAND_GREEN = "#00B97A";
-/** Typical Android status bar is 24dp; 28 gives comfortable clearance. */
-const ANDROID_STATUS_BAR_FALLBACK_PX = 28;
+/** Typical Android status bar is 24dp; 32 gives comfortable clearance on
+ *  smaller devices / short reported insets. */
+const ANDROID_STATUS_BAR_FALLBACK_PX = 32;
 
 let initialized = false;
 
