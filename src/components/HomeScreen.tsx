@@ -286,13 +286,14 @@ export function HomeScreen({
         />
 
         {activeSegment ? (
-          <SegmentView
-            segment={activeSegment}
-            categories={categories.filter((c) => c.segment_id === activeSegment.id)}
-            services={servicesFor(activeSegment)}
-            onBookService={onBookService}
-            onOpenTask={bookTileService}
-          />
+        <SegmentView
+          segment={activeSegment}
+          categories={categories.filter((c) => c.segment_id === activeSegment.id)}
+          services={servicesFor(activeSegment)}
+          onBookService={onBookService}
+          onAdd={addToBooking}
+          onOpenTask={bookTileService}
+        />
         ) : (
           <div className="mt-2">
             {segments.map((segment) => {
