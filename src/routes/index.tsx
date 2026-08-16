@@ -8,6 +8,7 @@ import {
   runTopOverlayHandler,
 } from "@/lib/backHandler";
 import { useEdgeSwipeBack } from "@/lib/useEdgeSwipeBack";
+import { initStatusBar } from "@/lib/statusBar";
 
 import { BadiyoLogo } from "@/components/BadiyoLogo";
 import {
