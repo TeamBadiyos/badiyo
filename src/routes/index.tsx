@@ -8,6 +8,7 @@ import {
   runTopOverlayHandler,
 } from "@/lib/backHandler";
 import { useEdgeSwipeBack } from "@/lib/useEdgeSwipeBack";
+import { initStatusBar } from "@/lib/statusBar";
 
 import { BadiyoLogo } from "@/components/BadiyoLogo";
 import {
@@ -221,6 +222,11 @@ function Index() {
     },
     [isAtRootPhase],
   );
+
+  // Status bar: keep native content below the status bar (no-op on web).
+  useEffect(() => {
+    void initStatusBar();
+  }, []);
 
   // Wire the native Android back button (no-op on web).
   useEffect(() => {
