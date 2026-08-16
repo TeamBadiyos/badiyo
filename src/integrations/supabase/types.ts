@@ -14,65 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      _deprecated_expert_push_tokens: {
-        Row: {
-          created_at: string
-          expert_id: string
-          fcm_token: string
-          id: string
-          platform: string | null
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          expert_id: string
-          fcm_token: string
-          id?: string
-          platform?: string | null
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          expert_id?: string
-          fcm_token?: string
-          id?: string
-          platform?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "expert_push_tokens_expert_id_fkey"
-            columns: ["expert_id"]
-            isOneToOne: false
-            referencedRelation: "experts"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      _deprecated_fcm_tokens: {
-        Row: {
-          created_at: string
-          id: string
-          token: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          token: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          token?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       addresses: {
         Row: {
           area: string | null
@@ -835,6 +776,47 @@ export type Database = {
           updated_by?: string | null
         }
         Relationships: []
+      }
+      legal_pages: {
+        Row: {
+          content: string
+          effective_date: string | null
+          id: string
+          is_active: boolean
+          last_updated_at: string
+          slug: string
+          title: string
+          updated_by: string | null
+        }
+        Insert: {
+          content: string
+          effective_date?: string | null
+          id?: string
+          is_active?: boolean
+          last_updated_at?: string
+          slug: string
+          title: string
+          updated_by?: string | null
+        }
+        Update: {
+          content?: string
+          effective_date?: string | null
+          id?: string
+          is_active?: boolean
+          last_updated_at?: string
+          slug?: string
+          title?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_pages_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "staff_users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       merchant_documents: {
         Row: {
@@ -2519,7 +2501,15 @@ export type Database = {
       }
       merchant_ensure_draft: { Args: { _phone: string }; Returns: string }
       merchant_has_login_pin: { Args: { p_phone: string }; Returns: boolean }
+      merchant_is_currently_open: {
+        Args: { _merchant_id: string }
+        Returns: boolean
+      }
       merchant_my_context: { Args: never; Returns: Json }
+      merchant_set_accepting_orders: {
+        Args: { _accepting: boolean }
+        Returns: boolean
+      }
       merchant_set_login_pin: { Args: { p_pin: string }; Returns: undefined }
       merchant_submit_application: { Args: never; Returns: undefined }
       merchant_verify_pin_internal: {
@@ -2623,12 +2613,17 @@ export type Database = {
       }
       staff_generate_merchant_payout_batch: { Args: never; Returns: string }
       staff_generate_payout_batch: { Args: never; Returns: string }
+      staff_generate_subscription_invoices: { Args: never; Returns: Json }
       staff_mark_payout_batch_paid: {
         Args: { _batch_id: string }
         Returns: undefined
       }
       staff_mark_payout_item_paid: {
         Args: { _item_id: string; _paid: boolean }
+        Returns: undefined
+      }
+      staff_mark_subscription_invoice_paid: {
+        Args: { _invoice_id: string; _paid: boolean }
         Returns: undefined
       }
       staff_reassign_expert: {
@@ -2653,6 +2648,10 @@ export type Database = {
       }
       staff_set_homepage_section_active: {
         Args: { _active: boolean; _id: string }
+        Returns: undefined
+      }
+      staff_set_merchant_fee_tier: {
+        Args: { _fee_tier_id: string; _merchant_id: string }
         Returns: undefined
       }
       staff_soft_delete_area_partner: {
@@ -2685,10 +2684,12 @@ export type Database = {
       }
       staff_upsert_area_partner: { Args: { _payload: Json }; Returns: string }
       staff_upsert_expert: { Args: { _payload: Json }; Returns: string }
+      staff_upsert_fee_tier: { Args: { _payload: Json }; Returns: string }
       staff_upsert_homepage_section: {
         Args: { _payload: Json }
         Returns: string
       }
+      staff_upsert_legal_page: { Args: { _payload: Json }; Returns: string }
       staff_verify_end_otp: {
         Args: { _booking_id: string; _otp: string }
         Returns: undefined

@@ -3,15 +3,19 @@ import { BadiyoLogo } from "./BadiyoLogo";
 import { supabase } from "@/integrations/supabase/client";
 import { getErrorMessage } from "@/lib/errorMessage";
 import { hapticImpact } from "@/lib/haptics";
+import { LegalConsentText } from "./LegalConsentText";
+import type { LegalSlug } from "./profile/LegalPageScreen";
 
 export function OtpVerifyScreen({
   phone,
   onBack,
   onVerified,
+  onOpenLegal,
 }: {
   phone: string; // 10-digit
   onBack: () => void;
   onVerified: () => void;
+  onOpenLegal?: (slug: LegalSlug) => void;
 }) {
   const [digits, setDigits] = useState<string[]>(["", "", "", ""]);
   const [loading, setLoading] = useState(false);
@@ -155,9 +159,7 @@ export function OtpVerifyScreen({
           Change number
         </button>
 
-        <p className="mt-auto pt-10 text-center text-xs text-muted-foreground">
-          By continuing, you agree to badiyos' Terms & Privacy Policy.
-        </p>
+        <LegalConsentText onOpenLegal={onOpenLegal} className="mt-auto pt-10" />
       </div>
     </main>
   );

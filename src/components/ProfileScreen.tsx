@@ -12,12 +12,17 @@ import {
   Gift,
   LogOut,
   CreditCard,
+  ScrollText,
+  ShieldCheck,
+  ReceiptText,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAvatarUrl } from "@/lib/useAvatarUrl";
+import { useT } from "@/i18n";
+import type { LegalSlug } from "./profile/LegalPageScreen";
 
 
 type Item = { key: string; label: string; desc: string; icon: LucideIcon; onClick: () => void };
@@ -34,6 +39,7 @@ export function ProfileScreen({
   onOpenAbout,
   onOpenReferrals,
   onOpenPaymentMethods,
+  onOpenLegal,
   onLogout,
 }: {
   onBack: () => void;
@@ -46,11 +52,13 @@ export function ProfileScreen({
   onOpenAbout: () => void;
   onOpenReferrals: () => void;
   onOpenPaymentMethods: () => void;
+  onOpenLegal: (slug: LegalSlug) => void;
   onLogout: () => void;
 }) {
 
   const [fullName, setFullName] = useState<string | null>(null);
   const { data: avatarUrl } = useAvatarUrl();
+  const t = useT();
 
   useEffect(() => {
     (async () => {
@@ -101,6 +109,14 @@ export function ProfileScreen({
       title: "Support",
       items: [
         { key: "help", label: "Help & Support", desc: "FAQs and contact us", icon: HelpCircle, onClick: onOpenHelp },
+      ],
+    },
+    {
+      title: t("legal.section"),
+      items: [
+        { key: "privacy", label: t("legal.privacy"), desc: t("legal.privacyDesc"), icon: ShieldCheck, onClick: () => onOpenLegal("privacy-policy") },
+        { key: "terms", label: t("legal.terms"), desc: t("legal.termsDesc"), icon: ScrollText, onClick: () => onOpenLegal("terms") },
+        { key: "refund", label: t("legal.refund"), desc: t("legal.refundDesc"), icon: ReceiptText, onClick: () => onOpenLegal("refund-policy") },
       ],
     },
     {
