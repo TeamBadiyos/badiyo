@@ -72,7 +72,10 @@ export async function fetchServiceCategories(): Promise<ServiceCategory[]> {
     .eq("is_active", true)
     .order("rank", { ascending: true });
   if (error) throw error;
-  return (data ?? []) as ServiceCategory[];
+  return ((data ?? []) as ServiceCategory[]).map((c) => ({
+    ...c,
+    icon_url: serviceImageUrl(c.icon_url),
+  }));
 }
 
 /**
