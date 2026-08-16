@@ -148,7 +148,7 @@ export function AddAddressMapScreen({
       .then(() => {
         if (cancelled || !mapDivRef.current || !window.google) return;
         const map = new window.google.maps.Map(mapDivRef.current, {
-          center: DEFAULT_CENTER,
+          center: centerRef.current,
           zoom: 16,
           disableDefaultUI: true,
           zoomControl: true,
@@ -169,6 +169,7 @@ export function AddAddressMapScreen({
             Math.abs(prev.lng - next.lng) < 1e-6
           )
             return;
+          console.info("[address] pin moved to", next);
           setCenter(next);
         });
       })
@@ -186,19 +187,30 @@ export function AddAddressMapScreen({
     const t = setTimeout(() => {
       setGeocoding(true);
       setGeocodeFailed(false);
+      console.info("[address] reverse geocoding", center);
       geocode({ data: center })
         .then((r) => {
           if (cancelled) return;
+          console.info("[address] reverse geocode ok:", r.formatted_address);
           if (!fromPlace) setAutoAddress(r.formatted_address);
           setArea(r.area);
           setCity(r.city);
         })
         .catch((e) => {
           if (cancelled) return;
-          console.error("Reverse geocode failed:", e);
+          console.error("[address] reverse geocode failed:", e);
           if (!fromPlace) {
             setAutoAddress("");
             setGeocodeFailed(true);
+            toast.error("Couldn't fetch the address for this pin.", {
+              description:
+                (e as Error)?.message?.slice(0, 140) ||
+                "Check your connection and try again.",
+              action: {
+                label: "Retry",
+                onClick: () => setGeocodeNonce((n) => n + 1),
+              },
+            });
           }
           setArea(null);
           setCity(null);
@@ -210,14 +222,18 @@ export function AddAddressMapScreen({
       cancelled = true;
       clearTimeout(t);
     };
-  }, [center, geocode]);
+  }, [center, geocode, geocodeNonce]);
 
   const useCurrentLocation = () => {
+    if (locating) return;
     setLocating(true);
+    console.info("[address] requesting current location");
     getCurrentCoords()
       .then((c) => {
+        console.info("[address] got coords", c);
         if (mapRef.current) mapRef.current.panTo(c);
         setCenter(c);
+
       })
       .catch((err) => console.error(err))
       .finally(() => setLocating(false));
