@@ -728,6 +728,11 @@ function Index() {
           />
         </div>
       )}
+      {phase === "manage-addresses" && (
+        <div className="animate-fade-slide-in">
+          <AddressSelectionScreen manage onBack={() => setPhase("profile")} />
+        </div>
+      )}
       {phase === "payment-methods" && (
         <div className="animate-fade-slide-in">
           <PaymentMethodsScreen onBack={() => setPhase("profile")} />
