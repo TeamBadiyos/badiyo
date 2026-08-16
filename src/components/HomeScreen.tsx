@@ -10,6 +10,8 @@ import { WhatsIncludedSheet } from "./WhatsIncludedSheet";
 import { supabase } from "@/integrations/supabase/client";
 import { useAvatarUrl } from "@/lib/useAvatarUrl";
 import { fetchSegmentServices, fetchSegments, type Segment, type SegmentService } from "@/lib/segments";
+import { SectionHeading } from "./SectionHeading";
+import { anchorPrice } from "@/lib/price";
 import { useT } from "@/i18n";
 import type { TranslationKey } from "@/i18n/en";
 
@@ -50,7 +52,7 @@ function ExpertTiles({ onOpenTask }: { onOpenTask: (slug: string) => void }) {
           onClick={() => onOpenTask(tile.slug)}
           className="flex flex-col text-left transition active:scale-[0.98]"
         >
-          <div className="aspect-square overflow-hidden rounded-[16px] bg-muted">
+          <div className="brand-grade aspect-square overflow-hidden rounded-[18px] bg-muted shadow-card-m">
             <img
               src={tile.image}
               alt={t(tile.labelKey)}
@@ -95,15 +97,20 @@ function toPayload(s: SegmentService, segment?: Segment | null): BookServicePayl
 function ServiceCard({ s, onBook }: { s: SegmentService; onBook: () => void }) {
   const t = useT();
   return (
-    <article className="flex items-center gap-4 rounded-[18px] border border-border bg-card p-4 shadow-sm">
-      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10">
+    <article className="surface-tint flex items-center gap-4 rounded-[18px] border border-border p-4 shadow-card-m">
+      <div className="icon-disc flex h-11 w-11 shrink-0 items-center justify-center rounded-full">
         <Icon name={s.icon} className="h-5 w-5 text-primary" />
       </div>
       <div className="flex min-w-0 flex-1 flex-col">
         <div className="text-base font-bold text-foreground">{s.duration_label}</div>
         {s.subtitle && <div className="text-xs text-muted-foreground">{s.subtitle}</div>}
-        <div className="text-sm font-bold text-primary">
-          {t("common.rupees", { amount: Number(s.price) })}
+        <div className="mt-0.5 flex items-baseline gap-1.5">
+          <span className="text-[17px] font-bold tracking-[-0.02em] text-primary">
+            {t("common.rupees", { amount: Number(s.price) })}
+          </span>
+          <span className="text-[11px] font-semibold text-muted-foreground line-through">
+            {t("common.rupees", { amount: anchorPrice(Number(s.price)) })}
+          </span>
         </div>
       </div>
       <button
@@ -120,8 +127,8 @@ function ServiceCard({ s, onBook }: { s: SegmentService; onBook: () => void }) {
 function ServiceMiniCard({ s, onBook }: { s: SegmentService; onBook: () => void }) {
   const t = useT();
   return (
-    <article className="flex h-[190px] w-full min-w-0 flex-col rounded-[18px] border border-border bg-card p-3 shadow-sm">
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10">
+    <article className="surface-tint flex h-[190px] w-full min-w-0 flex-col rounded-[18px] border border-border p-3 shadow-card-m">
+      <div className="icon-disc flex h-9 w-9 shrink-0 items-center justify-center rounded-full">
         <Icon name={s.icon} className="h-[18px] w-[18px] text-primary" />
       </div>
       <div className="mt-2 line-clamp-2 text-[13px] font-bold leading-tight text-foreground">
@@ -132,8 +139,13 @@ function ServiceMiniCard({ s, onBook }: { s: SegmentService; onBook: () => void 
           {s.subtitle}
         </div>
       )}
-      <div className="mt-1 text-[13px] font-bold text-primary">
-        {t("common.rupees", { amount: Number(s.price) })}
+      <div className="mt-1 flex flex-col">
+        <span className="text-[10px] font-semibold leading-none text-muted-foreground line-through">
+          {t("common.rupees", { amount: anchorPrice(Number(s.price)) })}
+        </span>
+        <span className="text-[16px] font-bold leading-tight tracking-[-0.02em] text-primary">
+          {t("common.rupees", { amount: Number(s.price) })}
+        </span>
       </div>
       <button
         onClick={onBook}
