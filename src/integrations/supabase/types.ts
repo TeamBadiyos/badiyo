@@ -425,6 +425,60 @@ export type Database = {
           },
         ]
       }
+      business_interest_leads: {
+        Row: {
+          business_name: string | null
+          category_interested: string
+          city: string
+          created_at: string
+          id: string
+          owner_name: string
+          phone: string
+        }
+        Insert: {
+          business_name?: string | null
+          category_interested: string
+          city?: string
+          created_at?: string
+          id?: string
+          owner_name: string
+          phone: string
+        }
+        Update: {
+          business_name?: string | null
+          category_interested?: string
+          city?: string
+          created_at?: string
+          id?: string
+          owner_name?: string
+          phone?: string
+        }
+        Relationships: []
+      }
+      city_interest_leads: {
+        Row: {
+          city: string
+          created_at: string
+          id: string
+          name: string
+          phone: string
+        }
+        Insert: {
+          city: string
+          created_at?: string
+          id?: string
+          name: string
+          phone: string
+        }
+        Update: {
+          city?: string
+          created_at?: string
+          id?: string
+          name?: string
+          phone?: string
+        }
+        Relationships: []
+      }
       device_sessions: {
         Row: {
           created_at: string
@@ -1943,6 +1997,50 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "service_categories_segment_id_fkey"
+            columns: ["segment_id"]
+            isOneToOne: false
+            referencedRelation: "segments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_task_details: {
+        Row: {
+          excluded_items: string[]
+          icon_url: string | null
+          id: string
+          included_items: string[]
+          is_active: boolean
+          rank: number
+          segment_id: string
+          task_name: string
+          task_slug: string
+        }
+        Insert: {
+          excluded_items: string[]
+          icon_url?: string | null
+          id?: string
+          included_items: string[]
+          is_active?: boolean
+          rank?: number
+          segment_id: string
+          task_name: string
+          task_slug: string
+        }
+        Update: {
+          excluded_items?: string[]
+          icon_url?: string | null
+          id?: string
+          included_items?: string[]
+          is_active?: boolean
+          rank?: number
+          segment_id?: string
+          task_name?: string
+          task_slug?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_task_details_segment_id_fkey"
             columns: ["segment_id"]
             isOneToOne: false
             referencedRelation: "segments"
