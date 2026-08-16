@@ -27,6 +27,10 @@ const config: CapacitorConfig = {
     StatusBar: {
       backgroundColor: "#00B97A",
       style: "DARK", // light content on the green bar
+      // Keep the WebView BELOW the status bar. Android WebViews do not expose
+      // the status bar height through env(safe-area-inset-top), so overlaying
+      // would make headers sit under the clock/notch.
+      overlaysWebView: false,
     },
     SplashScreen: {
       backgroundColor: "#00B97A",
