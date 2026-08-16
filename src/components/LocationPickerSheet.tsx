@@ -4,7 +4,12 @@ import { Check, Loader2, LocateFixed, MapPin, Plus, Search, X } from "lucide-rea
 import { supabase } from "@/integrations/supabase/client";
 import { AddAddressMapScreen, type PickedAddress } from "./AddAddressMapScreen";
 import { reverseGeocode } from "@/lib/geocode.functions";
-import { getCurrentCoords } from "@/lib/nativeGeolocation";
+import {
+  getCurrentCoords,
+  openAppSettings,
+  LocationPermissionError,
+} from "@/lib/nativeGeolocation";
+import { toast } from "sonner";
 import { pushBackHandler } from "@/lib/backHandler";
 
 
