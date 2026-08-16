@@ -330,7 +330,7 @@ export function HomeScreen({
               const items = servicesFor(segment).slice(0, 3);
               if (items.length === 0) return null;
               return (
-                <section key={segment.id} className="mt-5">
+                <section key={segment.id} className="mt-6 first:mt-4">
                   <div className="flex items-center justify-between gap-3">
                     <SectionHeading>{segment.name}</SectionHeading>
                     <button
@@ -356,7 +356,7 @@ export function HomeScreen({
             })}
 
             {/* Expert tiles */}
-            <SectionHeading size="lg" className="mt-8">
+            <SectionHeading size="lg" className="mt-7">
               {t("home.oneExpert")}
             </SectionHeading>
             <ExpertTiles onOpenTask={openIncluded} />
@@ -444,7 +444,7 @@ function SegmentView({
 
   return (
     <>
-      <SectionHeading className="mt-5">
+      <SectionHeading className="mt-4">
         {t("home.bookSegment", { segment: segment.name })}
       </SectionHeading>
 
@@ -459,7 +459,7 @@ function SegmentView({
         {t("home.scheduleHint")}
       </p>
 
-      <SectionHeading size="lg" className="mt-6">
+      <SectionHeading size="lg" className="mt-7">
         {t("home.oneExpert")}
       </SectionHeading>
       <ExpertTiles onOpenTask={onOpenTask} />
