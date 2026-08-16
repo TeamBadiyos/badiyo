@@ -54,14 +54,22 @@ Deno.serve(async (req) => {
       .update({ is_verified: true })
       .eq("id", row.id);
 
-    // Look up existing auth user by synthetic email AND by legacy phone in
-    // parallel; either match wins.
-    const [emailRes, phoneRes] = await Promise.all([
+    // Look up an existing auth user by synthetic email, by legacy auth phone,
+    // and by the customer profile's phone — the first match wins.
+    // The profile lookup matters: accounts created under the older anonymous
+    // sign-in flow have neither a synthetic email nor auth.users.phone, so
+    // without it a repeat login mints a SECOND account for the same number
+    // (that is exactly how the duplicate profile was created).
+    const [emailRes, phoneRes, profileRes] = await Promise.all([
       admin.rpc("get_auth_user_id_by_email", { _email: syntheticEmail }),
       admin.rpc("get_auth_user_id_by_phone", { _phone: `91${digits}` }),
+      admin.rpc("get_customer_auth_id_by_phone", { _phone: fullPhone }),
     ]);
     let userId: string | null =
-      (emailRes.data as string | null) || (phoneRes.data as string | null) || null;
+      (emailRes.data as string | null) ||
+      (phoneRes.data as string | null) ||
+      (profileRes.data as string | null) ||
+      null;
 
 
     const password = crypto.randomUUID() + crypto.randomUUID();
