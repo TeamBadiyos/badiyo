@@ -119,7 +119,9 @@ export async function fetchSegmentServices(): Promise<SegmentService[]> {
         display_order: o.display_order ?? svc.display_order ?? null,
         segment_id: svc.service_categories?.segment_id ?? null,
         service_category_id: svc.category_id ?? null,
-        image_url: serviceImageUrl(svc.image_url ?? svc.service_categories?.icon_url),
+        image_url: serviceImageUrl(
+          o.image_url ?? svc.image_url ?? svc.service_categories?.icon_url,
+        ),
         pricing_type: svc.pricing_type,
         service_name: svc.name,
         description: o.description ?? svc.description ?? null,
