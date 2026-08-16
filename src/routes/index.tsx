@@ -722,6 +722,7 @@ function Index() {
             onOpenHelp={() => setPhase("help")}
             onOpenReferrals={() => setPhase("referrals")}
             onOpenPaymentMethods={() => setPhase("payment-methods")}
+            onOpenAddresses={() => setPhase("manage-addresses")}
             onLogout={() => setPhase("login")}
           />
         </div>
