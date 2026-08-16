@@ -61,25 +61,6 @@ export function SettingsScreen({
           ))}
         </section>
 
-        <h2 className="mt-8 mb-2 px-1 text-xs font-bold uppercase tracking-wide text-muted-foreground">
-          {t("legal.section")}
-        </h2>
-        <section className="divide-y divide-border overflow-hidden rounded-[18px] border border-border bg-card shadow-sm">
-          {legalItems.map((it) => (
-            <button
-              key={it.key}
-              onClick={it.onClick}
-              className="flex w-full items-center gap-3 px-4 py-4 text-left transition active:bg-muted/40"
-            >
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10">
-                <it.icon className="h-4 w-4 text-primary" />
-              </div>
-              <p className="min-w-0 flex-1 text-sm font-bold text-foreground">{it.label}</p>
-              <ChevronRight className="h-5 w-5 text-muted-foreground" />
-            </button>
-          ))}
-        </section>
-
         <button
           onClick={() => setConfirmDelete(true)}
           className="mt-6 flex w-full items-center gap-3 rounded-[14px] border border-destructive/30 bg-card px-4 py-4 text-left"
