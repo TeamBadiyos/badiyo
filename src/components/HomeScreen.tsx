@@ -37,7 +37,7 @@ import { fetchSections } from "@/lib/homeData";
 
 const EXPERT_TILES: { image: string; labelKey: TranslationKey; slug: string; illustration?: boolean }[] = [
   { image: expertHouse, labelKey: "home.tile.houseCleaning", slug: "house-cleaning" },
-  { image: expertDusting, labelKey: "home.tile.dusting", slug: "dusting-wiping", illustration: true },
+  { image: expertDusting, labelKey: "home.tile.dusting", slug: "dusting-wiping" },
   { image: expertDishes, labelKey: "home.tile.dishes", slug: "cleaning-dishes" },
 ];
 
