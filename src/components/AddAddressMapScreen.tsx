@@ -3,11 +3,11 @@ import { ArrowLeft, Camera, Crosshair, Loader2, MapPin, Search, X } from "lucide
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
-  reverseGeocode,
   searchPlaces,
   getPlaceDetails,
   type PlaceSuggestion,
 } from "@/lib/geocode.functions";
+import { resolveAddress } from "@/lib/reverseGeocode";
 import {
   getCurrentCoords,
   openAppSettings,
@@ -83,10 +83,11 @@ export function AddAddressMapScreen({
   const [locating, setLocating] = useState(false);
   const [geocoding, setGeocoding] = useState(false);
   const [geocodeFailed, setGeocodeFailed] = useState(false);
+  const [geocodeError, setGeocodeError] = useState<string | null>(null);
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const geocode = useServerFn(reverseGeocode);
+  
   const placeSearch = useServerFn(searchPlaces);
   const placeDetails = useServerFn(getPlaceDetails);
   const centerRef = useRef(center);
@@ -180,11 +181,11 @@ export function AddAddressMapScreen({
     };
   }, []);
 
-  // Reverse geocode when center settles (debounced to coalesce rapid idles).
-  // Primary: server function (server key). Fallback: Maps JS Geocoder in the
-  // WebView — used when the server call fails, which happens in the packaged
-  // app whenever the installed bundle and the deployed server were built from
-  // different commits (server-function ids stop matching).
+  // Reverse geocode when the map center settles (debounced to coalesce rapid
+  // idles). Runs through resolveAddress(): stable HTTP route first, Maps JS
+  // Geocoder as fallback, both time-boxed. Deps intentionally exclude the
+  // server-fn identities — anything unstable there would clear the debounce
+  // timer on every render and the request would never fire.
   useEffect(() => {
     let cancelled = false;
     const fromPlace = skipGeocodeRef.current;
@@ -193,37 +194,21 @@ export function AddAddressMapScreen({
       void (async () => {
         setGeocoding(true);
         setGeocodeFailed(false);
+        setGeocodeError(null);
         console.info("[address] reverse geocode request", center);
-        let result: { formatted_address: string; area: string | null; city: string | null } | null =
-          null;
-        let lastError: unknown = null;
-        try {
-          result = await geocode({ data: center });
-          console.info("[address] reverse geocode ok (server):", result.formatted_address);
-        } catch (e) {
-          lastError = e;
-          console.error("[address] reverse geocode failed (server):", e);
-          try {
-            result = await browserReverseGeocode(center);
-            console.info("[address] reverse geocode ok (browser fallback):", result.formatted_address);
-          } catch (e2) {
-            lastError = e2;
-            console.error("[address] reverse geocode failed (browser fallback):", e2);
-          }
-        }
+        const outcome = await resolveAddress(center);
         if (cancelled) return;
-        if (result) {
-          if (!fromPlace) setAutoAddress(result.formatted_address);
-          setArea(result.area);
-          setCity(result.city);
+        if (outcome.ok) {
+          if (!fromPlace) setAutoAddress(outcome.result.formatted_address);
+          setArea(outcome.result.area);
+          setCity(outcome.result.city);
         } else {
           if (!fromPlace) {
             setAutoAddress("");
             setGeocodeFailed(true);
+            setGeocodeError(outcome.error);
             toast.error("Couldn't fetch the address for this pin.", {
-              description:
-                (lastError as Error)?.message?.slice(0, 140) ||
-                "Check your connection and try again.",
+              description: outcome.error.slice(0, 140),
               action: {
                 label: "Retry",
                 onClick: () => setGeocodeNonce((n) => n + 1),
@@ -241,7 +226,8 @@ export function AddAddressMapScreen({
       cancelled = true;
       clearTimeout(t);
     };
-  }, [center, geocode, geocodeNonce]);
+  }, [center, geocodeNonce]);
+
 
   const useCurrentLocation = () => {
     if (locating) return;
@@ -457,6 +443,12 @@ export function AddAddressMapScreen({
                 </span>
               </button>
             )}
+            {geocodeFailed && geocodeError && (
+              <p className="mt-1 break-words text-[11px] leading-snug text-destructive/80">
+                {geocodeError}
+              </p>
+            )}
+
           </div>
 
 
