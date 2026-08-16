@@ -35,9 +35,9 @@ function Icon({ name, className }: { name?: string | null; className?: string })
 import { fetchSections } from "@/lib/homeData";
 
 
-const EXPERT_TILES: { image: string; labelKey: TranslationKey; slug: string }[] = [
+const EXPERT_TILES: { image: string; labelKey: TranslationKey; slug: string; illustration?: boolean }[] = [
   { image: expertHouse, labelKey: "home.tile.houseCleaning", slug: "house-cleaning" },
-  { image: expertDusting, labelKey: "home.tile.dusting", slug: "dusting-wiping" },
+  { image: expertDusting, labelKey: "home.tile.dusting", slug: "dusting-wiping", illustration: true },
   { image: expertDishes, labelKey: "home.tile.dishes", slug: "cleaning-dishes" },
 ];
 
@@ -52,7 +52,9 @@ function ExpertTiles({ onOpenTask }: { onOpenTask: (slug: string) => void }) {
           onClick={() => onOpenTask(tile.slug)}
           className="flex flex-col text-left transition active:scale-[0.98]"
         >
-          <div className="brand-grade aspect-square overflow-hidden rounded-[18px] bg-muted shadow-card-m">
+          <div
+            className={`${tile.illustration ? "brand-grade-soft" : "brand-grade"} aspect-square overflow-hidden rounded-[18px] bg-muted shadow-card-m`}
+          >
             <img
               src={tile.image}
               alt={t(tile.labelKey)}
@@ -62,6 +64,7 @@ function ExpertTiles({ onOpenTask }: { onOpenTask: (slug: string) => void }) {
               className="h-full w-full object-cover"
             />
           </div>
+
           <p className="mt-2 w-full text-center text-xs font-semibold text-foreground leading-tight">
             {t(tile.labelKey)}
           </p>
