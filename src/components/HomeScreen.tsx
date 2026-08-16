@@ -418,7 +418,8 @@ function SegmentView({
             key={category.id}
             category={category}
             services={items}
-            onBook={(s) => onBookService?.(toPayload(s, segment))}
+            onViewDetail={(s) => onBookService?.(toPayload(s, segment))}
+            onAdd={(s) => onAdd(s)}
           />
         );
       })}
