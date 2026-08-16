@@ -2040,6 +2040,62 @@ export type Database = {
           },
         ]
       }
+      service_price_options: {
+        Row: {
+          created_at: string
+          customer_price: number
+          display_order: number
+          duration_minutes: number | null
+          expert_payout: number | null
+          hq_share: number | null
+          id: string
+          is_active: boolean
+          label: string
+          partner_commission: number | null
+          service_id: string
+          strikethrough_price: number | null
+          unit_label: string | null
+        }
+        Insert: {
+          created_at?: string
+          customer_price?: number
+          display_order?: number
+          duration_minutes?: number | null
+          expert_payout?: number | null
+          hq_share?: number | null
+          id?: string
+          is_active?: boolean
+          label: string
+          partner_commission?: number | null
+          service_id: string
+          strikethrough_price?: number | null
+          unit_label?: string | null
+        }
+        Update: {
+          created_at?: string
+          customer_price?: number
+          display_order?: number
+          duration_minutes?: number | null
+          expert_payout?: number | null
+          hq_share?: number | null
+          id?: string
+          is_active?: boolean
+          label?: string
+          partner_commission?: number | null
+          service_id?: string
+          strikethrough_price?: number | null
+          unit_label?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_price_options_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       service_task_details: {
         Row: {
           excluded_items: string[]
@@ -2080,6 +2136,47 @@ export type Database = {
             columns: ["segment_id"]
             isOneToOne: false
             referencedRelation: "segments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      services: {
+        Row: {
+          category_id: string
+          created_at: string
+          display_order: number
+          id: string
+          image_url: string | null
+          is_active: boolean
+          name: string
+          pricing_type: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name: string
+          pricing_type?: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name?: string
+          pricing_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "services_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "service_categories"
             referencedColumns: ["id"]
           },
         ]
@@ -2661,6 +2758,10 @@ export type Database = {
       }
       is_public_product_image: {
         Args: { _object_name: string }
+        Returns: boolean
+      }
+      is_public_service_image: {
+        Args: { object_name: string }
         Returns: boolean
       }
       link_referral: { Args: { _code: string }; Returns: undefined }
