@@ -50,6 +50,7 @@ import { NotificationsScreen } from "@/components/profile/NotificationsScreen";
 import { SettingsScreen } from "@/components/profile/SettingsScreen";
 import { HelpSupportScreen } from "@/components/profile/HelpSupportScreen";
 import { AboutScreen } from "@/components/profile/AboutScreen";
+import { LegalPageScreen, type LegalSlug } from "@/components/profile/LegalPageScreen";
 import { ActiveDevicesScreen } from "@/components/profile/ActiveDevicesScreen";
 import { LanguageScreen } from "@/components/profile/LanguageScreen";
 import { DeviceLimitScreen } from "@/components/DeviceLimitScreen";
@@ -113,6 +114,7 @@ type Phase =
   | "active-devices"
   | "language"
   | "device-limit"
+  | "legal"
   | "not-serviceable";
 
 
@@ -137,6 +139,7 @@ function Index() {
     });
   }, []);
 
+  const [legal, setLegal] = useState<{ slug: LegalSlug; from: Phase } | null>(null);
   const [selectedService, setSelectedService] = useState<SelectedService | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<SelectedSlot | null>(null);
   const [selectedAddress, setSelectedAddress] = useState<SelectedAddress | null>(null);
@@ -365,6 +368,10 @@ function Index() {
               setPendingPhone(p);
               setPhase("pin-login");
             }}
+            onOpenLegal={(slug) => {
+              setLegal({ slug, from: "login" });
+              setPhase("legal");
+            }}
           />
         </div>
       )}
@@ -413,6 +420,10 @@ function Index() {
         <div className="animate-fade-slide-in">
           <OtpVerifyScreen
             phone={pendingPhone}
+            onOpenLegal={(slug) => {
+              setLegal({ slug, from: "otp-verify" });
+              setPhase("legal");
+            }}
             onBack={() => setPhase("login")}
             onVerified={async () => {
               // Ensure profile row exists, then check whether the customer
@@ -682,6 +693,10 @@ function Index() {
             onOpenAbout={() => setPhase("about")}
             onOpenReferrals={() => setPhase("referrals")}
             onOpenPaymentMethods={() => setPhase("payment-methods")}
+            onOpenLegal={(slug) => {
+              setLegal({ slug, from: "profile" });
+              setPhase("legal");
+            }}
             onLogout={() => setPhase("login")}
           />
         </div>
@@ -781,6 +796,10 @@ function Index() {
             onOpenAbout={() => setPhase("about")}
             onOpenDevices={() => setPhase("active-devices")}
             onOpenLanguage={() => setPhase("language")}
+            onOpenLegal={(slug) => {
+              setLegal({ slug, from: "settings" });
+              setPhase("legal");
+            }}
           />
         </div>
       )}
@@ -809,6 +828,11 @@ function Index() {
             onContinue={() => setPhase("home")}
             onCancel={() => setPhase("login")}
           />
+        </div>
+      )}
+      {phase === "legal" && legal && (
+        <div className="animate-fade-slide-in">
+          <LegalPageScreen slug={legal.slug} onBack={() => setPhase(legal.from)} />
         </div>
       )}
       {phase === "about" && (
