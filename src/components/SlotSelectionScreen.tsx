@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ArrowLeft, Check, ChevronDown, Clock, X } from "lucide-react";
+import { Check, ChevronDown, Clock, X } from "lucide-react";
 import {
   getAllHourSlots,
   isHourBookable,
