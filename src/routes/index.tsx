@@ -90,6 +90,7 @@ type Phase =
   | "home"
   | "slot"
   | "address"
+  | "manage-addresses"
   | "summary"
   | "payment"
   | "searching-expert"
