@@ -17,6 +17,17 @@ export const en = {
   "common.profile": "Profile",
   "common.loading": "Loading…",
 
+  // ── Login ──────────────────────────────────────────────────
+  "login.title": "Sign in to badiyos",
+  "login.subtitle": "We'll send an OTP on WhatsApp",
+  "login.tagline": "हर घर का अपना साथी",
+  "login.mobileLabel": "Mobile number",
+  "login.placeholder": "10-digit mobile number",
+  "login.sendOtp": "Send OTP on WhatsApp",
+  "login.continueWithGoogle": "Continue with Google",
+  "login.or": "or",
+
+
   // ── Bottom navigation ────────────────────────────────────
   "nav.home": "Home",
   "nav.orders": "Orders",
