@@ -19,6 +19,17 @@ export const mr: Partial<Record<keyof typeof en, string>> = {
   "common.profile": "प्रोफाइल",
   "common.loading": "लोड होत आहे…",
 
+  // ── Login ──────────────────────────────────────────────────
+  "login.title": "badiyos मध्ये साइन इन करा",
+  "login.subtitle": "आम्ही WhatsApp वर OTP पाठवू",
+  "login.tagline": "हर घर का अपना साथी",
+  "login.mobileLabel": "मोबाइल नंबर",
+  "login.placeholder": "10-अंकी मोबाइल नंबर",
+  "login.sendOtp": "WhatsApp वर OTP पाठवा",
+  "login.continueWithGoogle": "Google सह सुरू ठेवा",
+  "login.or": "किंवा",
+
+
   // ── Bottom navigation ────────────────────────────────────
   "nav.home": "होम",
   "nav.orders": "ऑर्डर्स",

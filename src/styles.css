@@ -13,6 +13,8 @@
   --color-foreground: var(--foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-dark: var(--primary-dark);
+  --color-primary-light: var(--primary-light);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-border: var(--border);
@@ -34,6 +36,8 @@
   /* Brand green #00B97A (exact) */
   --primary: oklch(0.6934 0.1566 160.1);
   --primary-foreground: oklch(1 0 0);
+  --primary-dark: color-mix(in oklch, var(--primary) 70%, oklch(0.25 0 0));
+  --primary-light: color-mix(in oklch, var(--primary) 75%, oklch(0.98 0 0));
   --muted: oklch(0.96 0.005 180);
   --muted-foreground: oklch(0.55 0.02 260);
   --border: oklch(0.9 0.008 240);

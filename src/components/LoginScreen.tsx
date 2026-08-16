@@ -7,6 +7,7 @@ import { getErrorMessage } from "@/lib/errorMessage";
 import { hapticImpact } from "@/lib/haptics";
 import { hasLoginPin as checkHasLoginPin } from "@/lib/auth.functions";
 import { LegalConsentText } from "./LegalConsentText";
+import { useT, useLanguage } from "@/i18n";
 import type { LegalSlug } from "./profile/LegalPageScreen";
 
 
@@ -19,6 +20,8 @@ export function LoginScreen({
   onPinLogin?: (phone: string) => void;
   onOpenLegal?: (slug: LegalSlug) => void;
 } = {}) {
+  const t = useT();
+  const { lang, setLang } = useLanguage();
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -91,79 +94,114 @@ export function LoginScreen({
   };
 
   return (
-    <main className="min-h-screen w-full bg-background">
-      <div className="mx-auto flex min-h-screen w-full max-w-md flex-col px-6 pt-16 pb-10">
-        {/* Logo */}
-        <div className="flex justify-center">
-          <BadiyoLogo variant="green" className="h-12 w-auto" />
-        </div>
+    <main className="flex min-h-screen w-full flex-col bg-primary">
+      {/* Gradient header with wordmark and tagline */}
+      <header className="flex flex-1 flex-col items-center justify-center bg-gradient-to-b from-primary-dark via-primary to-primary-light px-6 pb-12 pt-12 min-h-[240px]">
+        <BadiyoLogo variant="white" className="h-12 w-auto" />
+        <p className="mt-3 text-center text-base font-medium text-white/90">
+          {t("login.tagline")}
+        </p>
+      </header>
 
-        {/* Heading */}
-        <div className="mt-10 text-center">
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            Welcome to badiyos
-          </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Sign in to book trusted home cleaning services
-          </p>
-        </div>
+      {/* White rounded-top card overlapping the header */}
+      <section className="relative -mt-8 shrink-0 rounded-t-[28px] bg-card px-6 pb-8 pt-8">
+        <div className="mx-auto w-full max-w-md">
+          {/* Heading */}
+          <div className="text-center">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">
+              {t("login.title")}
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {t("login.subtitle")}
+            </p>
+          </div>
 
-        {/* Form */}
-        <form onSubmit={(e) => { void hapticImpact("medium"); handleContinue(e); }} className="mt-10 space-y-4">
-          <label className="block">
-            <span className="mb-2 block text-sm font-semibold text-foreground">
-              Mobile number
-            </span>
-            <div className="flex items-center gap-2 rounded-[14px] border border-border bg-card px-4 py-3 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition">
-              <span className="text-sm font-semibold text-foreground select-none">
-                +91
+          {/* Form */}
+          <form onSubmit={(e) => { void hapticImpact("medium"); handleContinue(e); }} className="mt-8 space-y-4">
+            <label className="block">
+              <span className="mb-2 block text-sm font-semibold text-foreground">
+                {t("login.mobileLabel")}
               </span>
-              <span className="h-5 w-px bg-border" />
-              <input
-                type="tel"
-                inputMode="numeric"
-                autoComplete="tel-national"
-                placeholder="10-digit mobile number"
-                value={phone}
-                onChange={handlePhoneChange}
-                className="w-full bg-transparent text-base font-medium text-foreground outline-none placeholder:text-muted-foreground/70"
-              />
-            </div>
-          </label>
+              <div className="flex items-center gap-2 rounded-[14px] border border-border bg-card px-4 py-3 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition">
+                <span className="text-sm font-semibold text-foreground select-none">
+                  +91
+                </span>
+                <span className="h-5 w-px bg-border" />
+                <input
+                  type="tel"
+                  inputMode="numeric"
+                  autoComplete="tel-national"
+                  placeholder={t("login.placeholder")}
+                  value={phone}
+                  onChange={handlePhoneChange}
+                  className="w-full bg-transparent text-base font-medium text-foreground outline-none placeholder:text-muted-foreground/70"
+                />
+              </div>
+            </label>
 
+            <button
+              type="submit"
+              disabled={!isValid || loading}
+              className="w-full rounded-[14px] bg-primary px-4 py-3.5 text-base font-bold text-primary-foreground transition active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? t("common.loading") : t("login.sendOtp")}
+            </button>
+            {error && (
+              <p className="text-center text-sm font-medium text-destructive">{error}</p>
+            )}
+          </form>
+
+          {/* Divider */}
+          <div className="my-6 flex items-center gap-4">
+            <div className="h-px flex-1 bg-border" />
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              {t("login.or")}
+            </span>
+            <div className="h-px flex-1 bg-border" />
+          </div>
+
+          {/* Google */}
           <button
-            type="submit"
-            disabled={!isValid || loading}
-            className="w-full rounded-[14px] bg-primary px-4 py-3.5 text-base font-bold text-primary-foreground transition active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
+            type="button"
+            disabled={loading}
+            onClick={() => { void hapticImpact("light"); handleGoogle(); }}
+            className="flex w-full items-center justify-center gap-3 rounded-[14px] border border-border bg-card px-4 py-3.5 text-base font-semibold text-foreground transition hover:bg-muted active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? "Please wait…" : "Continue"}
+            <GoogleIcon />
+            {t("login.continueWithGoogle")}
           </button>
-          {error && (
-            <p className="text-center text-sm font-medium text-destructive">{error}</p>
-          )}
-        </form>
 
-        {/* Divider */}
-        <div className="my-8 flex items-center gap-4">
-          <div className="h-px flex-1 bg-border" />
-          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            or
-          </span>
-          <div className="h-px flex-1 bg-border" />
+          {/* Language toggle + legal consent */}
+          <div className="mt-8 space-y-4">
+            <div className="flex items-center justify-center gap-2">
+              <button
+                type="button"
+                onClick={() => setLang("en")}
+                className={`rounded-full px-3 py-1 text-sm font-medium transition ${
+                  lang === "en"
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                English
+              </button>
+              <span className="h-4 w-px bg-border" />
+              <button
+                type="button"
+                onClick={() => setLang("mr")}
+                className={`rounded-full px-3 py-1 text-sm font-medium transition ${
+                  lang === "mr"
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                मराठी
+              </button>
+            </div>
+            <LegalConsentText onOpenLegal={onOpenLegal} className="text-center" />
+          </div>
         </div>
-
-        {/* Google */}
-        <button
-          type="button"
-          onClick={() => { void hapticImpact("light"); handleGoogle(); }}
-          className="flex w-full items-center justify-center gap-3 rounded-[14px] border border-border bg-card px-4 py-3.5 text-base font-semibold text-foreground transition hover:bg-muted active:scale-[0.99]"
-        >
-          <GoogleIcon />
-          Continue with Google
-        </button>
-
-        <LegalConsentText onOpenLegal={onOpenLegal} className="mt-auto pt-10" />
-      </div>
+      </section>
     </main>
   );
 }
