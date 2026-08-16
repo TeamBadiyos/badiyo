@@ -125,10 +125,17 @@ export async function fetchSegmentServices(): Promise<SegmentService[]> {
         pricing_type: svc.pricing_type,
         service_name: svc.name,
         description: o.description ?? svc.description ?? null,
+        // Media is per-item: only fall back to the parent service's gallery/video
+        // when the item has no media of its own at all.
         gallery_urls: serviceImageUrls(
-          list(o.gallery_urls).length ? list(o.gallery_urls) : list(svc.gallery_urls),
+          o.image_url || list(o.gallery_urls).length || o.video_url
+            ? list(o.gallery_urls)
+            : list(svc.gallery_urls),
         ),
-        video_url: o.video_url ?? svc.video_url ?? null,
+        video_url:
+          o.image_url || list(o.gallery_urls).length || o.video_url
+            ? (o.video_url ?? null)
+            : (svc.video_url ?? null),
         inclusions: list(o.inclusions).length ? list(o.inclusions) : list(svc.inclusions),
         exclusions: list(o.exclusions).length ? list(o.exclusions) : list(svc.exclusions),
         task_types: ((o.item_task_types ?? []) as any[])
