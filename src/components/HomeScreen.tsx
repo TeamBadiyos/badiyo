@@ -382,12 +382,14 @@ function SegmentView({
   categories,
   services,
   onBookService,
+  onAdd,
   onOpenTask,
 }: {
   segment: Segment;
   categories: ServiceCategory[];
   services: SegmentService[];
   onBookService?: (s: BookServicePayload) => void;
+  onAdd: (s: SegmentService) => void;
   onOpenTask: () => void;
 }) {
   const t = useT();
