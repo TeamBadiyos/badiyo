@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/badiyos_green">
+
+    <LinearLayout
+        android:id="@+id/alarm_card"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:orientation="vertical"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center_horizontal"
+        android:padding="32dp">
+
+        <TextView
+            android:id="@+id/alarm_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textColor="@android:color/white"
+            android:textSize="26sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/alarm_body"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:gravity="center"
+            android:textColor="#E8FFF6"
+            android:textSize="16sp" />
+
+        <Button
+            android:id="@+id/alarm_ok"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="40dp"
+            android:minWidth="180dp"
+            android:paddingStart="32dp"
+            android:paddingEnd="32dp"
+            android:text="OK"
+            android:textAllCaps="false"
+            android:textColor="@color/badiyos_green"
+            android:textSize="18sp"
+            android:backgroundTint="@android:color/white" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:gravity="center"
+            android:text="Tap anywhere to open your booking"
+            android:textColor="#CDF3E6"
+            android:textSize="13sp" />
+    </LinearLayout>
+</FrameLayout>
