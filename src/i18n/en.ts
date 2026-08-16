@@ -177,6 +177,24 @@ export const en = {
   "notServiceable.onTheList": "You're on the list!",
   "notServiceable.confirmation": "We'll notify you the moment we launch in your area!",
   "notServiceable.changeAddress": "Try another address",
+
+  // ── Legal ────────────────────────────────────────────────
+  "legal.section": "Legal",
+  "legal.privacy": "Privacy Policy",
+  "legal.privacyDesc": "How we handle your data",
+  "legal.terms": "Terms & Conditions",
+  "legal.termsDesc": "Rules for using badiyos",
+  "legal.refund": "Refund & Cancellation Policy",
+  "legal.refundDesc": "Cancellations, fees and refunds",
+  "legal.errorTitle": "Couldn't load this page",
+  "legal.errorBody": "Check your internet connection and try again.",
+  "legal.retry": "Retry",
+  "legal.effective": "Effective",
+  "legal.updated": "Last updated",
+  "legal.agreePrefix": "By continuing, you agree to badiyos' ",
+  "legal.agreeAnd": " and ",
+  "legal.agreeSuffix": ".",
+  "legal.deleteNote": "Refunds for any cancelled bookings follow our Refund & Cancellation Policy.",
 } as const;
 
 export type TranslationKey = keyof typeof en;
