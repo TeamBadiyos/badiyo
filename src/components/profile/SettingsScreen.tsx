@@ -113,24 +113,7 @@ export function SettingsScreen({
             <p className="mt-2 text-sm text-muted-foreground">
               This will permanently remove your profile, bookings, and rewards. This action cannot be undone.
             </p>
-            <p className="mt-2 text-xs text-muted-foreground">
-              {t("legal.deleteNote")}{" "}
-              <button
-                type="button"
-                onClick={() => { setConfirmDelete(false); onOpenLegal("refund-policy"); }}
-                className="font-semibold text-primary underline underline-offset-2"
-              >
-                {t("legal.refund")}
-              </button>
-              {" · "}
-              <button
-                type="button"
-                onClick={() => { setConfirmDelete(false); onOpenLegal("privacy-policy"); }}
-                className="font-semibold text-primary underline underline-offset-2"
-              >
-                {t("legal.privacy")}
-              </button>
-            </p>
+            <p className="mt-2 text-xs text-muted-foreground">{t("legal.deleteNote")}</p>
             <div className="mt-5 flex gap-3">
               <button
                 onClick={() => setConfirmDelete(false)}
