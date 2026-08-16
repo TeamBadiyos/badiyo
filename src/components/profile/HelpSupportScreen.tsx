@@ -1,7 +1,19 @@
 import { useState } from "react";
-import { ArrowLeft, ChevronDown, MessageCircle, CheckCircle2 } from "lucide-react";
+import {
+  ArrowLeft,
+  ChevronDown,
+  ChevronRight,
+  MessageCircle,
+  CheckCircle2,
+  ShieldCheck,
+  ScrollText,
+  ReceiptText,
+  FileText,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getErrorMessage } from "@/lib/errorMessage";
+import { useT } from "@/i18n";
+import type { LegalSlug } from "./LegalPageScreen";
 
 const FAQS = [
   {
@@ -26,7 +38,46 @@ const FAQS = [
   },
 ];
 
-export function HelpSupportScreen({ onBack }: { onBack: () => void }) {
+export function HelpSupportScreen({
+  onBack,
+  onOpenLegal,
+  onOpenAbout,
+}: {
+  onBack: () => void;
+  onOpenLegal: (slug: LegalSlug) => void;
+  onOpenAbout: () => void;
+}) {
+  const t = useT();
+  const legalItems = [
+    {
+      key: "privacy",
+      label: t("legal.privacy"),
+      desc: t("legal.privacyDesc"),
+      icon: ShieldCheck,
+      onClick: () => onOpenLegal("privacy-policy"),
+    },
+    {
+      key: "terms",
+      label: t("legal.terms"),
+      desc: t("legal.termsDesc"),
+      icon: ScrollText,
+      onClick: () => onOpenLegal("terms"),
+    },
+    {
+      key: "refund",
+      label: t("legal.refund"),
+      desc: t("legal.refundDesc"),
+      icon: ReceiptText,
+      onClick: () => onOpenLegal("refund-policy"),
+    },
+    {
+      key: "about",
+      label: "About badiyos",
+      desc: "App version, company and contact",
+      icon: FileText,
+      onClick: onOpenAbout,
+    },
+  ];
   const [open, setOpen] = useState<number | null>(0);
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -96,6 +147,26 @@ export function HelpSupportScreen({ onBack }: { onBack: () => void }) {
               </div>
             );
           })}
+        </section>
+
+        <h2 className="mt-8 text-sm font-bold text-foreground">{t("legal.section")}</h2>
+        <section className="mt-3 divide-y divide-border overflow-hidden rounded-[18px] border border-border bg-card shadow-sm">
+          {legalItems.map((it) => (
+            <button
+              key={it.key}
+              onClick={it.onClick}
+              className="flex w-full items-center gap-3 px-4 py-4 text-left transition active:bg-muted/40"
+            >
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10">
+                <it.icon className="h-4 w-4 text-primary" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-bold text-foreground">{it.label}</p>
+                <p className="truncate text-xs text-muted-foreground">{it.desc}</p>
+              </div>
+              <ChevronRight className="h-5 w-5 text-muted-foreground" />
+            </button>
+          ))}
         </section>
 
         <h2 className="mt-8 text-sm font-bold text-foreground">Raise a ticket</h2>

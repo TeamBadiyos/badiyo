@@ -1,22 +1,17 @@
-import { ArrowLeft, ChevronRight, Globe, Bell, Shield, Smartphone, Trash2, X, ScrollText, ReceiptText } from "lucide-react";
+import { ArrowLeft, ChevronRight, Globe, Bell, Smartphone, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import { useT, useLanguage } from "@/i18n";
-import type { LegalSlug } from "./LegalPageScreen";
 
 export function SettingsScreen({
   onBack,
   onOpenNotifications,
-  onOpenAbout,
   onOpenDevices,
   onOpenLanguage,
-  onOpenLegal,
 }: {
   onBack: () => void;
   onOpenNotifications: () => void;
-  onOpenAbout: () => void;
   onOpenDevices: () => void;
   onOpenLanguage: () => void;
-  onOpenLegal: (slug: LegalSlug) => void;
 }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const t = useT();
@@ -34,12 +29,6 @@ export function SettingsScreen({
     { key: "devices", label: t("settings.devices"), icon: Smartphone, onClick: onOpenDevices },
   ];
 
-  const legalItems = [
-    { key: "privacy", label: t("legal.privacy"), icon: Shield, onClick: () => onOpenLegal("privacy-policy") },
-    { key: "terms", label: t("legal.terms"), icon: ScrollText, onClick: () => onOpenLegal("terms") },
-    { key: "refund", label: t("legal.refund"), icon: ReceiptText, onClick: () => onOpenLegal("refund-policy") },
-    { key: "about", label: "About badiyos", icon: Bell, onClick: onOpenAbout },
-  ];
 
   return (
     <main className="min-h-screen w-full bg-background pb-10">
@@ -72,25 +61,6 @@ export function SettingsScreen({
           ))}
         </section>
 
-        <h2 className="mt-8 mb-2 px-1 text-xs font-bold uppercase tracking-wide text-muted-foreground">
-          {t("legal.section")}
-        </h2>
-        <section className="divide-y divide-border overflow-hidden rounded-[18px] border border-border bg-card shadow-sm">
-          {legalItems.map((it) => (
-            <button
-              key={it.key}
-              onClick={it.onClick}
-              className="flex w-full items-center gap-3 px-4 py-4 text-left transition active:bg-muted/40"
-            >
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10">
-                <it.icon className="h-4 w-4 text-primary" />
-              </div>
-              <p className="min-w-0 flex-1 text-sm font-bold text-foreground">{it.label}</p>
-              <ChevronRight className="h-5 w-5 text-muted-foreground" />
-            </button>
-          ))}
-        </section>
-
         <button
           onClick={() => setConfirmDelete(true)}
           className="mt-6 flex w-full items-center gap-3 rounded-[14px] border border-destructive/30 bg-card px-4 py-4 text-left"
@@ -118,24 +88,7 @@ export function SettingsScreen({
             <p className="mt-2 text-sm text-muted-foreground">
               This will permanently remove your profile, bookings, and rewards. This action cannot be undone.
             </p>
-            <p className="mt-2 text-xs text-muted-foreground">
-              {t("legal.deleteNote")}{" "}
-              <button
-                type="button"
-                onClick={() => { setConfirmDelete(false); onOpenLegal("refund-policy"); }}
-                className="font-semibold text-primary underline underline-offset-2"
-              >
-                {t("legal.refund")}
-              </button>
-              {" · "}
-              <button
-                type="button"
-                onClick={() => { setConfirmDelete(false); onOpenLegal("privacy-policy"); }}
-                className="font-semibold text-primary underline underline-offset-2"
-              >
-                {t("legal.privacy")}
-              </button>
-            </p>
+            <p className="mt-2 text-xs text-muted-foreground">{t("legal.deleteNote")}</p>
             <div className="mt-5 flex gap-3">
               <button
                 onClick={() => setConfirmDelete(false)}

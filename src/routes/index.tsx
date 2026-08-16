@@ -696,13 +696,8 @@ function Index() {
             onOpenNotifications={() => setPhase("notifications")}
             onOpenSettings={() => setPhase("settings")}
             onOpenHelp={() => setPhase("help")}
-            onOpenAbout={() => setPhase("about")}
             onOpenReferrals={() => setPhase("referrals")}
             onOpenPaymentMethods={() => setPhase("payment-methods")}
-            onOpenLegal={(slug) => {
-              setLegal({ slug, from: "profile" });
-              setPhase("legal");
-            }}
             onLogout={() => setPhase("login")}
           />
         </div>
@@ -799,19 +794,21 @@ function Index() {
           <SettingsScreen
             onBack={() => setPhase("profile")}
             onOpenNotifications={() => setPhase("notifications")}
-            onOpenAbout={() => setPhase("about")}
             onOpenDevices={() => setPhase("active-devices")}
             onOpenLanguage={() => setPhase("language")}
-            onOpenLegal={(slug) => {
-              setLegal({ slug, from: "settings" });
-              setPhase("legal");
-            }}
           />
         </div>
       )}
       {phase === "help" && (
         <div className="animate-fade-slide-in">
-          <HelpSupportScreen onBack={() => setPhase("profile")} />
+          <HelpSupportScreen
+            onBack={() => setPhase("profile")}
+            onOpenLegal={(slug) => {
+              setLegal({ slug, from: "help" });
+              setPhase("legal");
+            }}
+            onOpenAbout={() => setPhase("about")}
+          />
         </div>
       )}
       {phase === "active-devices" && (
@@ -843,7 +840,7 @@ function Index() {
       )}
       {phase === "about" && (
         <div className="animate-fade-slide-in">
-          <AboutScreen onBack={() => setPhase("profile")} />
+          <AboutScreen onBack={() => setPhase("help")} />
         </div>
       )}
     </div>
