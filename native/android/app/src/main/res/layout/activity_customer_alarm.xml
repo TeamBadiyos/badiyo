@@ -22,8 +22,7 @@
             android:gravity="center"
             android:textColor="@android:color/white"
             android:textSize="26sp"
-            android:textStyle="bold"
-            tools:ignore="MissingPrefix" />
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/alarm_body"
