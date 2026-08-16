@@ -1,6 +1,6 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchSegmentServices, fetchSegments } from "@/lib/segments";
+import { fetchSegmentServices, fetchSegments, fetchServiceCategories } from "@/lib/segments";
 
 export type HomepageSection = {
   section_type: string;
@@ -30,6 +30,10 @@ export function prefetchHomeData(queryClient: QueryClient) {
     queryClient.prefetchQuery({
       queryKey: ["segment_services"],
       queryFn: fetchSegmentServices,
+    }),
+    queryClient.prefetchQuery({
+      queryKey: ["service_categories"],
+      queryFn: fetchServiceCategories,
     }),
     queryClient.prefetchQuery({ queryKey: ["homepage_sections"], queryFn: fetchSections }),
   ]).catch(() => {});

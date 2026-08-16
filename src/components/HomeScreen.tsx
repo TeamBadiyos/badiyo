@@ -9,7 +9,15 @@ import { ServicesBar } from "./home/ServicesBar";
 import { WhatsIncludedSheet } from "./WhatsIncludedSheet";
 import { supabase } from "@/integrations/supabase/client";
 import { useAvatarUrl } from "@/lib/useAvatarUrl";
-import { fetchSegmentServices, fetchSegments, type Segment, type SegmentService } from "@/lib/segments";
+import {
+  fetchSegmentServices,
+  fetchSegments,
+  fetchServiceCategories,
+  type Segment,
+  type SegmentService,
+  type ServiceCategory,
+} from "@/lib/segments";
+import { ServiceProductCard } from "./home/ServiceProductCard";
 import { SectionHeading } from "./SectionHeading";
 import { anchorPrice } from "@/lib/price";
 import { useT } from "@/i18n";
@@ -96,71 +104,6 @@ function toPayload(s: SegmentService, segment?: Segment | null): BookServicePayl
   };
 }
 
-/** Full-width booking card used by the existing Home Cleaning flow. */
-function ServiceCard({ s, onBook }: { s: SegmentService; onBook: () => void }) {
-  const t = useT();
-  return (
-    <article className="surface-tint flex items-center gap-4 rounded-[18px] border border-border p-4 shadow-card-m">
-      <div className="icon-disc flex h-11 w-11 shrink-0 items-center justify-center rounded-full">
-        <Icon name={s.icon} className="h-5 w-5 text-primary" />
-      </div>
-      <div className="flex min-w-0 flex-1 flex-col">
-        <div className="text-base font-bold text-foreground">{s.duration_label}</div>
-        {s.subtitle && <div className="text-xs text-muted-foreground">{s.subtitle}</div>}
-        <div className="mt-0.5 flex items-baseline gap-1.5">
-          <span className="text-[17px] font-bold tracking-[-0.02em] text-primary">
-            {t("common.rupees", { amount: Number(s.price) })}
-          </span>
-          <span className="text-[11px] font-semibold text-muted-foreground line-through">
-            {t("common.rupees", { amount: anchorPrice(Number(s.price)) })}
-          </span>
-        </div>
-      </div>
-      <button
-        onClick={onBook}
-        className="shrink-0 rounded-[12px] bg-primary px-4 py-2 text-sm font-bold text-primary-foreground transition active:scale-[0.98]"
-      >
-        {t("home.bookNow")}
-      </button>
-    </article>
-  );
-}
-
-/** Compact card used inside the 3-up service grids (All tab + segment page). */
-function ServiceMiniCard({ s, onBook }: { s: SegmentService; onBook: () => void }) {
-  const t = useT();
-  return (
-    <article className="surface-tint flex h-[190px] w-full min-w-0 flex-col rounded-[18px] border border-border p-3 shadow-card-m">
-      <div className="icon-disc flex h-9 w-9 shrink-0 items-center justify-center rounded-full">
-        <Icon name={s.icon} className="h-[18px] w-[18px] text-primary" />
-      </div>
-      <div className="mt-2 line-clamp-2 text-[13px] font-bold leading-tight text-foreground">
-        {s.duration_label}
-      </div>
-      {s.subtitle && (
-        <div className="mt-0.5 line-clamp-2 text-[11px] leading-tight text-muted-foreground">
-          {s.subtitle}
-        </div>
-      )}
-      <div className="mt-1 flex flex-col">
-        <span className="text-[10px] font-semibold leading-none text-muted-foreground line-through">
-          {t("common.rupees", { amount: anchorPrice(Number(s.price)) })}
-        </span>
-        <span className="text-[16px] font-bold leading-tight tracking-[-0.02em] text-primary">
-          {t("common.rupees", { amount: Number(s.price) })}
-        </span>
-      </div>
-      <button
-        onClick={onBook}
-        className="mt-auto w-full rounded-[12px] bg-primary px-2 py-2 text-[11px] font-bold text-primary-foreground transition active:scale-[0.98]"
-      >
-        {t("home.bookNow")}
-      </button>
-    </article>
-  );
-}
-
-
 export function HomeScreen({
   onBookService,
   onOpenProfile,
@@ -179,6 +122,10 @@ export function HomeScreen({
     queryKey: ["segment_services"],
     queryFn: fetchSegmentServices,
   });
+  const { data: categories = [] } = useQuery({
+    queryKey: ["service_categories"],
+    queryFn: fetchServiceCategories,
+  });
   const { data: sections = [] } = useQuery({
     queryKey: ["homepage_sections"],
     queryFn: fetchSections,
@@ -191,6 +138,7 @@ export function HomeScreen({
     await Promise.all([
       queryClient.refetchQueries({ queryKey: ["segments"] }),
       queryClient.refetchQueries({ queryKey: ["segment_services"] }),
+      queryClient.refetchQueries({ queryKey: ["service_categories"] }),
       queryClient.refetchQueries({ queryKey: ["homepage_sections"] }),
       queryClient.refetchQueries({ queryKey: ["users_total_coins"] }),
     ]);
@@ -237,6 +185,8 @@ export function HomeScreen({
   const activeSegment = segments.find((s) => s.id === activeSegmentId) ?? null;
   const servicesFor = (segment: Segment) =>
     services.filter((s) => s.segment_id === segment.id);
+  const servicesForCategory = (category: ServiceCategory) =>
+    services.filter((s) => s.service_category_id === category.id);
 
   const cleanSegment =
     activeSegment ??
@@ -320,6 +270,7 @@ export function HomeScreen({
         {activeSegment ? (
           <SegmentView
             segment={activeSegment}
+            categories={categories.filter((c) => c.segment_id === activeSegment.id)}
             services={servicesFor(activeSegment)}
             onBookService={onBookService}
             onOpenTask={openIncluded}
@@ -327,8 +278,10 @@ export function HomeScreen({
         ) : (
           <div className="mt-2">
             {segments.map((segment) => {
-              const items = servicesFor(segment).slice(0, 3);
-              if (items.length === 0) return null;
+              const segmentCategories = categories.filter(
+                (c) => c.segment_id === segment.id && servicesForCategory(c).length > 0,
+              );
+              if (segmentCategories.length === 0) return null;
               return (
                 <section key={segment.id} className="mt-6 first:mt-4">
                   <div className="flex items-center justify-between gap-3">
@@ -341,16 +294,15 @@ export function HomeScreen({
                       <ChevronRight className="h-4 w-4" />
                     </button>
                   </div>
-                  <div className="mt-3 grid grid-cols-3 gap-2.5">
-                    {items.map((s) => (
-                      <ServiceMiniCard
-                        key={s.id}
-                        s={s}
-                        onBook={() => onBookService?.(toPayload(s, segment))}
-                      />
-                    ))}
-                  </div>
 
+                  {segmentCategories.map((category) => (
+                    <CategoryRow
+                      key={category.id}
+                      category={category}
+                      services={servicesForCategory(category).slice(0, 3)}
+                      onBook={(s) => onBookService?.(toPayload(s, segment))}
+                    />
+                  ))}
                 </section>
               );
             })}
@@ -421,11 +373,13 @@ export function HomeScreen({
  */
 function SegmentView({
   segment,
+  categories,
   services,
   onBookService,
   onOpenTask,
 }: {
   segment: Segment;
+  categories: ServiceCategory[];
   services: SegmentService[];
   onBookService?: (s: BookServicePayload) => void;
   onOpenTask: (slug: string) => void;
@@ -448,11 +402,18 @@ function SegmentView({
         {t("home.bookSegment", { segment: segment.name })}
       </SectionHeading>
 
-      <div className="mt-4 grid grid-cols-3 gap-2.5">
-        {services.map((s) => (
-          <ServiceMiniCard key={s.id} s={s} onBook={() => onBookService?.(toPayload(s, segment))} />
-        ))}
-      </div>
+      {categories.map((category) => {
+        const items = services.filter((s) => s.service_category_id === category.id);
+        if (items.length === 0) return null;
+        return (
+          <CategoryRow
+            key={category.id}
+            category={category}
+            services={items}
+            onBook={(s) => onBookService?.(toPayload(s, segment))}
+          />
+        );
+      })}
 
 
       <p className="mt-4 text-center text-xs text-muted-foreground">
@@ -464,5 +425,38 @@ function SegmentView({
       </SectionHeading>
       <ExpertTiles onOpenTask={onOpenTask} />
     </>
+  );
+}
+
+/** One category's labelled row of compact product cards. */
+function CategoryRow({
+  category,
+  services,
+  onBook,
+}: {
+  category: ServiceCategory;
+  services: SegmentService[];
+  onBook: (s: SegmentService) => void;
+}) {
+  return (
+    <div className="mt-4">
+      <h3 className="text-[13px] font-bold tracking-[-0.01em] text-muted-foreground">
+        {category.name}
+      </h3>
+      <div className="mt-2 grid grid-cols-3 gap-2.5">
+        {services.map((s) => (
+          <ServiceProductCard
+            key={s.id}
+            service={{
+              name: s.duration_label,
+              price: Number(s.price),
+              imageUrl: s.image_url,
+              durationMinutes: s.duration_minutes,
+            }}
+            onAdd={() => onBook(s)}
+          />
+        ))}
+      </div>
+    </div>
   );
 }

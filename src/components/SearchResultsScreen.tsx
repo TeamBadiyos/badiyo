@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Search, Sparkles } from "lucide-react";
+import { ArrowLeft, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { anchorPrice } from "@/lib/price";
+import { ServiceProductCard } from "./home/ServiceProductCard";
 
 type Service = {
   id: string;
@@ -81,44 +81,25 @@ export function SearchResultsScreen({
               </p>
             </div>
           ) : (
-            <div className="flex flex-col gap-3">
+            <div className="grid grid-cols-3 gap-2.5">
               {results.map((s) => (
-                <article
+                <ServiceProductCard
                   key={s.id}
-                  className="surface-tint flex items-center gap-4 rounded-[18px] border border-border p-4 shadow-card-m"
-                >
-                  <div className="icon-disc flex h-11 w-11 shrink-0 items-center justify-center rounded-full">
-                    <Sparkles className="h-5 w-5 text-primary" />
-                  </div>
-                  <div className="flex min-w-0 flex-1 flex-col">
-                    <div className="text-base font-bold text-foreground">{s.duration_label}</div>
-                    {s.subtitle && (
-                      <div className="text-xs text-muted-foreground">{s.subtitle}</div>
-                    )}
-                    <div className="mt-0.5 flex items-baseline gap-1.5">
-                      <span className="text-[17px] font-bold tracking-[-0.02em] text-primary">
-                        Rs {Number(s.price)}
-                      </span>
-                      <span className="text-[11px] font-semibold text-muted-foreground line-through">
-                        Rs {anchorPrice(Number(s.price))}
-                      </span>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() =>
-                      onBookService({
-                        duration_label: s.duration_label,
-                        duration_minutes: Number(s.duration_minutes),
-                        price: Number(s.price),
-                        subtitle: s.subtitle,
-                        icon: s.icon,
-                      })
-                    }
-                    className="shrink-0 rounded-[12px] bg-primary px-4 py-2 text-sm font-bold text-primary-foreground transition active:scale-[0.98]"
-                  >
-                    Book Now
-                  </button>
-                </article>
+                  service={{
+                    name: s.duration_label,
+                    price: Number(s.price),
+                    durationMinutes: s.duration_minutes,
+                  }}
+                  onAdd={() =>
+                    onBookService({
+                      duration_label: s.duration_label,
+                      duration_minutes: Number(s.duration_minutes),
+                      price: Number(s.price),
+                      subtitle: s.subtitle,
+                      icon: s.icon,
+                    })
+                  }
+                />
               ))}
             </div>
           )}

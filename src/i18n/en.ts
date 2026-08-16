@@ -42,6 +42,7 @@ export const en = {
   "home.tile.dusting": "Dusting & Wiping",
   "home.tile.dishes": "Cleaning Dishes",
   "home.bookNow": "Book Now",
+  "home.add": "ADD",
   "home.bookSegment": "Book {segment}",
   "home.comingSoon": "{segment} is coming soon",
   "home.comingSoonSub": "We're getting this section ready for you.",
