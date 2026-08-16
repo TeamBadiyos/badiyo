@@ -980,6 +980,8 @@ function Index() {
           <AboutScreen onBack={() => setPhase("help")} />
         </div>
       )}
+      </Suspense>
     </div>
+
   );
 }
