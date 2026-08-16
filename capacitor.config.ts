@@ -3,7 +3,7 @@ import type { CapacitorConfig } from "@capacitor/cli";
 const config: CapacitorConfig = {
   appId: "com.badiyos.customer",
   appName: "badiyos",
-  webDir: "dist",
+  webDir: "dist/client",
   backgroundColor: "#00B97A",
   android: {
     backgroundColor: "#00B97A",
