@@ -126,7 +126,7 @@ export function LoginScreen({
       </header>
 
       {/* White rounded-top card */}
-      <section className="relative -mt-5 flex flex-1 flex-col rounded-t-[24px] bg-card px-6 pb-6 pt-7">
+      <section className="relative -mt-5 flex flex-1 flex-col rounded-t-[24px] bg-card px-6 pb-3 pt-7">
         <div className="mx-auto flex w-full max-w-md flex-1 flex-col">
           <h1 className="text-[26px] font-bold leading-tight tracking-tight text-foreground">
             {t("login.title")}
@@ -192,7 +192,7 @@ export function LoginScreen({
             {t("login.continueWithGoogle")}
           </button>
 
-          <LegalConsentText onOpenLegal={onOpenLegal} className="mt-auto pb-2 text-center" />
+          <LegalConsentText onOpenLegal={onOpenLegal} className="mt-auto text-center" />
         </div>
       </section>
     </main>
