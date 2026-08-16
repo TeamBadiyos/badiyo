@@ -153,8 +153,8 @@ export function WhatsIncludedSheet({
                   <ul className="mt-3 flex flex-col gap-2.5">
                     {active.excluded_items.map((item, i) => (
                       <li key={i} className="flex items-start gap-3">
-                        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-destructive/15">
-                          <X className="h-3.5 w-3.5 text-destructive" />
+                        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-warning/15">
+                          <X className="h-3.5 w-3.5 text-warning" />
                         </span>
                         <span className="text-sm text-foreground">{item}</span>
                       </li>

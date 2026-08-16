@@ -38,6 +38,7 @@
   --border: oklch(0.9 0.008 240);
   --input: oklch(0.9 0.008 240);
   --ring: oklch(0.685 0.157 158);
+  --warning: oklch(0.72 0.17 55);
 }
 
 @layer base {
