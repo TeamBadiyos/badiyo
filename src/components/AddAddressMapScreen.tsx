@@ -443,6 +443,12 @@ export function AddAddressMapScreen({
                 </span>
               </button>
             )}
+            {geocodeFailed && geocodeError && (
+              <p className="mt-1 break-words text-[11px] leading-snug text-destructive/80">
+                {geocodeError}
+              </p>
+            )}
+
           </div>
 
 
