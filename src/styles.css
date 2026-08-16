@@ -281,14 +281,10 @@ select,
 
 /* High-emphasis solid brand surface for promos/highlights */
 @utility surface-brand {
-  background-color: var(--primary);
-  background-image: linear-gradient(
-      135deg,
-      color-mix(in oklab, var(--primary) 88%, white),
-      color-mix(in oklab, var(--primary) 85%, black)
-    );
+  background-color: color-mix(in oklab, var(--primary) 94%, black);
   color: var(--primary-foreground);
 }
+
 
 /* Dot-grid texture tuned for solid green surfaces */
 @utility promo-texture-on-brand {
