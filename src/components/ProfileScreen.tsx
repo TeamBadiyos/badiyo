@@ -11,6 +11,7 @@ import {
   Gift,
   LogOut,
   CreditCard,
+  MapPin,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -34,6 +35,7 @@ export function ProfileScreen({
   onOpenHelp,
   onOpenReferrals,
   onOpenPaymentMethods,
+  onOpenAddresses,
   onLogout,
 }: {
   onBack: () => void;
@@ -45,6 +47,7 @@ export function ProfileScreen({
   onOpenHelp: () => void;
   onOpenReferrals: () => void;
   onOpenPaymentMethods: () => void;
+  onOpenAddresses: () => void;
   onLogout: () => void;
 }) {
 
@@ -78,6 +81,7 @@ export function ProfileScreen({
       title: "Account",
       items: [
         { key: "edit", label: "Edit Profile", desc: "Name, email and avatar", icon: UserCog, onClick: onOpenEditProfile },
+        { key: "addresses", label: "My Addresses", desc: "Add, edit or delete saved addresses", icon: MapPin, onClick: onOpenAddresses },
         { key: "payment", label: "Payment Methods", desc: "UPI, cards & saved methods", icon: CreditCard, onClick: onOpenPaymentMethods },
       ],
     },

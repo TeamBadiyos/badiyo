@@ -43,9 +43,12 @@ async function fetchAddresses(): Promise<Address[]> {
 export function AddressSelectionScreen({
   onBack,
   onContinue,
+  /** Manage mode (Profile -> My Addresses): list + edit/delete, no Continue bar. */
+  manage = false,
 }: {
   onBack: () => void;
-  onContinue: (address: Address) => void;
+  onContinue?: (address: Address) => void;
+  manage?: boolean;
 }) {
   const t = useT();
   const qc = useQueryClient();
@@ -205,7 +208,7 @@ export function AddressSelectionScreen({
   const selected = addresses.find((a) => a.id === selectedId) ?? null;
 
   return (
-    <main className="min-h-screen w-full bg-background pb-28">
+    <main className={`min-h-screen w-full bg-background ${manage ? "pb-10" : "pb-28"}`}>
       <div className="mx-auto w-full max-w-md px-5 pt-6">
         {/* Header */}
         <div className="flex items-center gap-3">
@@ -217,7 +220,7 @@ export function AddressSelectionScreen({
             <ArrowLeft className="h-5 w-5 text-foreground" />
           </button>
           <h1 className="text-base font-bold text-foreground">
-            {t("address.title")}
+            {manage ? "My Addresses" : t("address.title")}
           </h1>
         </div>
 
@@ -372,22 +375,24 @@ export function AddressSelectionScreen({
         </div>
       </div>
 
-      {/* Fixed continue */}
-      <div className="fixed inset-x-0 bottom-0 z-10 border-t border-border bg-card safe-bottom">
-        <div className="mx-auto w-full max-w-md px-5 py-4">
-          <button
-            disabled={!selected}
-            onClick={() => selected && onContinue(selected)}
-            className={`w-full rounded-[14px] px-4 py-3.5 text-sm font-bold transition ${
-              selected
-                ? "bg-primary text-primary-foreground active:scale-[0.99]"
-                : "bg-primary/30 text-primary-foreground/70"
-            }`}
-          >
-            {t("common.continue")}
-          </button>
+      {/* Fixed continue (booking flow only) */}
+      {!manage && (
+        <div className="fixed inset-x-0 bottom-0 z-10 border-t border-border bg-card safe-bottom">
+          <div className="mx-auto w-full max-w-md px-5 py-4">
+            <button
+              disabled={!selected}
+              onClick={() => selected && onContinue?.(selected)}
+              className={`w-full rounded-[14px] px-4 py-3.5 text-sm font-bold transition ${
+                selected
+                  ? "bg-primary text-primary-foreground active:scale-[0.99]"
+                  : "bg-primary/30 text-primary-foreground/70"
+              }`}
+            >
+              {t("common.continue")}
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Full-screen map picker */}
       {sheetOpen && (

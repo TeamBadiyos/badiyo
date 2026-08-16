@@ -14,6 +14,7 @@ import {
   LocationPermissionError,
 } from "@/lib/nativeGeolocation";
 import { loadMapsScript } from "@/lib/googleMapsLoader";
+import { browserReverseGeocode } from "@/lib/browserGeocode";
 
 
 export type PickedAddress = {
@@ -179,32 +180,49 @@ export function AddAddressMapScreen({
     };
   }, []);
 
-  // Reverse geocode when center settles (debounced to coalesce rapid idles)
+  // Reverse geocode when center settles (debounced to coalesce rapid idles).
+  // Primary: server function (server key). Fallback: Maps JS Geocoder in the
+  // WebView — used when the server call fails, which happens in the packaged
+  // app whenever the installed bundle and the deployed server were built from
+  // different commits (server-function ids stop matching).
   useEffect(() => {
     let cancelled = false;
     const fromPlace = skipGeocodeRef.current;
     skipGeocodeRef.current = false;
     const t = setTimeout(() => {
-      setGeocoding(true);
-      setGeocodeFailed(false);
-      console.info("[address] reverse geocoding", center);
-      geocode({ data: center })
-        .then((r) => {
-          if (cancelled) return;
-          console.info("[address] reverse geocode ok:", r.formatted_address);
-          if (!fromPlace) setAutoAddress(r.formatted_address);
-          setArea(r.area);
-          setCity(r.city);
-        })
-        .catch((e) => {
-          if (cancelled) return;
-          console.error("[address] reverse geocode failed:", e);
+      void (async () => {
+        setGeocoding(true);
+        setGeocodeFailed(false);
+        console.info("[address] reverse geocode request", center);
+        let result: { formatted_address: string; area: string | null; city: string | null } | null =
+          null;
+        let lastError: unknown = null;
+        try {
+          result = await geocode({ data: center });
+          console.info("[address] reverse geocode ok (server):", result.formatted_address);
+        } catch (e) {
+          lastError = e;
+          console.error("[address] reverse geocode failed (server):", e);
+          try {
+            result = await browserReverseGeocode(center);
+            console.info("[address] reverse geocode ok (browser fallback):", result.formatted_address);
+          } catch (e2) {
+            lastError = e2;
+            console.error("[address] reverse geocode failed (browser fallback):", e2);
+          }
+        }
+        if (cancelled) return;
+        if (result) {
+          if (!fromPlace) setAutoAddress(result.formatted_address);
+          setArea(result.area);
+          setCity(result.city);
+        } else {
           if (!fromPlace) {
             setAutoAddress("");
             setGeocodeFailed(true);
             toast.error("Couldn't fetch the address for this pin.", {
               description:
-                (e as Error)?.message?.slice(0, 140) ||
+                (lastError as Error)?.message?.slice(0, 140) ||
                 "Check your connection and try again.",
               action: {
                 label: "Retry",
@@ -214,8 +232,9 @@ export function AddAddressMapScreen({
           }
           setArea(null);
           setCity(null);
-        })
-        .finally(() => !cancelled && setGeocoding(false));
+        }
+        setGeocoding(false);
+      })();
     }, 400);
 
     return () => {

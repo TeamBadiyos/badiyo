@@ -90,6 +90,7 @@ type Phase =
   | "home"
   | "slot"
   | "address"
+  | "manage-addresses"
   | "summary"
   | "payment"
   | "searching-expert"
@@ -722,8 +723,14 @@ function Index() {
             onOpenHelp={() => setPhase("help")}
             onOpenReferrals={() => setPhase("referrals")}
             onOpenPaymentMethods={() => setPhase("payment-methods")}
+            onOpenAddresses={() => setPhase("manage-addresses")}
             onLogout={() => setPhase("login")}
           />
+        </div>
+      )}
+      {phase === "manage-addresses" && (
+        <div className="animate-fade-slide-in">
+          <AddressSelectionScreen manage onBack={() => setPhase("profile")} />
         </div>
       )}
       {phase === "payment-methods" && (
