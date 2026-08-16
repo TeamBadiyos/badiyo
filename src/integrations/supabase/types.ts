@@ -2826,6 +2826,10 @@ export type Database = {
         Returns: string
       }
       staff_upsert_legal_page: { Args: { _payload: Json }; Returns: string }
+      staff_upsert_notification_sound: {
+        Args: { _payload: Json }
+        Returns: string
+      }
       staff_upsert_task_detail: { Args: { _payload: Json }; Returns: string }
       staff_verify_end_otp: {
         Args: { _booking_id: string; _otp: string }

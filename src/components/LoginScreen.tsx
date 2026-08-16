@@ -94,35 +94,56 @@ export function LoginScreen({
   };
 
   return (
-    <main className="flex min-h-screen w-full flex-col bg-primary">
-      {/* Gradient header with wordmark and tagline */}
-      <header className="flex flex-1 flex-col items-center justify-center bg-gradient-to-b from-primary-dark via-primary to-primary-light px-6 pb-12 pt-12 min-h-[240px]">
-        <BadiyoLogo variant="white" className="h-12 w-auto" />
-        <p className="mt-3 text-center text-base font-medium text-white/90">
-          {t("login.tagline")}
-        </p>
+    <main className="flex min-h-screen w-full flex-col bg-card">
+      {/* Gradient header: wordmark, tagline, language pill top-right */}
+      <header className="relative shrink-0 bg-gradient-to-b from-primary-dark via-primary to-primary-light px-5 pb-10 pt-6">
+        <div className="absolute right-4 top-5 flex items-center rounded-full bg-white/95 p-0.5 shadow-sm">
+          <button
+            type="button"
+            onClick={() => setLang("en")}
+            className={`rounded-full px-3 py-1 text-xs font-bold transition ${
+              lang === "en" ? "bg-primary text-primary-foreground" : "text-primary"
+            }`}
+          >
+            EN
+          </button>
+          <button
+            type="button"
+            onClick={() => setLang("mr")}
+            className={`rounded-full px-3 py-1 text-xs font-bold transition ${
+              lang === "mr" ? "bg-primary text-primary-foreground" : "text-primary"
+            }`}
+          >
+            MR
+          </button>
+        </div>
+        <div className="flex flex-col items-center pt-2">
+          <BadiyoLogo variant="white" className="h-10 w-auto" />
+          <p className="mt-3 text-center text-sm font-medium text-white/90">
+            {t("login.tagline")}
+          </p>
+        </div>
       </header>
 
-      {/* White rounded-top card overlapping the header */}
-      <section className="relative -mt-8 shrink-0 rounded-t-[28px] bg-card px-6 pb-8 pt-8">
+      {/* White rounded-top card */}
+      <section className="relative -mt-5 flex-1 rounded-t-[24px] bg-card px-6 pb-6 pt-7">
         <div className="mx-auto w-full max-w-md">
-          {/* Heading */}
-          <div className="text-center">
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">
-              {t("login.title")}
-            </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {t("login.subtitle")}
-            </p>
-          </div>
+          <h1 className="text-[26px] font-bold leading-tight tracking-tight text-foreground">
+            {t("login.title")}
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {t("login.subtitle")}
+          </p>
 
-          {/* Form */}
-          <form onSubmit={(e) => { void hapticImpact("medium"); handleContinue(e); }} className="mt-8 space-y-4">
+          <form
+            onSubmit={(e) => { void hapticImpact("medium"); handleContinue(e); }}
+            className="mt-6"
+          >
             <label className="block">
               <span className="mb-2 block text-sm font-semibold text-foreground">
                 {t("login.mobileLabel")}
               </span>
-              <div className="flex items-center gap-2 rounded-[14px] border border-border bg-card px-4 py-3 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition">
+              <div className="flex items-center gap-2 rounded-[14px] border border-border bg-muted/40 px-4 py-3.5 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition">
                 <span className="text-sm font-semibold text-foreground select-none">
                   +91
                 </span>
@@ -142,17 +163,17 @@ export function LoginScreen({
             <button
               type="submit"
               disabled={!isValid || loading}
-              className="w-full rounded-[14px] bg-primary px-4 py-3.5 text-base font-bold text-primary-foreground transition active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
+              className="mt-4 w-full rounded-[14px] bg-primary px-4 py-3.5 text-base font-bold text-primary-foreground transition active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? t("common.loading") : t("login.sendOtp")}
             </button>
             {error && (
-              <p className="text-center text-sm font-medium text-destructive">{error}</p>
+              <p className="mt-3 text-center text-sm font-medium text-destructive">{error}</p>
             )}
           </form>
 
           {/* Divider */}
-          <div className="my-6 flex items-center gap-4">
+          <div className="my-4 flex items-center gap-4">
             <div className="h-px flex-1 bg-border" />
             <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               {t("login.or")}
@@ -171,37 +192,10 @@ export function LoginScreen({
             {t("login.continueWithGoogle")}
           </button>
 
-          {/* Language toggle + legal consent */}
-          <div className="mt-8 space-y-4">
-            <div className="flex items-center justify-center gap-2">
-              <button
-                type="button"
-                onClick={() => setLang("en")}
-                className={`rounded-full px-3 py-1 text-sm font-medium transition ${
-                  lang === "en"
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                English
-              </button>
-              <span className="h-4 w-px bg-border" />
-              <button
-                type="button"
-                onClick={() => setLang("mr")}
-                className={`rounded-full px-3 py-1 text-sm font-medium transition ${
-                  lang === "mr"
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                मराठी
-              </button>
-            </div>
-            <LegalConsentText onOpenLegal={onOpenLegal} className="text-center" />
-          </div>
+          <LegalConsentText onOpenLegal={onOpenLegal} className="mt-4 text-center" />
         </div>
       </section>
     </main>
   );
 }
+
