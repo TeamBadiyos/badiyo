@@ -1,26 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Search } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { ServiceProductCard } from "./home/ServiceProductCard";
-
-type Service = {
-  id: string;
-  icon: string | null;
-  duration_label: string;
-  duration_minutes: number;
-  subtitle: string | null;
-  price: number;
-};
-
-async function fetchServices(): Promise<Service[]> {
-  const { data, error } = await supabase
-    .from("service_catalogue_config")
-    .select("id, icon, duration_label, duration_minutes, subtitle, price, display_order")
-    .eq("is_active", true)
-    .order("display_order", { ascending: true });
-  if (error) throw error;
-  return (data ?? []) as Service[];
-}
+import { fetchSegmentServices } from "@/lib/segments";
 
 export function SearchResultsScreen({
   query,
@@ -38,9 +19,10 @@ export function SearchResultsScreen({
   }) => void;
 }) {
   const { data: services = [], isLoading } = useQuery({
-    queryKey: ["services"],
-    queryFn: fetchServices,
+    queryKey: ["segment_services"],
+    queryFn: fetchSegmentServices,
   });
+
 
   const q = query.trim().toLowerCase();
   const results = services.filter((s) => {
