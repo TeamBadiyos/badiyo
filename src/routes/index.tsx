@@ -382,6 +382,10 @@ function Index() {
   useEffect(() => {
     let cancelled = false;
 
+    // Home content is public config data — warm it during the splash so Home
+    // paints from cache the moment the user finishes logging in.
+    void prefetchHomeData(queryClient);
+
     fetchMinSupportedVersion().then((min) => {
       if (!cancelled && min && isBelow(APP_VERSION, min)) setForceUpdate(true);
     });
@@ -391,7 +395,6 @@ function Index() {
     supabase.auth.getSession().then(({ data }) => {
       if (cancelled) return;
       if (data.session?.user && !data.session.user.is_anonymous) {
-        setPhase("home");
         enterAppAfterAuth("home");
         ensureUserRow()
           .then(() => import("@/lib/referrals").then((m) => m.linkReferralIfAny()))
@@ -399,11 +402,16 @@ function Index() {
           .catch((e) => console.error("post-oauth setup failed:", e));
         return;
       }
-      // Otherwise run the normal splash → login flow.
+      // Otherwise run the normal splash → login flow. Warm the screens the
+      // user is about to hit so no chunk download sits on the critical path.
+      void import("@/components/PinLoginScreen");
+      void import("@/components/OtpVerifyScreen");
+      void import("@/components/HomeScreen");
       setTimeout(() => !cancelled && setPhase("splash-out"), 1800);
       setTimeout(() => !cancelled && setPhase("login"), 2300);
       ensureUserRow().catch((e) => console.error("startup ensureUserRow failed:", e));
     });
+
 
     const { data: sub } = supabase.auth.onAuthStateChange(async (event) => {
       if (event === "SIGNED_IN" || event === "USER_UPDATED") {
