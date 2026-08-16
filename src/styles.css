@@ -218,12 +218,13 @@ select,
   background-color: color-mix(in oklab, var(--primary) 5%, var(--card));
 }
 
-/* Duotone icon disc: light green -> slightly deeper green */
+/* Duotone icon disc: light green -> deep green (visible contrast) */
 @utility icon-disc {
   background-image: linear-gradient(
     155deg,
-    color-mix(in oklab, var(--primary) 12%, var(--card)),
-    color-mix(in oklab, var(--primary) 30%, var(--card))
+    color-mix(in oklab, var(--primary) 8%, var(--card)),
+    color-mix(in oklab, var(--primary) 30%, var(--card)) 45%,
+    color-mix(in oklab, var(--primary) 62%, var(--card))
   );
 }
 
@@ -246,6 +247,27 @@ select,
     mix-blend-mode: multiply;
   }
 }
+
+/* Lighter grade for illustration-style artwork (keeps line art readable) */
+@utility brand-grade-soft {
+  position: relative;
+  & > img {
+    filter: saturate(1.02);
+  }
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image: linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--primary) 8%, transparent),
+      color-mix(in oklab, var(--primary) 2%, transparent)
+    );
+    mix-blend-mode: multiply;
+  }
+}
+
 
 /* Soft dot-grid texture for promo/campaign banners */
 @utility promo-texture {
