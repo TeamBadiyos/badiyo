@@ -183,7 +183,9 @@ select,
 /* Applied once at the app shell so every screen inherits notch + home
    indicator insets. */
 @utility app-safe-shell {
-  padding-top: env(safe-area-inset-top, 0px);
+  /* On native shells Android often reports 0 for the status bar inset, so we
+     guarantee a minimum breathing room via --safe-top-min (set at runtime). */
+  padding-top: max(var(--safe-top-min, 0px), env(safe-area-inset-top, 0px));
   padding-left: env(safe-area-inset-left, 0px);
   padding-right: env(safe-area-inset-right, 0px);
   min-height: 100dvh;

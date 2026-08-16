@@ -24,6 +24,11 @@ export async function initStatusBar(): Promise<void> {
   if (initialized || !isNativeShell()) return;
   initialized = true;
 
+  // Guarantee a minimum top inset on native even when the platform reports
+  // env(safe-area-inset-top) = 0 (common on Android WebViews).
+  document.documentElement.style.setProperty("--safe-top-min", "12px");
+
+
   try {
     const { StatusBar, Style } = await import("@capacitor/status-bar");
 
