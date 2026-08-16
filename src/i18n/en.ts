@@ -209,6 +209,10 @@ export const en = {
   "legal.deleteNote": "Refunds for any cancelled bookings follow our Refund & Cancellation Policy.",
 
   // ── What's included ──────────────────────────────────────
+  "product.details": "All details",
+  "product.included": "What's included",
+  "product.notIncluded": "What's not included",
+
   "included.title": "What is included?",
   "included.trainedTo": "The expert is trained to",
   "included.notIncluded": "What is not included",

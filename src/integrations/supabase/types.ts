@@ -2044,47 +2044,65 @@ export type Database = {
         Row: {
           created_at: string
           customer_price: number
+          description: string | null
           display_order: number
           duration_minutes: number | null
+          exclusions: string[]
           expert_payout: number | null
+          gallery_urls: string[]
           hq_share: number | null
           id: string
+          image_url: string | null
+          inclusions: string[]
           is_active: boolean
           label: string
           partner_commission: number | null
           service_id: string
           strikethrough_price: number | null
           unit_label: string | null
+          video_url: string | null
         }
         Insert: {
           created_at?: string
           customer_price?: number
+          description?: string | null
           display_order?: number
           duration_minutes?: number | null
+          exclusions?: string[]
           expert_payout?: number | null
+          gallery_urls?: string[]
           hq_share?: number | null
           id?: string
+          image_url?: string | null
+          inclusions?: string[]
           is_active?: boolean
           label: string
           partner_commission?: number | null
           service_id: string
           strikethrough_price?: number | null
           unit_label?: string | null
+          video_url?: string | null
         }
         Update: {
           created_at?: string
           customer_price?: number
+          description?: string | null
           display_order?: number
           duration_minutes?: number | null
+          exclusions?: string[]
           expert_payout?: number | null
+          gallery_urls?: string[]
           hq_share?: number | null
           id?: string
+          image_url?: string | null
+          inclusions?: string[]
           is_active?: boolean
           label?: string
           partner_commission?: number | null
           service_id?: string
           strikethrough_price?: number | null
           unit_label?: string | null
+          video_url?: string | null
         }
         Relationships: [
           {
@@ -2096,80 +2114,51 @@ export type Database = {
           },
         ]
       }
-      service_task_details: {
-        Row: {
-          excluded_items: string[]
-          icon_url: string | null
-          id: string
-          included_items: string[]
-          is_active: boolean
-          rank: number
-          segment_id: string
-          task_name: string
-          task_slug: string
-        }
-        Insert: {
-          excluded_items: string[]
-          icon_url?: string | null
-          id?: string
-          included_items: string[]
-          is_active?: boolean
-          rank?: number
-          segment_id: string
-          task_name: string
-          task_slug: string
-        }
-        Update: {
-          excluded_items?: string[]
-          icon_url?: string | null
-          id?: string
-          included_items?: string[]
-          is_active?: boolean
-          rank?: number
-          segment_id?: string
-          task_name?: string
-          task_slug?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "service_task_details_segment_id_fkey"
-            columns: ["segment_id"]
-            isOneToOne: false
-            referencedRelation: "segments"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       services: {
         Row: {
           category_id: string
           created_at: string
+          description: string | null
           display_order: number
+          exclusions: string[]
+          gallery_urls: string[]
           id: string
           image_url: string | null
+          inclusions: string[]
           is_active: boolean
           name: string
           pricing_type: string
+          video_url: string | null
         }
         Insert: {
           category_id: string
           created_at?: string
+          description?: string | null
           display_order?: number
+          exclusions?: string[]
+          gallery_urls?: string[]
           id?: string
           image_url?: string | null
+          inclusions?: string[]
           is_active?: boolean
           name: string
           pricing_type?: string
+          video_url?: string | null
         }
         Update: {
           category_id?: string
           created_at?: string
+          description?: string | null
           display_order?: number
+          exclusions?: string[]
+          gallery_urls?: string[]
           id?: string
           image_url?: string | null
+          inclusions?: string[]
           is_active?: boolean
           name?: string
           pricing_type?: string
+          video_url?: string | null
         }
         Relationships: [
           {
@@ -2918,7 +2907,6 @@ export type Database = {
         Args: { _id: string }
         Returns: undefined
       }
-      staff_delete_task_detail: { Args: { _id: string }; Returns: undefined }
       staff_edit_booking: {
         Args: { _booking_id: string; _payload: Json }
         Returns: undefined
@@ -2955,10 +2943,6 @@ export type Database = {
         Returns: undefined
       }
       staff_reorder_homepage_sections: {
-        Args: { _orders: Json }
-        Returns: undefined
-      }
-      staff_reorder_task_details: {
         Args: { _orders: Json }
         Returns: undefined
       }

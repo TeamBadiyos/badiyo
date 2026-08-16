@@ -6,7 +6,6 @@ import { BadiyoLogo } from "./BadiyoLogo";
 import { BottomNav } from "./BottomNav";
 import { LocationPickerSheet, type SavedAddress } from "./LocationPickerSheet";
 import { ServicesBar } from "./home/ServicesBar";
-import { WhatsIncludedSheet } from "./WhatsIncludedSheet";
 import { supabase } from "@/integrations/supabase/client";
 import { useAvatarUrl } from "@/lib/useAvatarUrl";
 import {
@@ -49,7 +48,7 @@ const EXPERT_TILES: { image: string; labelKey: TranslationKey; slug: string; ill
   { image: expertDishes, labelKey: "home.tile.dishes", slug: "cleaning-dishes" },
 ];
 
-function ExpertTiles({ onOpenTask }: { onOpenTask: (slug: string) => void }) {
+function ExpertTiles({ onOpenTask }: { onOpenTask: () => void }) {
   const t = useT();
   return (
     <div className="mt-5 grid grid-cols-3 gap-4">
@@ -57,7 +56,7 @@ function ExpertTiles({ onOpenTask }: { onOpenTask: (slug: string) => void }) {
         <button
           type="button"
           key={tile.labelKey}
-          onClick={() => onOpenTask(tile.slug)}
+          onClick={() => onOpenTask()}
           className="flex flex-col text-left transition active:scale-[0.98]"
         >
           <div
@@ -90,6 +89,15 @@ export type BookServicePayload = {
   icon: string | null;
   segment_id: string | null;
   segment_name: string | null;
+  service_name: string | null;
+  strikethrough_price: number | null;
+  pricing_type: string | null;
+  image_url: string | null;
+  gallery_urls: string[];
+  video_url: string | null;
+  description: string | null;
+  inclusions: string[];
+  exclusions: string[];
 };
 
 function toPayload(s: SegmentService, segment?: Segment | null): BookServicePayload {
@@ -101,6 +109,15 @@ function toPayload(s: SegmentService, segment?: Segment | null): BookServicePayl
     icon: s.icon,
     segment_id: s.segment_id ?? segment?.id ?? null,
     segment_name: segment?.name ?? null,
+    service_name: s.service_name ?? null,
+    strikethrough_price: s.strikethrough_price ?? null,
+    pricing_type: s.pricing_type ?? null,
+    image_url: s.image_url ?? null,
+    gallery_urls: s.gallery_urls ?? [],
+    video_url: s.video_url ?? null,
+    description: s.description ?? null,
+    inclusions: s.inclusions ?? [],
+    exclusions: s.exclusions ?? [],
   };
 }
 
@@ -155,8 +172,6 @@ export function HomeScreen({
   const [activeAddress, setActiveAddress] = useState<SavedAddress | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeSegmentId, setActiveSegmentId] = useState<string | null>(null);
-  const [includedSlug, setIncludedSlug] = useState<string | null>(null);
-  const [includedOpen, setIncludedOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -194,13 +209,8 @@ export function HomeScreen({
     segments[0] ??
     null;
   const tileService = cleanSegment ? servicesFor(cleanSegment)[0] ?? null : null;
-  const bookFromSheet = () => {
-    setIncludedOpen(false);
+  const bookTileService = () => {
     if (tileService) onBookService?.(toPayload(tileService, cleanSegment));
-  };
-  const openIncluded = (slug: string) => {
-    setIncludedSlug(slug);
-    setIncludedOpen(true);
   };
 
   return (
@@ -273,7 +283,7 @@ export function HomeScreen({
             categories={categories.filter((c) => c.segment_id === activeSegment.id)}
             services={servicesFor(activeSegment)}
             onBookService={onBookService}
-            onOpenTask={openIncluded}
+            onOpenTask={bookTileService}
           />
         ) : (
           <div className="mt-2">
@@ -339,14 +349,6 @@ export function HomeScreen({
         onRewards={onOpenRewards ?? (() => {})}
       />
 
-      <WhatsIncludedSheet
-        open={includedOpen}
-        segmentId={cleanSegment?.id ?? null}
-        taskSlug={includedSlug}
-        onClose={() => setIncludedOpen(false)}
-        onSchedule={tileService ? bookFromSheet : undefined}
-        onBookInstant={tileService ? bookFromSheet : undefined}
-      />
 
       <LocationPickerSheet
         open={locationSheetOpen}
@@ -377,7 +379,7 @@ function SegmentView({
   categories: ServiceCategory[];
   services: SegmentService[];
   onBookService?: (s: BookServicePayload) => void;
-  onOpenTask: (slug: string) => void;
+  onOpenTask: () => void;
 }) {
   const t = useT();
   if (segment.display_template !== "CATEGORY_FIRST") {

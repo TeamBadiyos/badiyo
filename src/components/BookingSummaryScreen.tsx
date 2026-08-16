@@ -1,6 +1,4 @@
-import { useState } from "react";
-import { ArrowLeft, Clock, Calendar, Home as HomeIcon, Info } from "lucide-react";
-import { WhatsIncludedSheet } from "./WhatsIncludedSheet";
+import { ArrowLeft, Clock, Calendar, Home as HomeIcon } from "lucide-react";
 import type { SelectedService, SelectedSlot } from "./SlotSelectionScreen";
 import { useT, type TFunction } from "@/i18n";
 import { hapticImpact } from "@/lib/haptics";
@@ -51,7 +49,6 @@ export function BookingSummaryScreen({
   onProceedToPay: () => void;
 }) {
   const t = useT();
-  const [includedOpen, setIncludedOpen] = useState(false);
   const slotInfo = formatSlot(slot, t);
 
   return (
@@ -90,14 +87,6 @@ export function BookingSummaryScreen({
             </div>
           </div>
         </section>
-
-        <button
-          onClick={() => setIncludedOpen(true)}
-          className="mt-4 flex w-full items-center gap-2 rounded-[14px] border border-primary/40 bg-primary/5 px-4 py-3 text-left"
-        >
-          <Info className="h-4 w-4 shrink-0 text-primary" />
-          <span className="text-sm font-bold text-primary">{t("included.link")}</span>
-        </button>
 
         {/* Slot card */}
         <section className="mt-4 flex items-start gap-4 rounded-[18px] border border-border bg-card p-5">
@@ -164,12 +153,6 @@ export function BookingSummaryScreen({
         </section>
       </div>
 
-      <WhatsIncludedSheet
-        open={includedOpen}
-        segmentId={service.segment_id ?? null}
-        taskSlug={service.task_slug ?? null}
-        onClose={() => setIncludedOpen(false)}
-      />
 
       {/* Fixed pay button */}
       <div className="fixed inset-x-0 bottom-0 z-10 border-t border-border bg-card safe-bottom">
