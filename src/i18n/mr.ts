@@ -207,6 +207,10 @@ export const mr: Partial<Record<keyof typeof en, string>> = {
   "legal.agreeSuffix": " ला सहमती देता.",
   "legal.deleteNote": "रद्द केलेल्या बुकिंगचे परतावे आमच्या परतावा व रद्दीकरण धोरणानुसार होतील.",
 
+  "product.details": "संपूर्ण माहिती",
+  "product.included": "यात काय समाविष्ट आहे",
+  "product.notIncluded": "यात काय समाविष्ट नाही",
+
   "included.title": "यात काय समाविष्ट आहे?",
   "included.trainedTo": "तज्ञ हे करण्यास प्रशिक्षित आहे",
   "included.notIncluded": "यात काय समाविष्ट नाही",
