@@ -98,6 +98,7 @@ export type BookServicePayload = {
   description: string | null;
   inclusions: string[];
   exclusions: string[];
+  task_types: SegmentService["task_types"];
 };
 
 function toPayload(s: SegmentService, segment?: Segment | null): BookServicePayload {
@@ -118,8 +119,10 @@ function toPayload(s: SegmentService, segment?: Segment | null): BookServicePayl
     description: s.description ?? null,
     inclusions: s.inclusions ?? [],
     exclusions: s.exclusions ?? [],
+    task_types: s.task_types ?? [],
   };
 }
+
 
 export function HomeScreen({
   onBookService,
