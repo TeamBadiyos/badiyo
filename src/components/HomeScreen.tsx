@@ -20,6 +20,7 @@ import { ServiceProductCard } from "./home/ServiceProductCard";
 import { SectionHeading } from "./SectionHeading";
 import { anchorPrice } from "@/lib/price";
 import { useT } from "@/i18n";
+import { toast } from "sonner";
 import type { TranslationKey } from "@/i18n/en";
 
 import expertHouse from "@/assets/expert-house-cleaning.jpg";
