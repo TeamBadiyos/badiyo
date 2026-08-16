@@ -10,10 +10,12 @@ declare global {
   interface Window {
     google?: any;
     __badiyoInitMap?: () => void;
+    gm_authFailure?: () => void;
   }
 }
 
 let mapsLoaderPromise: Promise<void> | null = null;
+export let mapsAuthFailed = false;
 
 export function getMapsBrowserKey(): string | undefined {
   return import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY as
@@ -43,7 +45,17 @@ export function loadMapsScript(): Promise<void> {
       return;
     }
     window.__badiyoInitMap = () => resolve();
+    window.gm_authFailure = () => {
+      mapsAuthFailed = true;
+      // Almost always a referrer/API-key restriction for the current origin.
+      console.error(
+        "Google Maps auth failure — origin not allowed for this browser key:",
+        window.location.origin,
+      );
+    };
     const s = document.createElement("script");
+    // Always an absolute Google URL — never proxied through the connector
+    // gateway — so it resolves identically on web and inside the WebView.
     s.src = `https://maps.googleapis.com/maps/api/js?key=${key}&loading=async&callback=__badiyoInitMap`;
     s.async = true;
     s.defer = true;
