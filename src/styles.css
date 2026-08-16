@@ -20,6 +20,8 @@
   --color-ring: var(--ring);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
+  --color-warning: var(--warning);
+
 
   --font-sans: "Nunito Sans", ui-sans-serif, system-ui, sans-serif;
 }
