@@ -448,8 +448,13 @@ function Index() {
           style={{ opacity: Math.max(0, 0.18 * (1 - swipeBack.progress)) }}
         />
       )}
-      {forceUpdate && <ForceUpdateScreen />}
-      {!online && <NoInternetScreen onRetry={() => setOnline(navigator.onLine)} />}
+      <Suspense fallback={null}>
+        {forceUpdate && <ForceUpdateScreen />}
+        {!online && <NoInternetScreen onRetry={() => setOnline(navigator.onLine)} />}
+      </Suspense>
+
+      <Suspense fallback={<ScreenFallback />}>
+
 
       {(phase === "splash" || phase === "splash-out") && (
         <div
