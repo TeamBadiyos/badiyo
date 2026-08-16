@@ -205,3 +205,54 @@ select,
   padding-top: calc(var(--app-safe-top, 0px) + var(--bleed-top-extra, 0px));
 }
 
+
+/* ---- Brand surface polish (shared across service cards / headings) ---- */
+
+/* Shadow tier M: Y8 Blur20 @10% */
+@utility shadow-card-m {
+  box-shadow: 0 8px 20px 0 color-mix(in oklab, var(--foreground) 10%, transparent);
+}
+
+/* ~5% Badiyo Green tinted card surface */
+@utility surface-tint {
+  background-color: color-mix(in oklab, var(--primary) 5%, var(--card));
+}
+
+/* Duotone icon disc: light green -> slightly deeper green */
+@utility icon-disc {
+  background-image: linear-gradient(
+    155deg,
+    color-mix(in oklab, var(--primary) 12%, var(--card)),
+    color-mix(in oklab, var(--primary) 30%, var(--card))
+  );
+}
+
+/* Subtle brand color-grade over photography */
+@utility brand-grade {
+  position: relative;
+  & > img {
+    filter: saturate(1.05) contrast(1.02);
+  }
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image: linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--primary) 16%, transparent),
+      color-mix(in oklab, var(--primary) 4%, transparent)
+    );
+    mix-blend-mode: multiply;
+  }
+}
+
+/* Soft dot-grid texture for promo/campaign banners */
+@utility promo-texture {
+  background-image: radial-gradient(
+    color-mix(in oklab, var(--primary) 26%, transparent) 1.5px,
+    transparent 1.5px
+  );
+  background-size: 14px 14px;
+  background-position: 0 0;
+}
