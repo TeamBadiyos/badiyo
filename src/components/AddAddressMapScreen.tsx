@@ -528,7 +528,7 @@ export function AddAddressMapScreen({
                 : "bg-primary/30 text-primary-foreground/70"
             }`}
           >
-            {isSaving ? "Saving…" : "Save Address"}
+            {isSaving ? "Saving…" : initial ? "Update Address" : "Save Address"}
           </button>
         </div>
       </div>
