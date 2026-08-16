@@ -9,6 +9,13 @@ import { useT } from "@/i18n";
 import { hapticSelection } from "@/lib/haptics";
 import { MediaGallery, type MediaItem } from "./product/MediaGallery";
 
+export type TaskTypeDetail = {
+  id: string;
+  name: string;
+  inclusions: string[];
+  exclusions: string[];
+};
+
 export type SelectedService = {
   duration_label: string;
   duration_minutes: number;
@@ -28,7 +35,10 @@ export type SelectedService = {
   description?: string | null;
   inclusions?: string[] | null;
   exclusions?: string[] | null;
+  /** Per-task-type breakdown; takes precedence over the flat lists. */
+  task_types?: TaskTypeDetail[] | null;
 };
+
 
 export type SelectedSlot =
   | { mode: "now" }
