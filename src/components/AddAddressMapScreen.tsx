@@ -87,7 +87,7 @@ export function AddAddressMapScreen({
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const geocode = useServerFn(reverseGeocode);
+  
   const placeSearch = useServerFn(searchPlaces);
   const placeDetails = useServerFn(getPlaceDetails);
   const centerRef = useRef(center);
