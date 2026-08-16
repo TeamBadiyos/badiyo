@@ -235,8 +235,30 @@ export function AddAddressMapScreen({
         setCenter(c);
 
       })
-      .catch((err) => console.error(err))
+      .catch((err: unknown) => {
+        console.error("[address] location failed:", err);
+        const msg =
+          (err as Error)?.message || "Couldn't detect your location.";
+        if (err instanceof LocationPermissionError) {
+          toast.error("Location permission needed to detect your address", {
+            action: {
+              label: "Open settings",
+              onClick: () => {
+                void openAppSettings().then((ok) => {
+                  if (!ok)
+                    toast.info(
+                      "Enable Location for badiyos in your phone's app settings.",
+                    );
+                });
+              },
+            },
+          });
+        } else {
+          toast.error(msg);
+        }
+      })
       .finally(() => setLocating(false));
+
   };
 
   const canSave = addressDetails.trim().length > 0 && !isSaving;
