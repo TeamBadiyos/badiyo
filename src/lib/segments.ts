@@ -21,6 +21,13 @@ export type ServiceCategory = {
   rank: number;
 };
 
+export type TaskTypeDetail = {
+  id: string;
+  name: string;
+  inclusions: string[];
+  exclusions: string[];
+};
+
 export type SegmentService = {
   id: string;
   icon: string | null;
@@ -41,7 +48,10 @@ export type SegmentService = {
   video_url: string | null;
   inclusions: string[];
   exclusions: string[];
+  /** Task types linked to this bookable item, ordered for display. */
+  task_types: TaskTypeDetail[];
 };
+
 
 
 export async function fetchSegments(): Promise<Segment[]> {
