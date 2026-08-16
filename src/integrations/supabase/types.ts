@@ -2334,8 +2334,10 @@ export type Database = {
       task_types: {
         Row: {
           created_at: string
+          description: string | null
           exclusions: string[]
           id: string
+          image_url: string | null
           inclusions: string[]
           is_active: boolean
           name: string
@@ -2345,8 +2347,10 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          description?: string | null
           exclusions?: string[]
           id?: string
+          image_url?: string | null
           inclusions?: string[]
           is_active?: boolean
           name: string
@@ -2356,8 +2360,10 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          description?: string | null
           exclusions?: string[]
           id?: string
+          image_url?: string | null
           inclusions?: string[]
           is_active?: boolean
           name?: string

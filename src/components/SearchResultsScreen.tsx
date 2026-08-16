@@ -1,7 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Search } from "lucide-react";
+import { toast } from "sonner";
 import { ServiceProductCard } from "./home/ServiceProductCard";
 import { fetchSegmentServices } from "@/lib/segments";
+import { useT } from "@/i18n";
 
 export function SearchResultsScreen({
   query,
@@ -17,6 +19,25 @@ export function SearchResultsScreen({
     queryFn: fetchSegmentServices,
   });
 
+  const t = useT();
+  const selectService = (s: typeof services[number]): import("./SlotSelectionScreen").SelectedService => ({
+    duration_label: s.duration_label,
+    duration_minutes: Number(s.duration_minutes),
+    price: Number(s.price),
+    subtitle: s.subtitle,
+    icon: s.icon,
+    segment_id: s.segment_id,
+    service_name: s.service_name,
+    strikethrough_price: s.strikethrough_price,
+    pricing_type: s.pricing_type,
+    image_url: s.image_url,
+    gallery_urls: s.gallery_urls,
+    video_url: s.video_url,
+    description: s.description,
+    inclusions: s.inclusions,
+    exclusions: s.exclusions,
+    task_types: s.task_types ?? [],
+  });
 
   const q = query.trim().toLowerCase();
   const results = services.filter((s) => {
@@ -68,26 +89,9 @@ export function SearchResultsScreen({
                     price: Number(s.price),
                     durationMinutes: s.duration_minutes,
                   }}
+                  onViewDetail={() => onBookService(selectService(s))}
                   onAdd={() =>
-                    onBookService({
-                      duration_label: s.duration_label,
-                      duration_minutes: Number(s.duration_minutes),
-                      price: Number(s.price),
-                      subtitle: s.subtitle,
-                      icon: s.icon,
-                      segment_id: s.segment_id,
-                      service_name: s.service_name,
-                      strikethrough_price: s.strikethrough_price,
-                      pricing_type: s.pricing_type,
-                      image_url: s.image_url,
-                      gallery_urls: s.gallery_urls,
-                      video_url: s.video_url,
-                      description: s.description,
-                      inclusions: s.inclusions,
-                      exclusions: s.exclusions,
-                      task_types: s.task_types ?? [],
-
-                    })
+                    toast(t("home.addedToBooking", { name: s.service_name || s.duration_label }))
                   }
                 />
               ))}

@@ -43,6 +43,7 @@ export const en = {
   "home.tile.dishes": "Cleaning Dishes",
   "home.bookNow": "Book Now",
   "home.add": "ADD",
+  "home.addedToBooking": "Added {name} to booking",
   "home.bookSegment": "Book {segment}",
   "home.comingSoon": "{segment} is coming soon",
   "home.comingSoonSub": "We're getting this section ready for you.",

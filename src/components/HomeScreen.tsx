@@ -20,6 +20,7 @@ import { ServiceProductCard } from "./home/ServiceProductCard";
 import { SectionHeading } from "./SectionHeading";
 import { anchorPrice } from "@/lib/price";
 import { useT } from "@/i18n";
+import { toast } from "sonner";
 import type { TranslationKey } from "@/i18n/en";
 
 import expertHouse from "@/assets/expert-house-cleaning.jpg";
@@ -152,6 +153,10 @@ export function HomeScreen({
   });
   const { data: avatarUrl } = useAvatarUrl();
   const t = useT();
+  const addToBooking = (s: SegmentService) => {
+    toast(t("home.addedToBooking", { name: s.duration_label }));
+  };
+
 
   const queryClient = useQueryClient();
   const { pull, refreshing } = usePullToRefresh(async () => {
@@ -281,13 +286,14 @@ export function HomeScreen({
         />
 
         {activeSegment ? (
-          <SegmentView
-            segment={activeSegment}
-            categories={categories.filter((c) => c.segment_id === activeSegment.id)}
-            services={servicesFor(activeSegment)}
-            onBookService={onBookService}
-            onOpenTask={bookTileService}
-          />
+        <SegmentView
+          segment={activeSegment}
+          categories={categories.filter((c) => c.segment_id === activeSegment.id)}
+          services={servicesFor(activeSegment)}
+          onBookService={onBookService}
+          onAdd={addToBooking}
+          onOpenTask={bookTileService}
+        />
         ) : (
           <div className="mt-2">
             {segments.map((segment) => {
@@ -313,7 +319,8 @@ export function HomeScreen({
                       key={category.id}
                       category={category}
                       services={servicesForCategory(category).slice(0, 3)}
-                      onBook={(s) => onBookService?.(toPayload(s, segment))}
+                      onViewDetail={(s) => onBookService?.(toPayload(s, segment))}
+                      onAdd={addToBooking}
                     />
                   ))}
                 </section>
@@ -376,12 +383,14 @@ function SegmentView({
   categories,
   services,
   onBookService,
+  onAdd,
   onOpenTask,
 }: {
   segment: Segment;
   categories: ServiceCategory[];
   services: SegmentService[];
   onBookService?: (s: BookServicePayload) => void;
+  onAdd: (s: SegmentService) => void;
   onOpenTask: () => void;
 }) {
   const t = useT();
@@ -410,7 +419,8 @@ function SegmentView({
             key={category.id}
             category={category}
             services={items}
-            onBook={(s) => onBookService?.(toPayload(s, segment))}
+            onViewDetail={(s) => onBookService?.(toPayload(s, segment))}
+            onAdd={(s) => onAdd(s)}
           />
         );
       })}
@@ -437,11 +447,13 @@ function SegmentView({
 function CategoryRow({
   category,
   services,
-  onBook,
+  onViewDetail,
+  onAdd,
 }: {
   category: ServiceCategory;
   services: SegmentService[];
-  onBook: (s: SegmentService) => void;
+  onViewDetail: (s: SegmentService) => void;
+  onAdd: (s: SegmentService) => void;
 }) {
   return (
     <div className="mt-4">
@@ -459,7 +471,8 @@ function CategoryRow({
               imageUrl: s.image_url,
               durationMinutes: s.pricing_type === "flat" ? null : s.duration_minutes,
             }}
-            onAdd={() => onBook(s)}
+            onViewDetail={() => onViewDetail(s)}
+            onAdd={() => onAdd(s)}
           />
         ))}
       </div>
