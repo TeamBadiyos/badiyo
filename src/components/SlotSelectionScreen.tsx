@@ -62,6 +62,61 @@ function getNext7Days() {
   }
   return days;
 }
+function IncExcLists({
+  inclusions,
+  exclusions,
+  includedLabel,
+  notIncludedLabel,
+}: {
+  inclusions: string[];
+  exclusions: string[];
+  includedLabel: string;
+  notIncludedLabel: string;
+}) {
+  return (
+    <>
+      {inclusions.length > 0 && (
+        <>
+          <h3 className="text-xs font-bold uppercase tracking-[0.04em] text-muted-foreground">
+            {includedLabel}
+          </h3>
+          <ul className="mt-3 flex flex-col gap-2.5">
+            {inclusions.map((item, i) => (
+              <li key={i} className="flex items-start gap-3">
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/15">
+                  <Check className="h-3.5 w-3.5 text-primary" />
+                </span>
+                <span className="selectable text-sm text-foreground">{item}</span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+      {exclusions.length > 0 && (
+        <>
+          <h3
+            className={`text-xs font-bold uppercase tracking-[0.04em] text-muted-foreground ${
+              inclusions.length > 0 ? "mt-5" : ""
+            }`}
+          >
+            {notIncludedLabel}
+          </h3>
+          <ul className="mt-3 flex flex-col gap-2.5">
+            {exclusions.map((item, i) => (
+              <li key={i} className="flex items-start gap-3">
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-destructive/15">
+                  <X className="h-3.5 w-3.5 text-destructive" />
+                </span>
+                <span className="selectable text-sm text-foreground">{item}</span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </>
+  );
+}
+
 
 export function SlotSelectionScreen({
   service,
