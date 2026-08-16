@@ -794,19 +794,21 @@ function Index() {
           <SettingsScreen
             onBack={() => setPhase("profile")}
             onOpenNotifications={() => setPhase("notifications")}
-            onOpenAbout={() => setPhase("about")}
             onOpenDevices={() => setPhase("active-devices")}
             onOpenLanguage={() => setPhase("language")}
-            onOpenLegal={(slug) => {
-              setLegal({ slug, from: "settings" });
-              setPhase("legal");
-            }}
           />
         </div>
       )}
       {phase === "help" && (
         <div className="animate-fade-slide-in">
-          <HelpSupportScreen onBack={() => setPhase("profile")} />
+          <HelpSupportScreen
+            onBack={() => setPhase("profile")}
+            onOpenLegal={(slug) => {
+              setLegal({ slug, from: "help" });
+              setPhase("legal");
+            }}
+            onOpenAbout={() => setPhase("about")}
+          />
         </div>
       )}
       {phase === "active-devices" && (
