@@ -21,6 +21,13 @@ export type ServiceCategory = {
   rank: number;
 };
 
+export type TaskTypeDetail = {
+  id: string;
+  name: string;
+  inclusions: string[];
+  exclusions: string[];
+};
+
 export type SegmentService = {
   id: string;
   icon: string | null;
@@ -41,7 +48,10 @@ export type SegmentService = {
   video_url: string | null;
   inclusions: string[];
   exclusions: string[];
+  /** Task types linked to this bookable item, ordered for display. */
+  task_types: TaskTypeDetail[];
 };
+
 
 
 export async function fetchSegments(): Promise<Segment[]> {
@@ -80,8 +90,9 @@ export async function fetchSegmentServices(): Promise<SegmentService[]> {
   const { data, error } = await supabase
     .from("services")
     .select(
-      "id, name, image_url, pricing_type, display_order, category_id, description, gallery_urls, video_url, inclusions, exclusions, service_categories(segment_id, icon_url), service_price_options(id, label, duration_minutes, unit_label, customer_price, strikethrough_price, display_order, is_active, description, gallery_urls, video_url, inclusions, exclusions)",
+      "id, name, image_url, pricing_type, display_order, category_id, description, gallery_urls, video_url, inclusions, exclusions, service_categories(segment_id, icon_url), service_price_options(id, label, duration_minutes, unit_label, customer_price, strikethrough_price, display_order, is_active, description, gallery_urls, video_url, inclusions, exclusions, item_task_types(display_order, task_types(id, name, inclusions, exclusions, is_active, rank)))",
     )
+
     .eq("is_active", true)
     .order("display_order", { ascending: true });
   if (error) throw error;
@@ -114,7 +125,23 @@ export async function fetchSegmentServices(): Promise<SegmentService[]> {
         video_url: o.video_url ?? svc.video_url ?? null,
         inclusions: list(o.inclusions).length ? list(o.inclusions) : list(svc.inclusions),
         exclusions: list(o.exclusions).length ? list(o.exclusions) : list(svc.exclusions),
+        task_types: ((o.item_task_types ?? []) as any[])
+          .map((l: any) => ({ link: l, tt: l.task_types }))
+          .filter((x) => x.tt && x.tt.is_active !== false)
+          .sort(
+            (a, b) =>
+              (a.link.display_order ?? 0) - (b.link.display_order ?? 0) ||
+              (a.tt.rank ?? 0) - (b.tt.rank ?? 0),
+          )
+          .map(({ tt }) => ({
+            id: String(tt.id),
+            name: String(tt.name),
+            inclusions: list(tt.inclusions),
+            exclusions: list(tt.exclusions),
+          }))
+          .filter((tt) => tt.inclusions.length > 0 || tt.exclusions.length > 0),
       });
+
     }
   }
   return rows;

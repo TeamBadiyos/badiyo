@@ -837,6 +837,45 @@ export type Database = {
         }
         Relationships: []
       }
+      item_task_types: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          price_option_id: string
+          task_type_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          price_option_id: string
+          task_type_id: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          price_option_id?: string
+          task_type_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_task_types_price_option_id_fkey"
+            columns: ["price_option_id"]
+            isOneToOne: false
+            referencedRelation: "service_price_options"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "item_task_types_task_type_id_fkey"
+            columns: ["task_type_id"]
+            isOneToOne: false
+            referencedRelation: "task_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       legal_pages: {
         Row: {
           content: string
@@ -2289,6 +2328,42 @@ export type Database = {
           message?: string
           status?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      task_types: {
+        Row: {
+          created_at: string
+          exclusions: string[]
+          id: string
+          inclusions: string[]
+          is_active: boolean
+          name: string
+          rank: number
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          exclusions?: string[]
+          id?: string
+          inclusions?: string[]
+          is_active?: boolean
+          name: string
+          rank?: number
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          exclusions?: string[]
+          id?: string
+          inclusions?: string[]
+          is_active?: boolean
+          name?: string
+          rank?: number
+          slug?: string
+          updated_at?: string
         }
         Relationships: []
       }
