@@ -2603,6 +2603,10 @@ export type Database = {
         }[]
       }
       get_broadcast_radius_km: { Args: never; Returns: number }
+      get_customer_auth_id_by_phone: {
+        Args: { _phone: string }
+        Returns: string
+      }
       get_eligible_experts_for_booking: {
         Args: { p_booking_id: string }
         Returns: {
