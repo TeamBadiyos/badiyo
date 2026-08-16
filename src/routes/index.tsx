@@ -21,12 +21,13 @@ import { prefetchHomeData } from "@/lib/homeData";
 import { LoginScreen } from "@/components/LoginScreen";
 
 // --- Lazy: every other screen loads on demand. ---
-const lazyNamed = <T extends Record<string, unknown>, K extends keyof T>(
-  loader: () => Promise<T>,
-  key: K,
-) =>
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  lazy(() => loader().then((m) => ({ default: m[key] as any })));
+function lazyNamed<M, K extends keyof M>(loader: () => Promise<M>, key: K) {
+  type P = M[K] extends ComponentType<infer Props> ? Props : never;
+  return lazy<ComponentType<P>>(() =>
+    loader().then((m) => ({ default: m[key] as unknown as ComponentType<P> })),
+  );
+}
+
 
 const HomeScreen = lazyNamed(() => import("@/components/HomeScreen"), "HomeScreen");
 const OtpVerifyScreen = lazyNamed(() => import("@/components/OtpVerifyScreen"), "OtpVerifyScreen");
