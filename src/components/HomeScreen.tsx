@@ -18,6 +18,7 @@ import {
 } from "@/lib/segments";
 import { ServiceProductCard } from "./home/ServiceProductCard";
 import { SectionHeading } from "./SectionHeading";
+import { BrandWatermark } from "./BrandWatermark";
 import { anchorPrice } from "@/lib/price";
 import { useT } from "@/i18n";
 import { toast } from "sonner";
