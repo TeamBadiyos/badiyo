@@ -195,8 +195,22 @@ export function SlotSelectionScreen({
             aria-label={t("common.back")}
             className="absolute left-4 top-4 flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card shadow-card-m safe-top"
           >
-            <ArrowLeft className="h-5 w-5 text-foreground" />
+            {/* Inline SVG so the glyph paints in the same frame as the circle. */}
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+              className="h-5 w-5 text-foreground"
+            >
+              <path d="M19 12H5" />
+              <path d="m12 19-7-7 7-7" />
+            </svg>
           </button>
+
         </div>
 
         <div className="px-5 pt-4">
