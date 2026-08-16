@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ArrowLeft, Clock } from "lucide-react";
+import { ArrowLeft, Clock, Info } from "lucide-react";
 import {
   getAllHourSlots,
   isHourBookable,
@@ -7,6 +7,7 @@ import {
 } from "@/lib/hourSlots";
 import { useT } from "@/i18n";
 import { hapticSelection } from "@/lib/haptics";
+import { WhatsIncludedSheet } from "./WhatsIncludedSheet";
 
 export type SelectedService = {
   duration_label: string;
@@ -16,6 +17,7 @@ export type SelectedService = {
   icon: string | null;
   segment_id?: string | null;
   segment_name?: string | null;
+  task_slug?: string | null;
 };
 
 export type SelectedSlot =
@@ -56,6 +58,7 @@ export function SlotSelectionScreen({
   const allSlots = useMemo(getAllHourSlots, []);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [selectedHour, setSelectedHour] = useState<number | null>(null);
+  const [includedOpen, setIncludedOpen] = useState(false);
 
   const visibleSlots = useMemo(() => {
     if (!selectedDay) return allSlots;
@@ -81,7 +84,15 @@ export function SlotSelectionScreen({
           </h1>
         </div>
 
-        <div className="mt-6 grid grid-cols-2 gap-2 rounded-[14px] border border-border bg-card p-1">
+        <button
+          onClick={() => setIncludedOpen(true)}
+          className="mt-4 flex w-full items-center gap-2 rounded-[14px] border border-primary/40 bg-primary/5 px-4 py-3 text-left"
+        >
+          <Info className="h-4 w-4 shrink-0 text-primary" />
+          <span className="text-sm font-bold text-primary">{t("included.link")}</span>
+        </button>
+
+        <div className="mt-4 grid grid-cols-2 gap-2 rounded-[14px] border border-border bg-card p-1">
           {(["now", "later"] as Mode[]).map((m) => (
             <button
               key={m}
@@ -184,6 +195,13 @@ export function SlotSelectionScreen({
           </>
         )}
       </div>
+
+      <WhatsIncludedSheet
+        open={includedOpen}
+        segmentId={service.segment_id ?? null}
+        taskSlug={service.task_slug ?? null}
+        onClose={() => setIncludedOpen(false)}
+      />
 
       <div className="fixed inset-x-0 bottom-0 z-10 border-t border-border bg-card safe-bottom">
         <div className="mx-auto w-full max-w-md px-5 py-4">

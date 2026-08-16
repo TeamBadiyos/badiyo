@@ -6,6 +6,7 @@ import { BadiyoLogo } from "./BadiyoLogo";
 import { BottomNav } from "./BottomNav";
 import { LocationPickerSheet, type SavedAddress } from "./LocationPickerSheet";
 import { ServicesBar } from "./home/ServicesBar";
+import { WhatsIncludedSheet } from "./WhatsIncludedSheet";
 import { supabase } from "@/integrations/supabase/client";
 import { useAvatarUrl } from "@/lib/useAvatarUrl";
 import { fetchSegmentServices, fetchSegments, type Segment, type SegmentService } from "@/lib/segments";
@@ -45,18 +46,23 @@ async function fetchSections(): Promise<HomepageSection[]> {
   return (data ?? []) as HomepageSection[];
 }
 
-const EXPERT_TILES: { image: string; labelKey: TranslationKey }[] = [
-  { image: expertHouse, labelKey: "home.tile.houseCleaning" },
-  { image: expertDusting, labelKey: "home.tile.dusting" },
-  { image: expertDishes, labelKey: "home.tile.dishes" },
+const EXPERT_TILES: { image: string; labelKey: TranslationKey; slug: string }[] = [
+  { image: expertHouse, labelKey: "home.tile.houseCleaning", slug: "house-cleaning" },
+  { image: expertDusting, labelKey: "home.tile.dusting", slug: "dusting-wiping" },
+  { image: expertDishes, labelKey: "home.tile.dishes", slug: "cleaning-dishes" },
 ];
 
-function ExpertTiles() {
+function ExpertTiles({ onOpenTask }: { onOpenTask: (slug: string) => void }) {
   const t = useT();
   return (
     <div className="mt-5 grid grid-cols-3 gap-4">
       {EXPERT_TILES.map((tile) => (
-        <div key={tile.labelKey} className="flex flex-col">
+        <button
+          type="button"
+          key={tile.labelKey}
+          onClick={() => onOpenTask(tile.slug)}
+          className="flex flex-col text-left transition active:scale-[0.98]"
+        >
           <div className="aspect-square overflow-hidden rounded-[16px] bg-muted">
             <img
               src={tile.image}
@@ -67,10 +73,10 @@ function ExpertTiles() {
               className="h-full w-full object-cover"
             />
           </div>
-          <p className="mt-2 text-center text-xs font-semibold text-foreground leading-tight">
+          <p className="mt-2 w-full text-center text-xs font-semibold text-foreground leading-tight">
             {t(tile.labelKey)}
           </p>
-        </div>
+        </button>
       ))}
     </div>
   );
@@ -199,6 +205,8 @@ export function HomeScreen({
   const [activeAddress, setActiveAddress] = useState<SavedAddress | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeSegmentId, setActiveSegmentId] = useState<string | null>(null);
+  const [includedSlug, setIncludedSlug] = useState<string | null>(null);
+  const [includedOpen, setIncludedOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -227,6 +235,21 @@ export function HomeScreen({
   const activeSegment = segments.find((s) => s.id === activeSegmentId) ?? null;
   const servicesFor = (segment: Segment) =>
     services.filter((s) => s.segment_id === segment.id);
+
+  const cleanSegment =
+    activeSegment ??
+    segments.find((s) => s.slug?.toLowerCase().includes("clean")) ??
+    segments[0] ??
+    null;
+  const tileService = cleanSegment ? servicesFor(cleanSegment)[0] ?? null : null;
+  const bookFromSheet = () => {
+    setIncludedOpen(false);
+    if (tileService) onBookService?.(toPayload(tileService, cleanSegment));
+  };
+  const openIncluded = (slug: string) => {
+    setIncludedSlug(slug);
+    setIncludedOpen(true);
+  };
 
   return (
     <main className="min-h-screen w-full bg-background pb-28 momentum-scroll">
@@ -294,6 +317,7 @@ export function HomeScreen({
             segment={activeSegment}
             services={servicesFor(activeSegment)}
             onBookService={onBookService}
+            onOpenTask={openIncluded}
           />
         ) : (
           <div className="mt-2">
@@ -332,7 +356,7 @@ export function HomeScreen({
             <h2 className="mt-8 text-xl font-extrabold tracking-tight text-foreground">
               {t("home.oneExpert")}
             </h2>
-            <ExpertTiles />
+            <ExpertTiles onOpenTask={openIncluded} />
           </div>
         )}
 
@@ -365,6 +389,15 @@ export function HomeScreen({
         onRewards={onOpenRewards ?? (() => {})}
       />
 
+      <WhatsIncludedSheet
+        open={includedOpen}
+        segmentId={cleanSegment?.id ?? null}
+        taskSlug={includedSlug}
+        onClose={() => setIncludedOpen(false)}
+        onSchedule={tileService ? bookFromSheet : undefined}
+        onBookInstant={tileService ? bookFromSheet : undefined}
+      />
+
       <LocationPickerSheet
         open={locationSheetOpen}
         activeId={activeAddress?.id ?? null}
@@ -387,10 +420,12 @@ function SegmentView({
   segment,
   services,
   onBookService,
+  onOpenTask,
 }: {
   segment: Segment;
   services: SegmentService[];
   onBookService?: (s: BookServicePayload) => void;
+  onOpenTask: (slug: string) => void;
 }) {
   const t = useT();
   if (segment.display_template !== "CATEGORY_FIRST") {
@@ -424,7 +459,7 @@ function SegmentView({
       <h2 className="mt-6 text-xl font-extrabold tracking-tight text-foreground">
         {t("home.oneExpert")}
       </h2>
-      <ExpertTiles />
+      <ExpertTiles onOpenTask={onOpenTask} />
     </>
   );
 }
