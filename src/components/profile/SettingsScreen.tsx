@@ -29,12 +29,6 @@ export function SettingsScreen({
     { key: "devices", label: t("settings.devices"), icon: Smartphone, onClick: onOpenDevices },
   ];
 
-  const legalItems = [
-    { key: "privacy", label: t("legal.privacy"), icon: Shield, onClick: () => onOpenLegal("privacy-policy") },
-    { key: "terms", label: t("legal.terms"), icon: ScrollText, onClick: () => onOpenLegal("terms") },
-    { key: "refund", label: t("legal.refund"), icon: ReceiptText, onClick: () => onOpenLegal("refund-policy") },
-    { key: "about", label: "About badiyos", icon: Bell, onClick: onOpenAbout },
-  ];
 
   return (
     <main className="min-h-screen w-full bg-background pb-10">
