@@ -10,10 +10,12 @@ declare global {
   interface Window {
     google?: any;
     __badiyoInitMap?: () => void;
+    gm_authFailure?: () => void;
   }
 }
 
 let mapsLoaderPromise: Promise<void> | null = null;
+export let mapsAuthFailed = false;
 
 export function getMapsBrowserKey(): string | undefined {
   return import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY as
