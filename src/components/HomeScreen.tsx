@@ -319,7 +319,8 @@ export function HomeScreen({
                       key={category.id}
                       category={category}
                       services={servicesForCategory(category).slice(0, 3)}
-                      onBook={(s) => onBookService?.(toPayload(s, segment))}
+                      onViewDetail={(s) => onBookService?.(toPayload(s, segment))}
+                      onAdd={addToBooking}
                     />
                   ))}
                 </section>
@@ -446,11 +447,13 @@ function SegmentView({
 function CategoryRow({
   category,
   services,
-  onBook,
+  onViewDetail,
+  onAdd,
 }: {
   category: ServiceCategory;
   services: SegmentService[];
-  onBook: (s: SegmentService) => void;
+  onViewDetail: (s: SegmentService) => void;
+  onAdd: (s: SegmentService) => void;
 }) {
   return (
     <div className="mt-4">
@@ -468,7 +471,8 @@ function CategoryRow({
               imageUrl: s.image_url,
               durationMinutes: s.pricing_type === "flat" ? null : s.duration_minutes,
             }}
-            onAdd={() => onBook(s)}
+            onViewDetail={() => onViewDetail(s)}
+            onAdd={() => onAdd(s)}
           />
         ))}
       </div>
