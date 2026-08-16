@@ -19,6 +19,7 @@ export function MediaGallery({
   const trackRef = useRef<HTMLDivElement | null>(null);
 
   if (items.length === 0) return null;
+  const single = items.length === 1;
 
   return (
     <div className="w-full">
@@ -29,13 +30,17 @@ export function MediaGallery({
           const idx = Math.round(el.scrollLeft / Math.max(1, el.clientWidth));
           if (idx !== active) setActive(idx);
         }}
-        className="momentum-scroll flex w-full snap-x snap-mandatory overflow-x-auto"
+        className={`momentum-scroll flex w-full ${
+          single ? "overflow-hidden" : "snap-x snap-mandatory overflow-x-auto"
+        }`}
         style={{ scrollbarWidth: "none" }}
       >
         {items.map((item, i) => (
           <div
             key={`${item.url}-${i}`}
-            className="brand-grade aspect-[4/3] w-full shrink-0 snap-center overflow-hidden bg-muted"
+            className={`brand-grade aspect-square w-full shrink-0 overflow-hidden bg-muted ${
+              single ? "" : "snap-center"
+            }`}
           >
             {item.kind === "video" ? (
               <video
@@ -43,7 +48,7 @@ export function MediaGallery({
                 controls
                 playsInline
                 preload="metadata"
-                className="h-full w-full object-cover"
+                className="h-full w-full object-contain"
               />
             ) : (
               <img
@@ -51,12 +56,13 @@ export function MediaGallery({
                 alt={alt}
                 loading={i === 0 ? "eager" : "lazy"}
                 decoding="async"
-                className="h-full w-full object-cover"
+                className="h-full w-full object-contain"
               />
             )}
           </div>
         ))}
       </div>
+
 
       {items.length > 1 && (
         <div className="mt-3 flex items-center justify-center gap-1.5">
