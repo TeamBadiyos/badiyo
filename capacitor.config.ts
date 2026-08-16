@@ -1,3 +1,9 @@
+// ⚠️ HIGH RISK OF REVERT ⚠️
+// This file has silently reverted during syncs before, taking the status-bar
+// fix with it. Guarded by src/__tests__/capacitor-config.test.ts — if that test
+// fails, this file lost `plugins.StatusBar.overlaysWebView: false`, the green
+// background colors, or the `user.badiyos.com` server hostname. Re-apply rather
+// than relaxing the test.
 import type { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
