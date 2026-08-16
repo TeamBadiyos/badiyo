@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Search, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { anchorPrice } from "@/lib/price";
 
 type Service = {
   id: string;
