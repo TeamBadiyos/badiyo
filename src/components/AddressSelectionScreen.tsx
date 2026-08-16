@@ -258,57 +258,105 @@ export function AddressSelectionScreen({
                         label: "Delete",
                         icon: <Trash2 className="h-4 w-4" />,
                         className: "bg-destructive text-white",
-                        onAction: () => deleteAddress(a.id),
+                        onAction: () => setConfirmDelete(a),
                       },
                     ]}
                   >
-                    <button
-                      onClick={() => {
-                        void hapticSelection();
-                        setSelectedId(a.id);
-                      }}
-                      className={`flex w-full items-start gap-3 rounded-[18px] border p-4 text-left transition ${
+                    <div
+                      className={`relative rounded-[18px] border transition ${
                         active
                           ? "border-primary bg-primary/5"
                           : "border-border bg-card"
                       }`}
                     >
-                      {a.landmark_photo_url ? (
-                        <img
-                          src={a.landmark_photo_url}
-                          alt={a.label || "Home"}
-                          className="h-10 w-10 shrink-0 rounded-full border border-border object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] bg-primary/10">
-                          <Home className="h-5 w-5 text-primary" />
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-bold text-foreground">
-                          {a.label || t("address.fallbackLabel")}
-                        </div>
-                        <div className="mt-0.5 text-sm text-muted-foreground line-clamp-2 selectable">
-                          {a.full_address}
-                        </div>
-                        {a.area && (
-                          <div className="mt-0.5 text-xs text-muted-foreground/80">
-                            {a.area}
+                      <button
+                        onClick={() => {
+                          void hapticSelection();
+                          setSelectedId(a.id);
+                        }}
+                        className="flex w-full items-start gap-3 p-4 pr-12 text-left"
+                      >
+                        {a.landmark_photo_url ? (
+                          <img
+                            src={a.landmark_photo_url}
+                            alt={a.label || "Home"}
+                            className="h-10 w-10 shrink-0 rounded-full border border-border object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] bg-primary/10">
+                            <Home className="h-5 w-5 text-primary" />
                           </div>
                         )}
-                      </div>
-                      <span
-                        aria-hidden
-                        className={`mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${
-                          active ? "border-primary" : "border-border"
-                        }`}
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-bold text-foreground">
+                            {a.label || t("address.fallbackLabel")}
+                          </div>
+                          <div className="mt-0.5 text-sm text-muted-foreground line-clamp-2 selectable">
+                            {a.full_address}
+                          </div>
+                          {a.area && (
+                            <div className="mt-0.5 text-xs text-muted-foreground/80">
+                              {a.area}
+                            </div>
+                          )}
+                        </div>
+                        <span
+                          aria-hidden
+                          className={`mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${
+                            active ? "border-primary" : "border-border"
+                          }`}
+                        >
+                          {active && (
+                            <span className="h-2.5 w-2.5 rounded-full bg-primary" />
+                          )}
+                        </span>
+                      </button>
+
+                      {/* Per-address actions */}
+                      <button
+                        type="button"
+                        aria-label="Address options"
+                        onClick={() => {
+                          void hapticSelection();
+                          setMenuFor((cur) => (cur === a.id ? null : a.id));
+                        }}
+                        className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground active:bg-muted"
                       >
-                        {active && (
-                          <span className="h-2.5 w-2.5 rounded-full bg-primary" />
-                        )}
-                      </span>
-                    </button>
+                        <MoreVertical className="h-4 w-4" />
+                      </button>
+                      {menuFor === a.id && (
+                        <>
+                          <div
+                            className="fixed inset-0 z-10"
+                            onClick={() => setMenuFor(null)}
+                          />
+                          <div className="absolute right-2 top-11 z-20 w-36 overflow-hidden rounded-[14px] border border-border bg-card shadow-lg">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setMenuFor(null);
+                                setEditing(a);
+                              }}
+                              className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm font-semibold text-foreground active:bg-muted"
+                            >
+                              <Pencil className="h-4 w-4" /> Edit
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setMenuFor(null);
+                                setConfirmDelete(a);
+                              }}
+                              className="flex w-full items-center gap-2 border-t border-border px-3 py-2.5 text-left text-sm font-semibold text-destructive active:bg-muted"
+                            >
+                              <Trash2 className="h-4 w-4" /> Delete
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
                   </SwipeableRow>
+
                 );
               })}
 
