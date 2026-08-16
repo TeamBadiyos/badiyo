@@ -6,14 +6,18 @@ import { captureReferralCode } from "@/lib/referrals";
 import { getErrorMessage } from "@/lib/errorMessage";
 import { hapticImpact } from "@/lib/haptics";
 import { hasLoginPin as checkHasLoginPin } from "@/lib/auth.functions";
+import { LegalConsentText } from "./LegalConsentText";
+import type { LegalSlug } from "./profile/LegalPageScreen";
 
 
 export function LoginScreen({
   onOtpSent,
   onPinLogin,
+  onOpenLegal,
 }: {
   onOtpSent?: (phone: string) => void;
   onPinLogin?: (phone: string) => void;
+  onOpenLegal?: (slug: LegalSlug) => void;
 } = {}) {
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
@@ -158,9 +162,7 @@ export function LoginScreen({
           Continue with Google
         </button>
 
-        <p className="mt-auto pt-10 text-center text-xs text-muted-foreground">
-          By continuing, you agree to badiyos' Terms & Privacy Policy.
-        </p>
+        <LegalConsentText onOpenLegal={onOpenLegal} className="mt-auto pt-10" />
       </div>
     </main>
   );
