@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, lazy, useCallback, useEffect, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   initNativeBackButton,
@@ -11,61 +12,146 @@ import { useEdgeSwipeBack } from "@/lib/useEdgeSwipeBack";
 import { initStatusBar } from "@/lib/statusBar";
 
 import { BadiyoLogo } from "@/components/BadiyoLogo";
-import {
-  NotServiceableScreen,
-  type NotServiceableLocation,
-} from "@/components/NotServiceableScreen";
+import type { NotServiceableLocation } from "@/components/NotServiceableScreen";
 import { checkServiceability } from "@/lib/serviceability";
 import { hasLoginPin } from "@/lib/auth.functions";
+import { prefetchHomeData } from "@/lib/homeData";
 
+// --- Eager: only what the very first paint needs (splash → login). ---
 import { LoginScreen } from "@/components/LoginScreen";
-import { OtpVerifyScreen } from "@/components/OtpVerifyScreen";
-import { PinLoginScreen } from "@/components/PinLoginScreen";
-import { PinSetScreen } from "@/components/PinSetScreen";
-import { HomeScreen } from "@/components/HomeScreen";
-import {
-  SlotSelectionScreen,
-  type SelectedService,
-  type SelectedSlot,
-} from "@/components/SlotSelectionScreen";
-import {
-  AddressSelectionScreen,
-} from "@/components/AddressSelectionScreen";
-import {
-  BookingSummaryScreen,
-  type SelectedAddress,
-} from "@/components/BookingSummaryScreen";
-import { PaymentScreen } from "@/components/PaymentScreen";
-import { ExpertAssignedScreen } from "@/components/tracking/ExpertAssignedScreen";
-import { SearchingForExpertScreen } from "@/components/tracking/SearchingForExpertScreen";
-import { OtpScreen } from "@/components/tracking/OtpScreen";
-import { ServiceInProgressScreen } from "@/components/tracking/ServiceInProgressScreen";
-import { RateReviewScreen } from "@/components/tracking/RateReviewScreen";
-import { MyBookingsScreen, ACTIVE_TRACKING_STATUSES, type BookingRow } from "@/components/MyBookingsScreen";
-import { BookingDetailsScreen } from "@/components/BookingDetailsScreen";
-import { ProfileScreen } from "@/components/ProfileScreen";
-import { WalletScreen } from "@/components/WalletScreen";
-import { RewardsScreen } from "@/components/RewardsScreen";
-import { EditProfileScreen } from "@/components/profile/EditProfileScreen";
-import { NotificationsScreen } from "@/components/profile/NotificationsScreen";
-import { SettingsScreen } from "@/components/profile/SettingsScreen";
-import { HelpSupportScreen } from "@/components/profile/HelpSupportScreen";
-import { AboutScreen } from "@/components/profile/AboutScreen";
-import { LegalPageScreen, type LegalSlug } from "@/components/profile/LegalPageScreen";
-import { ActiveDevicesScreen } from "@/components/profile/ActiveDevicesScreen";
-import { LanguageScreen } from "@/components/profile/LanguageScreen";
-import { DeviceLimitScreen } from "@/components/DeviceLimitScreen";
+
+// --- Lazy: every other screen loads on demand. ---
+const lazyNamed = <T extends Record<string, unknown>, K extends keyof T>(
+  loader: () => Promise<T>,
+  key: K,
+) =>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  lazy(() => loader().then((m) => ({ default: m[key] as any })));
+
+const HomeScreen = lazyNamed(() => import("@/components/HomeScreen"), "HomeScreen");
+const OtpVerifyScreen = lazyNamed(() => import("@/components/OtpVerifyScreen"), "OtpVerifyScreen");
+const PinLoginScreen = lazyNamed(() => import("@/components/PinLoginScreen"), "PinLoginScreen");
+const PinSetScreen = lazyNamed(() => import("@/components/PinSetScreen"), "PinSetScreen");
+const NotServiceableScreen = lazyNamed(
+  () => import("@/components/NotServiceableScreen"),
+  "NotServiceableScreen",
+);
+const SlotSelectionScreen = lazyNamed(
+  () => import("@/components/SlotSelectionScreen"),
+  "SlotSelectionScreen",
+);
+const AddressSelectionScreen = lazyNamed(
+  () => import("@/components/AddressSelectionScreen"),
+  "AddressSelectionScreen",
+);
+const BookingSummaryScreen = lazyNamed(
+  () => import("@/components/BookingSummaryScreen"),
+  "BookingSummaryScreen",
+);
+const PaymentScreen = lazyNamed(() => import("@/components/PaymentScreen"), "PaymentScreen");
+const ExpertAssignedScreen = lazyNamed(
+  () => import("@/components/tracking/ExpertAssignedScreen"),
+  "ExpertAssignedScreen",
+);
+const SearchingForExpertScreen = lazyNamed(
+  () => import("@/components/tracking/SearchingForExpertScreen"),
+  "SearchingForExpertScreen",
+);
+const OtpScreen = lazyNamed(() => import("@/components/tracking/OtpScreen"), "OtpScreen");
+const ServiceInProgressScreen = lazyNamed(
+  () => import("@/components/tracking/ServiceInProgressScreen"),
+  "ServiceInProgressScreen",
+);
+const RateReviewScreen = lazyNamed(
+  () => import("@/components/tracking/RateReviewScreen"),
+  "RateReviewScreen",
+);
+const MyBookingsScreen = lazyNamed(
+  () => import("@/components/MyBookingsScreen"),
+  "MyBookingsScreen",
+);
+const BookingDetailsScreen = lazyNamed(
+  () => import("@/components/BookingDetailsScreen"),
+  "BookingDetailsScreen",
+);
+const ProfileScreen = lazyNamed(() => import("@/components/ProfileScreen"), "ProfileScreen");
+const WalletScreen = lazyNamed(() => import("@/components/WalletScreen"), "WalletScreen");
+const RewardsScreen = lazyNamed(() => import("@/components/RewardsScreen"), "RewardsScreen");
+const EditProfileScreen = lazyNamed(
+  () => import("@/components/profile/EditProfileScreen"),
+  "EditProfileScreen",
+);
+const NotificationsScreen = lazyNamed(
+  () => import("@/components/profile/NotificationsScreen"),
+  "NotificationsScreen",
+);
+const SettingsScreen = lazyNamed(
+  () => import("@/components/profile/SettingsScreen"),
+  "SettingsScreen",
+);
+const HelpSupportScreen = lazyNamed(
+  () => import("@/components/profile/HelpSupportScreen"),
+  "HelpSupportScreen",
+);
+const AboutScreen = lazyNamed(() => import("@/components/profile/AboutScreen"), "AboutScreen");
+const LegalPageScreen = lazyNamed(
+  () => import("@/components/profile/LegalPageScreen"),
+  "LegalPageScreen",
+);
+const ActiveDevicesScreen = lazyNamed(
+  () => import("@/components/profile/ActiveDevicesScreen"),
+  "ActiveDevicesScreen",
+);
+const LanguageScreen = lazyNamed(
+  () => import("@/components/profile/LanguageScreen"),
+  "LanguageScreen",
+);
+const DeviceLimitScreen = lazyNamed(
+  () => import("@/components/DeviceLimitScreen"),
+  "DeviceLimitScreen",
+);
+const ReferralDashboardScreen = lazyNamed(
+  () => import("@/components/ReferralDashboardScreen"),
+  "ReferralDashboardScreen",
+);
+const PaymentMethodsScreen = lazyNamed(
+  () => import("@/components/profile/PaymentMethodsScreen"),
+  "PaymentMethodsScreen",
+);
+const SearchResultsScreen = lazyNamed(
+  () => import("@/components/SearchResultsScreen"),
+  "SearchResultsScreen",
+);
+const OrdersScreen = lazyNamed(() => import("@/components/OrdersScreen"), "OrdersScreen");
+const NoInternetScreen = lazyNamed(
+  () => import("@/components/utility/NoInternetScreen"),
+  "NoInternetScreen",
+);
+const ForceUpdateScreen = lazyNamed(
+  () => import("@/components/utility/ForceUpdateScreen"),
+  "ForceUpdateScreen",
+);
+
+import type { SelectedService, SelectedSlot } from "@/components/SlotSelectionScreen";
+import type { SelectedAddress } from "@/components/BookingSummaryScreen";
+import type { BookingRow } from "@/components/MyBookingsScreen";
+import type { LegalSlug } from "@/components/profile/LegalPageScreen";
+import { ACTIVE_TRACKING_STATUSES } from "@/lib/bookingStatus";
 import { registerThisDevice, type DeviceSession } from "@/lib/devices";
-import { ReferralDashboardScreen } from "@/components/ReferralDashboardScreen";
-import { PaymentMethodsScreen } from "@/components/profile/PaymentMethodsScreen";
-import { SearchResultsScreen } from "@/components/SearchResultsScreen";
-import { OrdersScreen } from "@/components/OrdersScreen";
-import { NoInternetScreen } from "@/components/utility/NoInternetScreen";
-import { ForceUpdateScreen } from "@/components/utility/ForceUpdateScreen";
 import { ensureUserRow } from "@/lib/ensureUserRow";
 import { registerPushForCurrentUser, setPushNavigator } from "@/lib/push";
 import { APP_VERSION, fetchMinSupportedVersion, isBelow } from "@/lib/version";
 import { supabase } from "@/integrations/supabase/client";
+
+/** Full-screen brand placeholder shown while a lazy screen chunk loads. */
+function ScreenFallback() {
+  return (
+    <div className="flex min-h-screen w-full items-center justify-center bg-background">
+      <div className="h-9 w-9 animate-spin rounded-full border-[3px] border-primary/25 border-t-primary" />
+    </div>
+  );
+}
+
 
 
 export const Route = createFileRoute("/")({
