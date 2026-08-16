@@ -415,10 +415,15 @@ function SegmentView({
         {t("home.scheduleHint")}
       </p>
 
-      <SectionHeading size="lg" className="mt-7">
-        {t("home.oneExpert")}
-      </SectionHeading>
-      <ExpertTiles onOpenTask={onOpenTask} />
+      {segment.slug?.toLowerCase().includes("clean") && (
+        <>
+          <SectionHeading size="lg" className="mt-7">
+            {t("home.oneExpert")}
+          </SectionHeading>
+          <ExpertTiles onOpenTask={onOpenTask} />
+        </>
+      )}
+
     </>
   );
 }
