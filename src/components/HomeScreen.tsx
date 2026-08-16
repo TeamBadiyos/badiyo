@@ -363,21 +363,21 @@ export function HomeScreen({
           </div>
         )}
 
-        {/* Promo banner */}
+        {/* Promo banner — high-emphasis solid brand highlight */}
         {promo && (
           <button
             onClick={onOpenRewards}
-            className="promo-texture surface-tint mt-10 flex w-full items-center gap-3 overflow-hidden rounded-[18px] border border-primary/15 p-4 text-left shadow-card-m transition active:scale-[0.98]"
+            className="promo-texture-on-brand surface-brand mt-6 flex w-full items-center gap-3 overflow-hidden rounded-[18px] p-4 text-left shadow-card-m transition active:scale-[0.98]"
           >
-            <div className="icon-disc flex h-11 w-11 shrink-0 items-center justify-center rounded-full">
-              <Icon name={promo.payload?.icon} className="h-5 w-5 text-primary" />
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-foreground/15">
+              <Icon name={promo.payload?.icon} className="h-5 w-5 text-primary-foreground" />
             </div>
-            <p className="flex-1 text-sm font-semibold text-foreground leading-snug">
+            <p className="flex-1 text-sm font-bold text-primary-foreground leading-snug">
               {promo.payload?.text}
             </p>
             <span
               aria-hidden="true"
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-foreground text-primary"
             >
               →
             </span>
