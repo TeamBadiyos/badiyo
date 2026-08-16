@@ -43,10 +43,8 @@ export function ProfileScreen({
   onOpenNotifications: () => void;
   onOpenSettings: () => void;
   onOpenHelp: () => void;
-  onOpenAbout: () => void;
   onOpenReferrals: () => void;
   onOpenPaymentMethods: () => void;
-  onOpenLegal: (slug: LegalSlug) => void;
   onLogout: () => void;
 }) {
 
