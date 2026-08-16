@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { serviceImageUrl, serviceImageUrls } from "@/lib/serviceImage";
 
 export type DisplayTemplate = "CATEGORY_FIRST" | "STORE_FIRST" | "SEARCH_FIRST" | (string & {});
 
@@ -71,7 +72,10 @@ export async function fetchServiceCategories(): Promise<ServiceCategory[]> {
     .eq("is_active", true)
     .order("rank", { ascending: true });
   if (error) throw error;
-  return (data ?? []) as ServiceCategory[];
+  return ((data ?? []) as ServiceCategory[]).map((c) => ({
+    ...c,
+    icon_url: serviceImageUrl(c.icon_url),
+  }));
 }
 
 /**
@@ -115,13 +119,13 @@ export async function fetchSegmentServices(): Promise<SegmentService[]> {
         display_order: o.display_order ?? svc.display_order ?? null,
         segment_id: svc.service_categories?.segment_id ?? null,
         service_category_id: svc.category_id ?? null,
-        image_url: svc.image_url ?? svc.service_categories?.icon_url ?? null,
+        image_url: serviceImageUrl(svc.image_url ?? svc.service_categories?.icon_url),
         pricing_type: svc.pricing_type,
         service_name: svc.name,
         description: o.description ?? svc.description ?? null,
-        gallery_urls: list(o.gallery_urls).length
-          ? list(o.gallery_urls)
-          : list(svc.gallery_urls),
+        gallery_urls: serviceImageUrls(
+          list(o.gallery_urls).length ? list(o.gallery_urls) : list(svc.gallery_urls),
+        ),
         video_url: o.video_url ?? svc.video_url ?? null,
         inclusions: list(o.inclusions).length ? list(o.inclusions) : list(svc.inclusions),
         exclusions: list(o.exclusions).length ? list(o.exclusions) : list(svc.exclusions),
