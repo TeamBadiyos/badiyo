@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as InviteCodeRouteImport } from './routes/invite.$code'
+import { Route as ApiPublicReverseGeocodeRouteImport } from './routes/api/public/reverse-geocode'
 import { Route as ApiPublicHasLoginPinRouteImport } from './routes/api/public/has-login-pin'
 
 const IndexRoute = IndexRouteImport.update({
@@ -23,6 +24,11 @@ const InviteCodeRoute = InviteCodeRouteImport.update({
   path: '/invite/$code',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicReverseGeocodeRoute = ApiPublicReverseGeocodeRouteImport.update({
+  id: '/api/public/reverse-geocode',
+  path: '/api/public/reverse-geocode',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHasLoginPinRoute = ApiPublicHasLoginPinRouteImport.update({
   id: '/api/public/has-login-pin',
   path: '/api/public/has-login-pin',
@@ -33,30 +39,47 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/invite/$code': typeof InviteCodeRoute
   '/api/public/has-login-pin': typeof ApiPublicHasLoginPinRoute
+  '/api/public/reverse-geocode': typeof ApiPublicReverseGeocodeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/invite/$code': typeof InviteCodeRoute
   '/api/public/has-login-pin': typeof ApiPublicHasLoginPinRoute
+  '/api/public/reverse-geocode': typeof ApiPublicReverseGeocodeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/invite/$code': typeof InviteCodeRoute
   '/api/public/has-login-pin': typeof ApiPublicHasLoginPinRoute
+  '/api/public/reverse-geocode': typeof ApiPublicReverseGeocodeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/invite/$code' | '/api/public/has-login-pin'
+  fullPaths:
+    | '/'
+    | '/invite/$code'
+    | '/api/public/has-login-pin'
+    | '/api/public/reverse-geocode'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/invite/$code' | '/api/public/has-login-pin'
-  id: '__root__' | '/' | '/invite/$code' | '/api/public/has-login-pin'
+  to:
+    | '/'
+    | '/invite/$code'
+    | '/api/public/has-login-pin'
+    | '/api/public/reverse-geocode'
+  id:
+    | '__root__'
+    | '/'
+    | '/invite/$code'
+    | '/api/public/has-login-pin'
+    | '/api/public/reverse-geocode'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   InviteCodeRoute: typeof InviteCodeRoute
   ApiPublicHasLoginPinRoute: typeof ApiPublicHasLoginPinRoute
+  ApiPublicReverseGeocodeRoute: typeof ApiPublicReverseGeocodeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -75,6 +98,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InviteCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/reverse-geocode': {
+      id: '/api/public/reverse-geocode'
+      path: '/api/public/reverse-geocode'
+      fullPath: '/api/public/reverse-geocode'
+      preLoaderRoute: typeof ApiPublicReverseGeocodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/has-login-pin': {
       id: '/api/public/has-login-pin'
       path: '/api/public/has-login-pin'
@@ -89,6 +119,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   InviteCodeRoute: InviteCodeRoute,
   ApiPublicHasLoginPinRoute: ApiPublicHasLoginPinRoute,
+  ApiPublicReverseGeocodeRoute: ApiPublicReverseGeocodeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
