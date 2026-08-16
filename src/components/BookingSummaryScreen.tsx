@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { ArrowLeft, Clock, Calendar, Home as HomeIcon } from "lucide-react";
 import type { SelectedService, SelectedSlot } from "./SlotSelectionScreen";
 import { useT, type TFunction } from "@/i18n";
