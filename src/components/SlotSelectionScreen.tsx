@@ -193,7 +193,7 @@ export function SlotSelectionScreen({
           <button
             onClick={onBack}
             aria-label={t("common.back")}
-            className="absolute left-4 top-4 flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card shadow-card-m safe-top"
+            className="absolute left-4 top-4 flex h-9 w-9 items-center justify-center safe-top"
           >
             {/* Inline SVG so the glyph paints in the same frame as the circle. */}
             <svg
