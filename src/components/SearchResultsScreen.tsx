@@ -84,9 +84,9 @@ export function SearchResultsScreen({
               {results.map((s) => (
                 <article
                   key={s.id}
-                  className="flex items-center gap-4 rounded-[18px] border border-border bg-card p-4 shadow-sm"
+                  className="surface-tint flex items-center gap-4 rounded-[18px] border border-border p-4 shadow-card-m"
                 >
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                  <div className="icon-disc flex h-11 w-11 shrink-0 items-center justify-center rounded-full">
                     <Sparkles className="h-5 w-5 text-primary" />
                   </div>
                   <div className="flex min-w-0 flex-1 flex-col">
@@ -94,7 +94,14 @@ export function SearchResultsScreen({
                     {s.subtitle && (
                       <div className="text-xs text-muted-foreground">{s.subtitle}</div>
                     )}
-                    <div className="text-sm font-bold text-primary">Rs {Number(s.price)}</div>
+                    <div className="mt-0.5 flex items-baseline gap-1.5">
+                      <span className="text-[17px] font-bold tracking-[-0.02em] text-primary">
+                        Rs {Number(s.price)}
+                      </span>
+                      <span className="text-[11px] font-semibold text-muted-foreground line-through">
+                        Rs {anchorPrice(Number(s.price))}
+                      </span>
+                    </div>
                   </div>
                   <button
                     onClick={() =>
