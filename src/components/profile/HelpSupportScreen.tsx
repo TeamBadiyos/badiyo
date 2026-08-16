@@ -149,6 +149,26 @@ export function HelpSupportScreen({
           })}
         </section>
 
+        <h2 className="mt-8 text-sm font-bold text-foreground">{t("legal.section")}</h2>
+        <section className="mt-3 divide-y divide-border overflow-hidden rounded-[18px] border border-border bg-card shadow-sm">
+          {legalItems.map((it) => (
+            <button
+              key={it.key}
+              onClick={it.onClick}
+              className="flex w-full items-center gap-3 px-4 py-4 text-left transition active:bg-muted/40"
+            >
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10">
+                <it.icon className="h-4 w-4 text-primary" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-bold text-foreground">{it.label}</p>
+                <p className="truncate text-xs text-muted-foreground">{it.desc}</p>
+              </div>
+              <ChevronRight className="h-5 w-5 text-muted-foreground" />
+            </button>
+          ))}
+        </section>
+
         <h2 className="mt-8 text-sm font-bold text-foreground">Raise a ticket</h2>
         {ticketId ? (
           <section className="mt-3 flex flex-col items-center rounded-[18px] border border-border bg-card p-6 text-center shadow-sm">
