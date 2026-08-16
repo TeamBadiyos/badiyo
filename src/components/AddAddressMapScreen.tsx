@@ -1,13 +1,18 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Camera, Crosshair, Loader2, MapPin, Search, X } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
+import { toast } from "sonner";
 import {
   reverseGeocode,
   searchPlaces,
   getPlaceDetails,
   type PlaceSuggestion,
 } from "@/lib/geocode.functions";
-import { getCurrentCoords } from "@/lib/nativeGeolocation";
+import {
+  getCurrentCoords,
+  openAppSettings,
+  LocationPermissionError,
+} from "@/lib/nativeGeolocation";
 import { loadMapsScript } from "@/lib/googleMapsLoader";
 
 
@@ -22,34 +27,57 @@ export type PickedAddress = {
   photo: File | null;
 };
 
+/** Existing address being edited (map picker doubles as the edit flow). */
+export type EditableAddress = {
+  id: string;
+  label: string | null;
+  full_address: string;
+  latitude: number | null;
+  longitude: number | null;
+};
+
 type LatLng = { lat: number; lng: number };
 
 const DEFAULT_CENTER: LatLng = { lat: 18.4088, lng: 76.5604 }; // Latur
 const LABELS = ["Home", "Work", "Other"] as const;
 
-
-
+function splitExisting(full: string): { details: string; rest: string } {
+  const i = full.indexOf(",");
+  if (i === -1) return { details: full.trim(), rest: "" };
+  return { details: full.slice(0, i).trim(), rest: full.slice(i + 1).trim() };
+}
 
 export function AddAddressMapScreen({
   onBack,
   onSave,
   isSaving,
   error,
+  initial = null,
 }: {
   onBack: () => void;
   onSave: (a: PickedAddress) => void;
   isSaving: boolean;
   error: string | null;
+  initial?: EditableAddress | null;
 }) {
+  const initialSplit = initial ? splitExisting(initial.full_address) : null;
   const mapDivRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
-  const [center, setCenter] = useState<LatLng>(DEFAULT_CENTER);
+  const [center, setCenter] = useState<LatLng>(
+    initial?.latitude != null && initial?.longitude != null
+      ? { lat: Number(initial.latitude), lng: Number(initial.longitude) }
+      : DEFAULT_CENTER,
+  );
   const [mapReady, setMapReady] = useState(false);
-  const [autoAddress, setAutoAddress] = useState("");
+  const [autoAddress, setAutoAddress] = useState(initialSplit?.rest ?? "");
   const [area, setArea] = useState<string | null>(null);
   const [city, setCity] = useState<string | null>(null);
-  const [addressDetails, setAddressDetails] = useState("");
-  const [label, setLabel] = useState<(typeof LABELS)[number]>("Home");
+  const [addressDetails, setAddressDetails] = useState(
+    initialSplit?.details ?? "",
+  );
+  const [label, setLabel] = useState<(typeof LABELS)[number]>(
+    (LABELS.find((l) => l === initial?.label) ?? "Home") as (typeof LABELS)[number],
+  );
   const [editingAuto, setEditingAuto] = useState(false);
   const [locating, setLocating] = useState(false);
   const [geocoding, setGeocoding] = useState(false);
@@ -66,6 +94,8 @@ export function AddAddressMapScreen({
   const [suggestions, setSuggestions] = useState<PlaceSuggestion[]>([]);
   const [searching, setSearching] = useState(false);
   const skipGeocodeRef = useRef(false);
+  const [geocodeNonce, setGeocodeNonce] = useState(0);
+
 
   // Debounced place autocomplete
   useEffect(() => {
@@ -118,7 +148,7 @@ export function AddAddressMapScreen({
       .then(() => {
         if (cancelled || !mapDivRef.current || !window.google) return;
         const map = new window.google.maps.Map(mapDivRef.current, {
-          center: DEFAULT_CENTER,
+          center: centerRef.current,
           zoom: 16,
           disableDefaultUI: true,
           zoomControl: true,
@@ -139,6 +169,7 @@ export function AddAddressMapScreen({
             Math.abs(prev.lng - next.lng) < 1e-6
           )
             return;
+          console.info("[address] pin moved to", next);
           setCenter(next);
         });
       })
@@ -156,19 +187,30 @@ export function AddAddressMapScreen({
     const t = setTimeout(() => {
       setGeocoding(true);
       setGeocodeFailed(false);
+      console.info("[address] reverse geocoding", center);
       geocode({ data: center })
         .then((r) => {
           if (cancelled) return;
+          console.info("[address] reverse geocode ok:", r.formatted_address);
           if (!fromPlace) setAutoAddress(r.formatted_address);
           setArea(r.area);
           setCity(r.city);
         })
         .catch((e) => {
           if (cancelled) return;
-          console.error("Reverse geocode failed:", e);
+          console.error("[address] reverse geocode failed:", e);
           if (!fromPlace) {
             setAutoAddress("");
             setGeocodeFailed(true);
+            toast.error("Couldn't fetch the address for this pin.", {
+              description:
+                (e as Error)?.message?.slice(0, 140) ||
+                "Check your connection and try again.",
+              action: {
+                label: "Retry",
+                onClick: () => setGeocodeNonce((n) => n + 1),
+              },
+            });
           }
           setArea(null);
           setCity(null);
@@ -180,17 +222,43 @@ export function AddAddressMapScreen({
       cancelled = true;
       clearTimeout(t);
     };
-  }, [center, geocode]);
+  }, [center, geocode, geocodeNonce]);
 
   const useCurrentLocation = () => {
+    if (locating) return;
     setLocating(true);
+    console.info("[address] requesting current location");
     getCurrentCoords()
       .then((c) => {
+        console.info("[address] got coords", c);
         if (mapRef.current) mapRef.current.panTo(c);
         setCenter(c);
+
       })
-      .catch((err) => console.error(err))
+      .catch((err: unknown) => {
+        console.error("[address] location failed:", err);
+        const msg =
+          (err as Error)?.message || "Couldn't detect your location.";
+        if (err instanceof LocationPermissionError) {
+          toast.error("Location permission needed to detect your address", {
+            action: {
+              label: "Open settings",
+              onClick: () => {
+                void openAppSettings().then((ok) => {
+                  if (!ok)
+                    toast.info(
+                      "Enable Location for badiyos in your phone's app settings.",
+                    );
+                });
+              },
+            },
+          });
+        } else {
+          toast.error(msg);
+        }
+      })
       .finally(() => setLocating(false));
+
   };
 
   const canSave = addressDetails.trim().length > 0 && !isSaving;
@@ -460,7 +528,7 @@ export function AddAddressMapScreen({
                 : "bg-primary/30 text-primary-foreground/70"
             }`}
           >
-            {isSaving ? "Saving…" : "Save Address"}
+            {isSaving ? "Saving…" : initial ? "Update Address" : "Save Address"}
           </button>
         </div>
       </div>

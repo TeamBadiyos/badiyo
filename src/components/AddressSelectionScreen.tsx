@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Home, MapPin, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Home, MapPin, MoreVertical, Pencil, Plus, Trash2 } from "lucide-react";
 import { SwipeableRow } from "./SwipeableRow";
 import { hapticSelection, hapticImpact, hapticNotification } from "@/lib/haptics";
 import { toast } from "sonner";
@@ -54,22 +54,36 @@ export function AddressSelectionScreen({
     queryFn: fetchAddresses,
   });
 
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [editing, setEditing] = useState<Address | null>(null);
+  const [menuFor, setMenuFor] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<Address | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
   async function deleteAddress(id: string) {
     void hapticImpact("medium");
-    const { error } = await supabase.from("addresses").delete().eq("id", id);
+    setDeleting(true);
+    const { error } = await supabase.rpc("customer_delete_address", {
+      p_address_id: id,
+    });
+    setDeleting(false);
     if (error) {
+      console.error("[address] delete failed:", error);
       void hapticNotification("error");
       toast.error("Couldn't delete this address.");
       return;
     }
-    setSelectedId((cur) => (cur === id ? null : cur));
+    setConfirmDelete(null);
+    setMenuFor(null);
+    if (selectedId === id) {
+      setSelectedId(null);
+      toast.info("Pick another delivery address or detect your location.");
+    }
     void hapticNotification("success");
     toast.success("Address deleted");
     qc.invalidateQueries({ queryKey: ["addresses"] });
   }
-
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [sheetOpen, setSheetOpen] = useState(false);
 
   useEffect(() => {
     if (!selectedId && addresses.length > 0) {
@@ -77,6 +91,55 @@ export function AddressSelectionScreen({
       setSelectedId(def.id);
     }
   }, [addresses, selectedId]);
+
+  const editMutation = useMutation({
+    mutationFn: async (input: PickedAddress & { id: string }) => {
+      const { data: userData } = await supabase.auth.getUser();
+      const uid = userData.user?.id;
+      if (!uid) throw new Error("You need to sign in before saving an address.");
+
+      let photoUrl: string | null = null;
+      if (input.photo) {
+        const ext = (input.photo.name.split(".").pop() || "jpg").toLowerCase();
+        const path = `${uid}/${input.id}.${ext}`;
+        const { error: upErr } = await supabase.storage
+          .from("address-photos")
+          .upload(path, input.photo, {
+            upsert: true,
+            contentType: input.photo.type || "image/jpeg",
+          });
+        if (upErr) throw upErr;
+        photoUrl = supabase.storage.from("address-photos").getPublicUrl(path)
+          .data.publicUrl;
+      }
+
+      const { error } = await supabase.rpc("customer_update_address", {
+        p_address_id: input.id,
+        p_label: input.label,
+        p_full_address: input.full_address,
+        // The RPC accepts NULLs; generated types widen these to string.
+        p_area: input.area as unknown as string,
+        p_city: input.city as unknown as string,
+        p_latitude: input.latitude,
+        p_longitude: input.longitude,
+        p_landmark_photo_url: photoUrl ?? undefined,
+      });
+
+      if (error) throw error;
+      return input.id;
+    },
+    onSuccess: (id) => {
+      qc.invalidateQueries({ queryKey: ["addresses"] });
+      setSelectedId(id);
+      setEditing(null);
+      toast.success("Address updated");
+    },
+    onError: (e) => {
+      console.error("[address] update failed:", e);
+      toast.error("Couldn't update this address.");
+    },
+  });
+
 
   const addMutation = useMutation({
     mutationFn: async (input: PickedAddress) => {
@@ -195,57 +258,105 @@ export function AddressSelectionScreen({
                         label: "Delete",
                         icon: <Trash2 className="h-4 w-4" />,
                         className: "bg-destructive text-white",
-                        onAction: () => deleteAddress(a.id),
+                        onAction: () => setConfirmDelete(a),
                       },
                     ]}
                   >
-                    <button
-                      onClick={() => {
-                        void hapticSelection();
-                        setSelectedId(a.id);
-                      }}
-                      className={`flex w-full items-start gap-3 rounded-[18px] border p-4 text-left transition ${
+                    <div
+                      className={`relative rounded-[18px] border transition ${
                         active
                           ? "border-primary bg-primary/5"
                           : "border-border bg-card"
                       }`}
                     >
-                      {a.landmark_photo_url ? (
-                        <img
-                          src={a.landmark_photo_url}
-                          alt={a.label || "Home"}
-                          className="h-10 w-10 shrink-0 rounded-full border border-border object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] bg-primary/10">
-                          <Home className="h-5 w-5 text-primary" />
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-bold text-foreground">
-                          {a.label || t("address.fallbackLabel")}
-                        </div>
-                        <div className="mt-0.5 text-sm text-muted-foreground line-clamp-2 selectable">
-                          {a.full_address}
-                        </div>
-                        {a.area && (
-                          <div className="mt-0.5 text-xs text-muted-foreground/80">
-                            {a.area}
+                      <button
+                        onClick={() => {
+                          void hapticSelection();
+                          setSelectedId(a.id);
+                        }}
+                        className="flex w-full items-start gap-3 p-4 pr-12 text-left"
+                      >
+                        {a.landmark_photo_url ? (
+                          <img
+                            src={a.landmark_photo_url}
+                            alt={a.label || "Home"}
+                            className="h-10 w-10 shrink-0 rounded-full border border-border object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] bg-primary/10">
+                            <Home className="h-5 w-5 text-primary" />
                           </div>
                         )}
-                      </div>
-                      <span
-                        aria-hidden
-                        className={`mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${
-                          active ? "border-primary" : "border-border"
-                        }`}
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-bold text-foreground">
+                            {a.label || t("address.fallbackLabel")}
+                          </div>
+                          <div className="mt-0.5 text-sm text-muted-foreground line-clamp-2 selectable">
+                            {a.full_address}
+                          </div>
+                          {a.area && (
+                            <div className="mt-0.5 text-xs text-muted-foreground/80">
+                              {a.area}
+                            </div>
+                          )}
+                        </div>
+                        <span
+                          aria-hidden
+                          className={`mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${
+                            active ? "border-primary" : "border-border"
+                          }`}
+                        >
+                          {active && (
+                            <span className="h-2.5 w-2.5 rounded-full bg-primary" />
+                          )}
+                        </span>
+                      </button>
+
+                      {/* Per-address actions */}
+                      <button
+                        type="button"
+                        aria-label="Address options"
+                        onClick={() => {
+                          void hapticSelection();
+                          setMenuFor((cur) => (cur === a.id ? null : a.id));
+                        }}
+                        className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground active:bg-muted"
                       >
-                        {active && (
-                          <span className="h-2.5 w-2.5 rounded-full bg-primary" />
-                        )}
-                      </span>
-                    </button>
+                        <MoreVertical className="h-4 w-4" />
+                      </button>
+                      {menuFor === a.id && (
+                        <>
+                          <div
+                            className="fixed inset-0 z-10"
+                            onClick={() => setMenuFor(null)}
+                          />
+                          <div className="absolute right-2 top-11 z-20 w-36 overflow-hidden rounded-[14px] border border-border bg-card shadow-lg">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setMenuFor(null);
+                                setEditing(a);
+                              }}
+                              className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm font-semibold text-foreground active:bg-muted"
+                            >
+                              <Pencil className="h-4 w-4" /> Edit
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setMenuFor(null);
+                                setConfirmDelete(a);
+                              }}
+                              className="flex w-full items-center gap-2 border-t border-border px-3 py-2.5 text-left text-sm font-semibold text-destructive active:bg-muted"
+                            >
+                              <Trash2 className="h-4 w-4" /> Delete
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
                   </SwipeableRow>
+
                 );
               })}
 
@@ -287,6 +398,55 @@ export function AddressSelectionScreen({
           error={addMutation.error?.message ?? null}
         />
       )}
+
+      {/* Edit an existing address (same map + label + details flow) */}
+      {editing && (
+        <AddAddressMapScreen
+          initial={{
+            id: editing.id,
+            label: editing.label,
+            full_address: editing.full_address,
+            latitude: editing.latitude,
+            longitude: editing.longitude,
+          }}
+          onBack={() => setEditing(null)}
+          onSave={(input) =>
+            editMutation.mutate({ ...input, id: editing.id })
+          }
+          isSaving={editMutation.isPending}
+          error={editMutation.error?.message ?? null}
+        />
+      )}
+
+      {/* Delete confirmation */}
+      {confirmDelete && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 px-6">
+          <div className="w-full max-w-sm rounded-[18px] border border-border bg-card p-5">
+            <h2 className="text-base font-bold text-foreground">
+              Delete this address?
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground line-clamp-3">
+              {confirmDelete.full_address}
+            </p>
+            <div className="mt-5 flex gap-3">
+              <button
+                onClick={() => setConfirmDelete(null)}
+                className="flex-1 rounded-[14px] border border-border px-4 py-3 text-sm font-bold text-foreground"
+              >
+                {t("common.cancel")}
+              </button>
+              <button
+                disabled={deleting}
+                onClick={() => deleteAddress(confirmDelete.id)}
+                className="flex-1 rounded-[14px] bg-destructive px-4 py-3 text-sm font-bold text-white disabled:opacity-60"
+              >
+                {deleting ? "Deleting…" : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
+
   );
 }

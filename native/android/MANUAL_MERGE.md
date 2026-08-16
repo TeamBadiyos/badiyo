@@ -28,6 +28,9 @@ Add the permissions inside `<manifest>` (above `<application>`):
 <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
 <uses-permission android:name="android.permission.INTERNET" />
+<!-- Required for "Use current location" / map pin detection -->
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 <!-- END badiyos customer alerts -->
 ```
 

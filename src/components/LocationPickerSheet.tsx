@@ -4,7 +4,12 @@ import { Check, Loader2, LocateFixed, MapPin, Plus, Search, X } from "lucide-rea
 import { supabase } from "@/integrations/supabase/client";
 import { AddAddressMapScreen, type PickedAddress } from "./AddAddressMapScreen";
 import { reverseGeocode } from "@/lib/geocode.functions";
-import { getCurrentCoords } from "@/lib/nativeGeolocation";
+import {
+  getCurrentCoords,
+  openAppSettings,
+  LocationPermissionError,
+} from "@/lib/nativeGeolocation";
+import { toast } from "sonner";
 import { pushBackHandler } from "@/lib/backHandler";
 
 
@@ -141,10 +146,29 @@ export function LocationPickerSheet({
       setCurrentLoc(res.formatted_address);
       onSelect(virtual);
     } catch (e) {
-      setLocError((e as Error).message || "Could not resolve location.");
+      console.error("[location] current location failed:", e);
+      if (e instanceof LocationPermissionError) {
+        setLocError("Location permission needed to detect your address.");
+        toast.error("Location permission needed to detect your address", {
+          action: {
+            label: "Open settings",
+            onClick: () => {
+              void openAppSettings().then((ok) => {
+                if (!ok)
+                  toast.info(
+                    "Enable Location for badiyos in your phone's app settings.",
+                  );
+              });
+            },
+          },
+        });
+      } else {
+        setLocError((e as Error).message || "Could not resolve location.");
+      }
     } finally {
       setLocLoading(false);
     }
+
   };
 
   if (!open) return null;

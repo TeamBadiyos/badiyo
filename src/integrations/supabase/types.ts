@@ -2517,6 +2517,10 @@ export type Database = {
         }
         Returns: Json
       }
+      customer_delete_address: {
+        Args: { p_address_id: string }
+        Returns: boolean
+      }
       customer_list_devices: { Args: never; Returns: Json }
       customer_register_device: {
         Args: { _device_id: string; _device_label?: string }
@@ -2527,6 +2531,37 @@ export type Database = {
         Returns: undefined
       }
       customer_set_language: { Args: { _lang: string }; Returns: undefined }
+      customer_update_address: {
+        Args: {
+          p_address_id: string
+          p_area: string
+          p_city: string
+          p_full_address: string
+          p_label: string
+          p_landmark_photo_url?: string
+          p_latitude: number
+          p_longitude: number
+        }
+        Returns: {
+          area: string | null
+          city: string | null
+          created_at: string | null
+          full_address: string
+          id: string
+          is_default: boolean | null
+          label: string | null
+          landmark_photo_url: string | null
+          latitude: number | null
+          longitude: number | null
+          user_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "addresses"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       ensure_start_otp: { Args: { _booking_id: string }; Returns: string }
       expand_stale_broadcasts: { Args: never; Returns: number }
       expert_ensure_booking_codes: {
