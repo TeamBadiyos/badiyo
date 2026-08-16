@@ -22,6 +22,10 @@ const config: CapacitorConfig = {
     androidScheme: "https",
     iosScheme: "https",
     hostname: "user.badiyos.com",
+    // Cold start with zero connectivity: the WebView would otherwise show a
+    // blank/white page or the system "webpage not available" error. This
+    // bundled page renders the branded no-internet screen and auto-recovers.
+    errorPath: "offline.html",
   },
   android: {
     backgroundColor: "#00B97A",
