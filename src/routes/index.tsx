@@ -696,13 +696,8 @@ function Index() {
             onOpenNotifications={() => setPhase("notifications")}
             onOpenSettings={() => setPhase("settings")}
             onOpenHelp={() => setPhase("help")}
-            onOpenAbout={() => setPhase("about")}
             onOpenReferrals={() => setPhase("referrals")}
             onOpenPaymentMethods={() => setPhase("payment-methods")}
-            onOpenLegal={(slug) => {
-              setLegal({ slug, from: "profile" });
-              setPhase("legal");
-            }}
             onLogout={() => setPhase("login")}
           />
         </div>
