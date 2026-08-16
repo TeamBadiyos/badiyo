@@ -351,6 +351,8 @@ export function HomeScreen({
             </span>
           </button>
         )}
+
+        <BrandWatermark />
       </div>
 
       <BottomNav
