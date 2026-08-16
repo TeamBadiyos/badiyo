@@ -222,6 +222,11 @@ function Index() {
     [isAtRootPhase],
   );
 
+  // Status bar: keep native content below the status bar (no-op on web).
+  useEffect(() => {
+    void initStatusBar();
+  }, []);
+
   // Wire the native Android back button (no-op on web).
   useEffect(() => {
     initNativeBackButton();
