@@ -244,7 +244,7 @@ export function HomeScreen({
       <div className="mx-auto w-full max-w-md px-5 pt-2">
         {/* Header */}
         <header
-          className="bleed-safe-top sticky top-0 z-30 -mx-5 flex items-center justify-between gap-3 bg-background px-5 pb-4"
+          className="bleed-safe-top sticky top-0 z-30 -mx-5 flex items-center justify-between gap-3 bg-background px-5 pb-3"
           style={{ "--bleed-top-extra": "16px" } as React.CSSProperties}
         >
           <BadiyoLogo variant="green" className="h-7 w-auto" />
@@ -281,7 +281,7 @@ export function HomeScreen({
             e.preventDefault();
             onSearch?.(searchQuery.trim());
           }}
-          className="mt-5 flex items-center gap-3 rounded-[16px] border border-border bg-card px-4 py-3 shadow-sm"
+          className="flex items-center gap-3 rounded-[16px] border border-border bg-card px-4 py-3 shadow-sm"
         >
           <Search className="h-5 w-5 text-muted-foreground" />
           <input
