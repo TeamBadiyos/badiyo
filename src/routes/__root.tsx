@@ -83,6 +83,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "badiyos — Home cleaning, on demand" },
       { name: "description", content: "Book trusted home cleaning services in Latur with badiyos. Fast, reliable experts — just a tap away." },
       { name: "author", content: "Lovable" },
+      { name: "theme-color", content: "#00B97A" },
       { property: "og:title", content: "badiyos — Home cleaning, on demand" },
       { property: "og:description", content: "Book trusted home cleaning services in Latur with badiyos. Fast, reliable experts — just a tap away." },
       { property: "og:type", content: "website" },
