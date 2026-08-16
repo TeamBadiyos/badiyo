@@ -126,8 +126,8 @@ export function LoginScreen({
       </header>
 
       {/* White rounded-top card */}
-      <section className="relative -mt-5 flex-1 rounded-t-[24px] bg-card px-6 pb-6 pt-7">
-        <div className="mx-auto w-full max-w-md">
+      <section className="relative -mt-5 flex flex-1 flex-col rounded-t-[24px] bg-card px-6 pb-6 pt-7">
+        <div className="mx-auto flex w-full max-w-md flex-1 flex-col">
           <h1 className="text-[26px] font-bold leading-tight tracking-tight text-foreground">
             {t("login.title")}
           </h1>
@@ -163,7 +163,7 @@ export function LoginScreen({
             <button
               type="submit"
               disabled={!isValid || loading}
-              className="mt-4 w-full rounded-[14px] bg-primary px-4 py-3.5 text-base font-bold text-primary-foreground transition active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
+              className="mt-6 w-full rounded-[14px] bg-primary px-4 py-3.5 text-base font-bold text-primary-foreground transition active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? t("common.loading") : t("login.sendOtp")}
             </button>
@@ -192,7 +192,7 @@ export function LoginScreen({
             {t("login.continueWithGoogle")}
           </button>
 
-          <LegalConsentText onOpenLegal={onOpenLegal} className="mt-4 text-center" />
+          <LegalConsentText onOpenLegal={onOpenLegal} className="mt-auto pb-2 text-center" />
         </div>
       </section>
     </main>
