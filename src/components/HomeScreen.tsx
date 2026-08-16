@@ -257,7 +257,7 @@ export function HomeScreen({
       <div className="mx-auto w-full max-w-md px-5 pt-2">
         {/* Header */}
         <header
-          className="bleed-safe-top sticky top-0 z-30 -mx-5 flex items-center justify-between gap-3 bg-background px-5 py-4"
+          className="bleed-safe-top sticky top-0 z-30 -mx-5 flex items-center justify-between gap-3 bg-background px-5 pb-4"
           style={{ "--bleed-top-extra": "16px" } as React.CSSProperties}
         >
           <BadiyoLogo variant="green" className="h-7 w-auto" />
