@@ -5,6 +5,11 @@
 const KEY = (phone: string) => `badiyo.pin.${phone.replace(/\D/g, "").slice(-10)}`;
 
 async function ss() {
+  // SecureStorage is native-only; on web its methods reject with
+  // "SecureStorage.then() is not implemented on web".
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const cap = (globalThis as any).Capacitor;
+  if (!cap?.isNativePlatform?.()) return null;
   try {
     const mod = await import("@aparajita/capacitor-secure-storage");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
