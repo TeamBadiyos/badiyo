@@ -195,6 +195,17 @@ export const en = {
   "legal.agreeAnd": " and ",
   "legal.agreeSuffix": ".",
   "legal.deleteNote": "Refunds for any cancelled bookings follow our Refund & Cancellation Policy.",
+
+  // ── What's included ──────────────────────────────────────
+  "included.title": "What is included?",
+  "included.trainedTo": "The expert is trained to",
+  "included.notIncluded": "What is not included",
+  "included.equipmentNote": "Please provide all necessary equipments for the expert",
+  "included.emptyTitle": "Details coming soon",
+  "included.emptyBody": "We're still preparing the inclusion list for this task.",
+  "included.schedule": "Schedule",
+  "included.bookInstant": "Book Instant",
+  "included.link": "What's included?",
 } as const;
 
 export type TranslationKey = keyof typeof en;
