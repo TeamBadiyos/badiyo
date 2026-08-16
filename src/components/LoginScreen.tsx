@@ -96,7 +96,10 @@ export function LoginScreen({
   return (
     <main className="flex min-h-screen w-full flex-col bg-card">
       {/* Gradient header: wordmark, tagline, language pill top-right */}
-      <header className="relative shrink-0 bg-gradient-to-b from-primary-dark via-primary to-primary-light px-5 pb-10 pt-6">
+      <header
+        className="bleed-safe-top relative shrink-0 bg-gradient-to-b from-primary-dark via-primary to-primary-light px-5 pb-10"
+        style={{ ["--bleed-top-extra" as string]: "1.5rem" }}
+      >
         <div className="absolute right-4 top-5 flex items-center rounded-full bg-white/95 p-0.5 shadow-sm">
           <button
             type="button"
