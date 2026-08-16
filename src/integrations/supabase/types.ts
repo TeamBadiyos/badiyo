@@ -236,6 +236,7 @@ export type Database = {
       }
       booking_extensions: {
         Row: {
+          approval_status: string
           booking_id: string
           created_at: string
           extra_minutes: number
@@ -244,6 +245,7 @@ export type Database = {
           razorpay_payment_id: string | null
         }
         Insert: {
+          approval_status?: string
           booking_id: string
           created_at?: string
           extra_minutes: number
@@ -252,6 +254,7 @@ export type Database = {
           razorpay_payment_id?: string | null
         }
         Update: {
+          approval_status?: string
           booking_id?: string
           created_at?: string
           extra_minutes?: number
@@ -1384,6 +1387,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      notification_sounds: {
+        Row: {
+          applies_to: string[]
+          audio_url: string | null
+          event_key: string
+          id: string
+          is_active: boolean
+          label: string
+          updated_at: string
+        }
+        Insert: {
+          applies_to: string[]
+          audio_url?: string | null
+          event_key: string
+          id?: string
+          is_active?: boolean
+          label: string
+          updated_at?: string
+        }
+        Update: {
+          applies_to?: string[]
+          audio_url?: string | null
+          event_key?: string
+          id?: string
+          is_active?: boolean
+          label?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       offline_sale_items: {
         Row: {
