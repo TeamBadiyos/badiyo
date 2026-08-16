@@ -20,9 +20,11 @@ export type ProductCardService = {
 export function ServiceProductCard({
   service,
   onAdd,
+  onViewDetail,
 }: {
   service: ProductCardService;
   onAdd: () => void;
+  onViewDetail?: () => void;
 }) {
   const t = useT();
   const price = Number(service.price);
@@ -30,7 +32,10 @@ export function ServiceProductCard({
 
 
   return (
-    <article className="surface-tint flex w-full min-w-0 flex-col rounded-[18px] border border-border p-2 shadow-card-m">
+    <article
+      className="surface-tint flex w-full min-w-0 flex-col rounded-[18px] border border-border p-2 shadow-card-m cursor-pointer"
+      onClick={onViewDetail}
+    >
       <div className="relative">
         <div className="brand-grade aspect-square w-full overflow-hidden rounded-[14px] bg-muted">
           <img
@@ -42,7 +47,10 @@ export function ServiceProductCard({
           />
         </div>
         <button
-          onClick={onAdd}
+          onClick={(e) => {
+            e.stopPropagation();
+            onAdd();
+          }}
           className="absolute -bottom-2 right-1 rounded-[10px] border border-primary bg-card px-3 py-1 text-[11px] font-extrabold uppercase tracking-[0.02em] text-primary shadow-card-m transition active:scale-[0.96]"
         >
           {t("home.add")}
