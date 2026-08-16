@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { serviceImageUrl, serviceImageUrls } from "@/lib/serviceImage";
 
 export type DisplayTemplate = "CATEGORY_FIRST" | "STORE_FIRST" | "SEARCH_FIRST" | (string & {});
 
