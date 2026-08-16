@@ -28,11 +28,14 @@ export type SegmentService = {
   duration_minutes: number;
   subtitle: string | null;
   price: number;
+  strikethrough_price: number | null;
   display_order: number | null;
   segment_id: string | null;
   service_category_id: string | null;
   image_url: string | null;
+  pricing_type: string;
 };
+
 
 export async function fetchSegments(): Promise<Segment[]> {
   const { data, error } = await supabase
