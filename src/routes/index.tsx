@@ -248,24 +248,30 @@ function Index() {
 
   const [forceUpdate, setForceUpdate] = useState(false);
   const [limitDevices, setLimitDevices] = useState<DeviceSession[]>([]);
+  const queryClient = useQueryClient();
 
-  // Enforce the max-2-device rule right after any successful login.
+  // Enter the app immediately after a successful login. The max-2-device
+  // check used to block navigation (one extra sequential round-trip between
+  // PIN verification and Home); it now runs in the background and only
+  // interrupts if the limit is actually reached.
   const enterAppAfterAuth = useCallback(
-    async (fallbackPhase: Phase = "home") => {
-      try {
-        const res = await registerThisDevice();
-        if (res.status === "limit_reached") {
-          setLimitDevices(res.devices);
-          setPhase("device-limit");
-          return;
-        }
-      } catch (e) {
-        console.error("device registration failed:", e);
-      }
+    (fallbackPhase: Phase = "home") => {
       setPhase(fallbackPhase);
+      // Home data + Home chunk start loading in parallel with the device call.
+      void prefetchHomeData(queryClient);
+      void import("@/components/HomeScreen");
+      void registerThisDevice()
+        .then((res) => {
+          if (res.status === "limit_reached") {
+            setLimitDevices(res.devices);
+            setPhase("device-limit");
+          }
+        })
+        .catch((e) => console.error("device registration failed:", e));
     },
-    [setPhase],
+    [setPhase, queryClient],
   );
+
 
   function resetAndGoHome() {
     setActiveBookingId(null);
