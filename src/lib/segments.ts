@@ -125,7 +125,23 @@ export async function fetchSegmentServices(): Promise<SegmentService[]> {
         video_url: o.video_url ?? svc.video_url ?? null,
         inclusions: list(o.inclusions).length ? list(o.inclusions) : list(svc.inclusions),
         exclusions: list(o.exclusions).length ? list(o.exclusions) : list(svc.exclusions),
+        task_types: ((o.item_task_types ?? []) as any[])
+          .map((l: any) => ({ link: l, tt: l.task_types }))
+          .filter((x) => x.tt && x.tt.is_active !== false)
+          .sort(
+            (a, b) =>
+              (a.link.display_order ?? 0) - (b.link.display_order ?? 0) ||
+              (a.tt.rank ?? 0) - (b.tt.rank ?? 0),
+          )
+          .map(({ tt }) => ({
+            id: String(tt.id),
+            name: String(tt.name),
+            inclusions: list(tt.inclusions),
+            exclusions: list(tt.exclusions),
+          }))
+          .filter((tt) => tt.inclusions.length > 0 || tt.exclusions.length > 0),
       });
+
     }
   }
   return rows;
