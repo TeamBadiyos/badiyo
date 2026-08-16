@@ -34,6 +34,13 @@ export type SegmentService = {
   service_category_id: string | null;
   image_url: string | null;
   pricing_type: string;
+  /** Parent service name (the product's title). */
+  service_name: string;
+  description: string | null;
+  gallery_urls: string[];
+  video_url: string | null;
+  inclusions: string[];
+  exclusions: string[];
 };
 
 
@@ -63,11 +70,17 @@ export async function fetchServiceCategories(): Promise<ServiceCategory[]> {
  * options simply contribute nothing (they are skipped, never rendered empty),
  * and that never hides sibling services or the category itself.
  */
+/** Normalises a possibly-null text[] column into a clean string list. */
+function list(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((v): v is string => typeof v === "string" && v.trim().length > 0);
+}
+
 export async function fetchSegmentServices(): Promise<SegmentService[]> {
   const { data, error } = await supabase
     .from("services")
     .select(
-      "id, name, image_url, pricing_type, display_order, category_id, service_categories(segment_id, icon_url), service_price_options(id, label, duration_minutes, unit_label, customer_price, strikethrough_price, display_order, is_active)",
+      "id, name, image_url, pricing_type, display_order, category_id, description, gallery_urls, video_url, inclusions, exclusions, service_categories(segment_id, icon_url), service_price_options(id, label, duration_minutes, unit_label, customer_price, strikethrough_price, display_order, is_active, description, gallery_urls, video_url, inclusions, exclusions)",
     )
     .eq("is_active", true)
     .order("display_order", { ascending: true });
@@ -93,6 +106,14 @@ export async function fetchSegmentServices(): Promise<SegmentService[]> {
         service_category_id: svc.category_id ?? null,
         image_url: svc.image_url ?? svc.service_categories?.icon_url ?? null,
         pricing_type: svc.pricing_type,
+        service_name: svc.name,
+        description: o.description ?? svc.description ?? null,
+        gallery_urls: list(o.gallery_urls).length
+          ? list(o.gallery_urls)
+          : list(svc.gallery_urls),
+        video_url: o.video_url ?? svc.video_url ?? null,
+        inclusions: list(o.inclusions).length ? list(o.inclusions) : list(svc.inclusions),
+        exclusions: list(o.exclusions).length ? list(o.exclusions) : list(svc.exclusions),
       });
     }
   }
