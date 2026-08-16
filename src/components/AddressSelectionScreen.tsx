@@ -43,9 +43,12 @@ async function fetchAddresses(): Promise<Address[]> {
 export function AddressSelectionScreen({
   onBack,
   onContinue,
+  /** Manage mode (Profile -> My Addresses): list + edit/delete, no Continue bar. */
+  manage = false,
 }: {
   onBack: () => void;
-  onContinue: (address: Address) => void;
+  onContinue?: (address: Address) => void;
+  manage?: boolean;
 }) {
   const t = useT();
   const qc = useQueryClient();
