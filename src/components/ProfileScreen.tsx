@@ -8,13 +8,9 @@ import {
   Bell,
   Settings as SettingsIcon,
   HelpCircle,
-  FileText,
   Gift,
   LogOut,
   CreditCard,
-  ScrollText,
-  ShieldCheck,
-  ReceiptText,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -22,7 +18,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAvatarUrl } from "@/lib/useAvatarUrl";
 import { useT } from "@/i18n";
-import type { LegalSlug } from "./profile/LegalPageScreen";
+
 
 
 type Item = { key: string; label: string; desc: string; icon: LucideIcon; onClick: () => void };
