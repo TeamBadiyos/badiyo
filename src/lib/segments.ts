@@ -94,7 +94,7 @@ export async function fetchSegmentServices(): Promise<SegmentService[]> {
   const { data, error } = await supabase
     .from("services")
     .select(
-      "id, name, image_url, pricing_type, display_order, category_id, description, gallery_urls, video_url, inclusions, exclusions, service_categories(segment_id, icon_url), service_price_options(id, label, duration_minutes, unit_label, customer_price, strikethrough_price, display_order, is_active, description, gallery_urls, video_url, inclusions, exclusions, item_task_types(display_order, task_types(id, name, inclusions, exclusions, is_active, rank)))",
+      "id, name, image_url, pricing_type, display_order, category_id, description, gallery_urls, video_url, inclusions, exclusions, service_categories(segment_id, icon_url), service_price_options(id, label, duration_minutes, unit_label, customer_price, strikethrough_price, display_order, is_active, image_url, description, gallery_urls, video_url, inclusions, exclusions, item_task_types(display_order, task_types(id, name, inclusions, exclusions, is_active, rank)))",
     )
 
     .eq("is_active", true)
@@ -119,7 +119,9 @@ export async function fetchSegmentServices(): Promise<SegmentService[]> {
         display_order: o.display_order ?? svc.display_order ?? null,
         segment_id: svc.service_categories?.segment_id ?? null,
         service_category_id: svc.category_id ?? null,
-        image_url: serviceImageUrl(svc.image_url ?? svc.service_categories?.icon_url),
+        image_url: serviceImageUrl(
+          o.image_url ?? svc.image_url ?? svc.service_categories?.icon_url,
+        ),
         pricing_type: svc.pricing_type,
         service_name: svc.name,
         description: o.description ?? svc.description ?? null,
