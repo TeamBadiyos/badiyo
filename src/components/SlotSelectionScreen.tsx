@@ -195,47 +195,63 @@ export function SlotSelectionScreen({
                 />
               </button>
               {detailsOpen && (
-                <div className="border-t border-border px-4 py-4">
-                  {inclusions.length > 0 && (
-                    <>
-                      <h2 className="text-xs font-bold uppercase tracking-[0.04em] text-muted-foreground">
-                        {t("product.included")}
-                      </h2>
-                      <ul className="mt-3 flex flex-col gap-2.5">
-                        {inclusions.map((item, i) => (
-                          <li key={i} className="flex items-start gap-3">
-                            <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/15">
-                              <Check className="h-3.5 w-3.5 text-primary" />
-                            </span>
-                            <span className="selectable text-sm text-foreground">{item}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </>
-                  )}
-                  {exclusions.length > 0 && (
-                    <>
-                      <h2
-                        className={`text-xs font-bold uppercase tracking-[0.04em] text-muted-foreground ${
-                          inclusions.length > 0 ? "mt-5" : ""
-                        }`}
-                      >
-                        {t("product.notIncluded")}
-                      </h2>
-                      <ul className="mt-3 flex flex-col gap-2.5">
-                        {exclusions.map((item, i) => (
-                          <li key={i} className="flex items-start gap-3">
-                            <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-destructive/15">
-                              <X className="h-3.5 w-3.5 text-destructive" />
-                            </span>
-                            <span className="selectable text-sm text-foreground">{item}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </>
+                <div className="border-t border-border">
+                  {taskTypes.length > 0 ? (
+                    <div className="flex flex-col">
+                      {taskTypes.map((tt) => {
+                        const open = openTaskIds.includes(tt.id);
+                        return (
+                          <div
+                            key={tt.id}
+                            className="border-b border-border last:border-b-0"
+                          >
+                            <button
+                              onClick={() => {
+                                void hapticSelection();
+                                setOpenTaskIds((prev) =>
+                                  prev.includes(tt.id)
+                                    ? prev.filter((x) => x !== tt.id)
+                                    : [...prev, tt.id],
+                                );
+                              }}
+                              className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left"
+                            >
+                              <span className="text-sm font-bold text-foreground">
+                                {tt.name}
+                              </span>
+                              <ChevronDown
+                                className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${
+                                  open ? "rotate-180" : ""
+                                }`}
+                              />
+                            </button>
+                            {open && (
+                              <div className="px-4 pb-4">
+                                <IncExcLists
+                                  inclusions={tt.inclusions}
+                                  exclusions={tt.exclusions}
+                                  includedLabel={t("product.included")}
+                                  notIncludedLabel={t("product.notIncluded")}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="px-4 py-4">
+                      <IncExcLists
+                        inclusions={inclusions}
+                        exclusions={exclusions}
+                        includedLabel={t("product.included")}
+                        notIncludedLabel={t("product.notIncluded")}
+                      />
+                    </div>
                   )}
                 </div>
               )}
+
             </section>
           )}
 
