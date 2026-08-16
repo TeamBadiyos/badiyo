@@ -375,22 +375,24 @@ export function AddressSelectionScreen({
         </div>
       </div>
 
-      {/* Fixed continue */}
-      <div className="fixed inset-x-0 bottom-0 z-10 border-t border-border bg-card safe-bottom">
-        <div className="mx-auto w-full max-w-md px-5 py-4">
-          <button
-            disabled={!selected}
-            onClick={() => selected && onContinue(selected)}
-            className={`w-full rounded-[14px] px-4 py-3.5 text-sm font-bold transition ${
-              selected
-                ? "bg-primary text-primary-foreground active:scale-[0.99]"
-                : "bg-primary/30 text-primary-foreground/70"
-            }`}
-          >
-            {t("common.continue")}
-          </button>
+      {/* Fixed continue (booking flow only) */}
+      {!manage && (
+        <div className="fixed inset-x-0 bottom-0 z-10 border-t border-border bg-card safe-bottom">
+          <div className="mx-auto w-full max-w-md px-5 py-4">
+            <button
+              disabled={!selected}
+              onClick={() => selected && onContinue?.(selected)}
+              className={`w-full rounded-[14px] px-4 py-3.5 text-sm font-bold transition ${
+                selected
+                  ? "bg-primary text-primary-foreground active:scale-[0.99]"
+                  : "bg-primary/30 text-primary-foreground/70"
+              }`}
+            >
+              {t("common.continue")}
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Full-screen map picker */}
       {sheetOpen && (
