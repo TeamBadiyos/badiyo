@@ -153,6 +153,10 @@ export function HomeScreen({
   });
   const { data: avatarUrl } = useAvatarUrl();
   const t = useT();
+  const addToBooking = (s: SegmentService) => {
+    toast(t("home.addedToBooking", { name: s.duration_label }));
+  };
+
 
   const queryClient = useQueryClient();
   const { pull, refreshing } = usePullToRefresh(async () => {
