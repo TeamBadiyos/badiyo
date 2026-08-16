@@ -208,7 +208,7 @@ export function AddressSelectionScreen({
   const selected = addresses.find((a) => a.id === selectedId) ?? null;
 
   return (
-    <main className="min-h-screen w-full bg-background pb-28">
+    <main className={`min-h-screen w-full bg-background ${manage ? "pb-10" : "pb-28"}`}>
       <div className="mx-auto w-full max-w-md px-5 pt-6">
         {/* Header */}
         <div className="flex items-center gap-3">
@@ -220,7 +220,7 @@ export function AddressSelectionScreen({
             <ArrowLeft className="h-5 w-5 text-foreground" />
           </button>
           <h1 className="text-base font-bold text-foreground">
-            {t("address.title")}
+            {manage ? "My Addresses" : t("address.title")}
           </h1>
         </div>
 
