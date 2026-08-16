@@ -44,6 +44,11 @@ export function OtpVerifyScreen({
       const { data, error: fnErr } = await supabase.functions.invoke("verify-otp", {
         body: { phone, code: fullCode },
       });
+      console.info("[otp] verify-otp response", {
+        hasError: !!fnErr,
+        keys: data ? Object.keys(data) : null,
+        error: data?.error ?? null,
+      });
       if (fnErr) throw fnErr;
       if (!data?.access_token || !data?.refresh_token) {
         throw new Error(data?.error || "Invalid code");
@@ -52,8 +57,11 @@ export function OtpVerifyScreen({
         access_token: data.access_token,
         refresh_token: data.refresh_token,
       });
+      console.info("[otp] setSession done", { sessErr: sessErr?.message ?? null });
       if (sessErr) throw sessErr;
       onVerified();
+      console.info("[otp] onVerified() called");
+
     } catch (err) {
       console.error("verify-otp failed", err);
       setError(await getErrorMessage(err));

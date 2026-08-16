@@ -434,24 +434,48 @@ function Index() {
             onVerified={async () => {
               // Ensure profile row exists, then check whether the customer
               // already has a PIN. If not, force the PIN-set screen.
+              // Every step is time-boxed: a hung network call must never leave
+              // the user stranded on the OTP screen after a valid code.
+              const withTimeout = <T,>(p: Promise<T>, ms: number, label: string) =>
+                Promise.race([
+                  p,
+                  new Promise<never>((_, rej) =>
+                    setTimeout(() => rej(new Error(`${label} timed out`)), ms),
+                  ),
+                ]);
+              console.info("[otp] verified — starting post-OTP setup");
               try {
-                await ensureUserRow(`+91${pendingPhone}`);
+                await withTimeout(ensureUserRow(`+91${pendingPhone}`), 8000, "ensureUserRow");
+                console.info("[otp] ensureUserRow ok");
                 import("@/lib/referrals").then((m) => m.linkReferralIfAny()).catch(() => {});
-                const { hasPin } = await hasLoginPin({
-                  data: { phone: pendingPhone },
-                });
-                if (forceResetPin || !hasPin) {
-
-                  setForceResetPin(false);
-                  await enterAppAfterAuth("pin-set");
-                } else {
-                  await enterAppAfterAuth("home");
+                let hasPin = false;
+                try {
+                  const res = await withTimeout(
+                    hasLoginPin({ data: { phone: pendingPhone } }),
+                    8000,
+                    "hasLoginPin",
+                  );
+                  hasPin = res.hasPin;
+                } catch (pinErr) {
+                  console.warn("[otp] hasLoginPin check failed", pinErr);
                 }
+                console.info("[otp] hasPin:", hasPin, "forceReset:", forceResetPin);
+                if (forceResetPin || !hasPin) {
+                  setForceResetPin(false);
+                  setPhase("pin-set");
+                  void enterAppAfterAuth("pin-set");
+                } else {
+                  setPhase("home");
+                  void enterAppAfterAuth("home");
+                }
+                console.info("[otp] navigation dispatched");
               } catch (e) {
-                console.error("post-otp setup failed:", e);
+                console.error("[otp] post-otp setup failed:", e);
                 setPhase("home");
+                void enterAppAfterAuth("home");
               }
             }}
+
           />
 
         </div>
