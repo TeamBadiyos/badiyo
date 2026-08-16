@@ -398,6 +398,55 @@ export function AddressSelectionScreen({
           error={addMutation.error?.message ?? null}
         />
       )}
+
+      {/* Edit an existing address (same map + label + details flow) */}
+      {editing && (
+        <AddAddressMapScreen
+          initial={{
+            id: editing.id,
+            label: editing.label,
+            full_address: editing.full_address,
+            latitude: editing.latitude,
+            longitude: editing.longitude,
+          }}
+          onBack={() => setEditing(null)}
+          onSave={(input) =>
+            editMutation.mutate({ ...input, id: editing.id })
+          }
+          isSaving={editMutation.isPending}
+          error={editMutation.error?.message ?? null}
+        />
+      )}
+
+      {/* Delete confirmation */}
+      {confirmDelete && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 px-6">
+          <div className="w-full max-w-sm rounded-[18px] border border-border bg-card p-5">
+            <h2 className="text-base font-bold text-foreground">
+              Delete this address?
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground line-clamp-3">
+              {confirmDelete.full_address}
+            </p>
+            <div className="mt-5 flex gap-3">
+              <button
+                onClick={() => setConfirmDelete(null)}
+                className="flex-1 rounded-[14px] border border-border px-4 py-3 text-sm font-bold text-foreground"
+              >
+                {t("common.cancel")}
+              </button>
+              <button
+                disabled={deleting}
+                onClick={() => deleteAddress(confirmDelete.id)}
+                className="flex-1 rounded-[14px] bg-destructive px-4 py-3 text-sm font-bold text-white disabled:opacity-60"
+              >
+                {deleting ? "Deleting…" : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
+
   );
 }
