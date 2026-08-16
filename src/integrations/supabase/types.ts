@@ -2620,6 +2620,10 @@ export type Database = {
         Args: { _roles: string[]; _uid: string }
         Returns: boolean
       }
+      is_public_product_image: {
+        Args: { _object_name: string }
+        Returns: boolean
+      }
       link_referral: { Args: { _code: string }; Returns: undefined }
       merchant_advance_order: {
         Args: { _new_status: string; _order_id: string }
