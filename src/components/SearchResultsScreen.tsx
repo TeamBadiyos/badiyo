@@ -85,6 +85,8 @@ export function SearchResultsScreen({
                       description: s.description,
                       inclusions: s.inclusions,
                       exclusions: s.exclusions,
+                      task_types: s.task_types ?? [],
+
                     })
                   }
                 />
