@@ -11,7 +11,7 @@ import android.text.TextUtils;
 
 import androidx.core.app.NotificationCompat;
 
-import com.getcapacitor.plugin.PushNotifications.MessagingService;
+import com.capacitorjs.plugins.pushnotifications.MessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 
 import java.util.Map;
