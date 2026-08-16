@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
 import { LanguageProvider } from "@/i18n";
+import { OfflineGate } from "@/components/OfflineScreen";
 
 
 function NotFoundComponent() {
@@ -136,6 +137,7 @@ function RootComponent() {
       <LanguageProvider>
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />
+        <OfflineGate />
       </LanguageProvider>
     </QueryClientProvider>
   );
