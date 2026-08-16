@@ -297,6 +297,7 @@ export type Database = {
           refund_amount: number | null
           refund_id: string | null
           refund_status: string | null
+          reminder_sent: boolean
           review_text: string | null
           scheduled_date: string | null
           scheduled_time_slot: string | null
@@ -336,6 +337,7 @@ export type Database = {
           refund_amount?: number | null
           refund_id?: string | null
           refund_status?: string | null
+          reminder_sent?: boolean
           review_text?: string | null
           scheduled_date?: string | null
           scheduled_time_slot?: string | null
@@ -375,6 +377,7 @@ export type Database = {
           refund_amount?: number | null
           refund_id?: string | null
           refund_status?: string | null
+          reminder_sent?: boolean
           review_text?: string | null
           scheduled_date?: string | null
           scheduled_time_slot?: string | null
@@ -2476,6 +2479,7 @@ export type Database = {
           refund_amount: number | null
           refund_id: string | null
           refund_status: string | null
+          reminder_sent: boolean
           review_text: string | null
           scheduled_date: string | null
           scheduled_time_slot: string | null
@@ -2564,9 +2568,9 @@ export type Database = {
         Args: {
           _booking_id: string
           _extra_minutes: number
-          _razorpay_payment_id: string
+          _razorpay_payment_id?: string
         }
-        Returns: string
+        Returns: Json
       }
       generate_offline_invoice_number: {
         Args: { _merchant_id: string }
@@ -2647,11 +2651,31 @@ export type Database = {
         Args: { p_phone: string; p_pin: string }
         Returns: Json
       }
+      notify_customer_alert: {
+        Args: {
+          _alert_type: string
+          _body: string
+          _booking_id: string
+          _data?: Json
+          _title: string
+        }
+        Returns: undefined
+      }
       notify_customer_push: {
         Args: {
           _body: string
           _booking_id: string
           _route: string
+          _title: string
+        }
+        Returns: undefined
+      }
+      notify_expert_alert: {
+        Args: {
+          _alert_type: string
+          _body: string
+          _data?: Json
+          _expert_id: string
           _title: string
         }
         Returns: undefined
@@ -2674,6 +2698,21 @@ export type Database = {
         }
         Returns: undefined
       }
+      notify_push_event: {
+        Args: {
+          _alert_type: string
+          _body: string
+          _data?: Json
+          _title: string
+          _user_id: string
+          _user_type: string
+        }
+        Returns: undefined
+      }
+      partner_decide_extension: {
+        Args: { _decision: string; _extension_id: string }
+        Returns: Json
+      }
       point_in_polygon: {
         Args: { _lat: number; _lng: number; _poly: Json }
         Returns: boolean
@@ -2693,6 +2732,7 @@ export type Database = {
         Args: { _lat: number; _lng: number }
         Returns: string
       }
+      send_completion_reminders: { Args: never; Returns: number }
       set_login_pin: { Args: { p_pin: string }; Returns: undefined }
       staff_accept_booking: {
         Args: { _booking_id: string }
