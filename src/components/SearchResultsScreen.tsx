@@ -10,13 +10,7 @@ export function SearchResultsScreen({
 }: {
   query: string;
   onBack: () => void;
-  onBookService: (s: {
-    duration_label: string;
-    duration_minutes: number;
-    price: number;
-    subtitle: string | null;
-    icon: string | null;
-  }) => void;
+  onBookService: (s: import("./SlotSelectionScreen").SelectedService) => void;
 }) {
   const { data: services = [], isLoading } = useQuery({
     queryKey: ["segment_services"],
