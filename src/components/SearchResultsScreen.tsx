@@ -1,7 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Search } from "lucide-react";
+import { toast } from "sonner";
 import { ServiceProductCard } from "./home/ServiceProductCard";
 import { fetchSegmentServices } from "@/lib/segments";
+import { useT } from "@/i18n";
 
 export function SearchResultsScreen({
   query,
