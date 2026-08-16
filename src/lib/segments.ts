@@ -58,29 +58,44 @@ export async function fetchServiceCategories(): Promise<ServiceCategory[]> {
 }
 
 /**
- * Service catalogue rows enriched with the segment they belong to
- * (via service_categories.segment_id). Segment pages / sections filter on
- * `segment_id`; the legacy single-segment flow just uses the whole list.
+ * Bookable items = every active price option of every active service, flattened
+ * and enriched with its category/segment. Services with zero active price
+ * options simply contribute nothing (they are skipped, never rendered empty),
+ * and that never hides sibling services or the category itself.
  */
 export async function fetchSegmentServices(): Promise<SegmentService[]> {
   const { data, error } = await supabase
-    .from("service_catalogue_config")
+    .from("services")
     .select(
-      "id, icon, duration_label, duration_minutes, subtitle, price, display_order, service_category_id, service_categories(segment_id, icon_url)",
+      "id, name, image_url, pricing_type, display_order, category_id, service_categories(segment_id, icon_url), service_price_options(id, label, duration_minutes, unit_label, customer_price, strikethrough_price, display_order, is_active)",
     )
     .eq("is_active", true)
     .order("display_order", { ascending: true });
   if (error) throw error;
-  return ((data ?? []) as any[]).map((r) => ({
-    id: r.id,
-    icon: r.icon,
-    duration_label: r.duration_label,
-    duration_minutes: r.duration_minutes,
-    subtitle: r.subtitle,
-    price: r.price,
-    display_order: r.display_order,
-    segment_id: r.service_categories?.segment_id ?? null,
-    service_category_id: r.service_category_id ?? null,
-    image_url: r.service_categories?.icon_url ?? null,
-  }));
+
+  const rows: SegmentService[] = [];
+  for (const svc of (data ?? []) as any[]) {
+    const options = (svc.service_price_options ?? [])
+      .filter((o: any) => o.is_active)
+      .sort((a: any, b: any) => (a.display_order ?? 0) - (b.display_order ?? 0));
+    for (const o of options) {
+      rows.push({
+        id: o.id,
+        icon: null,
+        duration_label: o.label,
+        duration_minutes: Number(o.duration_minutes ?? 60),
+        subtitle: o.unit_label ?? null,
+        price: Number(o.customer_price),
+        strikethrough_price:
+          o.strikethrough_price == null ? null : Number(o.strikethrough_price),
+        display_order: o.display_order ?? svc.display_order ?? null,
+        segment_id: svc.service_categories?.segment_id ?? null,
+        service_category_id: svc.category_id ?? null,
+        image_url: svc.image_url ?? svc.service_categories?.icon_url ?? null,
+        pricing_type: svc.pricing_type,
+      });
+    }
+  }
+  return rows;
 }
+
