@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#00B97A" />
+    <title>No internet connection — badiyos</title>
+    <style>
+      :root {
+        --primary: #00b97a;
+        --charcoal: #222831;
+        --bg: #f8fafa;
+      }
+      * { box-sizing: border-box; }
+      html, body { height: 100%; margin: 0; }
+      body {
+        background: var(--bg);
+        color: var(--charcoal);
+        font-family: "Nunito Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 32px;
+      }
+      .icon {
+        width: 96px; height: 96px; border-radius: 50%;
+        background: rgba(0, 185, 122, 0.1);
+        display: flex; align-items: center; justify-content: center;
+      }
+      h1 { font-size: 20px; font-weight: 800; margin: 24px 0 0; }
+      p { font-size: 14px; margin: 8px 0 0; max-width: 280px; color: #5b636b; line-height: 1.5; }
+      button {
+        margin-top: 32px; border: 0; border-radius: 12px;
+        background: var(--primary); color: #fff;
+        font-size: 16px; font-weight: 700; font-family: inherit;
+        padding: 14px 32px;
+      }
+      button:active { opacity: 0.8; }
+      button[disabled] { opacity: 0.6; }
+    </style>
+  </head>
+  <body>
+    <div class="icon">
+      <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#00B97A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 20h.01" />
+        <path d="M8.5 16.429a5 5 0 0 1 7 0" />
+        <path d="M5 12.859a10 10 0 0 1 5.17-2.69" />
+        <path d="M19 12.859a10 10 0 0 0-2.007-1.523" />
+        <path d="M2 8.82a15 15 0 0 1 4.177-2.643" />
+        <path d="M22 8.82a15 15 0 0 0-11.288-3.764" />
+        <path d="m2 2 20 20" />
+      </svg>
+    </div>
+    <h1>No internet connection</h1>
+    <p>Lagta hai aapka internet band hai. Please check your connection and try again.</p>
+    <button id="retry" type="button">Retry</button>
+
+    <script>
+      var APP_URL = "https://user.badiyos.com/";
+      var btn = document.getElementById("retry");
+      var busy = false;
+
+      function goToApp() {
+        window.location.replace(APP_URL + "?t=" + Date.now());
+      }
+
+      function check() {
+        if (busy) return;
+        busy = true;
+        btn.disabled = true;
+        btn.textContent = "Checking…";
+        var done = function (ok) {
+          busy = false;
+          btn.disabled = false;
+          btn.textContent = "Retry";
+          if (ok) goToApp();
+        };
+        var ctrl = new AbortController();
+        var timer = setTimeout(function () { ctrl.abort(); }, 6000);
+        fetch(APP_URL + "favicon.png?ping=" + Date.now(), { cache: "no-store", mode: "no-cors", signal: ctrl.signal })
+          .then(function () { clearTimeout(timer); done(true); })
+          .catch(function () { clearTimeout(timer); done(false); });
+      }
+
+      btn.addEventListener("click", check);
+      // Auto-recover as soon as the device reports connectivity again.
+      window.addEventListener("online", check);
+      setInterval(function () { if (navigator.onLine) check(); }, 5000);
+      if (navigator.onLine) check();
+    </script>
+  </body>
+</html>
