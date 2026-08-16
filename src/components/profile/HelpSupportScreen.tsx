@@ -1,7 +1,19 @@
 import { useState } from "react";
-import { ArrowLeft, ChevronDown, MessageCircle, CheckCircle2 } from "lucide-react";
+import {
+  ArrowLeft,
+  ChevronDown,
+  ChevronRight,
+  MessageCircle,
+  CheckCircle2,
+  ShieldCheck,
+  ScrollText,
+  ReceiptText,
+  FileText,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getErrorMessage } from "@/lib/errorMessage";
+import { useT } from "@/i18n";
+import type { LegalSlug } from "./LegalPageScreen";
 
 const FAQS = [
   {
