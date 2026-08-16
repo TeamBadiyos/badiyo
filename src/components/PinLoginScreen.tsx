@@ -58,20 +58,8 @@ export function PinLoginScreen({
       setLoading(true);
       setError(null);
       try {
-        // TEMP diagnostics for native PIN-login debugging (no PIN value logged).
-        console.info("[pin-login] request", {
-          origin: window.location.origin,
-          phoneLast4: phone.slice(-4),
-          pinLength: code.length,
-        });
         const { data, error: fnErr } = await supabase.functions.invoke("verify-pin-login", {
           body: { phone, pin: code },
-        });
-        console.info("[pin-login] response", {
-          hasData: !!data,
-          hasSession: !!data?.access_token,
-          serverError: data?.error ?? null,
-          fnError: fnErr ? String((fnErr as Error).message ?? fnErr) : null,
         });
         // supabase.functions.invoke throws FunctionsHttpError for non-2xx,
         // but the JSON body still comes back in the error's context.
