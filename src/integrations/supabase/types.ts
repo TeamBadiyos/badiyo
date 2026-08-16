@@ -2701,6 +2701,7 @@ export type Database = {
         Args: { _id: string }
         Returns: undefined
       }
+      staff_delete_task_detail: { Args: { _id: string }; Returns: undefined }
       staff_edit_booking: {
         Args: { _booking_id: string; _payload: Json }
         Returns: undefined
@@ -2737,6 +2738,10 @@ export type Database = {
         Returns: undefined
       }
       staff_reorder_homepage_sections: {
+        Args: { _orders: Json }
+        Returns: undefined
+      }
+      staff_reorder_task_details: {
         Args: { _orders: Json }
         Returns: undefined
       }
@@ -2788,6 +2793,7 @@ export type Database = {
         Returns: string
       }
       staff_upsert_legal_page: { Args: { _payload: Json }; Returns: string }
+      staff_upsert_task_detail: { Args: { _payload: Json }; Returns: string }
       staff_verify_end_otp: {
         Args: { _booking_id: string; _otp: string }
         Returns: undefined
