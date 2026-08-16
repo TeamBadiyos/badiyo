@@ -79,6 +79,8 @@ export function SlotSelectionScreen({
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [selectedHour, setSelectedHour] = useState<number | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(true);
+  const [openTaskIds, setOpenTaskIds] = useState<string[]>([]);
+
 
   const media: MediaItem[] = useMemo(() => {
     const urls = [service.image_url, ...(service.gallery_urls ?? [])].filter(
