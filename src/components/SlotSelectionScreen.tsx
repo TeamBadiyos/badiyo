@@ -204,7 +204,7 @@ export function SlotSelectionScreen({
               strokeLinecap="round"
               strokeLinejoin="round"
               aria-hidden="true"
-              className="h-5 w-5 text-foreground"
+              className="h-6 w-6 text-foreground drop-shadow-[0_1px_3px_rgba(255,255,255,0.9)]"
             >
               <path d="M19 12H5" />
               <path d="m12 19-7-7 7-7" />
