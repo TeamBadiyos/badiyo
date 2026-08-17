@@ -234,6 +234,53 @@ export type Database = {
         }
         Relationships: []
       }
+      availability_overrides: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          is_unavailable: boolean
+          reason: string | null
+          target_id: string
+          target_type: string
+          unavailable_from: string | null
+          unavailable_until: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_unavailable?: boolean
+          reason?: string | null
+          target_id: string
+          target_type: string
+          unavailable_from?: string | null
+          unavailable_until?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_unavailable?: boolean
+          reason?: string | null
+          target_id?: string
+          target_type?: string
+          unavailable_from?: string | null
+          unavailable_until?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "availability_overrides_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "staff_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       booking_extensions: {
         Row: {
           approval_status: string
@@ -2834,6 +2881,10 @@ export type Database = {
         Args: { object_name: string }
         Returns: boolean
       }
+      is_target_unavailable: {
+        Args: { _target_id: string; _target_type: string }
+        Returns: boolean
+      }
       link_referral: { Args: { _code: string }; Returns: undefined }
       merchant_advance_order: {
         Args: { _new_status: string; _order_id: string }
@@ -2968,9 +3019,17 @@ export type Database = {
         Args: { _booking_id: string; _expert_id: string }
         Returns: undefined
       }
+      staff_assign_partner_skill: {
+        Args: { _expert_id: string; _service_category_id: string }
+        Returns: string
+      }
       staff_cancel_booking: {
         Args: { _booking_id: string; _reason: string }
         Returns: undefined
+      }
+      staff_clear_availability_override: {
+        Args: { _target_id: string; _target_type: string }
+        Returns: boolean
       }
       staff_create_service_catalogue_row: {
         Args: { _payload: Json }
@@ -3030,6 +3089,17 @@ export type Database = {
       staff_reverse_referral_reward: {
         Args: { _reason: string; _txn_id: string }
         Returns: undefined
+      }
+      staff_set_availability_override: {
+        Args: {
+          _is_unavailable: boolean
+          _reason: string
+          _target_id: string
+          _target_type: string
+          _unavailable_from: string
+          _unavailable_until: string
+        }
+        Returns: string
       }
       staff_set_homepage_section_active: {
         Args: { _active: boolean; _id: string }
