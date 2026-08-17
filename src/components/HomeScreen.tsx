@@ -42,6 +42,12 @@ function Icon({ name, className }: { name?: string | null; className?: string })
 }
 
 import { fetchSections } from "@/lib/homeData";
+import {
+  fetchAvailability,
+  isUnavailable,
+  unavailableReason,
+  type AvailabilityMap,
+} from "@/lib/availability";
 
 
 const EXPERT_TILES: { image: string; labelKey: TranslationKey; slug: string; illustration?: boolean }[] = [
@@ -152,6 +158,11 @@ export function HomeScreen({
     queryKey: ["homepage_sections"],
     queryFn: fetchSections,
   });
+  const { data: availability } = useQuery({
+    queryKey: ["availability_overrides"],
+    queryFn: fetchAvailability,
+    staleTime: 0,
+  });
   const { data: avatarUrl } = useAvatarUrl();
   const t = useT();
   const addToBooking = (s: SegmentService) => {
@@ -166,6 +177,7 @@ export function HomeScreen({
       queryClient.refetchQueries({ queryKey: ["segment_services"] }),
       queryClient.refetchQueries({ queryKey: ["service_categories"] }),
       queryClient.refetchQueries({ queryKey: ["homepage_sections"] }),
+      queryClient.refetchQueries({ queryKey: ["availability_overrides"] }),
       queryClient.refetchQueries({ queryKey: ["users_total_coins"] }),
     ]);
   });
@@ -294,6 +306,7 @@ export function HomeScreen({
           onBookService={onBookService}
           onAdd={addToBooking}
           onOpenTask={bookTileService}
+          availability={availability}
         />
         ) : (
           <div className="mt-2">
@@ -322,6 +335,7 @@ export function HomeScreen({
                       services={servicesForCategory(category).slice(0, 3)}
                       onViewDetail={(s) => onBookService?.(toPayload(s, segment))}
                       onAdd={addToBooking}
+                      availability={availability}
                     />
                   ))}
                 </section>
@@ -388,6 +402,7 @@ function SegmentView({
   onBookService,
   onAdd,
   onOpenTask,
+  availability,
 }: {
   segment: Segment;
   categories: ServiceCategory[];
@@ -395,6 +410,7 @@ function SegmentView({
   onBookService?: (s: BookServicePayload) => void;
   onAdd: (s: SegmentService) => void;
   onOpenTask: () => void;
+  availability?: AvailabilityMap;
 }) {
   const t = useT();
   if (segment.display_template !== "CATEGORY_FIRST") {
@@ -424,6 +440,7 @@ function SegmentView({
             services={items}
             onViewDetail={(s) => onBookService?.(toPayload(s, segment))}
             onAdd={(s) => onAdd(s)}
+            availability={availability}
           />
         );
       })}
@@ -452,17 +469,29 @@ function CategoryRow({
   services,
   onViewDetail,
   onAdd,
+  availability,
 }: {
   category: ServiceCategory;
   services: SegmentService[];
   onViewDetail: (s: SegmentService) => void;
   onAdd: (s: SegmentService) => void;
+  availability?: AvailabilityMap;
 }) {
+  const t = useT();
+  const categoryBlocked = isUnavailable(availability, "category", category.id);
+  const categoryReason = unavailableReason(availability, "category", category.id);
   return (
-    <div className="mt-4">
-      <h3 className="text-[13px] font-bold tracking-[-0.01em] text-muted-foreground">
-        {category.name}
-      </h3>
+    <div className={`mt-4 ${categoryBlocked ? "opacity-70" : ""}`}>
+      <div className="flex items-center gap-2">
+        <h3 className="text-[13px] font-bold tracking-[-0.01em] text-muted-foreground">
+          {category.name}
+        </h3>
+        {categoryBlocked ? (
+          <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold text-muted-foreground">
+            {categoryReason || t("home.unavailableBadge")}
+          </span>
+        ) : null}
+      </div>
       <div className="mt-2 grid grid-cols-3 gap-2.5">
         {services.map((s) => (
           <ServiceProductCard
@@ -474,6 +503,10 @@ function CategoryRow({
               imageUrl: s.image_url,
               durationMinutes: s.pricing_type === "flat" ? null : s.duration_minutes,
             }}
+            unavailable={categoryBlocked || isUnavailable(availability, "item", s.id)}
+            unavailableLabel={
+              categoryReason || unavailableReason(availability, "item", s.id) || null
+            }
             onViewDetail={() => onViewDetail(s)}
             onAdd={() => onAdd(s)}
           />
