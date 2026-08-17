@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { ServiceProductCard } from "./home/ServiceProductCard";
 import { fetchSegmentServices } from "@/lib/segments";
 import { useT } from "@/i18n";
+import { fetchAvailability, isUnavailable, unavailableReason } from "@/lib/availability";
 
 export function SearchResultsScreen({
   query,
@@ -17,6 +18,12 @@ export function SearchResultsScreen({
   const { data: services = [], isLoading } = useQuery({
     queryKey: ["segment_services"],
     queryFn: fetchSegmentServices,
+  });
+
+  const { data: availability } = useQuery({
+    queryKey: ["availability_overrides"],
+    queryFn: fetchAvailability,
+    staleTime: 0,
   });
 
   const t = useT();
@@ -89,6 +96,14 @@ export function SearchResultsScreen({
                     price: Number(s.price),
                     durationMinutes: s.duration_minutes,
                   }}
+                  unavailable={
+                    isUnavailable(availability, "item", s.id) ||
+                    isUnavailable(availability, "category", s.service_category_id)
+                  }
+                  unavailableLabel={
+                    unavailableReason(availability, "item", s.id) ||
+                    unavailableReason(availability, "category", s.service_category_id)
+                  }
                   onViewDetail={() => onBookService(selectService(s))}
                   onAdd={() =>
                     toast(t("home.addedToBooking", { name: s.service_name || s.duration_label }))
