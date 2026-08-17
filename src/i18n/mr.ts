@@ -46,6 +46,8 @@ export const mr: Partial<Record<keyof typeof en, string>> = {
   "home.bookNow": "आत्ताच बुक करा",
   "home.add": "ADD",
   "home.addedToBooking": "{name} बुकिंगमध्ये जोडले",
+  "home.unavailableBadge": "आज उपलब्ध नाही",
+  "home.unavailableToast": "ही सेवा सध्या उपलब्ध नाही, कृपया नंतर पुन्हा तपासा.",
   "home.bookSegment": "{segment} बुक करा",
   "home.comingSoon": "{segment} लवकरच येत आहे",
   "home.comingSoonSub": "हा विभाग आम्ही तयार करत आहोत.",
