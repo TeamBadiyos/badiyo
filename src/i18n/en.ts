@@ -44,6 +44,8 @@ export const en = {
   "home.bookNow": "Book Now",
   "home.add": "ADD",
   "home.addedToBooking": "Added {name} to booking",
+  "home.unavailableBadge": "Not available today",
+  "home.unavailableToast": "This service isn't available right now, please check back later.",
   "home.bookSegment": "Book {segment}",
   "home.comingSoon": "{segment} is coming soon",
   "home.comingSoonSub": "We're getting this section ready for you.",
