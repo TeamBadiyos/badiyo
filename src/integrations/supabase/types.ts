@@ -335,6 +335,7 @@ export type Database = {
           delete_reason: string | null
           deleted_at: string | null
           deleted_by: string | null
+          dispatch_exhausted_at: string | null
           end_otp: string | null
           id: string
           price: number
@@ -375,6 +376,7 @@ export type Database = {
           delete_reason?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
+          dispatch_exhausted_at?: string | null
           end_otp?: string | null
           id?: string
           price: number
@@ -415,6 +417,7 @@ export type Database = {
           delete_reason?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
+          dispatch_exhausted_at?: string | null
           end_otp?: string | null
           id?: string
           price?: number
@@ -602,6 +605,7 @@ export type Database = {
           city: string
           created_at: string
           id: string
+          no_expert_timeout_minutes: number
           radius_expand_after_seconds: number
           radius_expand_max_km: number
           radius_expand_step_km: number
@@ -613,6 +617,7 @@ export type Database = {
           city?: string
           created_at?: string
           id?: string
+          no_expert_timeout_minutes?: number
           radius_expand_after_seconds?: number
           radius_expand_max_km?: number
           radius_expand_step_km?: number
@@ -624,6 +629,7 @@ export type Database = {
           city?: string
           created_at?: string
           id?: string
+          no_expert_timeout_minutes?: number
           radius_expand_after_seconds?: number
           radius_expand_max_km?: number
           radius_expand_step_km?: number
@@ -1990,6 +1996,168 @@ export type Database = {
           },
         ]
       }
+      reward_ledger: {
+        Row: {
+          actor_id: string
+          actor_type: string
+          credited_at: string
+          id: string
+          notes: string | null
+          program_id: string
+          reversal_reason: string | null
+          reversed_at: string | null
+          reversed_by: string | null
+          reward_type: string
+          reward_value: number
+          status: string
+          trigger_event_ref: string
+        }
+        Insert: {
+          actor_id: string
+          actor_type: string
+          credited_at?: string
+          id?: string
+          notes?: string | null
+          program_id: string
+          reversal_reason?: string | null
+          reversed_at?: string | null
+          reversed_by?: string | null
+          reward_type: string
+          reward_value?: number
+          status?: string
+          trigger_event_ref: string
+        }
+        Update: {
+          actor_id?: string
+          actor_type?: string
+          credited_at?: string
+          id?: string
+          notes?: string | null
+          program_id?: string
+          reversal_reason?: string | null
+          reversed_at?: string | null
+          reversed_by?: string | null
+          reward_type?: string
+          reward_value?: number
+          status?: string
+          trigger_event_ref?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reward_ledger_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "reward_programs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reward_ledger_reversed_by_fkey"
+            columns: ["reversed_by"]
+            isOneToOne: false
+            referencedRelation: "staff_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reward_programs: {
+        Row: {
+          actor_type: string
+          condition: Json
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          name: string
+          recurrence: string
+          reward_type: string
+          reward_value: number
+          trigger_type: string
+          updated_at: string
+          valid_from: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          actor_type: string
+          condition?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          recurrence?: string
+          reward_type: string
+          reward_value?: number
+          trigger_type: string
+          updated_at?: string
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          actor_type?: string
+          condition?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          recurrence?: string
+          reward_type?: string
+          reward_value?: number
+          trigger_type?: string
+          updated_at?: string
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reward_programs_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "staff_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reward_programs_trigger_type_fkey"
+            columns: ["trigger_type"]
+            isOneToOne: false
+            referencedRelation: "reward_trigger_types"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      reward_trigger_types: {
+        Row: {
+          actor_types: string[]
+          condition_schema: Json
+          description: string | null
+          display_order: number
+          is_active: boolean
+          is_time_based: boolean
+          key: string
+          label: string
+        }
+        Insert: {
+          actor_types?: string[]
+          condition_schema?: Json
+          description?: string | null
+          display_order?: number
+          is_active?: boolean
+          is_time_based?: boolean
+          key: string
+          label: string
+        }
+        Update: {
+          actor_types?: string[]
+          condition_schema?: Json
+          description?: string | null
+          display_order?: number
+          is_active?: boolean
+          is_time_based?: boolean
+          key?: string
+          label?: string
+        }
+        Relationships: []
+      }
       segments: {
         Row: {
           created_at: string
@@ -2684,6 +2852,7 @@ export type Database = {
           delete_reason: string | null
           deleted_at: string | null
           deleted_by: string | null
+          dispatch_exhausted_at: string | null
           end_otp: string | null
           id: string
           price: number
@@ -2777,6 +2946,16 @@ export type Database = {
         }
       }
       ensure_start_otp: { Args: { _booking_id: string }; Returns: string }
+      evaluate_reward_triggers: {
+        Args: {
+          _actor_id: string
+          _actor_type: string
+          _event_context?: Json
+          _event_ref: string
+          _trigger_type: string
+        }
+        Returns: number
+      }
       expand_stale_broadcasts: { Args: never; Returns: number }
       expert_ensure_booking_codes: {
         Args: { _booking_id: string }
@@ -2997,6 +3176,20 @@ export type Database = {
         Args: { _lat: number; _lng: number }
         Returns: string
       }
+      reward_apply_credit: {
+        Args: {
+          _actor_id: string
+          _actor_type: string
+          _event_ref: string
+          _notes?: string
+          _program: Database["public"]["Tables"]["reward_programs"]["Row"]
+        }
+        Returns: boolean
+      }
+      run_reward_period_jobs: {
+        Args: { _force_period_start?: string }
+        Returns: number
+      }
       send_completion_reminders: { Args: never; Returns: number }
       set_login_pin: { Args: { p_pin: string }; Returns: undefined }
       staff_accept_booking: {
@@ -3043,9 +3236,18 @@ export type Database = {
         Args: { _decision: string; _notes?: string; _skill_id: string }
         Returns: undefined
       }
+      staff_delete_reward_program: { Args: { _id: string }; Returns: undefined }
       staff_delete_service_catalogue_row: {
         Args: { _id: string }
         Returns: undefined
+      }
+      staff_dispatch_failure_stats: {
+        Args: { _from: string; _to: string }
+        Returns: {
+          day: string
+          failures: number
+          refunded: number
+        }[]
       }
       staff_edit_booking: {
         Args: { _booking_id: string; _payload: Json }
@@ -3090,6 +3292,51 @@ export type Database = {
         Args: { _reason: string; _txn_id: string }
         Returns: undefined
       }
+      staff_reverse_reward: {
+        Args: { _ledger_id: string; _reason: string }
+        Returns: undefined
+      }
+      staff_reward_ledger_search: {
+        Args: {
+          _actor_type?: string
+          _from?: string
+          _limit?: number
+          _program_id?: string
+          _search?: string
+          _to?: string
+        }
+        Returns: {
+          actor_id: string
+          actor_name: string
+          actor_phone: string
+          actor_type: string
+          credited_at: string
+          id: string
+          notes: string
+          program_id: string
+          program_name: string
+          reversal_reason: string
+          reversed_at: string
+          reward_type: string
+          reward_value: number
+          status: string
+          trigger_event_ref: string
+        }[]
+      }
+      staff_reward_program_stats: {
+        Args: { _from?: string; _to?: string }
+        Returns: {
+          last_credited_at: string
+          program_id: string
+          reversed_count: number
+          times_triggered: number
+          total_value: number
+        }[]
+      }
+      staff_run_reward_period_jobs: {
+        Args: { _period_start?: string }
+        Returns: number
+      }
       staff_set_availability_override: {
         Args: {
           _is_unavailable: boolean
@@ -3107,6 +3354,10 @@ export type Database = {
       }
       staff_set_merchant_fee_tier: {
         Args: { _fee_tier_id: string; _merchant_id: string }
+        Returns: undefined
+      }
+      staff_set_reward_program_active: {
+        Args: { _id: string; _is_active: boolean }
         Returns: undefined
       }
       staff_soft_delete_area_partner: {
@@ -3149,6 +3400,22 @@ export type Database = {
         Args: { _payload: Json }
         Returns: string
       }
+      staff_upsert_reward_program: {
+        Args: {
+          _actor_type: string
+          _condition: Json
+          _id: string
+          _is_active: boolean
+          _name: string
+          _recurrence: string
+          _reward_type: string
+          _reward_value: number
+          _trigger_type: string
+          _valid_from: string
+          _valid_until: string
+        }
+        Returns: string
+      }
       staff_upsert_task_detail: { Args: { _payload: Json }; Returns: string }
       staff_verify_end_otp: {
         Args: { _booking_id: string; _otp: string }
@@ -3176,6 +3443,25 @@ export type Database = {
       system_accept_booking_after_payment: {
         Args: { _booking_id: string }
         Returns: undefined
+      }
+      system_auto_cancel_booking_no_expert: {
+        Args: {
+          _booking_id: string
+          _refund_amount: number
+          _refund_id: string
+          _refund_status: string
+        }
+        Returns: Json
+      }
+      system_list_expired_unassigned_bookings: {
+        Args: never
+        Returns: {
+          broadcast_started_at: string
+          created_at: string
+          id: string
+          price: number
+          razorpay_payment_id: string
+        }[]
       }
       verify_login_pin: {
         Args: { p_phone: string; p_pin: string; p_user_type: string }
