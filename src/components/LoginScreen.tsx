@@ -75,18 +75,17 @@ export function LoginScreen({
     try {
       // Referral code (if any) is already captured to localStorage on mount
       // and will be linked on return via onAuthStateChange in the root.
-      const { error: oauthError } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: { redirectTo: window.location.origin },
-      });
-      if (oauthError) throw oauthError;
-      // Browser navigates away to Google; no further action here.
+      // On the native app this opens an in-app browser and deep-links back;
+      // on the web it's a normal redirect.
+      await signInWithGoogle();
     } catch (err) {
       console.error("Google sign-in failed:", err);
       setError(await getErrorMessage(err));
+    } finally {
       setLoading(false);
     }
   };
+
 
   return (
     <main className="flex min-h-screen w-full flex-col bg-card">
