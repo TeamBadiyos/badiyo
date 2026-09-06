@@ -1627,6 +1627,27 @@ export type Database = {
           },
         ]
       }
+      ops_settings: {
+        Row: {
+          key: string
+          label: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          key: string
+          label: string
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          key?: string
+          label?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: []
+      }
       otp_codes: {
         Row: {
           code: string
@@ -2526,25 +2547,48 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          internal_note: string | null
           message: string
+          resolved_at: string | null
+          resolved_by: string | null
+          source: string
           status: string
+          updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
           id?: string
+          internal_note?: string | null
           message: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          source?: string
           status?: string
+          updated_at?: string
           user_id: string
         }
         Update: {
           created_at?: string
           id?: string
+          internal_note?: string | null
           message?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          source?: string
           status?: string
+          updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "support_tickets_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "staff_users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       task_types: {
         Row: {
@@ -2993,6 +3037,7 @@ export type Database = {
         Args: { _booking_id: string; _otp: string }
         Returns: string
       }
+      expire_stale_online_experts: { Args: never; Returns: number }
       extend_booking: {
         Args: {
           _booking_id: string
@@ -3166,6 +3211,13 @@ export type Database = {
         Args: { p_fcm_token: string; p_platform: string }
         Returns: string
       }
+      resolve_booking_payouts: {
+        Args: { _booking_id: string }
+        Returns: {
+          area_partner_payout: number
+          expert_payout: number
+        }[]
+      }
       resolve_caller_identity: {
         Args: { _auth_uid: string }
         Returns: {
@@ -3256,6 +3308,10 @@ export type Database = {
       }
       staff_expert_kyc_decision: {
         Args: { _decision: string; _expert_id: string; _reason: string }
+        Returns: undefined
+      }
+      staff_force_expert_offline: {
+        Args: { _expert_id: string }
         Returns: undefined
       }
       staff_generate_merchant_payout_batch: { Args: never; Returns: string }
@@ -3357,6 +3413,14 @@ export type Database = {
         Args: { _fee_tier_id: string; _merchant_id: string }
         Returns: undefined
       }
+      staff_set_ops_setting: {
+        Args: { _key: string; _value: string }
+        Returns: undefined
+      }
+      staff_set_partner_zones: {
+        Args: { _partner_id: string; _zone_ids: string[] }
+        Returns: undefined
+      }
       staff_set_reward_program_active: {
         Args: { _id: string; _is_active: boolean }
         Returns: undefined
@@ -3383,6 +3447,10 @@ export type Database = {
       }
       staff_update_service_price: {
         Args: { _id: string; _payload: Json }
+        Returns: undefined
+      }
+      staff_update_support_ticket: {
+        Args: { _note?: string; _status: string; _ticket_id: string }
         Returns: undefined
       }
       staff_update_zone: {
