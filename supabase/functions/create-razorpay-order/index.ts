@@ -1,6 +1,8 @@
 // Supabase Edge Function: create-razorpay-order
-// Looks up the authoritative price from service_catalogue_config using
-// service_duration_minutes sent by the client. NEVER trusts a client-supplied amount.
+// Computes the authoritative amount SERVER-SIDE from the catalogue.
+// Preferred input: { item_id } -> service_price_options.customer_price.
+// Legacy fallback: { service_duration_minutes } -> service_catalogue_config.
+// NEVER trusts a client-supplied amount.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -9,6 +11,35 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
+
+type SupaClient = ReturnType<typeof createClient>;
+
+/** True when an availability_overrides row currently blocks this target. */
+async function isBlocked(
+  supabase: SupaClient,
+  targetType: "item" | "category",
+  targetId: string | null,
+): Promise<boolean> {
+  if (!targetId) return false;
+  const { data, error } = await supabase
+    .from("availability_overrides")
+    .select("is_unavailable, unavailable_from, unavailable_until")
+    .eq("target_type", targetType)
+    .eq("target_id", targetId);
+  if (error) {
+    console.error("availability lookup failed", error);
+    return false;
+  }
+  const now = Date.now();
+  return (data ?? []).some((row: Record<string, unknown>) => {
+    if (!row.is_unavailable) return false;
+    const from = row.unavailable_from ? Date.parse(String(row.unavailable_from)) : null;
+    const until = row.unavailable_until ? Date.parse(String(row.unavailable_until)) : null;
+    if (from !== null && Number.isFinite(from) && now < from) return false;
+    if (until !== null && Number.isFinite(until) && now > until) return false;
+    return true;
+  });
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -23,35 +54,72 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json().catch(() => ({}));
+    const itemId = typeof body?.item_id === "string" ? body.item_id.trim() : "";
     const durationMinutes = Number(body?.service_duration_minutes);
     const currency = typeof body?.currency === "string" ? body.currency : "INR";
     const receipt = typeof body?.receipt === "string" ? body.receipt : `rcpt_${Date.now()}`;
-
-    if (!Number.isInteger(durationMinutes) || durationMinutes <= 0) {
-      return json({ error: "service_duration_minutes is required" }, 400);
-    }
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
-    const { data: svc, error: svcErr } = await supabase
-      .from("service_catalogue_config")
-      .select("price")
-      .eq("duration_minutes", durationMinutes)
-      .eq("is_active", true)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    let price: number | null = null;
 
-    if (svcErr || !svc) {
-      return json({ error: "Service not available" }, 400);
+    if (itemId) {
+      // Primary path: works for BOTH duration-based and flat-priced items,
+      // because the price is read from the exact item the customer picked.
+      const { data: item, error: itemErr } = await supabase
+        .from("service_price_options")
+        .select("id, customer_price, is_active, service_id, services(id, is_active, category_id)")
+        .eq("id", itemId)
+        .maybeSingle();
+
+      if (itemErr || !item) {
+        return json({ error: "Service not available" }, 400);
+      }
+      const svc = (item as Record<string, unknown>).services as
+        | { is_active?: boolean; category_id?: string | null }
+        | null;
+      if (!item.is_active || (svc && svc.is_active === false)) {
+        return json({ error: "Service not available" }, 400);
+      }
+
+      const categoryId = svc?.category_id ?? null;
+      if (
+        (await isBlocked(supabase, "item", itemId)) ||
+        (await isBlocked(supabase, "category", categoryId))
+      ) {
+        return json({ error: "This service isn't available right now" }, 409);
+      }
+
+      price = Number(item.customer_price);
+    } else {
+      // Legacy fallback for older clients that only send a duration.
+      if (!Number.isInteger(durationMinutes) || durationMinutes <= 0) {
+        return json({ error: "item_id is required" }, 400);
+      }
+      const { data: svc, error: svcErr } = await supabase
+        .from("service_catalogue_config")
+        .select("price")
+        .eq("duration_minutes", durationMinutes)
+        .eq("is_active", true)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (svcErr || !svc) {
+        return json({ error: "Service not available" }, 400);
+      }
+      price = Number(svc.price);
     }
 
-    const amount = Math.round(Number(svc.price) * 100);
+    if (!Number.isFinite(price!) || price! <= 0) {
+      return json({ error: "Invalid service price" }, 400);
+    }
+
+    const amount = Math.round(price! * 100);
     if (!Number.isInteger(amount) || amount < 100) {
-      return json({ error: "Invalid service price" }, 500);
+      return json({ error: "Invalid service price" }, 400);
     }
 
     const auth = btoa(`${keyId}:${keySecret}`);
