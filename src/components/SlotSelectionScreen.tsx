@@ -17,6 +17,9 @@ export type TaskTypeDetail = {
 };
 
 export type SelectedService = {
+  /** service_price_options.id — used for server-side price lookup. */
+  id?: string | null;
+  service_category_id?: string | null;
   duration_label: string;
   duration_minutes: number;
   price: number;

@@ -10,10 +10,12 @@ export function SearchResultsScreen({
   query,
   onBack,
   onBookService,
+  onQuickBook,
 }: {
   query: string;
   onBack: () => void;
   onBookService: (s: import("./SlotSelectionScreen").SelectedService) => void;
+  onQuickBook?: (s: import("./SlotSelectionScreen").SelectedService) => void;
 }) {
   const { data: services = [], isLoading } = useQuery({
     queryKey: ["segment_services"],
@@ -28,6 +30,8 @@ export function SearchResultsScreen({
 
   const t = useT();
   const selectService = (s: typeof services[number]): import("./SlotSelectionScreen").SelectedService => ({
+    id: s.id,
+    service_category_id: s.service_category_id,
     duration_label: s.duration_label,
     duration_minutes: Number(s.duration_minutes),
     price: Number(s.price),
@@ -105,9 +109,10 @@ export function SearchResultsScreen({
                     unavailableReason(availability, "category", s.service_category_id)
                   }
                   onViewDetail={() => onBookService(selectService(s))}
-                  onAdd={() =>
-                    toast(t("home.addedToBooking", { name: s.service_name || s.duration_label }))
-                  }
+                  onAdd={() => {
+                    toast(t("home.addedToBooking", { name: s.service_name || s.duration_label }));
+                    onQuickBook?.(selectService(s));
+                  }}
                 />
               ))}
             </div>
