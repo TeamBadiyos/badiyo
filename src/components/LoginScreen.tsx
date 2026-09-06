@@ -6,6 +6,8 @@ import { captureReferralCode } from "@/lib/referrals";
 import { getErrorMessage } from "@/lib/errorMessage";
 import { hapticImpact } from "@/lib/haptics";
 import { hasLoginPinFor } from "@/lib/hasLoginPin";
+import { signInWithGoogle } from "@/lib/googleAuth";
+
 import { LegalConsentText } from "./LegalConsentText";
 import { useT, useLanguage } from "@/i18n";
 import type { LegalSlug } from "./profile/LegalPageScreen";
