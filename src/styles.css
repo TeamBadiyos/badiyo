@@ -296,3 +296,15 @@ select,
   background-position: 0 0;
 }
 
+
+/* ---- Razorpay Checkout overlay safe-area ----
+   Razorpay's JS Checkout injects `.razorpay-container` (with a full-screen
+   iframe) directly into <body>, outside our app shell, so it ignores
+   --app-safe-top and its header paints under the Android status bar.
+   Push the whole overlay below the status bar and fill the strip with brand
+   green so there is no seam. */
+.razorpay-container {
+  padding-top: max(var(--safe-top-min, 0px), env(safe-area-inset-top, 0px)) !important;
+  box-sizing: border-box !important;
+  background-color: var(--primary) !important;
+}
