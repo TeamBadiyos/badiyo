@@ -160,6 +160,9 @@ export function ServiceInProgressScreen({
     queryFn: () => fetchBookingTiming(bookingId!),
     enabled: !!bookingId,
     refetchOnWindowFocus: true,
+    staleTime: 0,
+    refetchInterval: 4000,
+    refetchIntervalInBackground: false,
   });
 
   // Realtime subscription for instant UI updates + auto-advance / cancel handling.

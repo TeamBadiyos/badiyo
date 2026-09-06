@@ -82,7 +82,20 @@ export function OtpScreen({
       )
       .subscribe();
 
+    // Safety net: if the socket drops (backgrounded app, flaky network) poll
+    // the booking so verification still advances within a couple of seconds.
+    const poll = setInterval(async () => {
+      if (advancedRef.current) return;
+      const { data } = await supabase
+        .from("bookings")
+        .select("status")
+        .eq("id", bookingId)
+        .maybeSingle();
+      advanceIfMatch(data as { status?: string | null } | null);
+    }, 4000);
+
     return () => {
+      clearInterval(poll);
       supabase.removeChannel(channel);
     };
   }, [bookingId, targetStatus, onVerified]);

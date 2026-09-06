@@ -227,6 +227,7 @@ export function PaymentScreen({
         "create-razorpay-order",
         {
           body: {
+            item_id: service.id ?? null,
             service_duration_minutes: service.duration_minutes,
             currency: "INR",
             receipt,

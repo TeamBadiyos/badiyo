@@ -60,7 +60,12 @@ export function SearchingForExpertScreen({
           deleted_at: null,
         } as BookingRow)
       : undefined,
-    staleTime: 10_000,
+    // Realtime is the fast path; this short poll is the safety net so a
+    // dropped/failed socket can never leave the screen stale.
+    staleTime: 0,
+    refetchInterval: 4000,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
   });
 
   const advancedRef = useRef(false);

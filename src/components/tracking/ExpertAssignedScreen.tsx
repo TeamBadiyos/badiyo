@@ -78,7 +78,10 @@ export function ExpertAssignedScreen({
         } as BookingRow)
       : undefined,
 
-    staleTime: 15_000,
+    staleTime: 0,
+    refetchInterval: 4000,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
   });
 
   const status = booking?.status ?? currentStatus ?? "confirmed";

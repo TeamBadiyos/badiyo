@@ -594,6 +594,13 @@ function Index() {
               setSelectedService(s);
               setPhase("slot");
             }}
+            onQuickBook={(s) => {
+              // "ADD" shortcut: same booking flow as Book Now on the detail
+              // page, with the default "now" slot, skipping the detail page.
+              setSelectedService(s);
+              setSelectedSlot({ mode: "now" });
+              setPhase("address");
+            }}
             onOpenProfile={() => setPhase("profile")}
             onOpenRewards={() => setPhase("rewards")}
             onOpenOrders={() => setPhase("orders")}
@@ -852,6 +859,11 @@ function Index() {
             onBookService={(s) => {
               setSelectedService(s);
               setPhase("slot");
+            }}
+            onQuickBook={(s) => {
+              setSelectedService(s);
+              setSelectedSlot({ mode: "now" });
+              setPhase("address");
             }}
           />
         </div>

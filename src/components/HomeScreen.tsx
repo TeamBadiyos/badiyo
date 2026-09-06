@@ -90,6 +90,9 @@ function ExpertTiles({ onOpenTask }: { onOpenTask: () => void }) {
 }
 
 export type BookServicePayload = {
+  /** service_price_options.id — the authoritative item the customer picked. */
+  id: string | null;
+  service_category_id: string | null;
   duration_label: string;
   duration_minutes: number;
   price: number;
@@ -111,6 +114,8 @@ export type BookServicePayload = {
 
 function toPayload(s: SegmentService, segment?: Segment | null): BookServicePayload {
   return {
+    id: s.id ?? null,
+    service_category_id: s.service_category_id ?? null,
     duration_label: s.duration_label,
     duration_minutes: Number(s.duration_minutes),
     price: Number(s.price),
@@ -134,12 +139,14 @@ function toPayload(s: SegmentService, segment?: Segment | null): BookServicePayl
 
 export function HomeScreen({
   onBookService,
+  onQuickBook,
   onOpenProfile,
   onOpenRewards,
   onOpenOrders,
   onSearch,
 }: {
   onBookService?: (service: BookServicePayload) => void;
+  onQuickBook?: (service: BookServicePayload) => void;
   onOpenProfile?: () => void;
   onOpenRewards?: () => void;
   onOpenOrders?: () => void;
@@ -165,8 +172,9 @@ export function HomeScreen({
   });
   const { data: avatarUrl } = useAvatarUrl();
   const t = useT();
-  const addToBooking = (s: SegmentService) => {
-    toast(t("home.addedToBooking", { name: s.duration_label }));
+  const addToBooking = (s: SegmentService, segment?: Segment | null) => {
+    toast(t("home.addedToBooking", { name: s.service_name || s.duration_label }));
+    onQuickBook?.(toPayload(s, segment ?? null));
   };
 
 
@@ -304,7 +312,7 @@ export function HomeScreen({
           categories={categories.filter((c) => c.segment_id === activeSegment.id)}
           services={servicesFor(activeSegment)}
           onBookService={onBookService}
-          onAdd={addToBooking}
+          onAdd={(s) => addToBooking(s, activeSegment)}
           onOpenTask={bookTileService}
           availability={availability}
         />
@@ -334,7 +342,7 @@ export function HomeScreen({
                       category={category}
                       services={servicesForCategory(category).slice(0, 3)}
                       onViewDetail={(s) => onBookService?.(toPayload(s, segment))}
-                      onAdd={addToBooking}
+                      onAdd={(s) => addToBooking(s, segment)}
                       availability={availability}
                     />
                   ))}
