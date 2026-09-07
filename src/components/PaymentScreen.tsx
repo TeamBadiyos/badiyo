@@ -397,6 +397,30 @@ export function PaymentScreen({
               </div>
             )}
 
+            {saveFailed && !bookingId && (
+              <div className="mt-4 w-full rounded-[14px] border border-destructive/40 bg-destructive/5 p-4 text-left">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+                  <div>
+                    <p className="text-sm font-bold text-foreground">
+                      {t("payment.saveFailedTitle")}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {t("payment.saveFailedSub")}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => { void hapticImpact("medium"); void retrySaveBooking(); }}
+                  disabled={retrying}
+                  className="mt-3 flex w-full items-center justify-center gap-2 rounded-[12px] bg-primary px-4 py-3 text-sm font-bold text-primary-foreground transition active:scale-[0.99] disabled:opacity-60"
+                >
+                  {retrying && <Loader2 className="h-4 w-4 animate-spin" />}
+                  {t("payment.saveRetry")}
+                </button>
+              </div>
+            )}
+
             <section className="mt-8 w-full rounded-[18px] border border-border bg-card p-5 text-left">
               <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
                 {t("payment.service")}
