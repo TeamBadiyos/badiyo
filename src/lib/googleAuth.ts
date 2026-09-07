@@ -29,7 +29,6 @@ export async function signInWithGoogle(): Promise<void> {
     return;
   }
 
-  const { Browser } = await import("@capacitor/browser");
   const { App } = await import("@capacitor/app");
 
   const { data, error } = await supabase.auth.signInWithOAuth({
