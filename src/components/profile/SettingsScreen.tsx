@@ -1,5 +1,7 @@
-import { ArrowLeft, ChevronRight, Globe, Bell, Smartphone, Trash2, X } from "lucide-react";
+import { ArrowLeft, ChevronRight, Globe, Bell, Smartphone, Trash2, X, Loader2 } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { useT, useLanguage } from "@/i18n";
 
 export function SettingsScreen({
@@ -7,15 +9,43 @@ export function SettingsScreen({
   onOpenNotifications,
   onOpenDevices,
   onOpenLanguage,
+  onAccountDeleted,
 }: {
   onBack: () => void;
   onOpenNotifications: () => void;
   onOpenDevices: () => void;
   onOpenLanguage: () => void;
+  onAccountDeleted: () => void;
 }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const t = useT();
   const { lang } = useLanguage();
+
+  async function handleDeleteAccount() {
+    if (deleting) return;
+    setDeleting(true);
+    try {
+      const { error } = await supabase.rpc("customer_delete_account");
+      if (error) throw error;
+      // Clear the local session so nothing signed-in survives on this device.
+      await supabase.auth.signOut();
+      try {
+        window.localStorage.clear();
+        window.sessionStorage.clear();
+      } catch {
+        /* storage may be unavailable */
+      }
+      setConfirmDelete(false);
+      toast("Your account has been deleted");
+      onAccountDeleted();
+    } catch (e) {
+      console.error("Account deletion failed:", e);
+      toast("We couldn't delete your account. Please try again.");
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   const items = [
     {
