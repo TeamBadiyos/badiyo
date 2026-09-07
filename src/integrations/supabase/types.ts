@@ -1748,6 +1748,65 @@ export type Database = {
           },
         ]
       }
+      payment_intents: {
+        Row: {
+          alerted_at: string | null
+          amount: number
+          attempts: number
+          booking_id: string | null
+          created_at: string
+          currency: string
+          id: string
+          last_error: string | null
+          payload: Json
+          razorpay_order_id: string
+          razorpay_payment_id: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          alerted_at?: string | null
+          amount: number
+          attempts?: number
+          booking_id?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          last_error?: string | null
+          payload: Json
+          razorpay_order_id: string
+          razorpay_payment_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          alerted_at?: string | null
+          amount?: number
+          attempts?: number
+          booking_id?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          last_error?: string | null
+          payload?: Json
+          razorpay_order_id?: string
+          razorpay_payment_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_intents_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_modes: {
         Row: {
           id: string
@@ -3521,6 +3580,10 @@ export type Database = {
           _refund_status: string
         }
         Returns: Json
+      }
+      system_fulfill_payment_intent: {
+        Args: { _order_id: string; _payment_id: string }
+        Returns: string
       }
       system_list_expired_unassigned_bookings: {
         Args: never
