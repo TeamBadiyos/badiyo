@@ -246,6 +246,24 @@ export function PaymentScreen({
             service_duration_minutes: service.duration_minutes,
             currency: "INR",
             receipt,
+            // Saved server-side so the booking can be recovered automatically
+            // if this device fails to write it after a successful payment.
+            booking_draft: {
+              address_id: address.id ?? null,
+              service_duration_minutes: service.duration_minutes,
+              service_label: service.duration_label,
+              slot_type: slot.mode === "now" ? "now" : "scheduled",
+              scheduled_date:
+                slot.mode === "later"
+                  ? new Date(slot.day).toISOString().slice(0, 10)
+                  : null,
+              scheduled_time_slot:
+                slot.mode === "later"
+                  ? `${slot.slotLabel} (${slot.slotRange})`
+                  : null,
+              booking_lat: address.latitude ?? null,
+              booking_lng: address.longitude ?? null,
+            },
           },
         },
       );
