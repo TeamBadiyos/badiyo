@@ -171,25 +171,6 @@ export function LoginScreen({
             )}
           </form>
 
-          {/* Divider */}
-          <div className="my-4 flex items-center gap-4">
-            <div className="h-px flex-1 bg-border" />
-            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              {t("login.or")}
-            </span>
-            <div className="h-px flex-1 bg-border" />
-          </div>
-
-          {/* Google */}
-          <button
-            type="button"
-            disabled={loading}
-            onClick={() => { void hapticImpact("light"); handleGoogle(); }}
-            className="flex w-full items-center justify-center gap-3 rounded-[14px] border border-border bg-card px-4 py-3.5 text-base font-semibold text-foreground transition hover:bg-muted active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <GoogleIcon />
-            {t("login.continueWithGoogle")}
-          </button>
 
           <LegalConsentText onOpenLegal={onOpenLegal} className="mt-auto text-center" />
         </div>
