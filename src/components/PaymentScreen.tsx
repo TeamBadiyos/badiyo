@@ -89,7 +89,10 @@ export function PaymentScreen({
   const [bookingId, setBookingId] = useState<string | null>(null);
   const [booking, setBooking] = useState<BookingRow | null>(null);
   const [bookingLoadError, setBookingLoadError] = useState<string | null>(null);
+  const [saveFailed, setSaveFailed] = useState(false);
+  const [retrying, setRetrying] = useState(false);
   const startedRef = useRef(false);
+  const paymentRef = useRef<{ paymentId: string; orderId: string } | null>(null);
 
   
 
