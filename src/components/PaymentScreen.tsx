@@ -97,6 +97,7 @@ export function PaymentScreen({
   
 
   async function createBooking(paymentId: string, orderId: string) {
+    setSaveFailed(false);
     try {
       const { data: userData } = await supabase.auth.getUser();
       const uid = userData.user?.id;
