@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Phone, User, Loader2 } from "lucide-react";
+import { Phone, User, Loader2, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { SelectedAddress } from "../BookingSummaryScreen";
 import { StageTracker, stageFromStatus } from "./StageTracker";
@@ -50,6 +50,7 @@ export function ExpertAssignedScreen({
   onAdvanceInProgress,
   onAdvanceCompleted,
   onCancelled,
+  onBack,
 }: {
   bookingId: string | null;
   address: SelectedAddress;
@@ -58,6 +59,7 @@ export function ExpertAssignedScreen({
   onAdvanceInProgress?: () => void;
   onAdvanceCompleted?: () => void;
   onCancelled?: () => void;
+  onBack?: () => void;
 }) {
   const t = useT();
   const qc = useQueryClient();
@@ -188,6 +190,15 @@ export function ExpertAssignedScreen({
     <main className="min-h-screen w-full bg-background pb-8">
       <PullToRefreshIndicator pull={pull} refreshing={refreshing} />
       <div className="mx-auto w-full max-w-md px-5 pt-6">
+        {onBack && (
+          <button
+            onClick={onBack}
+            aria-label={t("common.back")}
+            className="mb-3 flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card"
+          >
+            <ArrowLeft className="h-5 w-5 text-foreground" />
+          </button>
+        )}
         <h1 className="text-lg font-bold text-foreground">{headline}</h1>
         <p className="mt-1 text-xs text-muted-foreground">
           {t("track.bookingNo", { id: bookingId?.slice(0, 8) ?? "—" })}

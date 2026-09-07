@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Sparkles, Plus, X, Loader2, AlertTriangle } from "lucide-react";
+import { Sparkles, Plus, X, Loader2, AlertTriangle, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useT } from "@/i18n";
 import { getErrorMessage } from "@/lib/errorMessage";
 import { StageTracker, stageFromStatus } from "./StageTracker";
+import { ServiceLocationMap } from "./ServiceLocationMap";
 import { usePullToRefresh, PullToRefreshIndicator } from "@/lib/usePullToRefresh";
 import type { SelectedAddress } from "../BookingSummaryScreen";
 
@@ -131,12 +132,14 @@ export function ServiceInProgressScreen({
   onShowEndOtp,
   onAdvanceCompleted,
   onCancelled,
+  onBack,
 }: {
   bookingId: string | null;
   address?: SelectedAddress | null;
   onShowEndOtp?: () => void;
   onAdvanceCompleted?: () => void;
   onCancelled?: () => void;
+  onBack?: () => void;
 }) {
   const t = useT();
   const qc = useQueryClient();
@@ -359,6 +362,15 @@ export function ServiceInProgressScreen({
     <main className="min-h-screen w-full bg-background">
       <PullToRefreshIndicator pull={pull} refreshing={refreshing} />
       <div className="mx-auto flex min-h-screen w-full max-w-md flex-col px-5 pt-6 pb-8">
+        {onBack && (
+          <button
+            onClick={onBack}
+            aria-label={t("common.back")}
+            className="mb-3 flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card"
+          >
+            <ArrowLeft className="h-5 w-5 text-foreground" />
+          </button>
+        )}
         <div className="mb-6">
           <StageTracker stage={stageFromStatus(timing?.status)} />
         </div>
@@ -390,17 +402,7 @@ export function ServiceInProgressScreen({
 
         {bannerNode && <div className="mt-4">{bannerNode}</div>}
 
-        {address && (
-          <section className="mt-5 overflow-hidden rounded-[18px] border border-border bg-card p-4">
-            <div className="text-sm font-bold text-foreground">{t("progress.serviceLocation")}</div>
-            <div className="mt-0.5 text-xs text-muted-foreground line-clamp-2">
-              {address.full_address}
-            </div>
-            <div className="mt-1 text-[11px] text-muted-foreground">
-              {t("progress.liveSoon")}
-            </div>
-          </section>
-        )}
+        {address && <ServiceLocationMap address={address} bookingId={bookingId} />}
 
 
         <div className="mt-auto pt-10 space-y-3">
