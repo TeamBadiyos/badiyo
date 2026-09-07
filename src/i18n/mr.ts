@@ -95,6 +95,9 @@ export const mr: Partial<Record<keyof typeof en, string>> = {
   "payment.failedSub": "तुमचे पेमेंट पूर्ण होऊ शकले नाही.",
   "payment.tryAgain": "पुन्हा प्रयत्न करा",
   "payment.backToSummary": "सारांशाकडे परत",
+  "payment.saveFailedTitle": "तुमचे बुकिंग तयार होऊ शकले नाही",
+  "payment.saveFailedSub": "तुमचे पेमेंट झाले आहे, पण बुकिंग सेव्ह झाले नाही. पुन्हा प्रयत्न करा — तरीही न झाल्यास पेमेंट आयडीसह सपोर्टशी संपर्क साधा, आम्ही ते दुरुस्त करू किंवा परतावा देऊ.",
+  "payment.saveRetry": "बुकिंग पुन्हा सेव्ह करा",
   "payment.nowArriving": "आत्ता · 30–45 मिनिटांत पोहोचेल",
 
   // ── Tracking: stages ─────────────────────────────────────

@@ -93,6 +93,9 @@ export const en = {
   "payment.failedSub": "Your payment could not be completed.",
   "payment.tryAgain": "Try Again",
   "payment.backToSummary": "Back to Summary",
+  "payment.saveFailedTitle": "We couldn't create your booking",
+  "payment.saveFailedSub": "Your payment went through, but the booking didn't save. Tap retry — if it still fails, contact support with your payment ID and we'll fix it or refund you.",
+  "payment.saveRetry": "Retry saving booking",
   "payment.nowArriving": "Now · arriving in 30–45 mins",
 
   // ── Tracking: stages ─────────────────────────────────────
