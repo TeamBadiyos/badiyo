@@ -296,9 +296,9 @@ export function PaymentScreen({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Auto-navigate to tracking after payment success
+  // Auto-navigate to tracking only once the booking actually exists.
   useEffect(() => {
-    if (status !== "success") return;
+    if (status !== "success" || !bookingId) return;
     const t = setTimeout(() => onTrackBooking(bookingId), 3000);
     return () => clearTimeout(t);
   }, [status, bookingId, onTrackBooking]);
