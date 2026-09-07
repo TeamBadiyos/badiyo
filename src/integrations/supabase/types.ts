@@ -3526,20 +3526,15 @@ export type Database = {
         Args: { _id: string; _payload: Json }
         Returns: undefined
       }
-      staff_update_support_ticket:
-        | {
-            Args: { _note?: string; _status: string; _ticket_id: string }
-            Returns: undefined
-          }
-        | {
-            Args: {
-              _note?: string
-              _resolution?: string
-              _status: string
-              _ticket_id: string
-            }
-            Returns: undefined
-          }
+      staff_update_support_ticket: {
+        Args: {
+          _note?: string
+          _resolution?: string
+          _status: string
+          _ticket_id: string
+        }
+        Returns: undefined
+      }
       staff_update_zone: {
         Args: { _payload: Json; _zone_id: string }
         Returns: undefined
