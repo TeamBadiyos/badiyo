@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
 import { BadiyoLogo } from "./BadiyoLogo";
-import { GoogleIcon } from "./GoogleIcon";
 import { supabase } from "@/integrations/supabase/client";
 import { captureReferralCode } from "@/lib/referrals";
 import { getErrorMessage } from "@/lib/errorMessage";
 import { hapticImpact } from "@/lib/haptics";
 import { hasLoginPinFor } from "@/lib/hasLoginPin";
-import { signInWithGoogle } from "@/lib/googleAuth";
+
 
 import { LegalConsentText } from "./LegalConsentText";
 import { useT, useLanguage } from "@/i18n";
@@ -70,23 +69,6 @@ export function LoginScreen({
     }
   };
 
-  const handleGoogle = async () => {
-    if (loading) return;
-    setError(null);
-    setLoading(true);
-    try {
-      // Referral code (if any) is already captured to localStorage on mount
-      // and will be linked on return via onAuthStateChange in the root.
-      // On the native app this opens an in-app browser and deep-links back;
-      // on the web it's a normal redirect.
-      await signInWithGoogle();
-    } catch (err) {
-      console.error("Google sign-in failed:", err);
-      setError(await getErrorMessage(err));
-    } finally {
-      setLoading(false);
-    }
-  };
 
 
   return (
