@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { MapPin, Search, Clock } from "lucide-react";
+import { MapPin, Search, Clock, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { SelectedAddress } from "../BookingSummaryScreen";
 import type { SelectedService, SelectedSlot } from "../SlotSelectionScreen";
@@ -36,6 +36,7 @@ export function SearchingForExpertScreen({
   currentStatus,
   onExpertAssigned,
   onCancelled,
+  onBack,
 }: {
   bookingId: string | null;
   address: SelectedAddress;
@@ -44,6 +45,7 @@ export function SearchingForExpertScreen({
   currentStatus?: string;
   onExpertAssigned: () => void;
   onCancelled?: () => void;
+  onBack?: () => void;
 }) {
   const t = useT();
   const qc = useQueryClient();
@@ -130,6 +132,15 @@ export function SearchingForExpertScreen({
   return (
     <main className="min-h-screen w-full bg-background pb-8">
       <div className="mx-auto w-full max-w-md px-5 pt-6">
+        {onBack && (
+          <button
+            onClick={onBack}
+            aria-label={t("common.back")}
+            className="mb-3 flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card"
+          >
+            <ArrowLeft className="h-5 w-5 text-foreground" />
+          </button>
+        )}
         <h1 className="text-lg font-bold text-foreground">{t("track.findingExpert")}</h1>
         <p className="mt-1 text-xs text-muted-foreground">
           {t("track.bookingNo", { id: bookingId?.slice(0, 8) ?? "—" })}

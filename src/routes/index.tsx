@@ -208,6 +208,14 @@ type Phase =
 
 
 
+const TRACKING_PHASES = new Set<Phase>([
+  "searching-expert",
+  "expert-assigned",
+  "otp-start",
+  "in-progress",
+  "otp-end",
+]);
+
 function Index() {
   const [phase, _setPhase] = useState<Phase>("splash");
   const historyRef = useRef<Phase[]>([]);
@@ -298,6 +306,13 @@ function Index() {
     (allowExit: boolean) => {
       const cur = phaseRef.current;
       const hist = historyRef.current;
+      // Tracking screens never go back into the booking/payment flow — go home.
+      if (TRACKING_PHASES.has(cur)) {
+        historyRef.current = [];
+        phaseRef.current = "home";
+        _setPhase("home");
+        return;
+      }
       if (!isAtRootPhase(cur) && hist.length > 0) {
         const prev = hist.pop()!;
         phaseRef.current = prev;
@@ -706,6 +721,7 @@ function Index() {
             service={selectedService}
             slot={selectedSlot}
             currentStatus={activeBookingStatus ?? undefined}
+            onBack={() => setPhase("home")}
             onExpertAssigned={() => {
               setActiveBookingStatus("expert_assigned");
               setPhase("expert-assigned");
@@ -723,6 +739,7 @@ function Index() {
             bookingId={activeBookingId}
             address={selectedAddress}
             currentStatus={activeBookingStatus ?? undefined}
+            onBack={() => setPhase("home")}
             onShowStartOtp={() => setPhase("otp-start")}
             onAdvanceInProgress={() => {
               setActiveBookingStatus("in_progress");
@@ -753,6 +770,7 @@ function Index() {
           <ServiceInProgressScreen
             bookingId={activeBookingId}
             address={selectedAddress}
+            onBack={() => setPhase("home")}
             onShowEndOtp={() => setPhase("otp-end")}
             onAdvanceCompleted={() => {
               setActiveBookingStatus("completed");
