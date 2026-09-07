@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Sparkles, Plus, X, Loader2, AlertTriangle } from "lucide-react";
+import { Sparkles, Plus, X, Loader2, AlertTriangle, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useT } from "@/i18n";
 import { getErrorMessage } from "@/lib/errorMessage";
 import { StageTracker, stageFromStatus } from "./StageTracker";
+import { ServiceLocationMap } from "./ServiceLocationMap";
 import { usePullToRefresh, PullToRefreshIndicator } from "@/lib/usePullToRefresh";
 import type { SelectedAddress } from "../BookingSummaryScreen";
 
@@ -131,12 +132,14 @@ export function ServiceInProgressScreen({
   onShowEndOtp,
   onAdvanceCompleted,
   onCancelled,
+  onBack,
 }: {
   bookingId: string | null;
   address?: SelectedAddress | null;
   onShowEndOtp?: () => void;
   onAdvanceCompleted?: () => void;
   onCancelled?: () => void;
+  onBack?: () => void;
 }) {
   const t = useT();
   const qc = useQueryClient();
