@@ -208,11 +208,22 @@ export function PaymentScreen({
       }
 
       void creditReferralForBooking(data.id);
+      setSaveFailed(false);
     } catch (e) {
       console.error("Failed to create booking record:", e);
-      setBookingLoadError(
-        "Booking saved, but there was an issue loading details - check My Bookings",
-      );
+      setBookingLoadError(null);
+      setSaveFailed(true);
+    }
+  }
+
+  async function retrySaveBooking() {
+    const p = paymentRef.current;
+    if (!p || retrying) return;
+    setRetrying(true);
+    try {
+      await createBooking(p.paymentId, p.orderId);
+    } finally {
+      setRetrying(false);
     }
   }
 
