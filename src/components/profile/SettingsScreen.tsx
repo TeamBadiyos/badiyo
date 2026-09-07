@@ -116,20 +116,26 @@ export function SettingsScreen({
               </button>
             </div>
             <p className="mt-2 text-sm text-muted-foreground">
-              This will permanently remove your profile, bookings, and rewards. This action cannot be undone.
+              This removes your profile, saved addresses, rewards access and signs you out of all
+              devices. You will not be able to sign in again with this number. Past bookings and
+              payment records are kept, without your personal details, because accounting rules
+              require us to retain them. This action cannot be undone.
             </p>
             <p className="mt-2 text-xs text-muted-foreground">{t("legal.deleteNote")}</p>
             <div className="mt-5 flex gap-3">
               <button
                 onClick={() => setConfirmDelete(false)}
-                className="flex-1 rounded-[14px] border border-border bg-card py-3 text-sm font-bold text-foreground"
+                disabled={deleting}
+                className="flex-1 rounded-[14px] border border-border bg-card py-3 text-sm font-bold text-foreground disabled:opacity-60"
               >
                 Cancel
               </button>
               <button
-                onClick={() => setConfirmDelete(false)}
-                className="flex-1 rounded-[14px] bg-destructive py-3 text-sm font-bold text-destructive-foreground"
+                onClick={() => void handleDeleteAccount()}
+                disabled={deleting}
+                className="flex flex-1 items-center justify-center gap-2 rounded-[14px] bg-destructive py-3 text-sm font-bold text-destructive-foreground disabled:opacity-60"
               >
+                {deleting && <Loader2 className="h-4 w-4 animate-spin" />}
                 Delete
               </button>
             </div>
