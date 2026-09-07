@@ -139,6 +139,41 @@ Deno.serve(async (req) => {
     }
 
     const order = JSON.parse(text);
+
+    // Persist a payment intent so a paid order can be recovered server-side
+    // (by the Razorpay webhook) even if the client never saves the booking.
+    try {
+      const draft = body?.booking_draft;
+      const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
+      let userId: string | null = null;
+      if (token) {
+        const { data: userRes } = await supabase.auth.getUser(token);
+        userId = userRes?.user?.id ?? null;
+      }
+      if (draft && userId) {
+        const { error: intentErr } = await supabase.from("payment_intents").insert({
+          user_id: userId,
+          razorpay_order_id: order.id,
+          amount: order.amount,
+          currency: order.currency,
+          payload: {
+            address_id: draft.address_id ?? null,
+            service_duration_minutes: draft.service_duration_minutes ?? 0,
+            service_label: draft.service_label ?? "Service",
+            slot_type: draft.slot_type ?? "now",
+            scheduled_date: draft.scheduled_date ?? null,
+            scheduled_time_slot: draft.scheduled_time_slot ?? null,
+            booking_lat: draft.booking_lat ?? null,
+            booking_lng: draft.booking_lng ?? null,
+            item_id: itemId || null,
+          },
+        });
+        if (intentErr) console.error("payment_intents insert failed", intentErr);
+      }
+    } catch (intentErr) {
+      console.error("payment intent capture failed", intentErr);
+    }
+
     return json({
       order_id: order.id,
       amount: order.amount,
