@@ -688,6 +688,7 @@ function Index() {
             onBack={() => setPhase("summary")}
             onDone={resetAndGoHome}
             onTrackBooking={(id) => {
+              if (!id) return;
               setActiveBookingId(id);
               setActiveBookingStatus("accepted");
               setPhase("searching-expert");

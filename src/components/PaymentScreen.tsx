@@ -89,11 +89,15 @@ export function PaymentScreen({
   const [bookingId, setBookingId] = useState<string | null>(null);
   const [booking, setBooking] = useState<BookingRow | null>(null);
   const [bookingLoadError, setBookingLoadError] = useState<string | null>(null);
+  const [saveFailed, setSaveFailed] = useState(false);
+  const [retrying, setRetrying] = useState(false);
   const startedRef = useRef(false);
+  const paymentRef = useRef<{ paymentId: string; orderId: string } | null>(null);
 
   
 
   async function createBooking(paymentId: string, orderId: string) {
+    setSaveFailed(false);
     try {
       const { data: userData } = await supabase.auth.getUser();
       const uid = userData.user?.id;
@@ -204,11 +208,22 @@ export function PaymentScreen({
       }
 
       void creditReferralForBooking(data.id);
+      setSaveFailed(false);
     } catch (e) {
       console.error("Failed to create booking record:", e);
-      setBookingLoadError(
-        "Booking saved, but there was an issue loading details - check My Bookings",
-      );
+      setBookingLoadError(null);
+      setSaveFailed(true);
+    }
+  }
+
+  async function retrySaveBooking() {
+    const p = paymentRef.current;
+    if (!p || retrying) return;
+    setRetrying(true);
+    try {
+      await createBooking(p.paymentId, p.orderId);
+    } finally {
+      setRetrying(false);
     }
   }
 
@@ -252,6 +267,10 @@ export function PaymentScreen({
         prefill: { contact },
         theme: { color: "#00B97A" },
         handler: (resp) => {
+          paymentRef.current = {
+            paymentId: resp.razorpay_payment_id,
+            orderId: resp.razorpay_order_id,
+          };
           setStatus("success");
           void createBooking(resp.razorpay_payment_id, resp.razorpay_order_id);
         },
@@ -277,9 +296,9 @@ export function PaymentScreen({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Auto-navigate to tracking after payment success
+  // Auto-navigate to tracking only once the booking actually exists.
   useEffect(() => {
-    if (status !== "success") return;
+    if (status !== "success" || !bookingId) return;
     const t = setTimeout(() => onTrackBooking(bookingId), 3000);
     return () => clearTimeout(t);
   }, [status, bookingId, onTrackBooking]);
@@ -320,7 +339,8 @@ export function PaymentScreen({
     : slot.mode === "now"
       ? t("payment.nowArriving")
       : `${slot.day} · ${slot.slotLabel} (${slot.slotRange})`;
-  const displayPaymentId = booking?.razorpay_payment_id ?? null;
+  const displayPaymentId =
+    booking?.razorpay_payment_id ?? paymentRef.current?.paymentId ?? null;
 
   return (
     <main className="min-h-screen w-full bg-background">
@@ -375,6 +395,30 @@ export function PaymentScreen({
                 <p className="text-xs text-muted-foreground">
                   {bookingLoadError}
                 </p>
+              </div>
+            )}
+
+            {saveFailed && !bookingId && (
+              <div className="mt-4 w-full rounded-[14px] border border-destructive/40 bg-destructive/5 p-4 text-left">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+                  <div>
+                    <p className="text-sm font-bold text-foreground">
+                      {t("payment.saveFailedTitle")}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {t("payment.saveFailedSub")}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => { void hapticImpact("medium"); void retrySaveBooking(); }}
+                  disabled={retrying}
+                  className="mt-3 flex w-full items-center justify-center gap-2 rounded-[12px] bg-primary px-4 py-3 text-sm font-bold text-primary-foreground transition active:scale-[0.99] disabled:opacity-60"
+                >
+                  {retrying && <Loader2 className="h-4 w-4 animate-spin" />}
+                  {t("payment.saveRetry")}
+                </button>
               </div>
             )}
 
