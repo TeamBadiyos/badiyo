@@ -946,6 +946,11 @@ function Index() {
             onOpenNotifications={() => setPhase("notifications")}
             onOpenDevices={() => setPhase("active-devices")}
             onOpenLanguage={() => setPhase("language")}
+            onAccountDeleted={() => {
+              queryClient.clear();
+              resetAndGoHome();
+              setPhase("login");
+            }}
           />
         </div>
       )}
