@@ -350,6 +350,34 @@ export function PaymentScreen({
     return () => clearTimeout(t);
   }, [status, bookingId, onTrackBooking]);
 
+  // If the client-side save failed, keep polling for the booking the payment
+  // webhook creates server-side, so the customer still lands on tracking.
+  useEffect(() => {
+    if (status !== "success" || bookingId || !saveFailed) return;
+    const p = paymentRef.current;
+    if (!p) return;
+    let cancelled = false;
+    let tries = 0;
+    const timer = setInterval(async () => {
+      tries += 1;
+      if (tries > 20) {
+        clearInterval(timer);
+        return;
+      }
+      const found = await findBookingForPayment(p.orderId, p.paymentId);
+      if (cancelled || !found) return;
+      clearInterval(timer);
+      setBookingId(found.id);
+      setBooking(found);
+      setSaveFailed(false);
+    }, 3000);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, bookingId, saveFailed]);
+
   // Re-fetch booking by id (supports refresh scenarios in-session)
   useEffect(() => {
     if (!bookingId) return;
