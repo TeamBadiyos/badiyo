@@ -49,8 +49,9 @@ export function ServiceLocationMap({
   bookingId?: string | null;
 }) {
   const mapDivRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<google.maps.Map | null>(null);
-  const expertMarkerRef = useRef<google.maps.Marker | null>(null);
+  // The Maps JS API is loaded dynamically and typed loosely by the loader.
+  const mapRef = useRef<any>(null);
+  const expertMarkerRef = useRef<any>(null);
   const [failed, setFailed] = useState(false);
   const [ready, setReady] = useState(false);
 
