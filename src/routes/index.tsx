@@ -357,6 +357,8 @@ function Index() {
       referrals: "referrals",
       wallet: "wallet",
       profile: "profile",
+      help: "help",
+      support: "help",
     };
     setPushNavigator((route, data) => {
       const phase = ROUTE_TO_PHASE[route];
@@ -946,6 +948,11 @@ function Index() {
             onOpenNotifications={() => setPhase("notifications")}
             onOpenDevices={() => setPhase("active-devices")}
             onOpenLanguage={() => setPhase("language")}
+            onAccountDeleted={() => {
+              queryClient.clear();
+              resetAndGoHome();
+              setPhase("login");
+            }}
           />
         </div>
       )}

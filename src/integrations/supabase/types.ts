@@ -2608,6 +2608,7 @@ export type Database = {
           id: string
           internal_note: string | null
           message: string
+          resolution_summary: string | null
           resolved_at: string | null
           resolved_by: string | null
           source: string
@@ -2620,6 +2621,7 @@ export type Database = {
           id?: string
           internal_note?: string | null
           message: string
+          resolution_summary?: string | null
           resolved_at?: string | null
           resolved_by?: string | null
           source?: string
@@ -2632,6 +2634,7 @@ export type Database = {
           id?: string
           internal_note?: string | null
           message?: string
+          resolution_summary?: string | null
           resolved_at?: string | null
           resolved_by?: string | null
           source?: string
@@ -2695,6 +2698,7 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string | null
+          deleted_at: string | null
           email: string | null
           full_name: string | null
           id: string
@@ -2712,6 +2716,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           created_at?: string | null
+          deleted_at?: string | null
           email?: string | null
           full_name?: string | null
           id: string
@@ -2729,6 +2734,7 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           created_at?: string | null
+          deleted_at?: string | null
           email?: string | null
           full_name?: string | null
           id?: string
@@ -3003,6 +3009,7 @@ export type Database = {
         }
         Returns: Json
       }
+      customer_delete_account: { Args: never; Returns: undefined }
       customer_delete_address: {
         Args: { p_address_id: string }
         Returns: boolean
@@ -3110,6 +3117,17 @@ export type Database = {
         Returns: string
       }
       generate_otp4: { Args: never; Returns: string }
+      get_assigned_expert_location: {
+        Args: { _booking_id: string }
+        Returns: {
+          expert_id: string
+          is_online: boolean
+          latitude: number
+          location_updated_at: string
+          longitude: number
+          name: string
+        }[]
+      }
       get_assigned_expert_public: {
         Args: { _booking_id: string }
         Returns: {
@@ -3508,10 +3526,20 @@ export type Database = {
         Args: { _id: string; _payload: Json }
         Returns: undefined
       }
-      staff_update_support_ticket: {
-        Args: { _note?: string; _status: string; _ticket_id: string }
-        Returns: undefined
-      }
+      staff_update_support_ticket:
+        | {
+            Args: { _note?: string; _status: string; _ticket_id: string }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              _note?: string
+              _resolution?: string
+              _status: string
+              _ticket_id: string
+            }
+            Returns: undefined
+          }
       staff_update_zone: {
         Args: { _payload: Json; _zone_id: string }
         Returns: undefined

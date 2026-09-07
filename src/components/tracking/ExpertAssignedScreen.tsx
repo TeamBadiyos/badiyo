@@ -289,7 +289,7 @@ export function ExpertAssignedScreen({
           </section>
         )}
 
-        <ServiceLocationMap address={address} />
+        <ServiceLocationMap address={address} bookingId={bookingId} />
 
         {(status === "expert_assigned" || status === "accepted" || status === "confirmed") && (
           <CancelBookingButton

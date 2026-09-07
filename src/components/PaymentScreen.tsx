@@ -211,9 +211,38 @@ export function PaymentScreen({
       setSaveFailed(false);
     } catch (e) {
       console.error("Failed to create booking record:", e);
+      // The server-side webhook safety net may already have created the
+      // booking for this payment (which also makes our insert fail on the
+      // unique order id). Look it up before showing an error.
+      const recovered = await findBookingForPayment(orderId, paymentId);
+      if (recovered) {
+        setBookingId(recovered.id);
+        setBooking(recovered);
+        setBookingLoadError(null);
+        setSaveFailed(false);
+        return;
+      }
       setBookingLoadError(null);
       setSaveFailed(true);
     }
+  }
+
+  /** Find a booking already created for this payment (client insert race or webhook). */
+  async function findBookingForPayment(orderId: string, paymentId: string) {
+    const { data, error } = await supabase
+      .from("bookings")
+      .select(
+        "id, service_label, service_duration_minutes, price, slot_type, scheduled_date, scheduled_time_slot, razorpay_payment_id",
+      )
+      .or(`razorpay_order_id.eq.${orderId},razorpay_payment_id.eq.${paymentId}`)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error) {
+      console.error("Booking lookup by payment failed:", error);
+      return null;
+    }
+    return (data as BookingRow | null) ?? null;
   }
 
   async function retrySaveBooking() {
@@ -320,6 +349,34 @@ export function PaymentScreen({
     const t = setTimeout(() => onTrackBooking(bookingId), 3000);
     return () => clearTimeout(t);
   }, [status, bookingId, onTrackBooking]);
+
+  // If the client-side save failed, keep polling for the booking the payment
+  // webhook creates server-side, so the customer still lands on tracking.
+  useEffect(() => {
+    if (status !== "success" || bookingId || !saveFailed) return;
+    const p = paymentRef.current;
+    if (!p) return;
+    let cancelled = false;
+    let tries = 0;
+    const timer = setInterval(async () => {
+      tries += 1;
+      if (tries > 20) {
+        clearInterval(timer);
+        return;
+      }
+      const found = await findBookingForPayment(p.orderId, p.paymentId);
+      if (cancelled || !found) return;
+      clearInterval(timer);
+      setBookingId(found.id);
+      setBooking(found);
+      setSaveFailed(false);
+    }, 3000);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, bookingId, saveFailed]);
 
   // Re-fetch booking by id (supports refresh scenarios in-session)
   useEffect(() => {
