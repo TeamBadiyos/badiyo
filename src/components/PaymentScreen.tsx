@@ -339,7 +339,8 @@ export function PaymentScreen({
     : slot.mode === "now"
       ? t("payment.nowArriving")
       : `${slot.day} · ${slot.slotLabel} (${slot.slotRange})`;
-  const displayPaymentId = booking?.razorpay_payment_id ?? null;
+  const displayPaymentId =
+    booking?.razorpay_payment_id ?? paymentRef.current?.paymentId ?? null;
 
   return (
     <main className="min-h-screen w-full bg-background">
