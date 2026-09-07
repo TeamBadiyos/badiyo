@@ -29,7 +29,6 @@ export async function signInWithGoogle(): Promise<void> {
     return;
   }
 
-  const { Browser } = await import("@capacitor/browser");
   const { App } = await import("@capacitor/app");
 
   const { data, error } = await supabase.auth.signInWithOAuth({
@@ -41,6 +40,16 @@ export async function signInWithGoogle(): Promise<void> {
   });
   if (error) throw error;
   if (!data?.url) throw new Error("Could not start Google sign-in");
+
+  // Fallback for APKs built before @capacitor/browser was synced in: the
+  // WebView is served from https://user.badiyos.com, so navigating it to the
+  // OAuth URL and back works too — Supabase exchanges the ?code= on return
+  // (detectSessionInUrl). Newer builds use the in-app browser instead.
+  if (!Capacitor.isPluginAvailable("Browser")) {
+    window.location.href = data.url;
+    return;
+  }
+  const { Browser } = await import("@capacitor/browser");
 
   // Handle the return trip before opening the browser, so a fast redirect
   // can't race us.
