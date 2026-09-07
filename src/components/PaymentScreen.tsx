@@ -267,6 +267,10 @@ export function PaymentScreen({
         prefill: { contact },
         theme: { color: "#00B97A" },
         handler: (resp) => {
+          paymentRef.current = {
+            paymentId: resp.razorpay_payment_id,
+            orderId: resp.razorpay_order_id,
+          };
           setStatus("success");
           void createBooking(resp.razorpay_payment_id, resp.razorpay_order_id);
         },
