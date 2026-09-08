@@ -1,5 +1,7 @@
+import { memo, useState } from "react";
 import { toast } from "sonner";
 import { anchorPrice } from "@/lib/price";
+import { sizedImageUrl } from "@/lib/serviceImage";
 import { useT } from "@/i18n";
 
 import fallbackImage from "@/assets/expert-house-cleaning.jpg";
