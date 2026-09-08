@@ -14,6 +14,53 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_deletion_requests: {
+        Row: {
+          created_at: string
+          email: string | null
+          handled_at: string | null
+          handled_by: string | null
+          id: string
+          phone: string
+          reason: string | null
+          staff_note: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          handled_at?: string | null
+          handled_by?: string | null
+          id?: string
+          phone: string
+          reason?: string | null
+          staff_note?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          handled_at?: string | null
+          handled_by?: string | null
+          id?: string
+          phone?: string
+          reason?: string | null
+          staff_note?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_deletion_requests_handled_by_fkey"
+            columns: ["handled_by"]
+            isOneToOne: false
+            referencedRelation: "staff_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       addresses: {
         Row: {
           area: string | null
@@ -3516,6 +3563,10 @@ export type Database = {
       }
       staff_update_booking_status: {
         Args: { _booking_id: string; _new_status: string; _note?: string }
+        Returns: undefined
+      }
+      staff_update_deletion_request: {
+        Args: { _note?: string; _request_id: string; _status: string }
         Returns: undefined
       }
       staff_update_referral_config: {
