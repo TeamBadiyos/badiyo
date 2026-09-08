@@ -275,6 +275,7 @@ export function PaymentScreen({
             service_duration_minutes: service.duration_minutes,
             currency: "INR",
             receipt,
+            purpose: "booking",
             // Saved server-side so the booking can be recovered automatically
             // if this device fails to write it after a successful payment.
             booking_draft: {
