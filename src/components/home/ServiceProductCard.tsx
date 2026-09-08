@@ -1,5 +1,7 @@
+import { memo, useState } from "react";
 import { toast } from "sonner";
 import { anchorPrice } from "@/lib/price";
+import { sizedImageUrl } from "@/lib/serviceImage";
 import { useT } from "@/i18n";
 
 import fallbackImage from "@/assets/expert-house-cleaning.jpg";
@@ -18,7 +20,7 @@ export type ProductCardService = {
  * Blinkit-style compact product card: square image, 2-line name,
  * price with strikethrough anchor, and a small outlined ADD button.
  */
-export function ServiceProductCard({
+function ServiceProductCardBase({
   service,
   onAdd,
   onViewDetail,
@@ -37,6 +39,10 @@ export function ServiceProductCard({
   const price = Number(service.price);
   const was = service.strikePrice ?? anchorPrice(price);
 
+  const [loaded, setLoaded] = useState(false);
+  // Cards render at ~170px wide; ask for a 2x variant, never the full-size file.
+  const src = sizedImageUrl(service.imageUrl, 360) || fallbackImage;
+
   const blocked = () => {
     toast(t("home.unavailableToast"));
   };
@@ -52,11 +58,14 @@ export function ServiceProductCard({
       <div className="relative">
         <div className="brand-grade aspect-square w-full overflow-hidden rounded-[14px] bg-muted">
           <img
-            src={service.imageUrl || fallbackImage}
+            src={src}
             alt={service.name}
             loading="lazy"
             decoding="async"
-            className="h-full w-full object-cover"
+            onLoad={() => setLoaded(true)}
+            className={`h-full w-full object-cover transition-opacity duration-200 ${
+              loaded ? "opacity-100" : "opacity-0"
+            }`}
           />
         </div>
         {unavailable ? (
@@ -99,3 +108,9 @@ export function ServiceProductCard({
   );
 }
 
+
+/**
+ * Memoised: home renders dozens of these, and unrelated state changes
+ * (search text, sheets, toasts) must not re-render the whole grid.
+ */
+export const ServiceProductCard = memo(ServiceProductCardBase);

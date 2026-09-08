@@ -25,7 +25,9 @@ export function SearchResultsScreen({
   const { data: availability } = useQuery({
     queryKey: ["availability_overrides"],
     queryFn: fetchAvailability,
-    staleTime: 0,
+    // Short cache + background refresh: the screen opens instantly and the
+    // list corrects itself a moment later instead of blocking on the network.
+    staleTime: 30_000,
   });
 
   const t = useT();

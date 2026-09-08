@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as InviteCodeRouteImport } from './routes/invite.$code'
+import { Route as ApiPublicServiceImageRouteImport } from './routes/api/public/service-image'
 import { Route as ApiPublicReverseGeocodeRouteImport } from './routes/api/public/reverse-geocode'
 import { Route as ApiPublicHasLoginPinRouteImport } from './routes/api/public/has-login-pin'
 import { Route as ApiPublicWebhooksRazorpayRouteImport } from './routes/api/public/webhooks/razorpay'
@@ -23,6 +24,11 @@ const IndexRoute = IndexRouteImport.update({
 const InviteCodeRoute = InviteCodeRouteImport.update({
   id: '/invite/$code',
   path: '/invite/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicServiceImageRoute = ApiPublicServiceImageRouteImport.update({
+  id: '/api/public/service-image',
+  path: '/api/public/service-image',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicReverseGeocodeRoute = ApiPublicReverseGeocodeRouteImport.update({
@@ -47,6 +53,7 @@ export interface FileRoutesByFullPath {
   '/invite/$code': typeof InviteCodeRoute
   '/api/public/has-login-pin': typeof ApiPublicHasLoginPinRoute
   '/api/public/reverse-geocode': typeof ApiPublicReverseGeocodeRoute
+  '/api/public/service-image': typeof ApiPublicServiceImageRoute
   '/api/public/webhooks/razorpay': typeof ApiPublicWebhooksRazorpayRoute
 }
 export interface FileRoutesByTo {
@@ -54,6 +61,7 @@ export interface FileRoutesByTo {
   '/invite/$code': typeof InviteCodeRoute
   '/api/public/has-login-pin': typeof ApiPublicHasLoginPinRoute
   '/api/public/reverse-geocode': typeof ApiPublicReverseGeocodeRoute
+  '/api/public/service-image': typeof ApiPublicServiceImageRoute
   '/api/public/webhooks/razorpay': typeof ApiPublicWebhooksRazorpayRoute
 }
 export interface FileRoutesById {
@@ -62,6 +70,7 @@ export interface FileRoutesById {
   '/invite/$code': typeof InviteCodeRoute
   '/api/public/has-login-pin': typeof ApiPublicHasLoginPinRoute
   '/api/public/reverse-geocode': typeof ApiPublicReverseGeocodeRoute
+  '/api/public/service-image': typeof ApiPublicServiceImageRoute
   '/api/public/webhooks/razorpay': typeof ApiPublicWebhooksRazorpayRoute
 }
 export interface FileRouteTypes {
@@ -71,6 +80,7 @@ export interface FileRouteTypes {
     | '/invite/$code'
     | '/api/public/has-login-pin'
     | '/api/public/reverse-geocode'
+    | '/api/public/service-image'
     | '/api/public/webhooks/razorpay'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -78,6 +88,7 @@ export interface FileRouteTypes {
     | '/invite/$code'
     | '/api/public/has-login-pin'
     | '/api/public/reverse-geocode'
+    | '/api/public/service-image'
     | '/api/public/webhooks/razorpay'
   id:
     | '__root__'
@@ -85,6 +96,7 @@ export interface FileRouteTypes {
     | '/invite/$code'
     | '/api/public/has-login-pin'
     | '/api/public/reverse-geocode'
+    | '/api/public/service-image'
     | '/api/public/webhooks/razorpay'
   fileRoutesById: FileRoutesById
 }
@@ -93,6 +105,7 @@ export interface RootRouteChildren {
   InviteCodeRoute: typeof InviteCodeRoute
   ApiPublicHasLoginPinRoute: typeof ApiPublicHasLoginPinRoute
   ApiPublicReverseGeocodeRoute: typeof ApiPublicReverseGeocodeRoute
+  ApiPublicServiceImageRoute: typeof ApiPublicServiceImageRoute
   ApiPublicWebhooksRazorpayRoute: typeof ApiPublicWebhooksRazorpayRoute
 }
 
@@ -110,6 +123,13 @@ declare module '@tanstack/react-router' {
       path: '/invite/$code'
       fullPath: '/invite/$code'
       preLoaderRoute: typeof InviteCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/service-image': {
+      id: '/api/public/service-image'
+      path: '/api/public/service-image'
+      fullPath: '/api/public/service-image'
+      preLoaderRoute: typeof ApiPublicServiceImageRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/reverse-geocode': {
@@ -141,6 +161,7 @@ const rootRouteChildren: RootRouteChildren = {
   InviteCodeRoute: InviteCodeRoute,
   ApiPublicHasLoginPinRoute: ApiPublicHasLoginPinRoute,
   ApiPublicReverseGeocodeRoute: ApiPublicReverseGeocodeRoute,
+  ApiPublicServiceImageRoute: ApiPublicServiceImageRoute,
   ApiPublicWebhooksRazorpayRoute: ApiPublicWebhooksRazorpayRoute,
 }
 export const routeTree = rootRouteImport

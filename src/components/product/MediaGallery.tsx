@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { sizedImageUrl } from "@/lib/serviceImage";
 
 export type MediaItem =
   | { kind: "image"; url: string }
@@ -52,7 +53,7 @@ export function MediaGallery({
               />
             ) : (
               <img
-                src={item.url}
+                src={sizedImageUrl(item.url, 900) ?? item.url}
                 alt={alt}
                 loading={i === 0 ? "eager" : "lazy"}
                 decoding="async"
