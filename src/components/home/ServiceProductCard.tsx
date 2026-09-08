@@ -20,7 +20,7 @@ export type ProductCardService = {
  * Blinkit-style compact product card: square image, 2-line name,
  * price with strikethrough anchor, and a small outlined ADD button.
  */
-export function ServiceProductCard({
+function ServiceProductCardBase({
   service,
   onAdd,
   onViewDetail,
@@ -38,6 +38,10 @@ export function ServiceProductCard({
   const t = useT();
   const price = Number(service.price);
   const was = service.strikePrice ?? anchorPrice(price);
+
+  const [loaded, setLoaded] = useState(false);
+  // Cards render at ~170px wide; ask for a 2x variant, never the full-size file.
+  const src = sizedImageUrl(service.imageUrl, 360) || fallbackImage;
 
   const blocked = () => {
     toast(t("home.unavailableToast"));
