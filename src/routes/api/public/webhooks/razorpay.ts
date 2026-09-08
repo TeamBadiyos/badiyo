@@ -9,6 +9,7 @@ type RazorpayPaymentEntity = {
   id?: string;
   order_id?: string;
   status?: string;
+  notes?: Record<string, string> | null;
 };
 
 function safeEqual(a: string, b: string): boolean {
