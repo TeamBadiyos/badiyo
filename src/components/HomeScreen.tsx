@@ -168,7 +168,7 @@ export function HomeScreen({
   const { data: availability } = useQuery({
     queryKey: ["availability_overrides"],
     queryFn: fetchAvailability,
-    staleTime: 0,
+    staleTime: 30_000,
   });
   const { data: avatarUrl } = useAvatarUrl();
   const t = useT();

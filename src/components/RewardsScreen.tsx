@@ -30,7 +30,7 @@ export function RewardsScreen({
   const { data, isLoading } = useQuery({
     queryKey: ["customer_rewards"],
     queryFn: fetchCustomerRewards,
-    staleTime: 0,
+    staleTime: 30_000,
   });
 
   const queryClient = useQueryClient();
