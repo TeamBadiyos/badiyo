@@ -275,6 +275,8 @@ export function ServiceInProgressScreen({
           service_duration_minutes: opt.duration_minutes,
           currency: "INR",
           receipt,
+          // Not a new booking: keeps the webhook safety net from false-alarming.
+          purpose: "extension",
         },
       });
       if (error) throw new Error(error.message);

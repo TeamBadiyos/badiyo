@@ -58,6 +58,9 @@ Deno.serve(async (req) => {
     const durationMinutes = Number(body?.service_duration_minutes);
     const currency = typeof body?.currency === "string" ? body.currency : "INR";
     const receipt = typeof body?.receipt === "string" ? body.receipt : `rcpt_${Date.now()}`;
+    // "booking" orders must end up as a booking (webhook safety net applies).
+    // "extension" orders top up an existing booking and must NOT be recovered.
+    const purpose = body?.purpose === "extension" ? "extension" : "booking";
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -129,7 +132,7 @@ Deno.serve(async (req) => {
         Authorization: `Basic ${auth}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ amount, currency, receipt }),
+      body: JSON.stringify({ amount, currency, receipt, notes: { purpose } }),
     });
 
     const text = await rzpRes.text();

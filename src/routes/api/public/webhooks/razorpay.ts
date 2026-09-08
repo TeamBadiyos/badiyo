@@ -9,6 +9,7 @@ type RazorpayPaymentEntity = {
   id?: string;
   order_id?: string;
   status?: string;
+  notes?: Record<string, string> | null;
 };
 
 function safeEqual(a: string, b: string): boolean {
@@ -53,6 +54,11 @@ export const Route = createFileRoute("/api/public/webhooks/razorpay")({
         const entity = payload.payload?.payment?.entity ?? {};
         const paymentId = entity.id ?? null;
         const orderId = entity.order_id ?? null;
+        // Service-extension top-ups are not bookings; the safety net must skip
+        // them, otherwise every extension raises a false "lost booking" alert.
+        if (entity.notes?.purpose === "extension") {
+          return new Response("ignored-extension");
+        }
         if (!orderId) {
           console.error("[razorpay-webhook] event without order_id", event);
           return new Response("ok");
