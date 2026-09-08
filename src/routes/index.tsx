@@ -280,6 +280,33 @@ function Index() {
     [setPhase, queryClient],
   );
 
+  // Once Home is on screen, quietly fetch the chunks the user is most likely
+  // to open next, so tapping a card or a tab feels instant instead of waiting
+  // on a network round-trip for the screen's code.
+  useEffect(() => {
+    if (phase !== "home") return;
+    const warm = () => {
+      void import("@/components/SlotSelectionScreen");
+      void import("@/components/SearchResultsScreen");
+      void import("@/components/AddressSelectionScreen");
+      void import("@/components/BookingSummaryScreen");
+      void import("@/components/PaymentScreen");
+      void import("@/components/OrdersScreen");
+      void import("@/components/ProfileScreen");
+    };
+    const ric = (window as unknown as {
+      requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number;
+    }).requestIdleCallback;
+    if (ric) {
+      const id = ric(warm, { timeout: 3000 });
+      return () => (window as unknown as { cancelIdleCallback?: (i: number) => void })
+        .cancelIdleCallback?.(id);
+    }
+    const t = setTimeout(warm, 1200);
+    return () => clearTimeout(t);
+  }, [phase]);
+
+
 
   function resetAndGoHome() {
     setActiveBookingId(null);
