@@ -108,3 +108,9 @@ function ServiceProductCardBase({
   );
 }
 
+
+/**
+ * Memoised: home renders dozens of these, and unrelated state changes
+ * (search text, sheets, toasts) must not re-render the whole grid.
+ */
+export const ServiceProductCard = memo(ServiceProductCardBase);
