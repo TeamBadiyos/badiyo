@@ -202,12 +202,14 @@ export function HomeScreen({
   const [searchQuery, setSearchQuery] = useState("");
   const [activeSegmentId, setActiveSegmentId] = useState<string | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
+  // Cached so returning to Home does not re-run auth + address lookup on
+  // every mount (that pair used to add a visible delay to the header).
+  const { data: defaultAddress } = useQuery({
+    queryKey: ["home_default_address"],
+    queryFn: async (): Promise<SavedAddress | null> => {
       const { data: userData } = await supabase.auth.getUser();
       const uid = userData.user?.id;
-      if (!uid) return;
+      if (!uid) return null;
       const { data } = await supabase
         .from("addresses")
         .select("id, label, full_address, area, city, is_default")
@@ -215,14 +217,14 @@ export function HomeScreen({
         .order("is_default", { ascending: false })
         .order("created_at", { ascending: false })
         .limit(1);
-      if (!cancelled && data && data.length > 0) {
-        setActiveAddress(data[0] as SavedAddress);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+      return (data?.[0] as SavedAddress | undefined) ?? null;
+    },
+    staleTime: 5 * 60_000,
+  });
+
+  useEffect(() => {
+    if (defaultAddress) setActiveAddress((prev) => prev ?? defaultAddress);
+  }, [defaultAddress]);
 
   const locationLabel = activeAddress?.area ?? activeAddress?.label ?? "Lahoti Compound";
 
