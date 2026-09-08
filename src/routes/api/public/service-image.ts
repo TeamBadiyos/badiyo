@@ -33,30 +33,12 @@ export const Route = createFileRoute("/api/public/service-image")({
         const path = safePath(url.searchParams.get("path"));
         if (!path) return badRequest("Missing or invalid path");
 
-        const widthParam = Number(url.searchParams.get("w") ?? "");
-        const width =
-          Number.isFinite(widthParam) && widthParam >= 64 && widthParam <= 1920
-            ? Math.round(widthParam)
-            : null;
+        // `w` is accepted and ignored: it only varies the cache key so different
+        // render sizes can be tuned later without changing call sites. Storage
+        // image transforms are not enabled on this project, and asking for one
+        // costs a second round-trip that returns the original anyway.
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
-        // Try a resized render first (no-op on plans without image transforms).
-        if (width) {
-          const { data, error } = await supabaseAdmin.storage
-            .from(BUCKET)
-            .download(path, { transform: { width, resize: "contain", quality: 72 } });
-          if (!error && data) {
-            return new Response(await data.arrayBuffer(), {
-              headers: {
-                "Content-Type": data.type || "image/jpeg",
-                "Cache-Control": IMMUTABLE,
-                "X-Content-Type-Options": "nosniff",
-                "Access-Control-Allow-Origin": "*",
-              },
-            });
-          }
-        }
 
         const { data, error } = await supabaseAdmin.storage.from(BUCKET).download(path);
         if (error || !data) {
