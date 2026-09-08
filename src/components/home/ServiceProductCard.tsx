@@ -58,11 +58,14 @@ function ServiceProductCardBase({
       <div className="relative">
         <div className="brand-grade aspect-square w-full overflow-hidden rounded-[14px] bg-muted">
           <img
-            src={service.imageUrl || fallbackImage}
+            src={src}
             alt={service.name}
             loading="lazy"
             decoding="async"
-            className="h-full w-full object-cover"
+            onLoad={() => setLoaded(true)}
+            className={`h-full w-full object-cover transition-opacity duration-200 ${
+              loaded ? "opacity-100" : "opacity-0"
+            }`}
           />
         </div>
         {unavailable ? (
