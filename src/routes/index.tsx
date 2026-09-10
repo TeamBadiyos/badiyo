@@ -16,6 +16,7 @@ import type { NotServiceableLocation } from "@/components/NotServiceableScreen";
 import { checkServiceability } from "@/lib/serviceability";
 import { hasLoginPin } from "@/lib/auth.functions";
 import { prefetchHomeData } from "@/lib/homeData";
+import { LiveServiceBar } from "@/components/tracking/LiveServiceBar";
 
 // --- Eager: only what the very first paint needs (splash → login). ---
 import { LoginScreen } from "@/components/LoginScreen";
@@ -804,6 +805,7 @@ function Index() {
             bookingId={activeBookingId}
             address={selectedAddress}
             onBack={() => setPhase("home")}
+            onReferNow={() => setPhase("referrals")}
             onShowEndOtp={() => setPhase("otp-end")}
             onAdvanceCompleted={() => {
               setActiveBookingStatus("completed");
@@ -1052,6 +1054,22 @@ function Index() {
         </div>
       )}
       </Suspense>
+      <LiveServiceBar
+        enabled={
+          phase !== "splash" &&
+          phase !== "login" &&
+          phase !== "otp-verify" &&
+          phase !== "in-progress" &&
+          phase !== "otp-end" &&
+          phase !== "rate-review" &&
+          phase !== "payment"
+        }
+        onOpen={(id: string) => {
+          setActiveBookingId(id);
+          setActiveBookingStatus("in_progress");
+          setPhase("in-progress");
+        }}
+      />
     </div>
 
   );
