@@ -15,6 +15,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 
+/** Public web address of the customer app — invite links must land here. */
+const INVITE_BASE_URL = "https://user.badiyos.com";
+
 type Txn = {
   id: string;
   status: string;
@@ -166,7 +169,7 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
   const walletBalance = user?.total_coins_earned ?? 0;
 
   const code = user?.referral_code ?? "";
-  const inviteUrl = code ? `https://badiyo.in/invite/${code}` : "https://badiyo.in";
+  const inviteUrl = code ? `${INVITE_BASE_URL}/invite/${code}` : INVITE_BASE_URL;
   const shareText = code
     ? `Join badiyos and get trusted home cleaning! Use my code ${code}: ${inviteUrl}`
     : `Join badiyos and get trusted home cleaning! ${inviteUrl}`;
