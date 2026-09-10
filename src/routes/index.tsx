@@ -458,6 +458,12 @@ function Index() {
 
 
     const { data: sub } = supabase.auth.onAuthStateChange(async (event) => {
+      if (event === "SIGNED_OUT") {
+        // Drop every cached query so the next person signing in on this
+        // device never sees the previous account's address or data.
+        queryClient.clear();
+        return;
+      }
       if (event === "SIGNED_IN" || event === "USER_UPDATED") {
         try {
           await ensureUserRow();
