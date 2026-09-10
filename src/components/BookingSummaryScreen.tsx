@@ -170,7 +170,7 @@ export function BookingSummaryScreen({
           <div className="flex flex-col">
             <span className="text-xs text-muted-foreground">{t("common.total")}</span>
             <span className="text-base font-bold text-foreground">
-              {t("common.rupees", { amount: service.price })}
+              {t("common.rupees", { amount: total })}
             </span>
           </div>
           <button
