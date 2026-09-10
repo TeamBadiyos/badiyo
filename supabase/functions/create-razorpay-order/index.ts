@@ -60,12 +60,50 @@ Deno.serve(async (req) => {
     const receipt = typeof body?.receipt === "string" ? body.receipt : `rcpt_${Date.now()}`;
     // "booking" orders must end up as a booking (webhook safety net applies).
     // "extension" orders top up an existing booking and must NOT be recovered.
-    const purpose = body?.purpose === "extension" ? "extension" : "booking";
+    // "tip" orders pay the expert directly and must NOT be recovered either.
+    const purpose =
+      body?.purpose === "extension"
+        ? "extension"
+        : body?.purpose === "tip"
+          ? "tip"
+          : "booking";
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
+
+    // Tips: fixed server-side whitelist, no GST, no catalogue lookup.
+    if (purpose === "tip") {
+      const ALLOWED_TIPS = [25, 50, 100];
+      const tipAmount = Number(body?.tip_amount);
+      if (!ALLOWED_TIPS.includes(tipAmount)) {
+        return json({ error: "Invalid tip amount" }, 400);
+      }
+      const auth = btoa(`${keyId}:${keySecret}`);
+      const rzpRes = await fetch("https://api.razorpay.com/v1/orders", {
+        method: "POST",
+        headers: { Authorization: `Basic ${auth}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: tipAmount * 100,
+          currency,
+          receipt,
+          notes: { purpose: "tip", tip_amount: String(tipAmount) },
+        }),
+      });
+      const tipText = await rzpRes.text();
+      if (!rzpRes.ok) {
+        console.error("Razorpay tip order failed", rzpRes.status, tipText);
+        return json({ error: "Failed to create Razorpay order", details: tipText }, 502);
+      }
+      const tipOrder = JSON.parse(tipText);
+      return json({
+        order_id: tipOrder.id,
+        amount: tipOrder.amount,
+        currency: tipOrder.currency,
+        key_id: keyId,
+      });
+    }
 
     let price: number | null = null;
 
