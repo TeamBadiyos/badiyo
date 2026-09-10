@@ -410,7 +410,10 @@ export function PaymentScreen({
   }, [bookingId]);
 
   const displayLabel = booking?.service_label ?? service.duration_label;
-  const displayPrice = booking?.price ?? service.price;
+  const displayPrice =
+    booking?.total_amount && Number(booking.total_amount) > 0
+      ? Number(booking.total_amount)
+      : totalWithGst(Number(booking?.price ?? service.price), gstPercent);
   const displayWhen = booking
     ? booking.slot_type === "now"
       ? t("payment.nowArriving")
