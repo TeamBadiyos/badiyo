@@ -1,22 +1,53 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Sparkles, Plus, X, Loader2, AlertTriangle, ArrowLeft } from "lucide-react";
+import {
+  Plus,
+  X,
+  Loader2,
+  ArrowLeft,
+  RefreshCw,
+  Phone,
+  User,
+  Star,
+  MapPin,
+  CalendarClock,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useT } from "@/i18n";
 import { getErrorMessage } from "@/lib/errorMessage";
-import { StageTracker, stageFromStatus } from "./StageTracker";
-import { ServiceLocationMap } from "./ServiceLocationMap";
 import { usePullToRefresh, PullToRefreshIndicator } from "@/lib/usePullToRefresh";
+import { fetchSections } from "@/lib/homeData";
+import { hapticImpact } from "@/lib/haptics";
+import { TimerRing } from "./TimerRing";
+import {
+  ACTIVE_BOOKING_KEY,
+  formatClock,
+  formatDayTime,
+  formatRemaining,
+  toneForRemaining,
+  TONE_HEX,
+  TONE_TEXT,
+  useNow,
+} from "@/lib/liveService";
 import type { SelectedAddress } from "../BookingSummaryScreen";
-
-
 
 type BookingTiming = {
   id: string;
   status: string;
   service_duration_minutes: number;
   service_end_at: string | null;
+  started_at: string | null;
+  end_otp: string | null;
   deleted_at: string | null;
+};
+
+type ExpertProfile = {
+  id: string;
+  name: string;
+  phone: string | null;
+  photo_url: string | null;
+  avg_rating: number | null;
+  review_count: number | null;
 };
 
 type CatalogueItem = {
@@ -25,6 +56,8 @@ type CatalogueItem = {
   duration_label: string;
   price: number;
 };
+
+const TIP_AMOUNTS = [25, 50, 100];
 
 const RAZORPAY_SRC = "https://checkout.razorpay.com/v1/checkout.js";
 function loadRazorpay(): Promise<boolean> {
@@ -53,8 +86,7 @@ function beep(kind: "warning" | "end") {
     const AC =
       (window as unknown as { AudioContext?: typeof AudioContext; webkitAudioContext?: typeof AudioContext })
         .AudioContext ??
-      (window as unknown as { webkitAudioContext?: typeof AudioContext })
-        .webkitAudioContext;
+      (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!AC) return;
     const ctx = new AC();
     const play = (freq: number, start: number, dur: number) => {
@@ -86,7 +118,7 @@ function beep(kind: "warning" | "end") {
 async function fetchBookingTiming(id: string): Promise<BookingTiming | null> {
   const { data, error } = await supabase
     .from("bookings")
-    .select("id, status, service_duration_minutes, service_end_at, deleted_at")
+    .select("id, status, service_duration_minutes, service_end_at, started_at, end_otp, deleted_at")
     .eq("id", id)
     .maybeSingle();
   if (error) {
@@ -94,6 +126,18 @@ async function fetchBookingTiming(id: string): Promise<BookingTiming | null> {
     return null;
   }
   return (data as BookingTiming | null) ?? null;
+}
+
+async function fetchExpertProfile(bookingId: string): Promise<ExpertProfile | null> {
+  const { data, error } = await supabase.rpc("get_assigned_expert_profile", {
+    _booking_id: bookingId,
+  });
+  if (error) {
+    console.error("get_assigned_expert_profile failed:", error);
+    return null;
+  }
+  const row = Array.isArray(data) ? data[0] : data;
+  return (row as ExpertProfile | undefined) ?? null;
 }
 
 async function fetchExtensionOptions(): Promise<CatalogueItem[]> {
@@ -114,18 +158,6 @@ async function fetchExtensionOptions(): Promise<CatalogueItem[]> {
   }));
 }
 
-function pad(n: number) {
-  return n.toString().padStart(2, "0");
-}
-function formatRemaining(sec: number) {
-  const s = Math.max(0, sec);
-  const h = Math.floor(s / 3600);
-  const m = Math.floor((s % 3600) / 60);
-  const r = s % 60;
-  if (h > 0) return `${pad(h)}:${pad(m)}:${pad(r)}`;
-  return `${pad(m)}:${pad(r)}`;
-}
-
 export function ServiceInProgressScreen({
   bookingId,
   address,
@@ -133,6 +165,7 @@ export function ServiceInProgressScreen({
   onAdvanceCompleted,
   onCancelled,
   onBack,
+  onReferNow,
 }: {
   bookingId: string | null;
   address?: SelectedAddress | null;
@@ -140,11 +173,10 @@ export function ServiceInProgressScreen({
   onAdvanceCompleted?: () => void;
   onCancelled?: () => void;
   onBack?: () => void;
+  onReferNow?: () => void;
 }) {
   const t = useT();
   const qc = useQueryClient();
-
-
 
   // Start the service (idempotent) as soon as we arrive here.
   useEffect(() => {
@@ -168,6 +200,20 @@ export function ServiceInProgressScreen({
     refetchIntervalInBackground: false,
   });
 
+  const { data: expert } = useQuery({
+    queryKey: ["booking-expert-profile", bookingId],
+    queryFn: () => fetchExpertProfile(bookingId!),
+    enabled: !!bookingId,
+    staleTime: 60_000,
+  });
+
+  const { data: sections = [] } = useQuery({
+    queryKey: ["homepage_sections"],
+    queryFn: fetchSections,
+    staleTime: 5 * 60_000,
+  });
+  const banner = sections.find((s) => s.section_type === "inprogress_banner")?.payload ?? null;
+
   // Realtime subscription for instant UI updates + auto-advance / cancel handling.
   const advancedRef = useRef(false);
   const cancelledRef = useRef(false);
@@ -184,9 +230,7 @@ export function ServiceInProgressScreen({
             prev ? { ...prev, ...row } : (row as BookingTiming),
           );
           const isCancelled =
-            row.status === "cancelled" ||
-            row.status === "rejected" ||
-            !!row.deleted_at;
+            row.status === "cancelled" || row.status === "rejected" || !!row.deleted_at;
           if (isCancelled && !cancelledRef.current && onCancelled) {
             cancelledRef.current = true;
             onCancelled();
@@ -217,23 +261,19 @@ export function ServiceInProgressScreen({
     await refetchTiming();
   });
 
-  // Ticking clock — recomputes every second from service_end_at.
-  const [now, setNow] = useState<number>(() => Date.now());
-  useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(t);
-  }, []);
+  const now = useNow(true);
 
   const endMs = timing?.service_end_at ? Date.parse(timing.service_end_at) : null;
+  const startMs = timing?.started_at ? Date.parse(timing.started_at) : null;
   const totalDurationMin = timing?.service_duration_minutes ?? 0;
   const remainingSec =
     endMs != null ? Math.max(0, Math.floor((endMs - now) / 1000)) : totalDurationMin * 60;
-  const isEnded = endMs != null && remainingSec === 0;
-  const graceOpen =
-    endMs != null && now <= endMs + 10 * 60 * 1000; // 10 min grace after end
+  const totalSec = Math.max(1, totalDurationMin * 60);
+  const progress = Math.max(0, Math.min(1, remainingSec / totalSec));
+  const tone = toneForRemaining(remainingSec);
+  const graceOpen = endMs != null && now <= endMs + 10 * 60 * 1000;
 
-  // Banner + sound state machine
-  const [banner, setBanner] = useState<"none" | "warn" | "end" | "dismissed-warn">("none");
+  // Sound cues at 5 minutes and at the end.
   const warnedRef = useRef(false);
   const endedRef = useRef(false);
   useEffect(() => {
@@ -241,12 +281,10 @@ export function ServiceInProgressScreen({
     if (!warnedRef.current && remainingSec > 0 && remainingSec <= 300) {
       warnedRef.current = true;
       beep("warning");
-      setBanner((b) => (b === "dismissed-warn" ? b : "warn"));
     }
     if (!endedRef.current && remainingSec === 0) {
       endedRef.current = true;
       beep("end");
-      setBanner("end");
     }
   }, [remainingSec, endMs]);
 
@@ -275,7 +313,6 @@ export function ServiceInProgressScreen({
           service_duration_minutes: opt.duration_minutes,
           currency: "INR",
           receipt,
-          // Not a new booking: keeps the webhook safety net from false-alarming.
           purpose: "extension",
         },
       });
@@ -305,25 +342,17 @@ export function ServiceInProgressScreen({
               reject(new Error(extErr.message));
               return;
             }
-            // Optimistically update timing so countdown reflects immediately.
-            qc.setQueryData<BookingTiming | null>(
-              ["booking-timing", bookingId],
-              (prev) =>
-                prev
-                  ? { ...prev, service_end_at: (newEnd as string) ?? prev.service_end_at }
-                  : prev,
+            qc.setQueryData<BookingTiming | null>(["booking-timing", bookingId], (prev) =>
+              prev ? { ...prev, service_end_at: (newEnd as string) ?? prev.service_end_at } : prev,
             );
             qc.invalidateQueries({ queryKey: ["booking-timing", bookingId] });
-            // Reset alert state so we get a fresh 5-min warning next time.
+            qc.invalidateQueries({ queryKey: ACTIVE_BOOKING_KEY });
             warnedRef.current = false;
             endedRef.current = false;
-            setBanner("none");
             setSheetOpen(false);
             resolve();
           },
-          modal: {
-            ondismiss: () => reject(new Error("Payment cancelled")),
-          },
+          modal: { ondismiss: () => reject(new Error("Payment cancelled")) },
         });
         rzp.open();
       });
@@ -334,103 +363,347 @@ export function ServiceInProgressScreen({
     }
   }
 
-  const canExtend = timing?.status === "in_progress" && (remainingSec > 0 || graceOpen);
+  // Tips
+  const [tipBusy, setTipBusy] = useState<number | null>(null);
+  const [tipPaid, setTipPaid] = useState<number | null>(null);
+  const [tipError, setTipError] = useState<string | null>(null);
 
-  const bannerNode = useMemo(() => {
-    if (banner === "warn") {
-      return (
-        <BannerCard
-          tone="warn"
-          title={t("progress.fiveLeft")}
-          onExtend={() => setSheetOpen(true)}
-          onDismiss={() => setBanner("dismissed-warn")}
-        />
-      );
+  async function payTip(amount: number) {
+    if (!bookingId) return;
+    setTipBusy(amount);
+    setTipError(null);
+    try {
+      const ok = await loadRazorpay();
+      if (!ok || !window.Razorpay) throw new Error("Failed to load Razorpay Checkout");
+      const { data, error } = await supabase.functions.invoke("create-razorpay-order", {
+        body: {
+          purpose: "tip",
+          tip_amount: amount,
+          currency: "INR",
+          receipt: `tip_${Date.now()}`,
+        },
+      });
+      if (error) throw new Error(error.message);
+      if (!data?.order_id || !data?.key_id) throw new Error("Invalid order response");
+
+      const { data: userData } = await supabase.auth.getUser();
+      const contact = userData.user?.phone || undefined;
+
+      await new Promise<void>((resolve, reject) => {
+        const rzp = new window.Razorpay!({
+          key: data.key_id,
+          order_id: data.order_id,
+          amount: data.amount,
+          currency: data.currency,
+          name: "badiyos",
+          description: `Tip for ${expert?.name ?? "your expert"}`,
+          prefill: { contact },
+          theme: { color: "#00B97A" },
+          handler: async (resp) => {
+            const { error: tipErr } = await supabase.rpc("record_booking_tip", {
+              _booking_id: bookingId,
+              _amount: amount,
+              _razorpay_payment_id: resp.razorpay_payment_id,
+            });
+            if (tipErr) {
+              reject(new Error(tipErr.message));
+              return;
+            }
+            setTipPaid(amount);
+            resolve();
+          },
+          modal: { ondismiss: () => reject(new Error("Payment cancelled")) },
+        });
+        rzp.open();
+      });
+    } catch (e) {
+      setTipError(await getErrorMessage(e));
+    } finally {
+      setTipBusy(null);
     }
-    if (banner === "end") {
-      return (
-        <BannerCard
-          tone="end"
-          title={t("progress.timesUp")}
-          onExtend={canExtend ? () => setSheetOpen(true) : undefined}
-          onDismiss={() => setBanner("none")}
-        />
-      );
-    }
-    return null;
-  }, [banner, canExtend]);
+  }
+
+  const canExtend = timing?.status === "in_progress" && (remainingSec > 0 || graceOpen);
+  const otp = timing?.end_otp ?? null;
+
+  function shareOtpOnWhatsApp() {
+    const message = [
+      "Hi 👋",
+      "",
+      "Your service is currently in progress.",
+      "",
+      `🔹 *Expert Name:* ${expert?.name ?? "Your expert"}`,
+      "",
+      `🔹 *Duration:* ${totalDurationMin} min`,
+      "",
+      `🔹 *Started at:* ${formatDayTime(startMs)}`,
+      "",
+      `⏱️ Your job ends at ${formatDayTime(endMs)}.`,
+      "",
+      `⏱️ Once done, please share this *Check-Out OTP* to end the service: *${otp ?? "----"}*`,
+      "",
+      "Thank you for choosing badiyos!",
+    ].join("\n");
+    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
+  }
 
   return (
-    <main className="min-h-screen w-full bg-background">
+    <main className="min-h-screen w-full bg-background pb-28">
       <PullToRefreshIndicator pull={pull} refreshing={refreshing} />
-      <div className="mx-auto flex min-h-screen w-full max-w-md flex-col px-5 pt-6 pb-8">
-        {onBack && (
-          <button
-            onClick={onBack}
-            aria-label={t("common.back")}
-            className="mb-3 flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card"
-          >
-            <ArrowLeft className="h-5 w-5 text-foreground" />
-          </button>
-        )}
-        <div className="mb-6">
-          <StageTracker stage={stageFromStatus(timing?.status)} />
-        </div>
-        <div className="flex flex-col items-center text-center">
-          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 animate-pulse">
-            <Sparkles className="h-10 w-10 text-primary" />
-          </div>
-          <h1 className="mt-6 text-xl font-bold text-foreground">
-            {t("progress.title")}
-          </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {t("progress.sub")}
-          </p>
-        </div>
-
-        <div className="mt-10 rounded-[18px] border border-border bg-card p-6 text-center">
-          <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
-            {t("progress.timeRemaining")}
-          </div>
-          <div className="mt-2 font-mono text-4xl font-bold tabular-nums text-foreground">
-            {formatRemaining(remainingSec)}
-          </div>
-          {endMs == null && (
-            <div className="mt-2 text-[11px] text-muted-foreground">
-              {t("progress.waitingStart")}
-            </div>
+      <div className="mx-auto w-full max-w-md px-4 pt-4">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          {onBack ? (
+            <button
+              onClick={onBack}
+              aria-label={t("common.back")}
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card"
+            >
+              <ArrowLeft className="h-5 w-5 text-foreground" />
+            </button>
+          ) : (
+            <span />
           )}
+          <button
+            onClick={() => refetchTiming()}
+            aria-label="Refresh"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card"
+          >
+            <RefreshCw className="h-4.5 w-4.5 text-foreground" />
+          </button>
         </div>
 
-        {bannerNode && <div className="mt-4">{bannerNode}</div>}
+        {/* Countdown card */}
+        <section className="mt-3 rounded-[20px] border border-border bg-card p-5 text-center">
+          <div className={`text-lg font-bold ${TONE_TEXT[tone]}`}>
+            {remainingSec === 0 ? "Service time is over" : "Service Ending Soon"}
+          </div>
+          <div className="mt-1 text-sm text-muted-foreground">
+            {endMs ? `Ends at ${formatClock(endMs)}` : t("progress.waitingStart")}
+          </div>
 
-        {address && <ServiceLocationMap address={address} bookingId={bookingId} />}
+          <div className="mt-6 flex justify-center">
+            <TimerRing progress={progress} tone={tone}>
+              <span className="text-[11px] text-muted-foreground">
+                {t("progress.timeRemaining")}
+              </span>
+              <span
+                className="mt-1 font-mono text-3xl font-bold tabular-nums"
+                style={{ color: TONE_HEX[tone] }}
+              >
+                {formatRemaining(remainingSec)}
+              </span>
+            </TimerRing>
+          </div>
 
-
-        <div className="mt-auto pt-10 space-y-3">
-          {canExtend && banner !== "warn" && banner !== "end" && (
+          {canExtend && (
             <button
               type="button"
-              onClick={() => setSheetOpen(true)}
-              className="flex w-full items-center justify-center gap-2 rounded-[14px] border border-primary bg-primary/10 px-4 py-3.5 text-sm font-bold text-primary active:scale-[0.99]"
+              onClick={() => {
+                void hapticImpact("medium");
+                setSheetOpen(true);
+              }}
+              className="mt-6 flex w-full items-center justify-center gap-2 rounded-full px-4 py-3.5 text-sm font-bold text-white active:scale-[0.99]"
+              style={{ backgroundColor: TONE_HEX[tone] }}
             >
               <Plus className="h-4 w-4" />
-              Extend time
+              Extend Service
             </button>
           )}
-          {onShowEndOtp && (
+        </section>
+
+        {/* Check-out OTP */}
+        <section className="mt-4 overflow-hidden rounded-[20px] border border-border bg-card">
+          <div className="flex items-center justify-between gap-3 p-5">
+            <div className="min-w-0">
+              <div className="text-base font-bold text-foreground">Check-out OTP</div>
+              <div className="mt-0.5 text-xs text-muted-foreground">
+                Share with expert to end service
+              </div>
+            </div>
+            <div className="flex shrink-0 gap-1.5">
+              {(otp ?? "----").split("").map((d, i) => (
+                <span
+                  key={i}
+                  className="flex h-11 w-9 items-center justify-center rounded-[10px] bg-foreground text-lg font-bold text-background"
+                >
+                  {d}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between gap-3 border-t border-border px-5 py-4">
+            <span className="text-sm text-foreground">Booked for someone else?</span>
             <button
               type="button"
-              onClick={onShowEndOtp}
-              className="flex w-full items-center justify-center gap-2 rounded-[14px] bg-primary px-4 py-3.5 text-sm font-bold text-primary-foreground active:scale-[0.99]"
+              onClick={shareOtpOnWhatsApp}
+              disabled={!otp}
+              className="flex items-center gap-2 text-sm font-bold text-foreground disabled:opacity-50"
             >
-              Show completion code
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#25D366]">
+                <WhatsAppGlyph />
+              </span>
+              Share OTP
             </button>
+          </div>
+
+          {onShowEndOtp && (
+            <div className="px-5 pb-5">
+              <button
+                type="button"
+                onClick={onShowEndOtp}
+                className="w-full rounded-full bg-foreground px-4 py-3.5 text-sm font-bold text-background active:scale-[0.99]"
+              >
+                End Service
+              </button>
+            </div>
           )}
-          <p className="text-center text-[11px] text-muted-foreground">
-            Your expert will ask for the completion code to end the service.
-          </p>
-        </div>
+        </section>
+
+        {/* Command-center banner */}
+        {banner && (
+          <section className="mt-4 overflow-hidden rounded-[20px] border border-border bg-primary/10">
+            <div className="flex items-center gap-3 p-5">
+              <div className="min-w-0 flex-1">
+                <div className="text-base font-bold text-foreground">
+                  {banner.title ?? "Refer & Earn"}
+                </div>
+                {banner.subtitle && (
+                  <div className="mt-0.5 text-xs text-muted-foreground">{banner.subtitle}</div>
+                )}
+                <button
+                  type="button"
+                  onClick={onReferNow}
+                  className="mt-3 rounded-full bg-primary px-4 py-2 text-xs font-bold text-primary-foreground active:scale-[0.99]"
+                >
+                  {banner.button_label ?? "Refer now"}
+                </button>
+              </div>
+              {banner.image_url ? (
+                <img
+                  src={banner.image_url}
+                  alt=""
+                  loading="lazy"
+                  className="h-20 w-28 shrink-0 rounded-[12px] object-cover"
+                />
+              ) : null}
+            </div>
+          </section>
+        )}
+
+        {/* Expert + tip */}
+        {expert && (
+          <section className="mt-4 rounded-[20px] border border-border bg-card p-5">
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10">
+                {expert.photo_url ? (
+                  <img
+                    src={expert.photo_url}
+                    alt={expert.name}
+                    className="h-full w-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = "none";
+                    }}
+                  />
+                ) : (
+                  <User className="h-6 w-6 text-primary" />
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-base font-bold text-foreground">{expert.name}</div>
+                {expert.review_count && expert.review_count > 0 && expert.avg_rating ? (
+                  <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 text-[11px] font-bold text-primary">
+                    <Star className="h-3 w-3 fill-primary text-primary" />
+                    {Number(expert.avg_rating).toFixed(1)}
+                  </span>
+                ) : (
+                  <div className="mt-0.5 text-xs text-muted-foreground">
+                    {t("track.verifiedExpert")}
+                  </div>
+                )}
+              </div>
+              {expert.phone && (
+                <a
+                  href={`tel:${expert.phone}`}
+                  aria-label={t("track.callExpert")}
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border"
+                >
+                  <Phone className="h-4.5 w-4.5 text-foreground" />
+                </a>
+              )}
+            </div>
+
+            <div className="mt-5 rounded-[16px] border border-border p-4">
+              {tipPaid ? (
+                <div className="text-center">
+                  <div className="text-sm font-bold text-foreground">
+                    Thank you! ₹{tipPaid} tip sent
+                  </div>
+                  <div className="mt-1 text-xs text-muted-foreground">
+                    100% of it goes to {expert.name}.
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="text-sm font-bold text-foreground">Make their day with a tip</div>
+                  <div className="mt-0.5 text-xs text-muted-foreground">
+                    100% of the tip goes to the expert
+                  </div>
+                  <div className="mt-4 grid grid-cols-3 gap-2">
+                    {TIP_AMOUNTS.map((amt) => (
+                      <button
+                        key={amt}
+                        type="button"
+                        disabled={tipBusy !== null}
+                        onClick={() => {
+                          void hapticImpact("light");
+                          payTip(amt);
+                        }}
+                        className="relative flex h-12 items-center justify-center rounded-[12px] border border-border bg-background text-sm font-bold text-foreground active:scale-[0.98] disabled:opacity-60"
+                      >
+                        {amt === 50 && (
+                          <span className="absolute -top-2 rounded-full bg-primary px-2 text-[9px] font-bold text-primary-foreground">
+                            Popular
+                          </span>
+                        )}
+                        {tipBusy === amt ? (
+                          <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                        ) : (
+                          `₹${amt}`
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                  {tipError && (
+                    <p className="mt-3 text-center text-xs text-destructive">{tipError}</p>
+                  )}
+                </>
+              )}
+            </div>
+          </section>
+        )}
+
+        {/* Booking details */}
+        <section className="mt-4 rounded-[20px] border border-border bg-card p-5">
+          <div className="flex items-center gap-3 text-sm text-foreground">
+            <CalendarClock className="h-4.5 w-4.5 text-primary" />
+            {totalDurationMin} min visit
+          </div>
+          {address && (
+            <div className="mt-3 flex items-start gap-3 text-sm text-muted-foreground">
+              <MapPin className="mt-0.5 h-4.5 w-4.5 shrink-0 text-primary" />
+              <span>
+                {address.label ? `${address.label} | ` : ""}
+                {address.full_address}
+              </span>
+            </div>
+          )}
+        </section>
+
+        <p className="mt-4 text-center text-[11px] text-muted-foreground">
+          Your expert will ask for the check-out code to end the service.
+        </p>
       </div>
 
       {sheetOpen && (
@@ -449,65 +722,11 @@ export function ServiceInProgressScreen({
   );
 }
 
-function BannerCard({
-  tone,
-  title,
-  onExtend,
-  onDismiss,
-}: {
-  tone: "warn" | "end";
-  title: string;
-  onExtend?: () => void;
-  onDismiss: () => void;
-}) {
-  const t = useT();
-  const isEnd = tone === "end";
+function WhatsAppGlyph() {
   return (
-    <div
-      className={`rounded-[16px] border p-4 ${
-        isEnd
-          ? "border-destructive/40 bg-destructive/10"
-          : "border-primary/40 bg-primary/10"
-      }`}
-    >
-      <div className="flex items-start gap-3">
-        <div
-          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
-            isEnd ? "bg-destructive/20 text-destructive" : "bg-primary/20 text-primary"
-          }`}
-        >
-          <AlertTriangle className="h-5 w-5" />
-        </div>
-        <div className="flex-1">
-          <div className="text-sm font-bold text-foreground">{title}</div>
-          <div className="mt-0.5 text-xs text-muted-foreground">
-            {isEnd
-              ? t("progress.extendNow")
-              : t("progress.needMore")}
-          </div>
-          <div className="mt-3 flex gap-2">
-            {onExtend && (
-              <button
-                type="button"
-                onClick={onExtend}
-                className={`rounded-[12px] px-3 py-2 text-xs font-bold text-primary-foreground active:scale-[0.99] ${
-                  isEnd ? "bg-destructive" : "bg-primary"
-                }`}
-              >
-                {t("progress.extendTime")}
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={onDismiss}
-              className="rounded-[12px] border border-border bg-card px-3 py-2 text-xs font-bold text-foreground"
-            >
-              {t("progress.dismiss")}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+    <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 fill-white" aria-hidden="true">
+      <path d="M12.04 2c-5.5 0-9.96 4.46-9.96 9.96 0 1.76.46 3.48 1.34 5L2 22l5.2-1.36a9.9 9.9 0 0 0 4.84 1.24h.01c5.5 0 9.96-4.46 9.96-9.96S17.54 2 12.04 2Zm5.8 14.06c-.24.68-1.4 1.3-1.94 1.34-.5.04-.98.22-3.3-.7-2.78-1.1-4.54-3.94-4.68-4.12-.14-.18-1.12-1.5-1.12-2.86s.72-2.02.98-2.3c.26-.28.56-.34.74-.34h.54c.18 0 .42-.06.64.5.24.58.8 2 .88 2.14.08.14.12.3.02.48-.1.18-.16.3-.3.46-.14.16-.3.36-.42.48-.14.14-.28.3-.12.58.16.28.72 1.18 1.54 1.92 1.06.94 1.94 1.24 2.22 1.38.28.14.44.12.6-.08.16-.2.7-.8.88-1.08.18-.28.36-.24.6-.14.24.1 1.56.74 1.82.87.26.14.44.2.5.32.06.12.06.68-.18 1.36Z" />
+    </svg>
   );
 }
 
@@ -531,9 +750,7 @@ function ExtensionSheet({
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-base font-bold text-foreground">{t("progress.extendTitle")}</h2>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              {t("progress.extendSub")}
-            </p>
+            <p className="mt-0.5 text-xs text-muted-foreground">{t("progress.extendSub")}</p>
           </div>
           <button
             onClick={onClose}
@@ -561,15 +778,15 @@ function ExtensionSheet({
                 className="flex w-full items-center justify-between rounded-[14px] border border-border bg-background p-4 text-left transition active:scale-[0.99] disabled:opacity-60"
               >
                 <div>
-                  <div className="text-sm font-bold text-foreground">
-                    +{o.duration_label}
-                  </div>
+                  <div className="text-sm font-bold text-foreground">+{o.duration_label}</div>
                   <div className="text-xs text-muted-foreground">
                     {t("progress.addsMinutes", { minutes: o.duration_minutes })}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold text-primary">{t("common.rupees", { amount: o.price })}</span>
+                  <span className="text-sm font-bold text-primary">
+                    {t("common.rupees", { amount: o.price })}
+                  </span>
                   {busy && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
                 </div>
               </button>
@@ -577,9 +794,7 @@ function ExtensionSheet({
           })}
         </div>
 
-        {error && (
-          <p className="mt-3 text-center text-xs text-destructive">{error}</p>
-        )}
+        {error && <p className="mt-3 text-center text-xs text-destructive">{error}</p>}
       </div>
     </div>
   );
