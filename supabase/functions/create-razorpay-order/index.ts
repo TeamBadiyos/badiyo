@@ -120,7 +120,23 @@ Deno.serve(async (req) => {
       return json({ error: "Invalid service price" }, 400);
     }
 
-    const amount = Math.round(price! * 100);
+    // GST is configured by admins in ops_settings and charged on top of the price.
+    let gstPercent = 5;
+    try {
+      const { data: gstRow } = await supabase
+        .from("ops_settings")
+        .select("value")
+        .eq("key", "gst_percent")
+        .maybeSingle();
+      const parsed = Number(String(gstRow?.value ?? "").replace(/[^0-9.]/g, ""));
+      if (Number.isFinite(parsed) && parsed >= 0 && parsed <= 100) gstPercent = parsed;
+    } catch (gstErr) {
+      console.error("gst_percent lookup failed", gstErr);
+    }
+
+    const basePaise = Math.round(price! * 100);
+    const gstPaise = Math.round((basePaise * gstPercent) / 100);
+    const amount = basePaise + gstPaise;
     if (!Number.isInteger(amount) || amount < 100) {
       return json({ error: "Invalid service price" }, 400);
     }
