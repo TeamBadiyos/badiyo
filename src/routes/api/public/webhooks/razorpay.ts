@@ -84,6 +84,25 @@ export const Route = createFileRoute("/api/public/webhooks/razorpay")({
         }
 
         if (!bookingId) {
+          // No payment intent for this order means it was never a booking
+          // checkout (extension top-ups and other payments create no intent).
+          // The database already audits that case, so don't raise a
+          // "lost booking" alert for it.
+          const { data: intent } = await supabaseAdmin
+            .from("payment_intents")
+            .select("id")
+            .eq("razorpay_order_id", orderId)
+            .maybeSingle();
+
+          if (!intent) {
+            console.warn(
+              "[razorpay-webhook] paid order has no booking intent (non-booking payment)",
+              orderId,
+              paymentId,
+            );
+            return new Response("no-intent");
+          }
+
           console.error(
             "[razorpay-webhook] could not ensure a booking for paid order",
             orderId,
