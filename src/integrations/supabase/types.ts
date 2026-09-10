@@ -3747,6 +3747,10 @@ export type Database = {
         }
         Returns: Json
       }
+      system_credit_referral_for_booking: {
+        Args: { _booking_id: string }
+        Returns: undefined
+      }
       system_fulfill_payment_intent: {
         Args: { _order_id: string; _payment_id: string }
         Returns: string
