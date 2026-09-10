@@ -8,6 +8,7 @@ import { getErrorMessage } from "@/lib/errorMessage";
 import { getCurrentCoords } from "@/lib/nativeGeolocation";
 import { useT } from "@/i18n";
 import { hapticImpact } from "@/lib/haptics";
+import { totalWithGst, useGstPercent } from "@/lib/gst";
 
 type RazorpayOptions = {
   key: string;
@@ -87,6 +88,7 @@ export function PaymentScreen({
   onTrackBooking: (bookingId: string | null) => void;
 }) {
   const t = useT();
+  const gstPercent = useGstPercent();
   const [status, setStatus] = useState<Status>("loading");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [bookingId, setBookingId] = useState<string | null>(null);
