@@ -121,7 +121,10 @@ function RootShell({ children }: { children: ReactNode }) {
       </head>
       <body>
         {children}
-        <Toaster position="bottom-center" />
+<Toaster
+          position="top-center"
+          offset="calc(env(safe-area-inset-top, 0px) + 8px)"
+        />
         <Scripts />
       </body>
 
