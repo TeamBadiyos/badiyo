@@ -384,6 +384,8 @@ export type Database = {
           deleted_by: string | null
           dispatch_exhausted_at: string | null
           end_otp: string | null
+          gst_amount: number
+          gst_percent: number
           id: string
           price: number
           rating: number | null
@@ -404,6 +406,7 @@ export type Database = {
           start_otp: string | null
           started_at: string | null
           status: string
+          total_amount: number
           updated_at: string | null
           user_id: string | null
           zone_id: string | null
@@ -425,6 +428,8 @@ export type Database = {
           deleted_by?: string | null
           dispatch_exhausted_at?: string | null
           end_otp?: string | null
+          gst_amount?: number
+          gst_percent?: number
           id?: string
           price: number
           rating?: number | null
@@ -445,6 +450,7 @@ export type Database = {
           start_otp?: string | null
           started_at?: string | null
           status?: string
+          total_amount?: number
           updated_at?: string | null
           user_id?: string | null
           zone_id?: string | null
@@ -466,6 +472,8 @@ export type Database = {
           deleted_by?: string | null
           dispatch_exhausted_at?: string | null
           end_otp?: string | null
+          gst_amount?: number
+          gst_percent?: number
           id?: string
           price?: number
           rating?: number | null
@@ -486,6 +494,7 @@ export type Database = {
           start_otp?: string | null
           started_at?: string | null
           status?: string
+          total_amount?: number
           updated_at?: string | null
           user_id?: string | null
           zone_id?: string | null
@@ -3010,6 +3019,8 @@ export type Database = {
           deleted_by: string | null
           dispatch_exhausted_at: string | null
           end_otp: string | null
+          gst_amount: number
+          gst_percent: number
           id: string
           price: number
           rating: number | null
@@ -3030,6 +3041,7 @@ export type Database = {
           start_otp: string | null
           started_at: string | null
           status: string
+          total_amount: number
           updated_at: string | null
           user_id: string | null
           zone_id: string | null
@@ -3213,6 +3225,7 @@ export type Database = {
         }[]
       }
       get_expert_id_for_auth: { Args: { _auth_uid: string }; Returns: string }
+      get_gst_percent: { Args: never; Returns: number }
       has_login_pin: { Args: { p_phone: string }; Returns: boolean }
       haversine_km: {
         Args: { lat1: number; lat2: number; lng1: number; lng2: number }
