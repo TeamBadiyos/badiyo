@@ -804,6 +804,7 @@ function Index() {
             bookingId={activeBookingId}
             address={selectedAddress}
             onBack={() => setPhase("home")}
+            onReferNow={() => setPhase("referrals")}
             onShowEndOtp={() => setPhase("otp-end")}
             onAdvanceCompleted={() => {
               setActiveBookingStatus("completed");
