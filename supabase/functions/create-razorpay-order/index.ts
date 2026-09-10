@@ -148,7 +148,16 @@ Deno.serve(async (req) => {
         Authorization: `Basic ${auth}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ amount, currency, receipt, notes: { purpose } }),
+      body: JSON.stringify({
+        amount,
+        currency,
+        receipt,
+        notes: {
+          purpose,
+          gst_percent: String(gstPercent),
+          base_price: String(price),
+        },
+      }),
     });
 
     const text = await rzpRes.text();
