@@ -427,7 +427,9 @@ function Index() {
           .eq("id", bookingId)
           .maybeSingle();
 
-        const addr = (b as { addresses?: SavedAddress | null } | null)?.addresses;
+        const addr = (b as { addresses?: Omit<SelectedAddress, "id"> | null } | null)
+          ?.addresses;
+
         if (addr) {
           setSelectedAddress({
             id: (b as { address_id?: string | null }).address_id ?? "",
