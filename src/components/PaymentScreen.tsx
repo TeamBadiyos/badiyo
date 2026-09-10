@@ -216,7 +216,6 @@ export function PaymentScreen({
         );
       }
 
-      void creditReferralForBooking(data.id);
       setSaveFailed(false);
     } catch (e) {
       console.error("Failed to create booking record:", e);
