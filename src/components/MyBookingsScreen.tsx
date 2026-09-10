@@ -9,6 +9,9 @@ export type BookingRow = {
   service_label: string;
   service_duration_minutes: number;
   price: number;
+  total_amount?: number | null;
+  gst_percent?: number | null;
+  gst_amount?: number | null;
   status: string;
   slot_type: string;
   scheduled_date: string | null;
@@ -46,7 +49,7 @@ async function fetchBookings(): Promise<BookingRow[]> {
   const { data, error } = await supabase
     .from("bookings")
     .select(
-      "id, service_label, service_duration_minutes, price, status, slot_type, scheduled_date, scheduled_time_slot, created_at, rating, review_text, address_id, razorpay_payment_id, addresses(label, full_address, area, city, latitude, longitude, is_default)",
+      "id, service_label, service_duration_minutes, price, total_amount, gst_percent, gst_amount, status, slot_type, scheduled_date, scheduled_time_slot, created_at, rating, review_text, address_id, razorpay_payment_id, addresses(label, full_address, area, city, latitude, longitude, is_default)",
     )
     .eq("user_id", uid)
     .is("deleted_at", null)
@@ -189,7 +192,9 @@ export function MyBookingsScreen({
                   </div>
                 ) : null}
                 <div className="mt-3 flex items-center justify-between">
-                  <span className="text-sm font-bold text-primary">Rs {b.price}</span>
+                  <span className="text-sm font-bold text-primary">
+                    Rs {b.total_amount && Number(b.total_amount) > 0 ? Number(b.total_amount) : b.price}
+                  </span>
                   <span className="text-xs font-semibold text-primary">View details →</span>
                 </div>
               </button>

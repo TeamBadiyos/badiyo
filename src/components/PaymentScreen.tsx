@@ -8,6 +8,7 @@ import { getErrorMessage } from "@/lib/errorMessage";
 import { getCurrentCoords } from "@/lib/nativeGeolocation";
 import { useT } from "@/i18n";
 import { hapticImpact } from "@/lib/haptics";
+import { totalWithGst, useGstPercent } from "@/lib/gst";
 
 type RazorpayOptions = {
   key: string;
@@ -62,6 +63,9 @@ type BookingRow = {
   service_label: string;
   service_duration_minutes: number;
   price: number;
+  total_amount?: number | null;
+  gst_percent?: number | null;
+  gst_amount?: number | null;
   slot_type: string;
   scheduled_date: string | null;
   scheduled_time_slot: string | null;
@@ -84,6 +88,7 @@ export function PaymentScreen({
   onTrackBooking: (bookingId: string | null) => void;
 }) {
   const t = useT();
+  const gstPercent = useGstPercent();
   const [status, setStatus] = useState<Status>("loading");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [bookingId, setBookingId] = useState<string | null>(null);
@@ -407,7 +412,10 @@ export function PaymentScreen({
   }, [bookingId]);
 
   const displayLabel = booking?.service_label ?? service.duration_label;
-  const displayPrice = booking?.price ?? service.price;
+  const displayPrice =
+    booking?.total_amount && Number(booking.total_amount) > 0
+      ? Number(booking.total_amount)
+      : totalWithGst(Number(booking?.price ?? service.price), gstPercent);
   const displayWhen = booking
     ? booking.slot_type === "now"
       ? t("payment.nowArriving")

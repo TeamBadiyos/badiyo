@@ -75,6 +75,7 @@ export const en = {
   "summary.title": "Booking Summary",
   "summary.priceDetails": "Price details",
   "summary.servicePrice": "Service price",
+  "summary.gst": "GST ({percent}%)",
   "summary.proceedToPay": "Proceed to Pay",
   "summary.now": "Now",
   "summary.nowSub": "Expert arriving in 30 – 45 mins",

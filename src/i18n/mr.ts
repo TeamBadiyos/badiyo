@@ -77,6 +77,7 @@ export const mr: Partial<Record<keyof typeof en, string>> = {
   "summary.title": "बुकिंग सारांश",
   "summary.priceDetails": "किंमत तपशील",
   "summary.servicePrice": "सेवेची किंमत",
+  "summary.gst": "जीएसटी ({percent}%)",
   "summary.proceedToPay": "पैसे भरा",
   "summary.now": "आत्ता",
   "summary.nowSub": "एक्सपर्ट 30 – 45 मिनिटांत पोहोचेल",
