@@ -193,11 +193,17 @@ export function BookingDetailsScreen({
           <h3 className="text-sm font-bold text-foreground">Price breakdown</h3>
           <div className="mt-3 space-y-2 text-sm">
             <Row label="Service" value={`Rs ${booking.price}`} />
-            <Row label="Taxes & fees" value="Included" muted />
+            <Row
+              label={`GST (${Number(booking.gst_percent ?? 0)}%)`}
+              value={`Rs ${Number(booking.gst_amount ?? 0)}`}
+              muted
+            />
             <div className="my-2 h-px bg-border" />
             <div className="flex items-center justify-between">
               <span className="text-sm font-bold text-foreground">Total paid</span>
-              <span className="text-base font-bold text-primary">Rs {booking.price}</span>
+              <span className="text-base font-bold text-primary">
+                Rs {booking.total_amount && Number(booking.total_amount) > 0 ? Number(booking.total_amount) : booking.price}
+              </span>
             </div>
           </div>
         </section>

@@ -192,7 +192,9 @@ export function MyBookingsScreen({
                   </div>
                 ) : null}
                 <div className="mt-3 flex items-center justify-between">
-                  <span className="text-sm font-bold text-primary">Rs {b.price}</span>
+                  <span className="text-sm font-bold text-primary">
+                    Rs {b.total_amount && Number(b.total_amount) > 0 ? Number(b.total_amount) : b.price}
+                  </span>
                   <span className="text-xs font-semibold text-primary">View details →</span>
                 </div>
               </button>
