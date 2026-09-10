@@ -17,6 +17,8 @@ import { useT } from "@/i18n";
 import { getErrorMessage } from "@/lib/errorMessage";
 import { usePullToRefresh, PullToRefreshIndicator } from "@/lib/usePullToRefresh";
 import { fetchSections } from "@/lib/homeData";
+import { recordTip } from "@/lib/tips.functions";
+
 import { hapticImpact } from "@/lib/haptics";
 import { TimerRing } from "./TimerRing";
 import {
