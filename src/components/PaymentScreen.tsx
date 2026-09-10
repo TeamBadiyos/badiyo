@@ -62,6 +62,9 @@ type BookingRow = {
   service_label: string;
   service_duration_minutes: number;
   price: number;
+  total_amount?: number | null;
+  gst_percent?: number | null;
+  gst_amount?: number | null;
   slot_type: string;
   scheduled_date: string | null;
   scheduled_time_slot: string | null;
