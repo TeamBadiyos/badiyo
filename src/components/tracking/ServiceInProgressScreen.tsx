@@ -400,18 +400,24 @@ export function ServiceInProgressScreen({
           prefill: { contact },
           theme: { color: "#00B97A" },
           handler: async (resp) => {
-            const { error: tipErr } = await supabase.rpc("record_booking_tip", {
-              _booking_id: bookingId,
-              _amount: amount,
-              _razorpay_payment_id: resp.razorpay_payment_id,
-            });
-            if (tipErr) {
-              reject(new Error(tipErr.message));
+            try {
+              // Server verifies the payment with Razorpay before crediting.
+              await recordTip({
+                data: {
+                  booking_id: bookingId,
+                  amount,
+                  razorpay_payment_id: resp.razorpay_payment_id,
+                  razorpay_order_id: data.order_id,
+                },
+              });
+            } catch (e) {
+              reject(e instanceof Error ? e : new Error("Could not record your tip"));
               return;
             }
             setTipPaid(amount);
             resolve();
           },
+
           modal: { ondismiss: () => reject(new Error("Payment cancelled")) },
         });
         rzp.open();
