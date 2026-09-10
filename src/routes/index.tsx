@@ -1053,6 +1053,22 @@ function Index() {
         </div>
       )}
       </Suspense>
+      <LiveServiceBar
+        enabled={
+          phase !== "splash" &&
+          phase !== "login" &&
+          phase !== "otp" &&
+          phase !== "in-progress" &&
+          phase !== "otp-end" &&
+          phase !== "rate-review" &&
+          phase !== "payment"
+        }
+        onOpen={(id) => {
+          setActiveBookingId(id);
+          setActiveBookingStatus("in_progress");
+          setPhase("in-progress");
+        }}
+      />
     </div>
 
   );
