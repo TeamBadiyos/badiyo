@@ -3436,16 +3436,27 @@ export type Database = {
         Args: { _lat: number; _lng: number }
         Returns: string
       }
-      reward_apply_credit: {
-        Args: {
-          _actor_id: string
-          _actor_type: string
-          _event_ref: string
-          _notes?: string
-          _program: Database["public"]["Tables"]["reward_programs"]["Row"]
-        }
-        Returns: boolean
-      }
+      reward_apply_credit:
+        | {
+            Args: {
+              _actor_id: string
+              _actor_type: string
+              _event_ref: string
+              _notes: string
+              _program: Record<string, unknown>
+            }
+            Returns: boolean
+          }
+        | {
+            Args: {
+              _actor_id: string
+              _actor_type: string
+              _event_ref: string
+              _notes?: string
+              _program: Database["public"]["Tables"]["reward_programs"]["Row"]
+            }
+            Returns: boolean
+          }
       run_reward_period_jobs: {
         Args: { _force_period_start?: string }
         Returns: number
