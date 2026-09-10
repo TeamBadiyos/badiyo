@@ -433,6 +433,7 @@ export type Database = {
           delete_reason: string | null
           deleted_at: string | null
           deleted_by: string | null
+          dispatch_alert_sent: boolean
           dispatch_exhausted_at: string | null
           end_otp: string | null
           gst_amount: number
@@ -448,6 +449,7 @@ export type Database = {
           reminder_sent: boolean
           review_text: string | null
           scheduled_date: string | null
+          scheduled_reminder_sent: boolean
           scheduled_time_slot: string | null
           service_category_id: string | null
           service_duration_minutes: number
@@ -477,6 +479,7 @@ export type Database = {
           delete_reason?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
+          dispatch_alert_sent?: boolean
           dispatch_exhausted_at?: string | null
           end_otp?: string | null
           gst_amount?: number
@@ -492,6 +495,7 @@ export type Database = {
           reminder_sent?: boolean
           review_text?: string | null
           scheduled_date?: string | null
+          scheduled_reminder_sent?: boolean
           scheduled_time_slot?: string | null
           service_category_id?: string | null
           service_duration_minutes: number
@@ -521,6 +525,7 @@ export type Database = {
           delete_reason?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
+          dispatch_alert_sent?: boolean
           dispatch_exhausted_at?: string | null
           end_otp?: string | null
           gst_amount?: number
@@ -536,6 +541,7 @@ export type Database = {
           reminder_sent?: boolean
           review_text?: string | null
           scheduled_date?: string | null
+          scheduled_reminder_sent?: boolean
           scheduled_time_slot?: string | null
           service_category_id?: string | null
           service_duration_minutes?: number
@@ -3068,6 +3074,7 @@ export type Database = {
           delete_reason: string | null
           deleted_at: string | null
           deleted_by: string | null
+          dispatch_alert_sent: boolean
           dispatch_exhausted_at: string | null
           end_otp: string | null
           gst_amount: number
@@ -3083,6 +3090,7 @@ export type Database = {
           reminder_sent: boolean
           review_text: string | null
           scheduled_date: string | null
+          scheduled_reminder_sent: boolean
           scheduled_time_slot: string | null
           service_category_id: string | null
           service_duration_minutes: number
@@ -3451,6 +3459,7 @@ export type Database = {
         Returns: number
       }
       send_completion_reminders: { Args: never; Returns: number }
+      send_scheduled_booking_reminders: { Args: never; Returns: number }
       set_login_pin: { Args: { p_pin: string }; Returns: undefined }
       staff_accept_booking: {
         Args: { _booking_id: string }
