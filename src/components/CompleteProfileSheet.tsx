@@ -103,7 +103,7 @@ export function CompleteProfileSheet({ enabled }: { enabled: boolean }) {
       .eq("id", uid);
     setSaving(false);
     if (updErr) {
-      setError(getErrorMessage(updErr));
+      setError(await getErrorMessage(updErr));
       return;
     }
     queryClient.invalidateQueries();
