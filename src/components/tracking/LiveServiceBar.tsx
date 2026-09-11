@@ -43,7 +43,9 @@ export function LiveServiceBar({
   return (
     <div
       className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center"
-      style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px))" }}
+      style={{
+        paddingBottom: `calc(env(safe-area-inset-bottom, 0px) + ${bottomOffset}px)`,
+      }}
     >
       <button
         type="button"
