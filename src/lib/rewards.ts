@@ -9,7 +9,7 @@ export type RewardLedgerRow = {
   reversed_at: string | null;
   reversal_reason: string | null;
   notes: string | null;
-  program_id: string;
+  program_id: string | null;
   program_name: string | null;
 };
 
