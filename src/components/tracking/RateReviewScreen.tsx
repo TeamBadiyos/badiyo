@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Star } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+
 import { useT } from "@/i18n";
 import { hapticImpact, hapticSelection } from "@/lib/haptics";
 
@@ -25,11 +27,17 @@ export function RateReviewScreen({
         _rating: rating || 0,
         _review: text.trim() || "",
       });
-      if (error) console.error("review submit failed:", error);
+      if (error) {
+        console.error("review submit failed:", error);
+        toast.error("Could not save your rating. Please try again.");
+        setSubmitting(false);
+        return;
+      }
     }
     setSubmitting(false);
     onSubmit();
   }
+
 
   return (
     <main className="min-h-screen w-full bg-background">
