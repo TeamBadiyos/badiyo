@@ -15,9 +15,12 @@ import {
 export function LiveServiceBar({
   enabled,
   onOpen,
+  /** Height (px) of any bottom chrome (tab bar / sticky CTA) to sit above. */
+  bottomOffset = 0,
 }: {
   enabled: boolean;
   onOpen: (bookingId: string) => void;
+  bottomOffset?: number;
 }) {
   const booking = useActiveBooking(enabled);
   const now = useNow(!!booking && enabled);
