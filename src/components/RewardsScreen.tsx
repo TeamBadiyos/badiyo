@@ -41,7 +41,7 @@ export function RewardsScreen({
   const ledger = data?.ledger ?? [];
   const programs = data?.programs ?? [];
   const coins = data?.legacyReferralCoins ?? 0;
-  const otherTotals = (data?.totals ?? []).filter((t) => t.type !== "coins" && t.type !== "cash");
+  const otherTotals = (data?.totals ?? []).filter((t) => t.type !== "coins");
 
   return (
     <main className="min-h-screen w-full bg-background pb-28 momentum-scroll">

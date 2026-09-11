@@ -53,7 +53,7 @@ export async function fetchCustomerRewards(): Promise<RewardsSnapshot> {
   const uid = userRes.user?.id;
   if (!uid) return EMPTY;
 
-  const [ledgerRes, programsRes, userRes2] = await Promise.all([
+  const [ledgerRes, programsRes, userRes2, referralsRes, completedRes] = await Promise.all([
     supabase
       .from("reward_ledger")
       .select(
@@ -73,6 +73,15 @@ export async function fetchCustomerRewards(): Promise<RewardsSnapshot> {
       .select("total_coins_earned, referral_count, successful_referrals")
       .eq("id", uid)
       .maybeSingle(),
+    supabase
+      .from("referral_transactions")
+      .select("status")
+      .eq("referrer_id", uid),
+    supabase
+      .from("bookings")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", uid)
+      .eq("status", "completed"),
   ]);
 
   if (ledgerRes.error) console.error("reward_ledger fetch failed:", ledgerRes.error);
@@ -95,8 +104,14 @@ export async function fetchCustomerRewards(): Promise<RewardsSnapshot> {
   });
 
   const now = Date.now();
-  const referralsDone = num(userRes2.data?.successful_referrals);
-  const signupsDone = num(userRes2.data?.referral_count);
+  const referralRows = referralsRes.data ?? [];
+  const referralsDone = Math.max(
+    referralRows.filter((r) => r.status === "reward_credited").length,
+    num(userRes2.data?.successful_referrals),
+  );
+  const signupsDone = Math.max(referralRows.length, num(userRes2.data?.referral_count));
+  const completedBookings = completedRes.count ?? 0;
+
 
   const programs: RewardProgramRow[] = (programsRes.data ?? [])
     .filter((p) => {
@@ -117,8 +132,9 @@ export async function fetchCustomerRewards(): Promise<RewardsSnapshot> {
         progress = { current: Math.min(signupsDone, total), total };
       } else if (p.trigger_type === "count_threshold") {
         const total = num(cond.count) || 1;
-        progress = { current: 0, total };
+        progress = { current: Math.min(completedBookings, total), total };
       }
+
       return {
         id: p.id,
         name: p.name,
