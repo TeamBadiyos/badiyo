@@ -3129,6 +3129,7 @@ export type Database = {
         Args: { _booking_id: string; _new_status: string }
         Returns: undefined
       }
+      apply_referral_code: { Args: { _code: string }; Returns: string }
       broadcast_booking_to_experts: {
         Args: { _booking_id: string; _radius?: number }
         Returns: number

@@ -12,6 +12,7 @@ import {
   Check,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { ReferralCodeInput } from "@/components/ReferralCodeInput";
 import { toast } from "sonner";
 
 
@@ -30,6 +31,7 @@ type UserRow = {
   full_name: string | null;
   referral_code: string | null;
   total_coins_earned: number | null;
+  referred_by: string | null;
 };
 
 type ReferralConfigRow = {
@@ -68,7 +70,7 @@ async function fetchAll() {
   const [userRes, txnRes, cfgRes] = await Promise.all([
     supabase
       .from("users")
-      .select("full_name, referral_code, total_coins_earned")
+      .select("full_name, referral_code, total_coins_earned, referred_by")
       .eq("id", uid)
       .maybeSingle(),
     supabase
@@ -144,7 +146,7 @@ function QrModal({ url, onClose }: { url: string; onClose: () => void }) {
 }
 
 export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["referral-dashboard"],
     queryFn: fetchAll,
   });
@@ -279,6 +281,16 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
               <StatCard label="Wallet Balance" value={`${walletBalance} coins`} />
               <StatCard label="Families Referred" value={String(totalReferred)} />
               <StatCard label="Successful Referrals" value={String(successful.length)} />
+            </section>
+
+            {/* Apply a friend's code */}
+            <section className="mt-6">
+              <h2 className="text-sm font-bold text-foreground">Enter a friend&apos;s code</h2>
+              <ReferralCodeInput
+                className="mt-3"
+                alreadyReferred={!!user?.referred_by}
+                onApplied={() => void refetch()}
+              />
             </section>
 
             {/* Referral code */}
