@@ -15,9 +15,12 @@ import {
 export function LiveServiceBar({
   enabled,
   onOpen,
+  /** Height (px) of any bottom chrome (tab bar / sticky CTA) to sit above. */
+  bottomOffset = 0,
 }: {
   enabled: boolean;
   onOpen: (bookingId: string) => void;
+  bottomOffset?: number;
 }) {
   const booking = useActiveBooking(enabled);
   const now = useNow(!!booking && enabled);
@@ -40,7 +43,9 @@ export function LiveServiceBar({
   return (
     <div
       className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center"
-      style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px))" }}
+      style={{
+        paddingBottom: `calc(env(safe-area-inset-bottom, 0px) + ${bottomOffset}px)`,
+      }}
     >
       <button
         type="button"

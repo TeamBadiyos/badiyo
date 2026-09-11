@@ -1090,6 +1090,14 @@ function Index() {
       )}
       </Suspense>
       <LiveServiceBar
+        // Sit above the tab bar / sticky CTA bars so they stay tappable.
+        bottomOffset={
+          phase === "home" || phase === "orders" || phase === "rewards"
+            ? 72
+            : phase === "address" || phase === "slot" || phase === "summary"
+              ? 68
+              : 0
+        }
         enabled={
           phase !== "splash" &&
           phase !== "login" &&
