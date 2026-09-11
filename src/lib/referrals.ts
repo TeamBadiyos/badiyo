@@ -63,6 +63,48 @@ export async function linkReferralIfAny(): Promise<void> {
   clearStoredReferralCode();
 }
 
+export type ApplyReferralResult =
+  | "applied"
+  | "invalid_code"
+  | "self_referral"
+  | "already_referred"
+  | "not_authenticated"
+  | "error";
+
+/**
+ * Apply an invite code entered manually (or prefilled from an invite link) and
+ * report the outcome so the UI can show a precise message.
+ */
+export async function applyReferralCode(rawCode: string): Promise<ApplyReferralResult> {
+  const code = rawCode.trim().toUpperCase();
+  if (!code) return "invalid_code";
+  const { data, error } = await supabase.rpc("apply_referral_code", { _code: code });
+  if (error) {
+    console.error("apply_referral_code failed:", error);
+    return "error";
+  }
+  const result = (data as ApplyReferralResult | null) ?? "error";
+  if (result === "applied" || result === "already_referred") clearStoredReferralCode();
+  return result;
+}
+
+export function referralResultMessage(result: ApplyReferralResult): string {
+  switch (result) {
+    case "applied":
+      return "Invite code applied!";
+    case "invalid_code":
+      return "That invite code doesn't exist";
+    case "self_referral":
+      return "You can't use your own code";
+    case "already_referred":
+      return "An invite code is already applied to your account";
+    case "not_authenticated":
+      return "Please sign in first";
+    default:
+      return "Couldn't apply the code. Please try again.";
+  }
+}
+
 /**
  * Called after a booking has been created with status='confirmed'.
  * Server decides if it's the user's first confirmed booking and credits the referrer.
