@@ -17,6 +17,7 @@ import { checkServiceability } from "@/lib/serviceability";
 import { hasLoginPin } from "@/lib/auth.functions";
 import { prefetchHomeData } from "@/lib/homeData";
 import { LiveServiceBar } from "@/components/tracking/LiveServiceBar";
+import { CompleteProfileSheet } from "@/components/CompleteProfileSheet";
 
 // --- Eager: only what the very first paint needs (splash → login). ---
 import { LoginScreen } from "@/components/LoginScreen";
