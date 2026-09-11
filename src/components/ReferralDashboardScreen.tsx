@@ -146,7 +146,7 @@ function QrModal({ url, onClose }: { url: string; onClose: () => void }) {
 }
 
 export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["referral-dashboard"],
     queryFn: fetchAll,
   });
