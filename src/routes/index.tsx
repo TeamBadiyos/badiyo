@@ -1090,6 +1090,9 @@ function Index() {
         </div>
       )}
       </Suspense>
+      <CompleteProfileSheet
+        enabled={phase === "home" || phase === "orders" || phase === "rewards"}
+      />
       <LiveServiceBar
         // Sit above the tab bar / sticky CTA bars so they stay tappable.
         bottomOffset={
