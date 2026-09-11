@@ -83,7 +83,7 @@ export function CompleteProfileSheet({ enabled }: { enabled: boolean }) {
       const url = await uploadAvatar(uid, file);
       setAvatarUrl(await signAddressPhotoUrl(url));
     } catch (err) {
-      toast.error(getErrorMessage(err));
+      toast.error(await getErrorMessage(err));
     } finally {
       setUploading(false);
     }
