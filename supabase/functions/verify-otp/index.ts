@@ -54,8 +54,8 @@ Deno.serve(async (req) => {
       .update({ is_verified: true })
       .eq("id", row.id);
 
-    // Look up an existing auth user by synthetic email, by legacy auth phone,
-    // and by the customer profile's phone — the first match wins.
+    // Look up an existing auth user by synthetic email (including a linked
+    // identity left by account deletion), legacy auth phone, and profile phone.
     // The profile lookup matters: accounts created under the older anonymous
     // sign-in flow have neither a synthetic email nor auth.users.phone, so
     // without it a repeat login mints a SECOND account for the same number
@@ -79,11 +79,21 @@ Deno.serve(async (req) => {
         password,
         email: syntheticEmail,
         email_confirm: true,
+        ban_duration: "none",
         user_metadata: { phone: fullPhone },
       });
       if (updErr) {
         console.error("updateUserById failed", updErr);
         return json({ error: updErr.message || "Could not sign in" }, 500);
+      }
+
+      const { error: reactivateErr } = await admin.rpc("reactivate_customer_after_otp", {
+        _user_id: userId,
+        _phone: fullPhone,
+      });
+      if (reactivateErr) {
+        console.error("reactivate_customer_after_otp failed", reactivateErr);
+        return json({ error: "Could not restore account" }, 500);
       }
     } else {
       const { data: created, error: createErr } = await admin.auth.admin.createUser({
@@ -94,7 +104,7 @@ Deno.serve(async (req) => {
       });
       if (createErr || !created.user) {
         console.error("createUser failed", createErr);
-        return json({ error: createErr?.message || "Could not create account" }, 500);
+        return json({ error: "Could not restore or create account. Please retry." }, 500);
       }
       userId = created.user.id;
     }

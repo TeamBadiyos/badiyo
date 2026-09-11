@@ -3494,6 +3494,10 @@ export type Database = {
         Args: { _lat: number; _lng: number; _poly: Json }
         Returns: boolean
       }
+      reactivate_customer_after_otp: {
+        Args: { _phone: string; _user_id: string }
+        Returns: undefined
+      }
       record_booking_tip: {
         Args: {
           _amount: number
