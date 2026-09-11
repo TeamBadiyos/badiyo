@@ -132,8 +132,9 @@ export async function fetchCustomerRewards(): Promise<RewardsSnapshot> {
         progress = { current: Math.min(signupsDone, total), total };
       } else if (p.trigger_type === "count_threshold") {
         const total = num(cond.count) || 1;
-        progress = { current: 0, total };
+        progress = { current: Math.min(completedBookings, total), total };
       }
+
       return {
         id: p.id,
         name: p.name,
