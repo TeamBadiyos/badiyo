@@ -134,12 +134,16 @@ export function CompleteProfileSheet({ enabled }: { enabled: boolean }) {
     const name = fullName.trim();
     const mail = email.trim();
     if (!name) return setError("Please enter your name");
-    if (!/^\S+@\S+\.\S+$/.test(mail)) return setError("Please enter a valid email");
+    if (mail && !/^\S+@\S+\.\S+$/.test(mail)) {
+      return setError("Please enter a valid email or leave it blank");
+    }
     setError(null);
     setSaving(true);
+    const updatePayload: { full_name: string; email?: string | null } = { full_name: name };
+    updatePayload.email = mail || null;
     const { error: updErr } = await supabase
       .from("users")
-      .update({ full_name: name, email: mail })
+      .update(updatePayload)
       .eq("id", uid);
     if (updErr) {
       setSaving(false);
