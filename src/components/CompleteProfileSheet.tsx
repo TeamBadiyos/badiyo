@@ -101,11 +101,25 @@ export function CompleteProfileSheet({ enabled }: { enabled: boolean }) {
       .from("users")
       .update({ full_name: name, email: mail })
       .eq("id", uid);
-    setSaving(false);
     if (updErr) {
+      setSaving(false);
       setError(await getErrorMessage(updErr));
       return;
     }
+
+    // Apply a typed invite code that the user never tapped "Apply" on.
+    const code = referralCode.trim();
+    if (code && !alreadyReferred && !referralApplied) {
+      const result = await applyReferralCode(code);
+      if (result !== "applied" && result !== "already_referred") {
+        setSaving(false);
+        setError(referralResultMessage(result));
+        return;
+      }
+      setReferralApplied(true);
+    }
+
+    setSaving(false);
     queryClient.invalidateQueries();
     toast.success("Profile updated");
     setOpen(false);
