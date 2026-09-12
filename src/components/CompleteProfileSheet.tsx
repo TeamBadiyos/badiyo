@@ -234,7 +234,7 @@ export function CompleteProfileSheet({ enabled }: { enabled: boolean }) {
             onChange={(e) => setEmail(e.target.value)}
             type="email"
             inputMode="email"
-            placeholder="Email address"
+            placeholder="Email address (optional)"
             className="h-12 w-full rounded-[14px] border border-border bg-background px-4 text-sm font-semibold text-foreground outline-none focus:border-primary"
           />
         </div>
