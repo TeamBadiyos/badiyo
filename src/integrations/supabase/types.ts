@@ -369,6 +369,45 @@ export type Database = {
           },
         ]
       }
+      booking_preferred_experts: {
+        Row: {
+          booking_id: string
+          created_at: string
+          expert_id: string
+          expires_at: string
+          id: string
+        }
+        Insert: {
+          booking_id: string
+          created_at?: string
+          expert_id: string
+          expires_at: string
+          id?: string
+        }
+        Update: {
+          booking_id?: string
+          created_at?: string
+          expert_id?: string
+          expires_at?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_preferred_experts_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_preferred_experts_expert_id_fkey"
+            columns: ["expert_id"]
+            isOneToOne: false
+            referencedRelation: "experts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       booking_tips: {
         Row: {
           amount: number
@@ -627,6 +666,36 @@ export type Database = {
         }
         Relationships: []
       }
+      capacity_messages: {
+        Row: {
+          city: string
+          created_at: string
+          id: string
+          is_active: boolean
+          message_key: string
+          message_text: string
+          updated_at: string
+        }
+        Insert: {
+          city?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          message_key: string
+          message_text: string
+          updated_at?: string
+        }
+        Update: {
+          city?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          message_key?: string
+          message_text?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       city_interest_leads: {
         Row: {
           city: string
@@ -714,38 +783,91 @@ export type Database = {
         }
         Relationships: []
       }
+      dispatch_alert_events: {
+        Row: {
+          alert_type: string
+          booking_id: string
+          city: string | null
+          id: string
+          payload: Json
+          triggered_at: string
+          whatsapp_sent: boolean
+          zone_id: string | null
+        }
+        Insert: {
+          alert_type: string
+          booking_id: string
+          city?: string | null
+          id?: string
+          payload?: Json
+          triggered_at?: string
+          whatsapp_sent?: boolean
+          zone_id?: string | null
+        }
+        Update: {
+          alert_type?: string
+          booking_id?: string
+          city?: string | null
+          id?: string
+          payload?: Json
+          triggered_at?: string
+          whatsapp_sent?: boolean
+          zone_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dispatch_alert_events_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dispatch_config: {
         Row: {
+          aisensy_template_name: string | null
+          almost_available_window_minutes: number
           broadcast_radius_km: number
           broadcast_timeout_seconds: number
           city: string
           created_at: string
           id: string
+          no_accept_alert_threshold_seconds: number
           no_expert_timeout_minutes: number
+          ops_alert_whatsapp_numbers: string[]
           radius_expand_after_seconds: number
           radius_expand_max_km: number
           radius_expand_step_km: number
           updated_at: string
         }
         Insert: {
+          aisensy_template_name?: string | null
+          almost_available_window_minutes?: number
           broadcast_radius_km?: number
           broadcast_timeout_seconds?: number
           city?: string
           created_at?: string
           id?: string
+          no_accept_alert_threshold_seconds?: number
           no_expert_timeout_minutes?: number
+          ops_alert_whatsapp_numbers?: string[]
           radius_expand_after_seconds?: number
           radius_expand_max_km?: number
           radius_expand_step_km?: number
           updated_at?: string
         }
         Update: {
+          aisensy_template_name?: string | null
+          almost_available_window_minutes?: number
           broadcast_radius_km?: number
           broadcast_timeout_seconds?: number
           city?: string
           created_at?: string
           id?: string
+          no_accept_alert_threshold_seconds?: number
           no_expert_timeout_minutes?: number
+          ops_alert_whatsapp_numbers?: string[]
           radius_expand_after_seconds?: number
           radius_expand_max_km?: number
           radius_expand_step_km?: number
@@ -2944,6 +3066,57 @@ export type Database = {
         }
         Relationships: []
       }
+      waitlist_notify_events: {
+        Row: {
+          channel: string
+          city: string | null
+          created_at: string
+          expert_id: string | null
+          id: string
+          payload: Json
+          segment_id: string | null
+          waitlist_id: string
+          whatsapp_status: string
+        }
+        Insert: {
+          channel?: string
+          city?: string | null
+          created_at?: string
+          expert_id?: string | null
+          id?: string
+          payload?: Json
+          segment_id?: string | null
+          waitlist_id: string
+          whatsapp_status?: string
+        }
+        Update: {
+          channel?: string
+          city?: string | null
+          created_at?: string
+          expert_id?: string | null
+          id?: string
+          payload?: Json
+          segment_id?: string | null
+          waitlist_id?: string
+          whatsapp_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "waitlist_notify_events_expert_id_fkey"
+            columns: ["expert_id"]
+            isOneToOne: false
+            referencedRelation: "experts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_notify_events_waitlist_id_fkey"
+            columns: ["waitlist_id"]
+            isOneToOne: false
+            referencedRelation: "waitlist_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       waitlist_requests: {
         Row: {
           address_text: string | null
@@ -2952,6 +3125,8 @@ export type Database = {
           id: string
           latitude: number
           longitude: number
+          notified_at: string | null
+          notify_count: number
           segment_id: string | null
           status: string
           user_id: string | null
@@ -2963,6 +3138,8 @@ export type Database = {
           id?: string
           latitude: number
           longitude: number
+          notified_at?: string | null
+          notify_count?: number
           segment_id?: string | null
           status?: string
           user_id?: string | null
@@ -2974,6 +3151,8 @@ export type Database = {
           id?: string
           latitude?: number
           longitude?: number
+          notified_at?: string | null
+          notify_count?: number
           segment_id?: string | null
           status?: string
           user_id?: string | null
@@ -3134,6 +3313,7 @@ export type Database = {
         Args: { _booking_id: string; _radius?: number }
         Returns: number
       }
+      check_booking_capacity: { Args: { _booking_id: string }; Returns: Json }
       check_serviceability: {
         Args: { _lat: number; _lng: number; _segment_id?: string }
         Returns: Json
@@ -3265,6 +3445,7 @@ export type Database = {
         }
         Returns: number
       }
+      evaluate_zone_capacity: { Args: { _booking_id: string }; Returns: Json }
       expand_stale_broadcasts: { Args: never; Returns: number }
       expert_ensure_booking_codes: {
         Args: { _booking_id: string }
@@ -3448,6 +3629,15 @@ export type Database = {
         }
         Returns: undefined
       }
+      notify_customer_user_push: {
+        Args: {
+          _body: string
+          _route: string
+          _title: string
+          _user_id: string
+        }
+        Returns: undefined
+      }
       notify_expert_alert: {
         Args: {
           _alert_type: string
@@ -3487,12 +3677,20 @@ export type Database = {
         }
         Returns: undefined
       }
+      notify_waitlist_for_expert: {
+        Args: { _expert_id: string }
+        Returns: number
+      }
       partner_decide_extension: {
         Args: { _decision: string; _extension_id: string }
         Returns: Json
       }
       point_in_polygon: {
         Args: { _lat: number; _lng: number; _poly: Json }
+        Returns: boolean
+      }
+      raise_dispatch_alert: {
+        Args: { _booking_id: string; _type: string }
         Returns: boolean
       }
       reactivate_customer_after_otp: {
@@ -3663,6 +3861,10 @@ export type Database = {
         Args: { _invoice_id: string; _paid: boolean }
         Returns: undefined
       }
+      staff_notify_waitlist_area: {
+        Args: { _city: string; _segment_id?: string }
+        Returns: number
+      }
       staff_reassign_expert: {
         Args: { _booking_id: string; _new_expert_id: string }
         Returns: undefined
@@ -3728,6 +3930,10 @@ export type Database = {
         Args: { _period_start?: string }
         Returns: number
       }
+      staff_save_capacity_message: {
+        Args: { _payload: Json }
+        Returns: undefined
+      }
       staff_set_availability_override: {
         Args: {
           _is_unavailable: boolean
@@ -3778,6 +3984,10 @@ export type Database = {
       }
       staff_update_deletion_request: {
         Args: { _note?: string; _request_id: string; _status: string }
+        Returns: undefined
+      }
+      staff_update_dispatch_config: {
+        Args: { _payload: Json }
         Returns: undefined
       }
       staff_update_referral_config: {
@@ -3866,6 +4076,7 @@ export type Database = {
         }
         Returns: Json
       }
+      system_check_no_accept_alerts: { Args: never; Returns: string[] }
       system_credit_referral_for_booking: {
         Args: { _booking_id: string }
         Returns: undefined
@@ -3882,6 +4093,37 @@ export type Database = {
           id: string
           price: number
           razorpay_payment_id: string
+        }[]
+      }
+      system_mark_dispatch_whatsapp: {
+        Args: { _event_id: string }
+        Returns: undefined
+      }
+      system_mark_waitlist_whatsapp: {
+        Args: { _event_id: string }
+        Returns: undefined
+      }
+      system_pending_dispatch_whatsapp: {
+        Args: never
+        Returns: {
+          alert_type: string
+          booking_id: string
+          city: string
+          event_id: string
+          numbers: string[]
+          service_label: string
+          template_name: string
+        }[]
+      }
+      system_pending_waitlist_whatsapp: {
+        Args: never
+        Returns: {
+          city: string
+          customer_name: string
+          event_id: string
+          numbers: string[]
+          phone: string
+          template_name: string
         }[]
       }
       verify_login_pin: {
