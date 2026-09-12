@@ -14,9 +14,9 @@ function isSynthetic(email: string | null | undefined) {
 }
 
 /**
- * Nudges a signed-in customer to fill in their name, email and photo.
- * Skippable — reappears on the next app open / foreground until name + email
- * are set. The skip is intentionally in-memory only: persisting it (e.g. in
+ * Nudges a signed-in customer to fill in their name and (optionally) email/photo.
+ * Skippable — reappears on the next app open / foreground until a name
+ * is saved. The skip is intentionally in-memory only: persisting it (e.g. in
  * sessionStorage) hid the popup forever inside the Capacitor webview, which is
  * never torn down between app opens.
  */
@@ -94,8 +94,7 @@ export function CompleteProfileSheet({ enabled }: { enabled: boolean }) {
           .maybeSingle();
         if (!data) return;
         const nameOk = !!data.full_name?.trim();
-        const emailOk = !!data.email && !isSynthetic(data.email);
-        if (nameOk && emailOk) return;
+        if (nameOk) return;
         setUid(u.id);
         setFullName(data.full_name ?? "");
         setEmail(isSynthetic(data.email) ? "" : (data.email ?? ""));
@@ -135,12 +134,16 @@ export function CompleteProfileSheet({ enabled }: { enabled: boolean }) {
     const name = fullName.trim();
     const mail = email.trim();
     if (!name) return setError("Please enter your name");
-    if (!/^\S+@\S+\.\S+$/.test(mail)) return setError("Please enter a valid email");
+    if (mail && !/^\S+@\S+\.\S+$/.test(mail)) {
+      return setError("Please enter a valid email or leave it blank");
+    }
     setError(null);
     setSaving(true);
+    const updatePayload: { full_name: string; email?: string | null } = { full_name: name };
+    updatePayload.email = mail || null;
     const { error: updErr } = await supabase
       .from("users")
-      .update({ full_name: name, email: mail })
+      .update(updatePayload)
       .eq("id", uid);
     if (updErr) {
       setSaving(false);
@@ -179,7 +182,7 @@ export function CompleteProfileSheet({ enabled }: { enabled: boolean }) {
           <div>
             <h2 className="text-lg font-extrabold text-foreground">Complete your profile</h2>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              Helps our experts recognise you and send booking updates.
+              Name is required; email and photo are optional.
             </p>
           </div>
           <button
@@ -231,7 +234,7 @@ export function CompleteProfileSheet({ enabled }: { enabled: boolean }) {
             onChange={(e) => setEmail(e.target.value)}
             type="email"
             inputMode="email"
-            placeholder="Email address"
+            placeholder="Email address (optional)"
             className="h-12 w-full rounded-[14px] border border-border bg-background px-4 text-sm font-semibold text-foreground outline-none focus:border-primary"
           />
         </div>
