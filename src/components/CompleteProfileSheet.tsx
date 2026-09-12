@@ -94,8 +94,7 @@ export function CompleteProfileSheet({ enabled }: { enabled: boolean }) {
           .maybeSingle();
         if (!data) return;
         const nameOk = !!data.full_name?.trim();
-        const emailOk = !!data.email && !isSynthetic(data.email);
-        if (nameOk && emailOk) return;
+        if (nameOk) return;
         setUid(u.id);
         setFullName(data.full_name ?? "");
         setEmail(isSynthetic(data.email) ? "" : (data.email ?? ""));
