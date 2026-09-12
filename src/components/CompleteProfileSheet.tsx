@@ -14,9 +14,9 @@ function isSynthetic(email: string | null | undefined) {
 }
 
 /**
- * Nudges a signed-in customer to fill in their name, email and photo.
- * Skippable — reappears on the next app open / foreground until name + email
- * are set. The skip is intentionally in-memory only: persisting it (e.g. in
+ * Nudges a signed-in customer to fill in their name and (optionally) email/photo.
+ * Skippable — reappears on the next app open / foreground until a name
+ * is saved. The skip is intentionally in-memory only: persisting it (e.g. in
  * sessionStorage) hid the popup forever inside the Capacitor webview, which is
  * never torn down between app opens.
  */
