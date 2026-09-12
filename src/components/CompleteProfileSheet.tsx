@@ -9,15 +9,16 @@ import { ReferralCodeInput } from "@/components/ReferralCodeInput";
 import { applyReferralCode, referralResultMessage } from "@/lib/referrals";
 import { toast } from "sonner";
 
-const DISMISS_KEY = "badiyo.completeProfileDismissed";
-
 function isSynthetic(email: string | null | undefined) {
   return !!email && /@badiyos?\.phone\.local$/i.test(email);
 }
 
 /**
- * Nudges a freshly signed-in customer to fill in their name, email and photo.
- * Skippable — reappears on the next app open until name + email are set.
+ * Nudges a signed-in customer to fill in their name, email and photo.
+ * Skippable — reappears on the next app open / foreground until name + email
+ * are set. The skip is intentionally in-memory only: persisting it (e.g. in
+ * sessionStorage) hid the popup forever inside the Capacitor webview, which is
+ * never torn down between app opens.
  */
 export function CompleteProfileSheet({ enabled }: { enabled: boolean }) {
   const [open, setOpen] = useState(false);
@@ -32,48 +33,85 @@ export function CompleteProfileSheet({ enabled }: { enabled: boolean }) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
-  const checkedRef = useRef(false);
   const queryClient = useQueryClient();
+  /** Bumped whenever the popup should be re-evaluated (foreground, sign-in). */
+  const [tick, setTick] = useState(0);
+  const skippedRef = useRef(false);
+  const checkingRef = useRef(false);
+
+  // Re-check on app resume / tab becoming visible again, and on sign-in.
+  useEffect(() => {
+    let cancelled = false;
+    const bump = () => {
+      if (cancelled) return;
+      skippedRef.current = false;
+      setTick((t) => t + 1);
+    };
+    const onVisible = () => {
+      if (document.visibilityState === "visible") bump();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+
+    let removeApp: (() => void) | undefined;
+    import("@capacitor/app")
+      .then(({ App }) =>
+        App.addListener("appStateChange", ({ isActive }) => {
+          if (isActive) bump();
+        }),
+      )
+      .then((handle) => {
+        if (cancelled) handle.remove();
+        else removeApp = () => handle.remove();
+      })
+      .catch(() => {
+        /* web build: visibilitychange is enough */
+      });
+
+    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_IN" || event === "USER_UPDATED") bump();
+    });
+
+    return () => {
+      cancelled = true;
+      document.removeEventListener("visibilitychange", onVisible);
+      removeApp?.();
+      sub.subscription.unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
-    if (!enabled || checkedRef.current) return;
-    checkedRef.current = true;
+    if (!enabled || skippedRef.current || checkingRef.current) return;
+    checkingRef.current = true;
     (async () => {
       try {
-        if (sessionStorage.getItem(DISMISS_KEY) === "1") return;
-      } catch {
-        /* ignore */
+        const { data: userRes } = await supabase.auth.getUser();
+        const u = userRes.user;
+        if (!u) return;
+        const { data } = await supabase
+          .from("users")
+          .select("full_name, email, avatar_url, referred_by")
+          .eq("id", u.id)
+          .maybeSingle();
+        if (!data) return;
+        const nameOk = !!data.full_name?.trim();
+        const emailOk = !!data.email && !isSynthetic(data.email);
+        if (nameOk && emailOk) return;
+        setUid(u.id);
+        setFullName(data.full_name ?? "");
+        setEmail(isSynthetic(data.email) ? "" : (data.email ?? ""));
+        setAvatarUrl(await signAddressPhotoUrl(data.avatar_url ?? null));
+        setAlreadyReferred(!!data.referred_by);
+        setReferralApplied(false);
+        setError(null);
+        setOpen(true);
+      } finally {
+        checkingRef.current = false;
       }
-      const { data: userRes } = await supabase.auth.getUser();
-      const u = userRes.user;
-      if (!u) {
-        checkedRef.current = false;
-        return;
-      }
-      const { data } = await supabase
-        .from("users")
-        .select("full_name, email, avatar_url, referred_by")
-        .eq("id", u.id)
-        .maybeSingle();
-      if (!data) return;
-      const nameOk = !!data.full_name?.trim();
-      const emailOk = !!data.email && !isSynthetic(data.email);
-      if (nameOk && emailOk) return;
-      setUid(u.id);
-      setFullName(data.full_name ?? "");
-      setEmail(isSynthetic(data.email) ? "" : (data.email ?? ""));
-      setAvatarUrl(await signAddressPhotoUrl(data.avatar_url ?? null));
-      setAlreadyReferred(!!data.referred_by);
-      setOpen(true);
     })();
-  }, [enabled]);
+  }, [enabled, tick]);
 
   function dismiss() {
-    try {
-      sessionStorage.setItem(DISMISS_KEY, "1");
-    } catch {
-      /* ignore */
-    }
+    skippedRef.current = true;
     setOpen(false);
   }
 
