@@ -9,15 +9,16 @@ import { ReferralCodeInput } from "@/components/ReferralCodeInput";
 import { applyReferralCode, referralResultMessage } from "@/lib/referrals";
 import { toast } from "sonner";
 
-const DISMISS_KEY = "badiyo.completeProfileDismissed";
-
 function isSynthetic(email: string | null | undefined) {
   return !!email && /@badiyos?\.phone\.local$/i.test(email);
 }
 
 /**
- * Nudges a freshly signed-in customer to fill in their name, email and photo.
- * Skippable — reappears on the next app open until name + email are set.
+ * Nudges a signed-in customer to fill in their name, email and photo.
+ * Skippable — reappears on the next app open / foreground until name + email
+ * are set. The skip is intentionally in-memory only: persisting it (e.g. in
+ * sessionStorage) hid the popup forever inside the Capacitor webview, which is
+ * never torn down between app opens.
  */
 export function CompleteProfileSheet({ enabled }: { enabled: boolean }) {
   const [open, setOpen] = useState(false);
