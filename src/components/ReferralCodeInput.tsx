@@ -10,11 +10,18 @@ type Props = {
   /** Hide the field entirely and show a confirmation when a referrer already exists. */
   alreadyReferred?: boolean;
   onApplied?: () => void;
+  /** Lets a parent form read the typed code so it can apply it on its own save. */
+  onCodeChange?: (code: string) => void;
   className?: string;
 };
 
 /** Small "Have an invite code?" box used on the profile popup and Refer & Earn. */
-export function ReferralCodeInput({ alreadyReferred, onApplied, className }: Props) {
+export function ReferralCodeInput({
+  alreadyReferred,
+  onApplied,
+  onCodeChange,
+  className,
+}: Props) {
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<{ ok: boolean; text: string } | null>(null);
@@ -22,8 +29,17 @@ export function ReferralCodeInput({ alreadyReferred, onApplied, className }: Pro
 
   useEffect(() => {
     const stored = getStoredReferralCode();
-    if (stored) setCode(stored);
+    if (stored) {
+      setCode(stored);
+      onCodeChange?.(stored);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  function updateCode(next: string) {
+    setCode(next);
+    onCodeChange?.(next);
+  }
 
   if (alreadyReferred || done) {
     return (
