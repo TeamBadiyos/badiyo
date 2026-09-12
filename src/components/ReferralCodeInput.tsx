@@ -80,7 +80,7 @@ export function ReferralCodeInput({
         <input
           id="referral-code"
           value={code}
-          onChange={(e) => setCode(e.target.value.toUpperCase())}
+          onChange={(e) => updateCode(e.target.value.toUpperCase())}
           placeholder="Enter code"
           autoCapitalize="characters"
           className="h-11 flex-1 rounded-[14px] border border-border bg-card px-4 text-sm font-semibold uppercase tracking-wide text-foreground outline-none focus:border-primary"
