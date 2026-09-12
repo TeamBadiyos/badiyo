@@ -182,7 +182,7 @@ export function CompleteProfileSheet({ enabled }: { enabled: boolean }) {
           <div>
             <h2 className="text-lg font-extrabold text-foreground">Complete your profile</h2>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              Helps our experts recognise you and send booking updates.
+              Name is required; email and photo are optional.
             </p>
           </div>
           <button
