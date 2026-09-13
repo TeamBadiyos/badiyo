@@ -82,7 +82,11 @@ export function CompleteProfileSheet({ enabled }: { enabled: boolean }) {
   }, []);
 
   useEffect(() => {
-    if (!enabled || skippedRef.current || checkingRef.current) return;
+    openRef.current = open;
+  }, [open]);
+
+  useEffect(() => {
+    if (!enabled || skippedRef.current || checkingRef.current || openRef.current) return;
     checkingRef.current = true;
     (async () => {
       try {
