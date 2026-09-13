@@ -3862,7 +3862,7 @@ export type Database = {
         Returns: undefined
       }
       staff_notify_waitlist_area: {
-        Args: { _city: string; _segment_id?: string }
+        Args: { _city?: string; _segment_id?: string }
         Returns: number
       }
       staff_reassign_expert: {
