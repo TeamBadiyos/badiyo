@@ -38,6 +38,8 @@ export function CompleteProfileSheet({ enabled }: { enabled: boolean }) {
   const [tick, setTick] = useState(0);
   const skippedRef = useRef(false);
   const checkingRef = useRef(false);
+  /** Mirrors `open` so the re-check never wipes a form the user is filling in. */
+  const openRef = useRef(false);
 
   // Re-check on app resume / tab becoming visible again, and on sign-in.
   useEffect(() => {
