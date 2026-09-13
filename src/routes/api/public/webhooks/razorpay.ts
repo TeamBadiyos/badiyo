@@ -54,10 +54,11 @@ export const Route = createFileRoute("/api/public/webhooks/razorpay")({
         const entity = payload.payload?.payment?.entity ?? {};
         const paymentId = entity.id ?? null;
         const orderId = entity.order_id ?? null;
-        // Service-extension top-ups are not bookings; the safety net must skip
-        // them, otherwise every extension raises a false "lost booking" alert.
-        if (entity.notes?.purpose === "extension") {
-          return new Response("ignored-extension");
+        // Extension top-ups and tips are not bookings; the safety net must skip
+        // them, otherwise every one raises a false "lost booking" alert.
+        const purpose = entity.notes?.purpose;
+        if (purpose === "extension" || purpose === "tip") {
+          return new Response(`ignored-${purpose}`);
         }
         if (!orderId) {
           console.error("[razorpay-webhook] event without order_id", event);
@@ -90,7 +91,7 @@ export const Route = createFileRoute("/api/public/webhooks/razorpay")({
           // "lost booking" alert for it.
           const { data: intent } = await supabaseAdmin
             .from("payment_intents")
-            .select("id")
+            .select("id, status, last_error, attempts")
             .eq("razorpay_order_id", orderId)
             .maybeSingle();
 
@@ -103,11 +104,15 @@ export const Route = createFileRoute("/api/public/webhooks/razorpay")({
             return new Response("no-intent");
           }
 
+          // Surface the real database error so the cause is visible in logs
+          // instead of a bare "null" from the RPC result.
           console.error(
             "[razorpay-webhook] could not ensure a booking for paid order",
             orderId,
             paymentId,
             lastError,
+            "intent:",
+            JSON.stringify(intent),
           );
           await supabaseAdmin.from("audit_logs").insert({
             actor_id: "00000000-0000-0000-0000-000000000000",
