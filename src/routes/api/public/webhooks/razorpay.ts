@@ -91,7 +91,7 @@ export const Route = createFileRoute("/api/public/webhooks/razorpay")({
           // "lost booking" alert for it.
           const { data: intent } = await supabaseAdmin
             .from("payment_intents")
-            .select("id")
+            .select("id, status, last_error, attempts")
             .eq("razorpay_order_id", orderId)
             .maybeSingle();
 
