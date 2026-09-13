@@ -104,11 +104,15 @@ export const Route = createFileRoute("/api/public/webhooks/razorpay")({
             return new Response("no-intent");
           }
 
+          // Surface the real database error so the cause is visible in logs
+          // instead of a bare "null" from the RPC result.
           console.error(
             "[razorpay-webhook] could not ensure a booking for paid order",
             orderId,
             paymentId,
             lastError,
+            "intent:",
+            JSON.stringify(intent),
           );
           await supabaseAdmin.from("audit_logs").insert({
             actor_id: "00000000-0000-0000-0000-000000000000",
