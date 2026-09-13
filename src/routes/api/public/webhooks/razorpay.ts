@@ -54,10 +54,11 @@ export const Route = createFileRoute("/api/public/webhooks/razorpay")({
         const entity = payload.payload?.payment?.entity ?? {};
         const paymentId = entity.id ?? null;
         const orderId = entity.order_id ?? null;
-        // Service-extension top-ups are not bookings; the safety net must skip
-        // them, otherwise every extension raises a false "lost booking" alert.
-        if (entity.notes?.purpose === "extension") {
-          return new Response("ignored-extension");
+        // Extension top-ups and tips are not bookings; the safety net must skip
+        // them, otherwise every one raises a false "lost booking" alert.
+        const purpose = entity.notes?.purpose;
+        if (purpose === "extension" || purpose === "tip") {
+          return new Response(`ignored-${purpose}`);
         }
         if (!orderId) {
           console.error("[razorpay-webhook] event without order_id", event);
