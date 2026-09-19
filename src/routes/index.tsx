@@ -263,6 +263,7 @@ function Index() {
   const [activeBookingStatus, setActiveBookingStatus] = useState<string | null>(null);
   const [selectedBooking, setSelectedBooking] = useState<BookingRow | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [courierOrderId, setCourierOrderId] = useState<string | null>(null);
   const [pendingPhone, setPendingPhone] = useState<string | null>(null);
   const [forceResetPin, setForceResetPin] = useState(false);
   // Always start "online" so SSR and first client render match; a real offline
