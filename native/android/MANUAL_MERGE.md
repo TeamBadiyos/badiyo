@@ -131,9 +131,14 @@ no-op) and falls back.
 
 ## 1. Install + sync
 
+Version note: this project runs **Capacitor 8** (`@capacitor/core` 8.x), so pin
+the Capgo plugin to its Capacitor-8 line — `@capgo/capacitor-install-referrer@^8`
+(e.g. 8.1.11). A `@^7` or older build targets Capacitor 7 and will not sync
+cleanly. `capacitor-razorpay` 1.3.x is Capacitor-version agnostic.
+
 ```bash
 bun install
-npm install capacitor-razorpay @capgo/capacitor-install-referrer
+npm install capacitor-razorpay "@capgo/capacitor-install-referrer@^8"
 bun run build:capacitor
 npx cap sync android
 npx cap ls android
@@ -172,7 +177,27 @@ With this, `https://user.badiyos.com/invite/CODE` opens the app instead of
 Chrome. The app handles it in `src/routes/index.tsx` (`appUrlOpen` +
 `App.getLaunchUrl()`): the invite code is stored and applied at sign-in.
 
-## 3. assetlinks.json / SHA-256 fingerprint
+## 3. ProGuard / R8 (release builds only)
+
+Release APKs run R8 minification (`minifyEnabled true` in
+`android/app/build.gradle`). Razorpay's Android SDK talks to its web layer
+through `@JavascriptInterface` reflection — if R8 strips those methods the
+native sheet opens but payments silently fail. Add to
+`android/app/proguard-rules.pro`:
+
+```proguard
+# Razorpay
+-keepclassmembers class * {
+    @android.webkit.JavascriptInterface <methods>;
+}
+-keep class com.razorpay.** { *; }
+-dontwarn com.razorpay.**
+```
+
+If the release build ever shows the sheet closing instantly or a payment that
+never returns, this file is the first place to check.
+
+## 4. assetlinks.json / SHA-256 fingerprint
 
 `public/.well-known/assetlinks.json` is served from
 `https://user.badiyos.com/.well-known/assetlinks.json` and must contain:
@@ -189,7 +214,9 @@ Chrome. The app handles it in `src/routes/index.tsx` (`appUrlOpen` +
 ```
 
 The fingerprint must be the **Play App Signing** certificate, NOT the upload
-key. Get it from:
+key. The currently published value is
+`A8:82:51:BE:D1:8B:58:74:FB:E0:32:B7:A9:1B:DC:F5:65:7C:D1:4F:29:9A:01:69:4F:5B:A8:3C:02:1A:B4:A6`.
+Get it from:
 
 > Play Console → badiyos → **Test and release → Setup → App integrity** →
 > **App signing key certificate** → `SHA-256 certificate fingerprint`
@@ -199,7 +226,7 @@ more than one entry if you also want debug builds to verify:
 `keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey
 -storepass android`).
 
-## 4. Verify after installing the new APK
+## 5. Verify after installing the new APK
 
 App links:
 
