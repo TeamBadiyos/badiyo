@@ -149,6 +149,18 @@ function nativeSheetAvailable(): boolean {
 }
 
 
+/**
+ * Razorpay shows its own "Contact details" step whenever a prefill field is
+ * missing or empty, so only non-empty values are sent.
+ */
+function buildPrefill(opts: RazorpayCheckoutOptions): Record<string, string> {
+  const prefill: Record<string, string> = {};
+  if (opts.contact?.trim()) prefill.contact = opts.contact.trim();
+  if (opts.email?.trim()) prefill.email = opts.email.trim();
+  if (opts.name?.trim()) prefill.name = opts.name.trim();
+  return prefill;
+}
+
 async function openNative(opts: RazorpayCheckoutOptions): Promise<RazorpaySuccess> {
   const result = await NativeCheckout.open({
     key: opts.key,
@@ -157,7 +169,7 @@ async function openNative(opts: RazorpayCheckoutOptions): Promise<RazorpaySucces
     currency: opts.currency,
     name: opts.name ?? "badiyos",
     description: opts.description,
-    prefill: { contact: opts.contact, email: opts.email },
+    prefill: buildPrefill(opts),
     theme: { color: "#00B97A" },
   });
 
@@ -187,7 +199,7 @@ function openWeb(opts: RazorpayCheckoutOptions): Promise<RazorpaySuccess> {
         currency: opts.currency,
         name: opts.name ?? "badiyos",
         description: opts.description,
-        prefill: { contact: opts.contact, email: opts.email },
+        prefill: buildPrefill(opts),
         theme: { color: "#00B97A" },
         handler: (resp) => {
           settled = true;
