@@ -3930,47 +3930,104 @@ export type Database = {
         }
         Relationships: []
       }
+      support_ticket_messages: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          sender_id: string | null
+          sender_type: string
+          ticket_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          sender_id?: string | null
+          sender_type: string
+          ticket_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          sender_id?: string | null
+          sender_type?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_ticket_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       support_tickets: {
         Row: {
+          booking_id: string | null
+          category: string
           created_at: string
           id: string
           internal_note: string | null
+          last_message_at: string
           message: string
           resolution_summary: string | null
           resolved_at: string | null
           resolved_by: string | null
           source: string
           status: string
+          subject: string | null
+          unread_for_customer: boolean
           updated_at: string
           user_id: string
         }
         Insert: {
+          booking_id?: string | null
+          category?: string
           created_at?: string
           id?: string
           internal_note?: string | null
+          last_message_at?: string
           message: string
           resolution_summary?: string | null
           resolved_at?: string | null
           resolved_by?: string | null
           source?: string
           status?: string
+          subject?: string | null
+          unread_for_customer?: boolean
           updated_at?: string
           user_id: string
         }
         Update: {
+          booking_id?: string | null
+          category?: string
           created_at?: string
           id?: string
           internal_note?: string | null
+          last_message_at?: string
           message?: string
           resolution_summary?: string | null
           resolved_at?: string | null
           resolved_by?: string | null
           source?: string
           status?: string
+          subject?: string | null
+          unread_for_customer?: boolean
           updated_at?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "support_tickets_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "support_tickets_resolved_by_fkey"
             columns: ["resolved_by"]
@@ -5460,6 +5517,10 @@ export type Database = {
       start_service: { Args: { _booking_id: string }; Returns: string }
       submit_booking_review: {
         Args: { _booking_id: string; _rating: number; _review: string }
+        Returns: undefined
+      }
+      support_mark_ticket_read: {
+        Args: { _ticket_id: string }
         Returns: undefined
       }
       system_accept_booking_after_payment: {
