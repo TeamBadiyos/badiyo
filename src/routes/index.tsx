@@ -412,6 +412,8 @@ function Index() {
     setPushNavigator((route, data) => {
       const phase = ROUTE_TO_PHASE[route];
       if (phase) {
+        if (route === "offers") setRewardsTab("offers");
+        else if (route === "rewards") setRewardsTab("rewards");
         setPhase(phase);
         return;
       }
@@ -1020,6 +1022,7 @@ function Index() {
       {phase === "rewards" && (
         <div className="animate-fade-slide-in">
           <RewardsScreen
+            initialTab={rewardsTab}
             onOpenHome={() => setPhase("home")}
             onOpenRewards={() => setPhase("rewards")}
             onOpenReferrals={() => setPhase("referrals")}
