@@ -271,26 +271,21 @@ Install referrer:
 ## Contacts picker (pickup / drop contact)
 
 The parcel booking screen has a "From contacts" button next to each contact
-block. On the web it uses the browser Contact Picker API; on Android it needs
-the Capacitor contacts plugin bundled into the build.
+block. On the web it uses the browser Contact Picker API; on Android it uses
+`@capacitor-community/contacts`, which is already a project dependency — so
+`npx cap sync android` wires the plugin in automatically. No install step.
 
-1. Install the plugin (Capacitor 8 in this project):
-
-   ```bash
-   npm install @capacitor-community/contacts@^8.0.0
-   npx cap sync android
-   ```
-
-2. Add the permission to `android/app/src/main/AndroidManifest.xml`, inside
+1. Add the permission to `android/app/src/main/AndroidManifest.xml`, inside
    `<manifest>` and above `<application>`:
 
    ```xml
    <uses-permission android:name="android.permission.READ_CONTACTS" />
    ```
 
-3. Nothing else is required — the app requests the permission only when the
-   user taps "From contacts", and falls back to manual typing when the user
-   denies it or the plugin is missing.
+2. Nothing else is required — the app requests the permission only when the
+   user taps "From contacts". When the plugin or the browser API is missing
+   (desktop browser, older APK) the button is hidden and manual typing is the
+   only path; denying the permission shows a message and keeps typing available.
 
 Verify:
 
