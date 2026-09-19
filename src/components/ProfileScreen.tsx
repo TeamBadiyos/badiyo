@@ -35,7 +35,6 @@ export function ProfileScreen({
   onOpenSettings,
   onOpenHelp,
   onOpenReferrals,
-  onOpenPaymentMethods,
   onOpenAddresses,
   onLogout,
 }: {
