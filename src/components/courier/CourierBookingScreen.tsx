@@ -30,7 +30,7 @@ import { payWithRazorpay, toPaymentError } from "@/lib/razorpayCheckout";
 import { getPaymentPrefill } from "@/lib/paymentPrefill";
 import { paymentErrorKey } from "@/lib/paymentError";
 import { useT } from "@/i18n";
-import { pickContact } from "@/lib/contactPicker";
+import { contactPickerAvailable, pickContact } from "@/lib/contactPicker";
 import { fetchCourierVehicles, fetchCourierTypes, fetchCourierService } from "./courierData";
 
 type Addr = {
