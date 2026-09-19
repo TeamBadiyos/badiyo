@@ -139,7 +139,6 @@ const NETWORK_HINTS = [
   "offline",
   "unreachable",
   "failed to fetch",
-  "gateway_error",
   "failed to load razorpay",
 ];
 
