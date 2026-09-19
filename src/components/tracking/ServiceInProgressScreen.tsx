@@ -61,27 +61,8 @@ type CatalogueItem = {
 
 const TIP_AMOUNTS = [25, 50, 100];
 
-const RAZORPAY_SRC = "https://checkout.razorpay.com/v1/checkout.js";
-function loadRazorpay(): Promise<boolean> {
-  return new Promise((resolve) => {
-    if (typeof window === "undefined") return resolve(false);
-    if (window.Razorpay) return resolve(true);
-    const existing = document.querySelector(
-      `script[src="${RAZORPAY_SRC}"]`,
-    ) as HTMLScriptElement | null;
-    if (existing) {
-      existing.addEventListener("load", () => resolve(true));
-      existing.addEventListener("error", () => resolve(false));
-      return;
-    }
-    const s = document.createElement("script");
-    s.src = RAZORPAY_SRC;
-    s.async = true;
-    s.onload = () => resolve(true);
-    s.onerror = () => resolve(false);
-    document.body.appendChild(s);
-  });
-}
+import { payWithRazorpay, PaymentCancelledError } from "@/lib/razorpayCheckout";
+
 
 function beep(kind: "warning" | "end") {
   try {
