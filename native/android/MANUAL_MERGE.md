@@ -131,9 +131,14 @@ no-op) and falls back.
 
 ## 1. Install + sync
 
+Version note: this project runs **Capacitor 8** (`@capacitor/core` 8.x), so pin
+the Capgo plugin to its Capacitor-8 line — `@capgo/capacitor-install-referrer@^8`
+(e.g. 8.1.11). A `@^7` or older build targets Capacitor 7 and will not sync
+cleanly. `capacitor-razorpay` 1.3.x is Capacitor-version agnostic.
+
 ```bash
 bun install
-npm install capacitor-razorpay @capgo/capacitor-install-referrer
+npm install capacitor-razorpay "@capgo/capacitor-install-referrer@^8"
 bun run build:capacitor
 npx cap sync android
 npx cap ls android
