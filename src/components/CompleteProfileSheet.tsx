@@ -1,6 +1,6 @@
 import { getAuthUser } from "@/lib/authUser";
 import { useEffect, useRef, useState } from "react";
-import { Camera, User, X } from "lucide-react";
+import { Camera, User } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { signAddressPhotoUrl } from "@/lib/storageUrl";
@@ -26,6 +26,7 @@ export function CompleteProfileSheet({ enabled }: { enabled: boolean }) {
   const [uid, setUid] = useState<string | null>(null);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [alreadyReferred, setAlreadyReferred] = useState(false);
   const [referralCode, setReferralCode] = useState("");
@@ -96,13 +97,23 @@ export function CompleteProfileSheet({ enabled }: { enabled: boolean }) {
         if (!u) return;
         const { data } = await supabase
           .from("users")
-          .select("full_name, email, avatar_url, referred_by")
+          .select("full_name, email, phone, avatar_url, referred_by")
           .eq("id", u.id)
           .maybeSingle();
         if (!data) return;
+        const authPhone = (u.phone ?? "").replace(/^\+?91/, "").replace(/\D/g, "");
+        const rowPhone = (data.phone ?? "").replace(/^\+?91/, "").replace(/\D/g, "");
+        const existingPhone = rowPhone || authPhone;
         const nameOk = !!data.full_name?.trim();
-        if (nameOk) return;
+        const phoneOk = /^[6-9]\d{9}$/.test(existingPhone);
+        if (nameOk && phoneOk) return;
+        // Login-time phone is known but the profile row is missing it — backfill silently.
+        if (nameOk && !rowPhone && /^[6-9]\d{9}$/.test(authPhone)) {
+          await supabase.from("users").update({ phone: authPhone }).eq("id", u.id);
+          return;
+        }
         setUid(u.id);
+        setPhone(existingPhone);
         setFullName(data.full_name ?? "");
         setEmail(isSynthetic(data.email) ? "" : (data.email ?? ""));
         setAvatarUrl(await signAddressPhotoUrl(data.avatar_url ?? null));
@@ -115,11 +126,6 @@ export function CompleteProfileSheet({ enabled }: { enabled: boolean }) {
       }
     })();
   }, [enabled, tick]);
-
-  function dismiss() {
-    skippedRef.current = true;
-    setOpen(false);
-  }
 
   async function handlePhoto(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -140,13 +146,20 @@ export function CompleteProfileSheet({ enabled }: { enabled: boolean }) {
     if (!uid) return;
     const name = fullName.trim();
     const mail = email.trim();
+    const mobile = phone.replace(/\D/g, "").slice(-10);
     if (!name) return setError("Please enter your name");
+    if (!/^[6-9]\d{9}$/.test(mobile)) {
+      return setError("Please enter a valid 10-digit mobile number");
+    }
     if (mail && !/^\S+@\S+\.\S+$/.test(mail)) {
       return setError("Please enter a valid email or leave it blank");
     }
     setError(null);
     setSaving(true);
-    const updatePayload: { full_name: string; email?: string | null } = { full_name: name };
+    const updatePayload: { full_name: string; phone: string; email?: string | null } = {
+      full_name: name,
+      phone: mobile,
+    };
     updatePayload.email = mail || null;
     const { error: updErr } = await supabase
       .from("users")
@@ -189,16 +202,9 @@ export function CompleteProfileSheet({ enabled }: { enabled: boolean }) {
           <div>
             <h2 className="text-lg font-extrabold text-foreground">Complete your profile</h2>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              Name is required; email and photo are optional.
+              Name and mobile number are required; email and photo are optional.
             </p>
           </div>
-          <button
-            onClick={dismiss}
-            aria-label="Close"
-            className="flex h-8 w-8 items-center justify-center rounded-full border border-border"
-          >
-            <X className="h-4 w-4 text-muted-foreground" />
-          </button>
         </div>
 
         <div className="mt-4 flex items-center gap-3">
@@ -237,6 +243,15 @@ export function CompleteProfileSheet({ enabled }: { enabled: boolean }) {
             className="h-12 w-full rounded-[14px] border border-border bg-background px-4 text-sm font-semibold text-foreground outline-none focus:border-primary"
           />
           <input
+            value={phone}
+            onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
+            type="tel"
+            inputMode="numeric"
+            maxLength={10}
+            placeholder="Mobile number (10 digits)"
+            className="h-12 w-full rounded-[14px] border border-border bg-background px-4 text-sm font-semibold text-foreground outline-none focus:border-primary"
+          />
+          <input
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             type="email"
@@ -261,12 +276,6 @@ export function CompleteProfileSheet({ enabled }: { enabled: boolean }) {
           className="mt-5 h-12 w-full rounded-[14px] bg-primary text-sm font-bold text-primary-foreground disabled:opacity-60"
         >
           {saving ? "Saving…" : "Save profile"}
-        </button>
-        <button
-          onClick={dismiss}
-          className="mt-2 h-10 w-full text-sm font-semibold text-muted-foreground"
-        >
-          Skip for now
         </button>
       </div>
     </div>
