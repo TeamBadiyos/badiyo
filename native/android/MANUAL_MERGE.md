@@ -226,7 +226,7 @@ more than one entry if you also want debug builds to verify:
 `keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey
 -storepass android`).
 
-## 4. Verify after installing the new APK
+## 5. Verify after installing the new APK
 
 App links:
 
