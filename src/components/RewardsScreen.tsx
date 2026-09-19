@@ -236,7 +236,10 @@ export function RewardsScreen({
             );
           })}
         </div>
+          </>
+        )}
       </div>
+
 
       <BottomNav
         activeKey="rewards"
