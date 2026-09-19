@@ -114,6 +114,21 @@ export type Database = {
           },
         ]
       }
+      admin_alert_dispatch_state: {
+        Row: {
+          id: boolean
+          last_dispatch_at: string
+        }
+        Insert: {
+          id?: boolean
+          last_dispatch_at?: string
+        }
+        Update: {
+          id?: boolean
+          last_dispatch_at?: string
+        }
+        Relationships: []
+      }
       admin_alert_log: {
         Row: {
           created_at: string
@@ -4548,6 +4563,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_alert_clean: { Args: { _v: string }; Returns: string }
+      admin_alert_dispatch: { Args: never; Returns: undefined }
+      admin_alert_enabled: { Args: { _key: string }; Returns: boolean }
+      admin_alert_enqueue: {
+        Args: {
+          _amount: number
+          _customer: string
+          _order: string
+          _order_id: string
+          _order_type: string
+          _time: string
+        }
+        Returns: undefined
+      }
       admin_alert_verify_job_secret: {
         Args: { _secret: string }
         Returns: boolean
