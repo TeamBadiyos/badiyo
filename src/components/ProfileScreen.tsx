@@ -34,6 +34,7 @@ export function ProfileScreen({
   onOpenNotifications,
   onOpenSettings,
   onOpenHelp,
+  onOpenTickets,
   onOpenReferrals,
   onOpenAddresses,
   onLogout,
@@ -45,8 +46,8 @@ export function ProfileScreen({
   onOpenNotifications: () => void;
   onOpenSettings: () => void;
   onOpenHelp: () => void;
+  onOpenTickets: () => void;
   onOpenReferrals: () => void;
-  onOpenPaymentMethods: () => void;
   onOpenAddresses: () => void;
   onLogout: () => void;
 }) {
@@ -82,7 +83,6 @@ export function ProfileScreen({
       items: [
         { key: "edit", label: "Edit Profile", desc: "Name, email and avatar", icon: UserCog, onClick: onOpenEditProfile },
         { key: "addresses", label: "My Addresses", desc: "Add, edit or delete saved addresses", icon: MapPin, onClick: onOpenAddresses },
-        { key: "payment", label: "Payment Methods", desc: "UPI, cards & saved methods", icon: CreditCard, onClick: onOpenPaymentMethods },
       ],
     },
 
