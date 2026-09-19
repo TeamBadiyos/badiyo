@@ -2,7 +2,7 @@ import { getAuthUser } from "@/lib/authUser";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { usePullToRefresh, PullToRefreshIndicator } from "@/lib/usePullToRefresh";
-import { ChevronDown, ChevronRight, Clock, Gift, Home, MapPin, Mic, Package, Search, Sparkles, User, Wind, type LucideIcon } from "lucide-react";
+import { ChevronDown, ChevronRight, Clock, Gift, Home, MapPin, Mic, Search, Sparkles, User, Wind, type LucideIcon } from "lucide-react";
 import { BadiyoLogo } from "./BadiyoLogo";
 import { BottomNav } from "./BottomNav";
 import { LocationPickerSheet, type SavedAddress } from "./LocationPickerSheet";
@@ -162,6 +162,8 @@ export function HomeScreen({
     staleTime: 5 * 60_000,
   });
   const { data: segments = [] } = useQuery({ queryKey: ["segments"], queryFn: fetchSegments });
+  // Courier has its own bottom-bar tab, so it never shows as a service chip.
+  const visibleSegments = segments.filter((s) => s.slug !== "courier");
   const { data: services = [] } = useQuery({
     queryKey: ["segment_services"],
     queryFn: fetchSegmentServices,
@@ -310,29 +312,9 @@ export function HomeScreen({
           </button>
         </form>
 
-        {/* Parcel delivery — only shown where the service is switched on */}
-        {courierEnabled && onOpenCourier && (
-          <button
-            type="button"
-            onClick={onOpenCourier}
-            className="mt-3 flex w-full items-center gap-3 rounded-[16px] border border-border bg-card px-4 py-3 text-left shadow-sm"
-          >
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-              <Package className="h-5 w-5 text-primary" />
-            </span>
-            <span className="flex-1">
-              <span className="block text-sm font-semibold text-foreground">Send a parcel</span>
-              <span className="block text-xs text-muted-foreground">
-                Pickup &amp; drop anywhere in the city
-              </span>
-            </span>
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-          </button>
-        )}
-
         {/* Services bar (segment tabs) */}
         <ServicesBar
-          segments={segments}
+          segments={visibleSegments}
           activeSegmentId={activeSegmentId}
           onSelect={setActiveSegmentId}
         />
@@ -413,6 +395,8 @@ export function HomeScreen({
         onHome={() => setActiveSegmentId(null)}
         onOrders={onOpenOrders ?? (() => {})}
         onRewards={onOpenRewards ?? (() => {})}
+        onParcel={onOpenCourier}
+        showParcel={courierEnabled}
       />
 
 

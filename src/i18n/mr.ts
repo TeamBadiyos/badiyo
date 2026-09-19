@@ -33,6 +33,7 @@ export const mr: Partial<Record<keyof typeof en, string>> = {
   // ── Bottom navigation ────────────────────────────────────
   "nav.home": "होम",
   "nav.orders": "ऑर्डर्स",
+  "nav.parcel": "पार्सल पाठवा",
   "nav.rewards": "बक्षिसे",
 
   // ── Home ─────────────────────────────────────────────────

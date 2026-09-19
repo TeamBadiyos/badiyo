@@ -31,6 +31,7 @@ export const en = {
   // ── Bottom navigation ────────────────────────────────────
   "nav.home": "Home",
   "nav.orders": "Orders",
+  "nav.parcel": "Send Parcel",
   "nav.rewards": "Rewards",
 
   // ── Home ─────────────────────────────────────────────────

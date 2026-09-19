@@ -4,6 +4,7 @@ import { usePullToRefresh, PullToRefreshIndicator } from "@/lib/usePullToRefresh
 import { CalendarCheck, MapPin, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { BottomNav } from "./BottomNav";
+import { fetchCourierEnabled } from "./courier/courierData";
 import {
   ACTIVE_TRACKING_STATUSES,
   PAST_STATUSES,
@@ -56,11 +57,18 @@ export function OrdersScreen({
   onOpenHome,
   onOpenRewards,
   onOpenBooking,
+  onOpenCourier,
 }: {
   onOpenHome: () => void;
   onOpenRewards: () => void;
   onOpenBooking: (b: BookingRow) => void;
+  onOpenCourier?: () => void;
 }) {
+  const { data: courierEnabled = false } = useQuery({
+    queryKey: ["courier_enabled"],
+    queryFn: () => fetchCourierEnabled(),
+    staleTime: 5 * 60_000,
+  });
   const { data: bookings = [], isLoading, error } = useQuery({
     queryKey: ["my-bookings"],
     queryFn: fetchBookings,
@@ -211,6 +219,8 @@ export function OrdersScreen({
         onHome={onOpenHome}
         onOrders={() => {}}
         onRewards={onOpenRewards}
+        onParcel={onOpenCourier}
+        showParcel={courierEnabled}
       />
     </main>
   );
