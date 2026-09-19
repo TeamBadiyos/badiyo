@@ -5,7 +5,6 @@ import { useQuery } from "@tanstack/react-query";
 import {
   AlertTriangle,
   ArrowLeft,
-  Bike,
   Check,
   ChevronRight,
   Loader2,
@@ -15,7 +14,6 @@ import {
   Phone,
   Plus,
   Route as RouteIcon,
-  ShieldCheck,
   UserRound,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -254,11 +252,11 @@ export function CourierBookingScreen({
           </span>
         </div>
         <div className="mx-auto mt-3 grid w-full max-w-md grid-cols-4 gap-1" aria-label={t("courier.progress")}>
-          {["Locations", "Bike", "Parcel", "Review"].map((label, index) => (
-            <div key={label} className="min-w-0">
+          {(["courier.step1", "courier.step2", "courier.step3", "courier.step4"] as const).map((key, index) => (
+            <div key={key} className="min-w-0">
               <div className={`h-1 rounded-full ${index < step ? "bg-primary" : "bg-muted"}`} />
               <span className={`mt-1 block truncate text-center text-[10px] font-bold ${index < step ? "text-primary" : "text-muted-foreground"}`}>
-                {t(`courier.step${index + 1}` as "courier.step1")}
+                {t(key)}
               </span>
             </div>
           ))}
@@ -329,7 +327,7 @@ export function CourierBookingScreen({
                         <p className="mt-1 text-xs text-muted-foreground">{t("courier.doorstepDelivery")}</p>
                       </div>
                       <div className="flex h-40 items-center justify-center bg-primary/10 p-2">
-                        <img src={courierBike} alt="Delivery bike" width={1024} height={768} className="h-auto w-full object-contain" />
+                        <img src={courierBike} alt="Delivery bike" width={1024} height={768} loading="lazy" className="h-auto w-full object-contain" />
                       </div>
                     </div>
                   </Button>
@@ -401,7 +399,7 @@ export function CourierBookingScreen({
             </div>
             <div className="overflow-hidden rounded-lg border border-border bg-card">
               <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center bg-primary/5">
-                <img src={courierBike} alt="Delivery bike" width={1024} height={768} className="h-24 w-24 object-contain p-2" />
+                <img src={courierBike} alt="Delivery bike" width={1024} height={768} loading="lazy" className="h-24 w-24 object-contain p-2" />
                 <div className="min-w-0 pr-4">
                   <p className="text-lg font-extrabold text-foreground">{selectedVehicle?.name ?? t("courier.bike")}</p>
                   <p className="text-sm text-muted-foreground">{selectedType?.name} · {weight} kg</p>
