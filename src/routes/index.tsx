@@ -467,6 +467,54 @@ function Index() {
 
 
 
+  // Play Store install attribution + verified app links opened inside the app.
+  useEffect(() => {
+    let disposed = false;
+    const subs: Array<{ remove: () => void }> = [];
+
+    // 1) Friend installed from the Play Store via an invite link: pick the
+    //    referral code out of the install referrer once per install.
+    void import("@/lib/installReferrer")
+      .then((m) => m.captureInstallReferrer())
+      .catch(() => {});
+
+    // 2) https://user.badiyos.com/invite/CODE opened by Android's verified
+    //    app link: stay inside the app, keep the code, land on home.
+    void (async () => {
+      try {
+        if (!isNativeShell()) return;
+        const { App } = await import("@capacitor/app");
+        const handle = async (url: string) => {
+          const m = url?.match(/\/invite\/([^/?#]+)/i);
+          if (!m?.[1]) return;
+          const code = decodeURIComponent(m[1]).trim().toUpperCase();
+          const referrals = await import("@/lib/referrals");
+          referrals.storeReferralCode(code);
+          // Already signed in → attach right away; otherwise it is applied
+          // after OTP sign-in by the existing linkReferralIfAny() calls.
+          const { data } = await supabase.auth.getSession();
+          if (data.session?.user && !data.session.user.is_anonymous) {
+            await referrals.linkReferralIfAny().catch(() => {});
+          }
+        };
+        const sub = await App.addListener("appUrlOpen", ({ url }) => {
+          void handle(url);
+        });
+        if (disposed) sub.remove();
+        else subs.push(sub);
+        const launch = await App.getLaunchUrl();
+        if (launch?.url) void handle(launch.url);
+      } catch {
+        /* web / plugin missing */
+      }
+    })();
+
+    return () => {
+      disposed = true;
+      subs.forEach((s) => s.remove());
+    };
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
 
