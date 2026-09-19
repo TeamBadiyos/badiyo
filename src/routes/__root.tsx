@@ -14,6 +14,16 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
 import { LanguageProvider } from "@/i18n";
 import { OfflineGate } from "@/components/OfflineScreen";
+import { buildEarlyBootScript } from "@/lib/earlyData";
+
+const SUPABASE_URL =
+  (import.meta.env.VITE_SUPABASE_URL as string | undefined) ?? process.env.SUPABASE_URL ?? "";
+const SUPABASE_KEY =
+  (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined) ??
+  process.env.SUPABASE_PUBLISHABLE_KEY ??
+  "";
+
+
 
 
 function NotFoundComponent() {
