@@ -1,5 +1,12 @@
 import { supabase } from "@/integrations/supabase/client";
 import { serviceImageUrl, serviceImageUrls } from "@/lib/serviceImage";
+import {
+  SEGMENTS_SELECT,
+  SERVICES_SELECT,
+  SERVICE_CATEGORIES_SELECT,
+  takeEarlyJson,
+} from "@/lib/earlyData";
+
 
 export type DisplayTemplate = "CATEGORY_FIRST" | "STORE_FIRST" | "SEARCH_FIRST" | (string & {});
 
