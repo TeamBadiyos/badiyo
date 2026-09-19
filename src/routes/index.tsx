@@ -242,6 +242,8 @@ function Index() {
   const [selectedService, setSelectedService] = useState<SelectedService | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<SelectedSlot | null>(null);
   const [selectedAddress, setSelectedAddress] = useState<SelectedAddress | null>(null);
+  const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
+  const [rewardsTab, setRewardsTab] = useState<"rewards" | "offers">("rewards");
   const [notServiceable, setNotServiceable] = useState<NotServiceableLocation | null>(null);
   const [activeBookingId, setActiveBookingId] = useState<string | null>(null);
   const [activeBookingStatus, setActiveBookingStatus] = useState<string | null>(null);
@@ -315,6 +317,7 @@ function Index() {
     setSelectedService(null);
     setSelectedSlot(null);
     setSelectedAddress(null);
+    setAppliedCoupon(null);
     setPhase("home");
   }
 
