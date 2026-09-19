@@ -172,9 +172,41 @@ Deno.serve(async (req) => {
       console.error("gst_percent lookup failed", gstErr);
     }
 
+    // Who is paying (needed for coupons and for the payment-intent safety net).
+    const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
+    let userId: string | null = null;
+    if (token) {
+      const { data: userRes } = await supabase.auth.getUser(token);
+      userId = userRes?.user?.id ?? null;
+    }
+
+    // Coupon: the discount is always computed server-side from the coupon rules.
+    const couponCode =
+      typeof body?.coupon_code === "string" && body.coupon_code.trim()
+        ? body.coupon_code.trim().toUpperCase()
+        : null;
+    let discount = 0;
+    if (couponCode && userId && purpose === "booking") {
+      const { data: quote, error: quoteErr } = await supabase.rpc("coupon_quote", {
+        _user_id: userId,
+        _code: couponCode,
+        _base_amount: price!,
+        _duration_minutes: Number.isInteger(durationMinutes) ? durationMinutes : null,
+      });
+      if (quoteErr) {
+        console.error("coupon_quote failed", quoteErr);
+      } else if (quote && (quote as Record<string, unknown>).ok === true) {
+        discount = Number((quote as Record<string, unknown>).discount ?? 0);
+      }
+    }
+
     const basePaise = Math.round(price! * 100);
     const gstPaise = Math.round((basePaise * gstPercent) / 100);
-    const amount = basePaise + gstPaise;
+    const discountPaise = Math.min(
+      Math.max(Math.round(discount * 100), 0),
+      basePaise + gstPaise,
+    );
+    const amount = basePaise + gstPaise - discountPaise;
     if (!Number.isInteger(amount) || amount < 100) {
       return json({ error: "Invalid service price" }, 400);
     }
@@ -194,6 +226,9 @@ Deno.serve(async (req) => {
           purpose,
           gst_percent: String(gstPercent),
           base_price: String(price),
+          ...(discountPaise > 0 && couponCode
+            ? { coupon_code: couponCode, discount: String(discountPaise / 100) }
+            : {}),
         },
       }),
     });
@@ -210,12 +245,6 @@ Deno.serve(async (req) => {
     // (by the Razorpay webhook) even if the client never saves the booking.
     try {
       const draft = body?.booking_draft;
-      const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
-      let userId: string | null = null;
-      if (token) {
-        const { data: userRes } = await supabase.auth.getUser(token);
-        userId = userRes?.user?.id ?? null;
-      }
       if (draft && userId) {
         const { error: intentErr } = await supabase.from("payment_intents").insert({
           user_id: userId,
@@ -238,6 +267,18 @@ Deno.serve(async (req) => {
       }
     } catch (intentErr) {
       console.error("payment intent capture failed", intentErr);
+    }
+
+    // Hold the coupon against this order so the booking trigger can apply it once.
+    if (discountPaise > 0 && couponCode && userId) {
+      const { error: reserveErr } = await supabase.rpc("system_coupon_reserve", {
+        _user_id: userId,
+        _code: couponCode,
+        _order_id: order.id,
+        _base_amount: price!,
+        _duration_minutes: Number.isInteger(durationMinutes) ? durationMinutes : 0,
+      });
+      if (reserveErr) console.error("system_coupon_reserve failed", reserveErr);
     }
 
     return json({

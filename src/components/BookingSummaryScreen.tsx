@@ -1,8 +1,10 @@
-import { ArrowLeft, Clock, Calendar, Home as HomeIcon } from "lucide-react";
+import { ArrowLeft, Clock, Calendar, Home as HomeIcon, Tag, X } from "lucide-react";
+import { useState } from "react";
 import type { SelectedService, SelectedSlot } from "./SlotSelectionScreen";
 import { useT, type TFunction } from "@/i18n";
 import { hapticImpact } from "@/lib/haptics";
 import { gstAmount, totalWithGst, useGstPercent } from "@/lib/gst";
+import { previewCoupon, type AppliedCoupon } from "@/lib/coupons";
 
 export type SelectedAddress = {
   id: string;
@@ -38,6 +40,8 @@ export function BookingSummaryScreen({
   service,
   slot,
   address,
+  coupon,
+  onCouponChange,
   onBack,
   onEditAddress,
   onProceedToPay,
@@ -45,6 +49,8 @@ export function BookingSummaryScreen({
   service: SelectedService;
   slot: SelectedSlot;
   address: SelectedAddress;
+  coupon: AppliedCoupon | null;
+  onCouponChange: (coupon: AppliedCoupon | null) => void;
   onBack: () => void;
   onEditAddress: () => void;
   onProceedToPay: () => void;
@@ -53,7 +59,31 @@ export function BookingSummaryScreen({
   const slotInfo = formatSlot(slot, t);
   const gstPercent = useGstPercent();
   const tax = gstAmount(Number(service.price), gstPercent);
-  const total = totalWithGst(Number(service.price), gstPercent);
+  const grossTotal = totalWithGst(Number(service.price), gstPercent);
+  const discount = Math.min(coupon?.discount ?? 0, grossTotal);
+  const total = Math.max(grossTotal - discount, 0);
+
+  const [codeInput, setCodeInput] = useState("");
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [checking, setChecking] = useState(false);
+
+  async function applyCode() {
+    setChecking(true);
+    setCouponError(null);
+    const res = await previewCoupon(
+      codeInput,
+      Number(service.price),
+      service.duration_minutes,
+    );
+    setChecking(false);
+    if (res.ok) {
+      onCouponChange(res.coupon);
+      setCodeInput("");
+    } else {
+      onCouponChange(null);
+      setCouponError(res.message);
+    }
+  }
 
   return (
     <main className="min-h-screen w-full bg-background pb-28">
@@ -136,8 +166,57 @@ export function BookingSummaryScreen({
           </div>
         </section>
 
+        {/* Coupon */}
+        <section className="mt-4 rounded-[18px] border border-border bg-card p-5">
+          <div className="flex items-center gap-2">
+            <Tag className="h-4 w-4 text-primary" />
+            <span className="text-sm font-bold text-foreground">Coupon</span>
+          </div>
+          {coupon ? (
+            <div className="mt-3 flex items-center justify-between gap-3 rounded-[14px] bg-primary/10 px-4 py-3">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-bold text-primary">{coupon.code}</p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {coupon.title} · saves ₹{Math.round(coupon.discount)}
+                </p>
+              </div>
+              <button
+                type="button"
+                aria-label="Remove coupon"
+                onClick={() => onCouponChange(null)}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-card"
+              >
+                <X className="h-4 w-4 text-foreground" />
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="mt-3 flex items-center gap-2">
+                <input
+                  value={codeInput}
+                  onChange={(e) => setCodeInput(e.target.value.toUpperCase())}
+                  placeholder="Enter coupon code"
+                  autoCapitalize="characters"
+                  className="h-11 min-w-0 flex-1 rounded-[14px] border border-border bg-background px-3 text-sm font-bold uppercase tracking-wide text-foreground outline-none focus:border-primary"
+                />
+                <button
+                  type="button"
+                  disabled={checking || !codeInput.trim()}
+                  onClick={() => void applyCode()}
+                  className="h-11 shrink-0 rounded-[14px] bg-primary px-4 text-sm font-bold text-primary-foreground disabled:opacity-50"
+                >
+                  {checking ? "…" : "Apply"}
+                </button>
+              </div>
+              {couponError && (
+                <p className="mt-2 text-xs font-medium text-destructive">{couponError}</p>
+              )}
+            </>
+          )}
+        </section>
+
         {/* Price breakdown */}
-        <section className="mt-6 rounded-[18px] border border-border bg-card p-5">
+        <section className="mt-4 rounded-[18px] border border-border bg-card p-5">
           <div className="text-sm font-bold text-foreground">
             {t("summary.priceDetails")}
           </div>
@@ -153,6 +232,14 @@ export function BookingSummaryScreen({
               {t("common.rupees", { amount: tax })}
             </span>
           </div>
+          {discount > 0 && (
+            <div className="mt-2 flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Coupon discount</span>
+              <span className="font-bold text-primary">
+                −{t("common.rupees", { amount: Math.round(discount) })}
+              </span>
+            </div>
+          )}
           <div className="my-4 h-px bg-border" />
           <div className="flex items-center justify-between">
             <span className="text-base font-bold text-foreground">{t("common.total")}</span>

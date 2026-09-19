@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ReferralCodeInput } from "@/components/ReferralCodeInput";
+import { fetchReferralProgress } from "@/lib/coupons";
 import { toast } from "sonner";
 
 
@@ -158,10 +159,22 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
   const user = data?.user ?? null;
   const config = data?.config ?? null;
 
+  // Qualified = the friend has completed their first booking (reward credited or pending credit).
   const successful = useMemo(
-    () => transactions.filter((t) => t.status === "reward_credited"),
+    () =>
+      transactions.filter(
+        (t) => t.status === "reward_credited" || t.status === "first_booking_completed",
+      ),
     [transactions],
   );
+  const { data: progress } = useQuery({
+    queryKey: ["referral_progress"],
+    queryFn: fetchReferralProgress,
+    staleTime: 60_000,
+  });
+  const invitedCount = progress?.invited ?? transactions.length;
+  const joinedCount = progress?.joined ?? transactions.length;
+  const qualifiedCount = progress?.qualified ?? successful.length;
   const totalRewards = useMemo(
     () => successful.reduce((sum, t) => sum + Number(t.reward_amount ?? 0), 0),
     [successful],
@@ -350,6 +363,28 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
                 />
               </div>
             </section>
+
+            {/* Referral progress */}
+            <section className="mt-6 grid grid-cols-3 gap-2">
+              {[
+                { label: "Invited", value: invitedCount },
+                { label: "Joined", value: joinedCount },
+                { label: "Qualified", value: qualifiedCount },
+              ].map((s) => (
+                <div
+                  key={s.label}
+                  className="rounded-[16px] border border-border bg-card p-3 text-center"
+                >
+                  <p className="text-xl font-extrabold text-foreground">{s.value}</p>
+                  <p className="mt-0.5 text-[11px] font-semibold text-muted-foreground">
+                    {s.label}
+                  </p>
+                </div>
+              ))}
+            </section>
+            <p className="mt-2 text-[11px] text-muted-foreground">
+              A referral qualifies once your friend completes their first booking.
+            </p>
 
             {/* Milestone */}
             <section className="mt-8 rounded-[18px] border border-border bg-card p-4">

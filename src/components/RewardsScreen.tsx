@@ -1,7 +1,9 @@
+import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { usePullToRefresh, PullToRefreshIndicator } from "@/lib/usePullToRefresh";
 import { Coins, Gift, Sparkles } from "lucide-react";
 import { fetchCustomerRewards, formatRewardValue } from "@/lib/rewards";
+import { OffersList } from "./OffersList";
 import { BottomNav } from "./BottomNav";
 
 function formatDate(iso: string): string {
@@ -17,16 +19,22 @@ function formatDate(iso: string): string {
 }
 
 export function RewardsScreen({
+  initialTab = "rewards",
   onOpenHome,
   onOpenRewards,
   onOpenReferrals,
   onOpenBookings,
 }: {
+  initialTab?: "rewards" | "offers";
   onOpenHome: () => void;
   onOpenRewards: () => void;
   onOpenReferrals: () => void;
   onOpenBookings: () => void;
 }) {
+  const [tab, setTab] = useState<"rewards" | "offers">(initialTab);
+  useEffect(() => {
+    setTab(initialTab);
+  }, [initialTab]);
   const { data, isLoading } = useQuery({
     queryKey: ["customer_rewards"],
     queryFn: fetchCustomerRewards,
@@ -35,7 +43,11 @@ export function RewardsScreen({
 
   const queryClient = useQueryClient();
   const { pull, refreshing } = usePullToRefresh(async () => {
-    await queryClient.refetchQueries({ queryKey: ["customer_rewards"] });
+    await Promise.all([
+      queryClient.refetchQueries({ queryKey: ["customer_rewards"] }),
+      queryClient.refetchQueries({ queryKey: ["my_coupons"] }),
+      queryClient.refetchQueries({ queryKey: ["campaign_offers"] }),
+    ]);
   });
 
   const ledger = data?.ledger ?? [];
@@ -49,6 +61,26 @@ export function RewardsScreen({
       <div className="mx-auto w-full max-w-md px-5 pt-6">
         <h1 className="text-lg font-bold text-foreground">Rewards</h1>
 
+        {/* Tabs */}
+        <div className="mt-4 flex rounded-[14px] border border-border bg-card p-1">
+          {(["rewards", "offers"] as const).map((k) => (
+            <button
+              key={k}
+              type="button"
+              onClick={() => setTab(k)}
+              className={`flex-1 rounded-[11px] py-2 text-sm font-bold capitalize transition ${
+                tab === k ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+              }`}
+            >
+              {k === "rewards" ? "Rewards" : "Offers"}
+            </button>
+          ))}
+        </div>
+
+        {tab === "offers" && <OffersList />}
+
+        {tab === "rewards" && (
+          <>
         {/* Summary card */}
         <section className="mt-5 rounded-[18px] bg-primary/10 p-5">
           <div className="flex items-center justify-between">
@@ -204,7 +236,10 @@ export function RewardsScreen({
             );
           })}
         </div>
+          </>
+        )}
       </div>
+
 
       <BottomNav
         activeKey="rewards"
