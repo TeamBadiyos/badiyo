@@ -125,7 +125,10 @@ Three things ship together in this build:
 
 Both plugins are registered BY NAME in the web code
 (`src/lib/razorpayCheckout.ts`, `src/lib/installReferrer.ts`), so the web
-bundle needs no npm dependency and the currently published APK keeps working.
+bundle works with or without them.
+`@capgo/capacitor-install-referrer@^8` is now a project dependency in
+package.json (bundled via `bun install` + `npx cap sync android`) — the
+manual `npm install` for it below is only a fallback if sync misses it.
 If a plugin is missing at runtime the app logs a `console.warn` (never a silent
 no-op) and falls back.
 
