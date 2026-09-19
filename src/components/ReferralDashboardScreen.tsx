@@ -18,8 +18,8 @@ import { fetchReferralProgress } from "@/lib/coupons";
 import { toast } from "sonner";
 
 
-/** Public web address of the customer app — invite links must land here. */
-const INVITE_BASE_URL = "https://user.badiyos.com";
+import { buildPlayStoreInviteUrl } from "@/lib/referrals";
+
 
 type Txn = {
   id: string;
