@@ -119,18 +119,21 @@ export type Database = {
           current_version: string
           id: number
           min_supported_version: string
+          play_store_url: string | null
           updated_at: string
         }
         Insert: {
           current_version?: string
           id?: number
           min_supported_version?: string
+          play_store_url?: string | null
           updated_at?: string
         }
         Update: {
           current_version?: string
           id?: number
           min_supported_version?: string
+          play_store_url?: string | null
           updated_at?: string
         }
         Relationships: []
