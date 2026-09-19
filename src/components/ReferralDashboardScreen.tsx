@@ -185,7 +185,9 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
   const walletBalance = user?.total_coins_earned ?? 0;
 
   const code = user?.referral_code ?? "";
-  const inviteUrl = code ? `${INVITE_BASE_URL}/invite/${code}` : INVITE_BASE_URL;
+  const inviteUrl = code
+    ? buildPlayStoreInviteUrl(code)
+    : buildPlayStoreInviteUrl("");
   const shareText = code
     ? `Join badiyos and get trusted home cleaning! Use my code ${code}: ${inviteUrl}`
     : `Join badiyos and get trusted home cleaning! ${inviteUrl}`;
