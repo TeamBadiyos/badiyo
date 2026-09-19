@@ -29,6 +29,17 @@ export function captureReferralCode(): string | null {
   return code;
 }
 
+/** Store a referral code that did not come from the current URL (e.g. Play install referrer). */
+export function storeReferralCode(code: string): void {
+  const clean = code.trim().toUpperCase();
+  if (!clean) return;
+  try {
+    window.localStorage.setItem(STORAGE_KEY, clean);
+  } catch {
+    /* ignore */
+  }
+}
+
 export function getStoredReferralCode(): string | null {
   if (typeof window === "undefined") return null;
   try {
