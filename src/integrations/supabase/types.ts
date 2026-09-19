@@ -114,6 +114,84 @@ export type Database = {
           },
         ]
       }
+      admin_alert_log: {
+        Row: {
+          created_at: string
+          error: string | null
+          id: string
+          order_id: string
+          order_type: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          order_id: string
+          order_type: string
+          status: string
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          order_id?: string
+          order_type?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      admin_alert_queue: {
+        Row: {
+          attempts: number
+          created_at: string
+          id: string
+          last_error: string | null
+          next_attempt_at: string
+          order_id: string
+          order_type: string
+          sent_at: string | null
+          status: string
+          updated_at: string
+          v_amount: string
+          v_customer: string
+          v_order: string
+          v_time: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          next_attempt_at?: string
+          order_id: string
+          order_type: string
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+          v_amount?: string
+          v_customer?: string
+          v_order?: string
+          v_time?: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          next_attempt_at?: string
+          order_id?: string
+          order_type?: string
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+          v_amount?: string
+          v_customer?: string
+          v_order?: string
+          v_time?: string
+        }
+        Relationships: []
+      }
       app_config: {
         Row: {
           current_version: string
@@ -4470,6 +4548,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_alert_verify_job_secret: {
+        Args: { _secret: string }
+        Returns: boolean
+      }
       advance_booking_status: {
         Args: { _booking_id: string; _new_status: string }
         Returns: undefined
