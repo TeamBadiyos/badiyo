@@ -16,6 +16,7 @@ import type { NotServiceableLocation } from "@/components/NotServiceableScreen";
 import { checkServiceability } from "@/lib/serviceability";
 import { hasLoginPin } from "@/lib/auth.functions";
 import { prefetchHomeData } from "@/lib/homeData";
+import { isNativeShell } from "@/lib/nativeServerFn";
 import { LiveServiceBar } from "@/components/tracking/LiveServiceBar";
 import { CompleteProfileSheet } from "@/components/CompleteProfileSheet";
 
