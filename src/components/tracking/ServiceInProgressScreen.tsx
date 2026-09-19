@@ -346,8 +346,6 @@ export function ServiceInProgressScreen({
     setTipBusy(amount);
     setTipError(null);
     try {
-      const ok = await loadRazorpay();
-      if (!ok || !window.Razorpay) throw new Error("Failed to load Razorpay Checkout");
       const { data, error } = await supabase.functions.invoke("create-razorpay-order", {
         body: {
           purpose: "tip",
@@ -362,44 +360,33 @@ export function ServiceInProgressScreen({
       const { data: userData } = await supabase.auth.getUser();
       const contact = userData.user?.phone || undefined;
 
-      await new Promise<void>((resolve, reject) => {
-        const rzp = new window.Razorpay!({
-          key: data.key_id,
-          order_id: data.order_id,
-          amount: data.amount,
-          currency: data.currency,
-          name: "badiyos",
-          description: `Tip for ${expert?.name ?? "your expert"}`,
-          prefill: { contact },
-          theme: { color: "#00B97A" },
-          handler: async (resp) => {
-            try {
-              // Server verifies the payment with Razorpay before crediting.
-              await recordTip({
-                data: {
-                  booking_id: bookingId,
-                  amount,
-                  razorpay_payment_id: resp.razorpay_payment_id,
-                  razorpay_order_id: data.order_id,
-                },
-              });
-            } catch (e) {
-              reject(e instanceof Error ? e : new Error("Could not record your tip"));
-              return;
-            }
-            setTipPaid(amount);
-            resolve();
-          },
-
-          modal: { ondismiss: () => reject(new Error("Payment cancelled")) },
-        });
-        rzp.open();
+      const resp = await payWithRazorpay({
+        key: data.key_id,
+        order_id: data.order_id,
+        amount: data.amount,
+        currency: data.currency,
+        description: `Tip for ${expert?.name ?? "your expert"}`,
+        contact,
       });
+
+      // Server verifies the payment with Razorpay before crediting.
+      await recordTip({
+        data: {
+          booking_id: bookingId,
+          amount,
+          razorpay_payment_id: resp.razorpay_payment_id,
+          razorpay_order_id: data.order_id,
+        },
+      });
+      setTipPaid(amount);
     } catch (e) {
-      setTipError(await getErrorMessage(e));
+      setTipError(
+        e instanceof PaymentCancelledError ? "Payment cancelled" : await getErrorMessage(e),
+      );
     } finally {
       setTipBusy(null);
     }
+
   }
 
   const canExtend = timing?.status === "in_progress" && (remainingSec > 0 || graceOpen);
