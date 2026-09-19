@@ -4936,6 +4936,10 @@ export type Database = {
         }[]
       }
       my_referral_progress: { Args: never; Returns: Json }
+      notify_courier_offer_push: {
+        Args: { _expert_id: string; _offer_id: string }
+        Returns: undefined
+      }
       notify_customer_alert: {
         Args: {
           _alert_type: string
