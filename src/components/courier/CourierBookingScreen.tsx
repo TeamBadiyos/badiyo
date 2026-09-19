@@ -5,7 +5,9 @@ import { useQuery } from "@tanstack/react-query";
 import {
   AlertTriangle,
   ArrowLeft,
+  BookUser,
   Check,
+  X,
   ChevronRight,
   Loader2,
   MapPinned,
@@ -27,6 +29,7 @@ import { courierQuote, courierCreateOrder, courierConfirmPayment } from "@/lib/c
 import { payWithRazorpay, toPaymentError } from "@/lib/razorpayCheckout";
 import { paymentErrorKey } from "@/lib/paymentError";
 import { useT } from "@/i18n";
+import { pickContact } from "@/lib/contactPicker";
 import { fetchCourierVehicles, fetchCourierTypes, fetchCourierService } from "./courierData";
 
 type Addr = {
@@ -51,6 +54,13 @@ type Quote = {
 
 type Step = 1 | 2 | 3 | 4;
 type AddressTarget = "pickup" | "drop";
+
+/** Always show weights with two decimals, e.g. 1.00 */
+function formatWeight(value: string | number): string {
+  const num = Number(value);
+  if (!Number.isFinite(num) || num <= 0) return "1.00";
+  return num.toFixed(2);
+}
 
 async function fetchAddresses(): Promise<Addr[]> {
   const { data, error } = await supabase
@@ -90,7 +100,7 @@ export function CourierBookingScreen({
   const [dropPhone, setDropPhone] = useState("");
   const [vehicleId, setVehicleId] = useState<string | null>(null);
   const [typeId, setTypeId] = useState<string | null>(null);
-  const [weight, setWeight] = useState("1");
+  const [weight, setWeight] = useState("1.00");
   const [note, setNote] = useState("");
   const [confirmed, setConfirmed] = useState(false);
   const [quote, setQuote] = useState<Quote | null>(null);
@@ -150,7 +160,7 @@ export function CourierBookingScreen({
       courier_type_id: typeId ?? "",
       pickup: { lat: Number(pickup?.latitude ?? 0), lng: Number(pickup?.longitude ?? 0) },
       drop: { lat: Number(drop?.latitude ?? 0), lng: Number(drop?.longitude ?? 0) },
-      weight_kg: Math.max(0, Number(weight) || 0),
+      weight_kg: Number(formatWeight(weight)),
     }),
     [city, vehicleId, typeId, pickup, drop, weight],
   );
@@ -325,6 +335,32 @@ export function CourierBookingScreen({
                           {vehicle.max_weight_kg ? t("courier.upToKg", { weight: vehicle.max_weight_kg }) : t("courier.smallParcels")}
                         </p>
                         <p className="mt-1 text-xs text-muted-foreground">{t("courier.doorstepDelivery")}</p>
+                        {!!vehicle.inclusions?.length && (
+                          <div className="mt-3">
+                            <p className="text-[11px] font-extrabold uppercase tracking-wide text-primary">{t("courier.included")}</p>
+                            <ul className="mt-1 space-y-1">
+                              {vehicle.inclusions.map((item) => (
+                                <li key={item} className="flex items-start gap-1.5 text-xs font-normal leading-4 text-muted-foreground">
+                                  <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+                                  <span className="min-w-0">{item}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {!!vehicle.exclusions?.length && (
+                          <div className="mt-3">
+                            <p className="text-[11px] font-extrabold uppercase tracking-wide text-destructive">{t("courier.notIncluded")}</p>
+                            <ul className="mt-1 space-y-1">
+                              {vehicle.exclusions.map((item) => (
+                                <li key={item} className="flex items-start gap-1.5 text-xs font-normal leading-4 text-muted-foreground">
+                                  <X className="mt-0.5 h-3.5 w-3.5 shrink-0 text-destructive" />
+                                  <span className="min-w-0">{item}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
                       </div>
                       <div className="flex h-40 items-center justify-center bg-primary/10 p-2">
                         <img src={courierBike} alt="Delivery bike" width={1024} height={768} loading="lazy" className="h-auto w-full object-contain" />
@@ -377,7 +413,13 @@ export function CourierBookingScreen({
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <label className="space-y-1.5 text-sm font-bold text-foreground">
                 {t("courier.weight")}
-                <Input inputMode="decimal" value={weight} onChange={(event) => setWeight(event.target.value)} className="h-12" />
+                <Input
+                  inputMode="decimal"
+                  value={weight}
+                  onChange={(event) => setWeight(event.target.value.replace(/[^\d.]/g, ""))}
+                  onBlur={() => setWeight(formatWeight(weight))}
+                  className="h-12"
+                />
               </label>
               <label className="space-y-1.5 text-sm font-bold text-foreground">
                 {t("courier.note")}
@@ -385,7 +427,7 @@ export function CourierBookingScreen({
               </label>
             </div>
             {err && <p className="rounded-lg bg-destructive/10 p-3 text-sm font-semibold text-destructive">{err}</p>}
-            <Button className="h-12 w-full text-base font-bold" disabled={!parcelReady || quoting} onClick={getQuote}>
+            <Button className="h-12 w-full text-base font-bold" disabled={!parcelReady || quoting} onClick={() => { setWeight(formatWeight(weight)); void getQuote(); }}>
               {quoting ? <Loader2 className="animate-spin" /> : t("courier.reviewPrice")} {!quoting && <ChevronRight />}
             </Button>
           </section>
@@ -402,7 +444,7 @@ export function CourierBookingScreen({
                 <img src={courierBike} alt="Delivery bike" width={1024} height={768} loading="lazy" className="h-24 w-24 object-contain p-2" />
                 <div className="min-w-0 pr-4">
                   <p className="text-lg font-extrabold text-foreground">{selectedVehicle?.name ?? t("courier.bike")}</p>
-                  <p className="text-sm text-muted-foreground">{selectedType?.name} · {weight} kg</p>
+                  <p className="text-sm text-muted-foreground">{selectedType?.name} · {formatWeight(weight)} kg</p>
                 </div>
               </div>
               <div className="border-t border-border p-4"><RouteSummary pickup={pickup} drop={drop} onEdit={() => setStep(1)} embedded /></div>
@@ -469,9 +511,43 @@ function AddressStop({ kind, address, onClick }: { kind: AddressTarget; address:
 
 function ContactFields({ title, name, phone, onName, onPhone }: { title: string; name: string; phone: string; onName: (value: string) => void; onPhone: (value: string) => void }) {
   const t = useT();
+  const [picking, setPicking] = useState(false);
+
+  const handlePick = async () => {
+    setPicking(true);
+    try {
+      const result = await pickContact();
+      if (result.ok) {
+        if (result.contact.name) onName(result.contact.name);
+        if (result.contact.phone.length === 10) onPhone(result.contact.phone);
+        else toast.error(t("courier.contactNoNumber"));
+        return;
+      }
+      if (result.reason === "denied") toast.error(t("courier.contactDenied"));
+      else if (result.reason === "unsupported") toast.error(t("courier.contactUnsupported"));
+      else if (result.reason === "error") toast.error(t("courier.contactFailed"));
+    } finally {
+      setPicking(false);
+    }
+  };
+
   return (
     <div>
-      <h3 className="mb-2 text-sm font-extrabold text-foreground">{title}</h3>
+      <div className="mb-2 flex items-center justify-between">
+        <h3 className="text-sm font-extrabold text-foreground">{title}</h3>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={handlePick}
+          disabled={picking}
+          aria-label={t("courier.pickFromContacts")}
+          className="h-8 gap-1.5 px-2 text-primary"
+        >
+          {picking ? <Loader2 className="h-4 w-4 animate-spin" /> : <BookUser className="h-4 w-4" />}
+          <span className="text-xs font-bold">{t("courier.pickFromContacts")}</span>
+        </Button>
+      </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="relative"><UserRound className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" /><Input value={name} onChange={(event) => onName(event.target.value)} placeholder={t("courier.contactName")} className="h-12 pl-10" /></div>
         <div className="relative"><Phone className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" /><Input inputMode="numeric" value={phone} onChange={(event) => onPhone(event.target.value.replace(/\D/g, "").slice(0, 10))} placeholder={t("courier.mobileNumber")} className="h-12 pl-10" /></div>
