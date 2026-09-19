@@ -172,9 +172,41 @@ Deno.serve(async (req) => {
       console.error("gst_percent lookup failed", gstErr);
     }
 
+    // Who is paying (needed for coupons and for the payment-intent safety net).
+    const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
+    let userId: string | null = null;
+    if (token) {
+      const { data: userRes } = await supabase.auth.getUser(token);
+      userId = userRes?.user?.id ?? null;
+    }
+
+    // Coupon: the discount is always computed server-side from the coupon rules.
+    const couponCode =
+      typeof body?.coupon_code === "string" && body.coupon_code.trim()
+        ? body.coupon_code.trim().toUpperCase()
+        : null;
+    let discount = 0;
+    if (couponCode && userId && purpose === "booking") {
+      const { data: quote, error: quoteErr } = await supabase.rpc("coupon_quote", {
+        _user_id: userId,
+        _code: couponCode,
+        _base_amount: price!,
+        _duration_minutes: Number.isInteger(durationMinutes) ? durationMinutes : null,
+      });
+      if (quoteErr) {
+        console.error("coupon_quote failed", quoteErr);
+      } else if (quote && (quote as Record<string, unknown>).ok === true) {
+        discount = Number((quote as Record<string, unknown>).discount ?? 0);
+      }
+    }
+
     const basePaise = Math.round(price! * 100);
     const gstPaise = Math.round((basePaise * gstPercent) / 100);
-    const amount = basePaise + gstPaise;
+    const discountPaise = Math.min(
+      Math.max(Math.round(discount * 100), 0),
+      basePaise + gstPaise,
+    );
+    const amount = basePaise + gstPaise - discountPaise;
     if (!Number.isInteger(amount) || amount < 100) {
       return json({ error: "Invalid service price" }, 400);
     }
