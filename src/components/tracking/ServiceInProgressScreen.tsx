@@ -287,9 +287,6 @@ export function ServiceInProgressScreen({
     setBusyOptionId(opt.id);
     setExtError(null);
     try {
-      const ok = await loadRazorpay();
-      if (!ok || !window.Razorpay) throw new Error("Failed to load Razorpay Checkout");
-
       const receipt = `ext_${Date.now()}`;
       const { data, error } = await supabase.functions.invoke("create-razorpay-order", {
         body: {
@@ -305,45 +302,38 @@ export function ServiceInProgressScreen({
       const { data: userData } = await supabase.auth.getUser();
       const contact = userData.user?.phone || undefined;
 
-      await new Promise<void>((resolve, reject) => {
-        const rzp = new window.Razorpay!({
-          key: data.key_id,
-          order_id: data.order_id,
-          amount: data.amount,
-          currency: data.currency,
-          name: "badiyos",
-          description: `Extend by ${opt.duration_label}`,
-          prefill: { contact },
-          theme: { color: "#00B97A" },
-          handler: async (resp) => {
-            const { data: newEnd, error: extErr } = await supabase.rpc("extend_booking", {
-              _booking_id: bookingId,
-              _extra_minutes: opt.duration_minutes,
-              _razorpay_payment_id: resp.razorpay_payment_id,
-            });
-            if (extErr) {
-              reject(new Error(extErr.message));
-              return;
-            }
-            qc.setQueryData<BookingTiming | null>(["booking-timing", bookingId], (prev) =>
-              prev ? { ...prev, service_end_at: (newEnd as string) ?? prev.service_end_at } : prev,
-            );
-            qc.invalidateQueries({ queryKey: ["booking-timing", bookingId] });
-            qc.invalidateQueries({ queryKey: ACTIVE_BOOKING_KEY });
-            warnedRef.current = false;
-            endedRef.current = false;
-            setSheetOpen(false);
-            resolve();
-          },
-          modal: { ondismiss: () => reject(new Error("Payment cancelled")) },
-        });
-        rzp.open();
+      const resp = await payWithRazorpay({
+        key: data.key_id,
+        order_id: data.order_id,
+        amount: data.amount,
+        currency: data.currency,
+        description: `Extend by ${opt.duration_label}`,
+        contact,
       });
+
+      const { data: newEnd, error: extErr } = await supabase.rpc("extend_booking", {
+        _booking_id: bookingId,
+        _extra_minutes: opt.duration_minutes,
+        _razorpay_payment_id: resp.razorpay_payment_id,
+      });
+      if (extErr) throw new Error(extErr.message);
+
+      qc.setQueryData<BookingTiming | null>(["booking-timing", bookingId], (prev) =>
+        prev ? { ...prev, service_end_at: (newEnd as string) ?? prev.service_end_at } : prev,
+      );
+      qc.invalidateQueries({ queryKey: ["booking-timing", bookingId] });
+      qc.invalidateQueries({ queryKey: ACTIVE_BOOKING_KEY });
+      warnedRef.current = false;
+      endedRef.current = false;
+      setSheetOpen(false);
     } catch (e) {
-      setExtError(await getErrorMessage(e));
+      setExtError(
+        e instanceof PaymentCancelledError ? "Payment cancelled" : await getErrorMessage(e),
+      );
     } finally {
       setBusyOptionId(null);
     }
+
   }
 
   // Tips
