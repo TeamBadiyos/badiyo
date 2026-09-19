@@ -111,6 +111,13 @@ export function ProfileScreen({
           icon: HelpCircle,
           onClick: onOpenHelp,
         },
+        {
+          key: "tickets",
+          label: "My Tickets",
+          desc: "Track your support requests & replies",
+          icon: MessageCircle,
+          onClick: onOpenTickets,
+        },
       ],
     },
   ];
