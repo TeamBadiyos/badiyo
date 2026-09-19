@@ -2,7 +2,7 @@ import { getAuthUser } from "@/lib/authUser";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { usePullToRefresh, PullToRefreshIndicator } from "@/lib/usePullToRefresh";
-import { ChevronDown, ChevronRight, Clock, Gift, Home, MapPin, Mic, Search, Sparkles, User, Wind, type LucideIcon } from "lucide-react";
+import { ChevronDown, ChevronRight, Clock, Gift, Home, MapPin, Mic, Package, Search, Sparkles, User, Wind, type LucideIcon } from "lucide-react";
 import { BadiyoLogo } from "./BadiyoLogo";
 import { BottomNav } from "./BottomNav";
 import { LocationPickerSheet, type SavedAddress } from "./LocationPickerSheet";
