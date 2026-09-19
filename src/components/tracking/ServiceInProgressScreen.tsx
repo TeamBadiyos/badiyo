@@ -290,6 +290,7 @@ export function ServiceInProgressScreen({
     if (!bookingId) return;
     setBusyOptionId(opt.id);
     setExtError(null);
+    let extOrderId: string | null = null;
     try {
       const receipt = `ext_${Date.now()}`;
       const { data, error } = await supabase.functions.invoke("create-razorpay-order", {
