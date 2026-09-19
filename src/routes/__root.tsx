@@ -113,7 +113,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       // so the first data request doesn't pay for a fresh handshake.
       ...(SUPABASE_URL
         ? [
-            { rel: "preconnect", href: SUPABASE_URL, crossOrigin: "anonymous" },
+            { rel: "preconnect", href: SUPABASE_URL, crossOrigin: "anonymous" as const },
             { rel: "dns-prefetch", href: SUPABASE_URL },
           ]
         : []),
