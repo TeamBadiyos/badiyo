@@ -790,8 +790,28 @@ function Index() {
               setSearchQuery(q);
               setPhase("search-results");
             }}
+            onOpenCourier={() => setPhase("courier")}
           />
 
+        </div>
+      )}
+      {phase === "courier" && (
+        <div className="animate-fade-slide-in">
+          <CourierBookingScreen
+            onBack={() => setPhase("home")}
+            onBooked={(id) => {
+              setCourierOrderId(id);
+              setPhase("courier-track");
+            }}
+          />
+        </div>
+      )}
+      {phase === "courier-track" && courierOrderId && (
+        <div className="animate-fade-slide-in">
+          <CourierTrackingScreen
+            orderId={courierOrderId}
+            onBack={() => setPhase("home")}
+          />
         </div>
       )}
       {phase === "slot" && selectedService && (
