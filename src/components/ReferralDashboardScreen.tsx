@@ -367,7 +367,7 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
             {/* Referral progress */}
             <section className="mt-6 grid grid-cols-3 gap-2">
               {[
-                { label: "Invited", value: joinedCount },
+                { label: "Invited", value: invitedCount },
                 { label: "Joined", value: joinedCount },
                 { label: "Qualified", value: qualifiedCount },
               ].map((s) => (
