@@ -55,6 +55,13 @@ type Quote = {
 type Step = 1 | 2 | 3 | 4;
 type AddressTarget = "pickup" | "drop";
 
+/** Always show weights with two decimals, e.g. 1.00 */
+function formatWeight(value: string | number): string {
+  const num = Number(value);
+  if (!Number.isFinite(num) || num <= 0) return "1.00";
+  return num.toFixed(2);
+}
+
 async function fetchAddresses(): Promise<Addr[]> {
   const { data, error } = await supabase
     .from("addresses")
