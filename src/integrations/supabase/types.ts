@@ -4641,27 +4641,17 @@ export type Database = {
         Args: { _order_id: string; _purpose: string }
         Returns: Json
       }
-      courier_rider_advance:
-        | {
-            Args: {
-              _lat?: number
-              _lng?: number
-              _order_id: string
-              _to_status: string
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              _accuracy_m?: number
-              _fix_at?: string
-              _lat?: number
-              _lng?: number
-              _order_id: string
-              _to_status: string
-            }
-            Returns: Json
-          }
+      courier_rider_advance: {
+        Args: {
+          _accuracy_m?: number
+          _fix_at?: string
+          _lat?: number
+          _lng?: number
+          _order_id: string
+          _to_status: string
+        }
+        Returns: Json
+      }
       courier_rider_cancel: {
         Args: { _order_id: string; _reason: string }
         Returns: Json
