@@ -173,9 +173,10 @@ function openWeb(opts: RazorpayCheckoutOptions): Promise<RazorpaySuccess> {
   return new Promise<RazorpaySuccess>((resolve, reject) => {
     void loadWebCheckout().then((ok) => {
       if (!ok || !window.Razorpay) {
-        reject(new Error("Failed to load Razorpay Checkout"));
+        reject(toPaymentError("network: failed to load razorpay checkout"));
         return;
       }
+      let settled = false;
       const rzp = new window.Razorpay({
         key: opts.key,
         order_id: opts.order_id,
@@ -185,9 +186,28 @@ function openWeb(opts: RazorpayCheckoutOptions): Promise<RazorpaySuccess> {
         description: opts.description,
         prefill: { contact: opts.contact, email: opts.email },
         theme: { color: "#00B97A" },
-        handler: (resp) => resolve(resp),
-        modal: { ondismiss: () => reject(new PaymentCancelledError()) },
+        handler: (resp) => {
+          settled = true;
+          resolve(resp);
+        },
+        modal: {
+          ondismiss: () => {
+            if (settled) return;
+            settled = true;
+            reject(new PaymentCancelledError());
+          },
+        },
       });
+      // Bank / card / UPI rejections arrive here, not via ondismiss.
+      try {
+        rzp.on?.("payment.failed", (payload: unknown) => {
+          if (settled) return;
+          settled = true;
+          reject(toPaymentError(payload));
+        });
+      } catch {
+        /* older checkout builds have no event bus */
+      }
       rzp.open();
     });
   });
@@ -195,7 +215,8 @@ function openWeb(opts: RazorpayCheckoutOptions): Promise<RazorpaySuccess> {
 
 /**
  * Opens Razorpay and resolves with the payment details once the customer has
- * paid. Rejects with {@link PaymentCancelledError} if they close the sheet.
+ * paid. Always rejects with {@link RazorpayPaymentError} (a
+ * {@link PaymentCancelledError} when the customer closed the sheet).
  */
 export async function payWithRazorpay(
   opts: RazorpayCheckoutOptions,
@@ -204,9 +225,12 @@ export async function payWithRazorpay(
     try {
       return await openNative(opts);
     } catch (err) {
-      if (isCancellation(err)) throw new PaymentCancelledError();
-      throw err instanceof Error ? err : new Error("Payment failed");
+      throw toPaymentError(err);
     }
   }
-  return openWeb(opts);
+  try {
+    return await openWeb(opts);
+  } catch (err) {
+    throw toPaymentError(err);
+  }
 }
