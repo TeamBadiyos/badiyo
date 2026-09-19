@@ -245,12 +245,6 @@ Deno.serve(async (req) => {
     // (by the Razorpay webhook) even if the client never saves the booking.
     try {
       const draft = body?.booking_draft;
-      const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
-      let userId: string | null = null;
-      if (token) {
-        const { data: userRes } = await supabase.auth.getUser(token);
-        userId = userRes?.user?.id ?? null;
-      }
       if (draft && userId) {
         const { error: intentErr } = await supabase.from("payment_intents").insert({
           user_id: userId,
