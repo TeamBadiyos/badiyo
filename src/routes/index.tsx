@@ -402,6 +402,7 @@ function Index() {
       orders: "orders",
       "my-bookings": "my-bookings",
       rewards: "rewards",
+      offers: "rewards",
       referrals: "referrals",
       wallet: "wallet",
       profile: "profile",
@@ -778,6 +779,7 @@ function Index() {
             service={selectedService}
             slot={selectedSlot}
             address={selectedAddress}
+            coupon={appliedCoupon}
             onBack={() => setPhase("summary")}
             onDone={resetAndGoHome}
             onTrackBooking={(id) => {
