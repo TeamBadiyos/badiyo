@@ -100,7 +100,7 @@ export function CourierBookingScreen({
   const [dropPhone, setDropPhone] = useState("");
   const [vehicleId, setVehicleId] = useState<string | null>(null);
   const [typeId, setTypeId] = useState<string | null>(null);
-  const [weight, setWeight] = useState("1");
+  const [weight, setWeight] = useState("1.00");
   const [note, setNote] = useState("");
   const [confirmed, setConfirmed] = useState(false);
   const [quote, setQuote] = useState<Quote | null>(null);
@@ -160,7 +160,7 @@ export function CourierBookingScreen({
       courier_type_id: typeId ?? "",
       pickup: { lat: Number(pickup?.latitude ?? 0), lng: Number(pickup?.longitude ?? 0) },
       drop: { lat: Number(drop?.latitude ?? 0), lng: Number(drop?.longitude ?? 0) },
-      weight_kg: Math.max(0, Number(weight) || 0),
+      weight_kg: Number(formatWeight(weight)),
     }),
     [city, vehicleId, typeId, pickup, drop, weight],
   );
@@ -427,7 +427,7 @@ export function CourierBookingScreen({
               </label>
             </div>
             {err && <p className="rounded-lg bg-destructive/10 p-3 text-sm font-semibold text-destructive">{err}</p>}
-            <Button className="h-12 w-full text-base font-bold" disabled={!parcelReady || quoting} onClick={getQuote}>
+            <Button className="h-12 w-full text-base font-bold" disabled={!parcelReady || quoting} onClick={() => { setWeight(formatWeight(weight)); void getQuote(); }}>
               {quoting ? <Loader2 className="animate-spin" /> : t("courier.reviewPrice")} {!quoting && <ChevronRight />}
             </Button>
           </section>
@@ -444,7 +444,7 @@ export function CourierBookingScreen({
                 <img src={courierBike} alt="Delivery bike" width={1024} height={768} loading="lazy" className="h-24 w-24 object-contain p-2" />
                 <div className="min-w-0 pr-4">
                   <p className="text-lg font-extrabold text-foreground">{selectedVehicle?.name ?? t("courier.bike")}</p>
-                  <p className="text-sm text-muted-foreground">{selectedType?.name} · {weight} kg</p>
+                  <p className="text-sm text-muted-foreground">{selectedType?.name} · {formatWeight(weight)} kg</p>
                 </div>
               </div>
               <div className="border-t border-border p-4"><RouteSummary pickup={pickup} drop={drop} onEdit={() => setStep(1)} embedded /></div>
