@@ -888,6 +888,187 @@ export type Database = {
         }
         Relationships: []
       }
+      courier_types: {
+        Row: {
+          created_at: string
+          extra_fee: number
+          icon: string | null
+          id: string
+          instructions: string | null
+          is_active: boolean
+          name: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          extra_fee?: number
+          icon?: string | null
+          id?: string
+          instructions?: string | null
+          is_active?: boolean
+          name: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          extra_fee?: number
+          icon?: string | null
+          id?: string
+          instructions?: string | null
+          is_active?: boolean
+          name?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      courier_vehicle_courier_types: {
+        Row: {
+          courier_type_id: string
+          created_at: string
+          id: string
+          is_active: boolean
+          vehicle_type_id: string
+        }
+        Insert: {
+          courier_type_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          vehicle_type_id: string
+        }
+        Update: {
+          courier_type_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          vehicle_type_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "courier_vehicle_courier_types_courier_type_id_fkey"
+            columns: ["courier_type_id"]
+            isOneToOne: false
+            referencedRelation: "courier_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "courier_vehicle_courier_types_vehicle_type_id_fkey"
+            columns: ["vehicle_type_id"]
+            isOneToOne: false
+            referencedRelation: "courier_vehicle_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      courier_vehicle_rates: {
+        Row: {
+          base_fare: number
+          city: string
+          commission_pct: number
+          created_at: string
+          id: string
+          included_km: number
+          is_placeholder: boolean
+          min_fare: number
+          per_km: number
+          platform_fee: number
+          updated_at: string
+          vehicle_type_id: string
+        }
+        Insert: {
+          base_fare?: number
+          city: string
+          commission_pct?: number
+          created_at?: string
+          id?: string
+          included_km?: number
+          is_placeholder?: boolean
+          min_fare?: number
+          per_km?: number
+          platform_fee?: number
+          updated_at?: string
+          vehicle_type_id: string
+        }
+        Update: {
+          base_fare?: number
+          city?: string
+          commission_pct?: number
+          created_at?: string
+          id?: string
+          included_km?: number
+          is_placeholder?: boolean
+          min_fare?: number
+          per_km?: number
+          platform_fee?: number
+          updated_at?: string
+          vehicle_type_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "courier_vehicle_rates_vehicle_type_id_fkey"
+            columns: ["vehicle_type_id"]
+            isOneToOne: false
+            referencedRelation: "courier_vehicle_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      courier_vehicle_types: {
+        Row: {
+          created_at: string
+          exclusions: string[]
+          icon: string | null
+          id: string
+          inclusions: string[]
+          is_active: boolean
+          max_weight_kg: number
+          name: string
+          required_documents: string[]
+          required_skill: string | null
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          exclusions?: string[]
+          icon?: string | null
+          id?: string
+          inclusions?: string[]
+          is_active?: boolean
+          max_weight_kg?: number
+          name: string
+          required_documents?: string[]
+          required_skill?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          exclusions?: string[]
+          icon?: string | null
+          id?: string
+          inclusions?: string[]
+          is_active?: boolean
+          max_weight_kg?: number
+          name?: string
+          required_documents?: string[]
+          required_skill?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "courier_vehicle_types_required_skill_fkey"
+            columns: ["required_skill"]
+            isOneToOne: false
+            referencedRelation: "service_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_coupons: {
         Row: {
           coupon_id: string
@@ -2988,6 +3169,39 @@ export type Database = {
           },
         ]
       }
+      service_flags: {
+        Row: {
+          city: string
+          created_at: string
+          id: string
+          is_active: boolean
+          label: string
+          service_key: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          city: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label: string
+          service_key: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          city?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string
+          service_key?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       service_price_options: {
         Row: {
           created_at: string
@@ -3764,6 +3978,8 @@ export type Database = {
         }
         Returns: Json
       }
+      courier_is_ops_staff: { Args: never; Returns: boolean }
+      courier_is_super_admin: { Args: never; Returns: boolean }
       credit_referral_for_booking: {
         Args: { _booking_id: string }
         Returns: undefined
