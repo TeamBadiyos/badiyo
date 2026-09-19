@@ -158,6 +158,13 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
+  // Restore the last known public catalogue from the device (client only).
+  useEffect(() => {
+    startQueryPersistence(queryClient);
+  }, [queryClient]);
+
+
+
   return (
     <QueryClientProvider client={queryClient}>
       <LanguageProvider>
