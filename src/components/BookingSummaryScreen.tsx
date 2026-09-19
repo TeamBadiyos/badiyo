@@ -166,8 +166,57 @@ export function BookingSummaryScreen({
           </div>
         </section>
 
+        {/* Coupon */}
+        <section className="mt-4 rounded-[18px] border border-border bg-card p-5">
+          <div className="flex items-center gap-2">
+            <Tag className="h-4 w-4 text-primary" />
+            <span className="text-sm font-bold text-foreground">Coupon</span>
+          </div>
+          {coupon ? (
+            <div className="mt-3 flex items-center justify-between gap-3 rounded-[14px] bg-primary/10 px-4 py-3">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-bold text-primary">{coupon.code}</p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {coupon.title} · saves ₹{Math.round(coupon.discount)}
+                </p>
+              </div>
+              <button
+                type="button"
+                aria-label="Remove coupon"
+                onClick={() => onCouponChange(null)}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-card"
+              >
+                <X className="h-4 w-4 text-foreground" />
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="mt-3 flex items-center gap-2">
+                <input
+                  value={codeInput}
+                  onChange={(e) => setCodeInput(e.target.value.toUpperCase())}
+                  placeholder="Enter coupon code"
+                  autoCapitalize="characters"
+                  className="h-11 min-w-0 flex-1 rounded-[14px] border border-border bg-background px-3 text-sm font-bold uppercase tracking-wide text-foreground outline-none focus:border-primary"
+                />
+                <button
+                  type="button"
+                  disabled={checking || !codeInput.trim()}
+                  onClick={() => void applyCode()}
+                  className="h-11 shrink-0 rounded-[14px] bg-primary px-4 text-sm font-bold text-primary-foreground disabled:opacity-50"
+                >
+                  {checking ? "…" : "Apply"}
+                </button>
+              </div>
+              {couponError && (
+                <p className="mt-2 text-xs font-medium text-destructive">{couponError}</p>
+              )}
+            </>
+          )}
+        </section>
+
         {/* Price breakdown */}
-        <section className="mt-6 rounded-[18px] border border-border bg-card p-5">
+        <section className="mt-4 rounded-[18px] border border-border bg-card p-5">
           <div className="text-sm font-bold text-foreground">
             {t("summary.priceDetails")}
           </div>
