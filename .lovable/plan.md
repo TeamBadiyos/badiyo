@@ -1,44 +1,39 @@
-# Fix missing UPI options in the Play Store app checkout
+# Fix missing UPI options in the Play Store app checkout (payment stays inside the app)
 
 ## What's actually happening
 
-On the website, Razorpay's checkout shows every UPI app (GPay, PhonePe, Paytm). Inside the Android app the same checkout hides them. This is not a key or config problem — Razorpay deliberately hides "pay with UPI app" when the page runs inside an app's built-in browser, because that built-in browser is not allowed to hand the payment over to GPay/PhonePe.
+On the website, Razorpay's checkout shows every UPI app (GPay, PhonePe, Paytm). Inside the Android app the same checkout hides them. This is not a key or dashboard problem: Razorpay hides "pay with UPI app" when its page runs inside an app's built-in browser, because that built-in browser is not allowed to hand the payment over to GPay/PhonePe.
 
-So the options are missing for the same reason on any app built this way, and no change to the payment keys or the Razorpay dashboard will bring them back.
+## What you want
 
-## The fix, without a new APK
+Payment must happen inside the badiyos app itself — no Chrome, no browser hop.
 
-You said a new Play Store build isn't possible right now. Good news: the app already ships with the ability to open a real Chrome window (Chrome Custom Tab). Chrome *can* hand payments to UPI apps. So instead of adding anything native, we move checkout into that Chrome window for app users only.
+## The honest constraint
 
-Flow for app users:
+To open GPay/PhonePe/Paytm from inside the app, the app needs Razorpay's native Android payment sheet. That is a change in the app's native part, so it needs **one new APK build and a Play Store upload**. There is no way around this: the current APK simply does not contain the capability, and web-only changes cannot add it.
 
-```text
-Booking summary -> Pay
-   -> app opens Razorpay checkout in a real Chrome window
-   -> all UPI apps appear; user pays in GPay/PhonePe/Paytm
-   -> Chrome returns to a badiyos payment-result page
-   -> app closes Chrome, confirms the payment with our server,
-      creates the booking, and goes to tracking as usual
-```
-
-Website users see no change at all — the current in-page checkout stays.
+So the plan is: I prepare everything now, you do one build when you're ready. After that build, all future payment changes stay live-updating as usual.
 
 ## What gets built
 
-1. **A hosted checkout page** on badiyos.com that opens Razorpay for one specific order and, when payment finishes, sends the result back to the app's return address.
-2. **App-side switch**: when running inside the Play Store app, the Pay button opens that page in the Chrome window instead of the in-app checkout. Website keeps the existing behaviour.
-3. **Return handling**: after Chrome closes, the app verifies the payment with our server (never trusting anything the page sends back), then continues to the existing booking-creation and tracking flow, including the coupon and payment-recovery logic already in place.
-4. **Safety net**: if the user closes Chrome without paying, or the network drops, the app checks the order status with our server and either resumes tracking (payment went through) or returns them to the summary to retry. The existing Razorpay webhook already rescues any paid-but-unsaved booking.
-5. **Same treatment for the two other payment points**: service extension top-ups and tips on the live service screen.
+1. **Native Razorpay payment sheet in the app.** Add Razorpay's official Capacitor plugin so, inside the app, tapping Pay opens the native payment sheet with all UPI apps, cards, netbanking and wallets. The user never leaves badiyos.
+2. **Website unchanged.** On the website the existing in-page checkout keeps working exactly as today. One shared payment helper decides which one to use.
+3. **Same treatment everywhere money is taken:** booking checkout, service extension top-ups, and tips on the live service screen.
+4. **Server verification unchanged.** Amounts still come from the server, the payment is still verified server-side before a booking is created, and the existing webhook safety net still rescues any paid-but-unsaved booking. Coupons and GST logic are untouched.
+5. **Build instructions.** I'll write down the exact steps and the native files/settings needed, so the person who builds the APK can follow them without guesswork.
 
-## What this does not cover
+## What you do
 
-Even in Chrome, a handful of banks' UPI flows can behave differently from a fully native payment sheet. If after this you still want the most seamless experience (Razorpay's native Android payment sheet, which also removes the Chrome hop), that genuinely needs one new APK build. I can prepare that change too and keep it dormant until you're ready to build — say the word.
+1. Approve this plan; I make all the code changes.
+2. When ready, run the app build and upload the new APK to Play Store.
+3. After that, UPI apps appear inside badiyos checkout on Android.
+
+Until that build is uploaded, users on the current APK will keep seeing the reduced option list — nothing I change on the server or website can fix that for them.
 
 ## Technical notes
 
-- Detect the app shell with the existing `isNativeShell()` helper in `src/lib/nativeServerFn.ts`; keep the current `window.Razorpay` path for web.
-- New public route (e.g. `src/routes/api/public/...` plus a thin page route) renders Razorpay Checkout for a given `order_id`, and on success/failure redirects to a return URL on `user.badiyos.com` that the app intercepts.
-- Open with `@capacitor/browser` (already a dependency, so it is present in the live APK) and close it on return; listen for `browserFinished` to handle user-cancelled payments.
-- Verification stays server-side: reuse the signature/`payment_id` verification path already used by tips (`src/lib/tips.functions.ts`) rather than trusting redirect params.
-- No change to key handling, GST, coupon reservation, or `create-razorpay-order` pricing logic.
+- Add `@capacitor-community/razorpay`; wrap it in a single `payWithRazorpay()` helper in `src/lib` that branches on the existing `isNativeShell()` check (`src/lib/nativeServerFn.ts`). Native path calls the plugin's `open` with the order id and key returned by `create-razorpay-order`; web path keeps the current `window.Razorpay` flow.
+- Callers to migrate: `src/components/PaymentScreen.tsx`, and both the extension and tip flows in `src/components/tracking/ServiceInProgressScreen.tsx`.
+- The plugin's success payload carries `razorpay_payment_id` / `razorpay_order_id` / `razorpay_signature` in the same shape the web handler already consumes, so downstream booking creation, coupon application and tip verification (`src/lib/tips.functions.ts`) need no change.
+- Handle plugin cancel/error the same way the web `ondismiss` path is handled today, including the paid-but-unsaved recovery check.
+- `capacitor.config.ts` stays as-is (live `server.url`); document the added plugin in `native/android/MANUAL_MERGE.md` alongside the existing manual steps.
