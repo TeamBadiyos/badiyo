@@ -63,27 +63,46 @@ export type SegmentService = {
 
 
 export async function fetchSegments(): Promise<Segment[]> {
+  // Reuse the request the head script already started, when there is one.
+  const early = takeEarlyJson<Segment[]>("segments");
+  if (early) {
+    try {
+      return (await early) ?? [];
+    } catch {
+      /* fall through to the normal client call */
+    }
+  }
   const { data, error } = await supabase
     .from("segments")
-    .select("id, name, short_name, slug, vertical_type, display_template, rank")
+    .select(SEGMENTS_SELECT)
     .eq("is_active", true)
     .order("rank", { ascending: true });
   if (error) throw error;
   return (data ?? []) as Segment[];
 }
 
+function mapCategories(rows: ServiceCategory[]): ServiceCategory[] {
+  return rows.map((c) => ({ ...c, icon_url: serviceImageUrl(c.icon_url) }));
+}
+
 export async function fetchServiceCategories(): Promise<ServiceCategory[]> {
+  const early = takeEarlyJson<ServiceCategory[]>("service_categories");
+  if (early) {
+    try {
+      return mapCategories((await early) ?? []);
+    } catch {
+      /* fall through */
+    }
+  }
   const { data, error } = await supabase
     .from("service_categories")
-    .select("id, segment_id, name, slug, icon_url, rank")
+    .select(SERVICE_CATEGORIES_SELECT)
     .eq("is_active", true)
     .order("rank", { ascending: true });
   if (error) throw error;
-  return ((data ?? []) as ServiceCategory[]).map((c) => ({
-    ...c,
-    icon_url: serviceImageUrl(c.icon_url),
-  }));
+  return mapCategories((data ?? []) as ServiceCategory[]);
 }
+
 
 /**
  * Bookable items = every active price option of every active service, flattened
