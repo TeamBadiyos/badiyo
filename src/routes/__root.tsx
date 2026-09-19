@@ -14,6 +14,18 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
 import { LanguageProvider } from "@/i18n";
 import { OfflineGate } from "@/components/OfflineScreen";
+import { buildEarlyBootScript } from "@/lib/earlyData";
+import { startQueryPersistence } from "@/lib/queryPersistence";
+
+
+const SUPABASE_URL =
+  (import.meta.env.VITE_SUPABASE_URL as string | undefined) ?? process.env.SUPABASE_URL ?? "";
+const SUPABASE_KEY =
+  (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined) ??
+  process.env.SUPABASE_PUBLISHABLE_KEY ??
+  "";
+
+
 
 
 function NotFoundComponent() {
@@ -99,6 +111,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "stylesheet", href: appCss },
       { rel: "icon", type: "image/png", href: "/favicon.png" },
       { rel: "apple-touch-icon", href: "/favicon.png" },
+      // Open the TLS connection to the data host while the bundle downloads,
+      // so the first data request doesn't pay for a fresh handshake.
+      ...(SUPABASE_URL
+        ? [
+            { rel: "preconnect", href: SUPABASE_URL, crossOrigin: "anonymous" as const },
+            { rel: "dns-prefetch", href: SUPABASE_URL },
+          ]
+        : []),
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
@@ -106,7 +126,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: "https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800&display=swap",
       },
     ],
+    scripts: [
+      // Kicks off Home's public config requests before the app bundle is parsed.
+      { children: buildEarlyBootScript(SUPABASE_URL, SUPABASE_KEY) },
+    ],
   }),
+
   shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
@@ -134,6 +159,13 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+
+  // Restore the last known public catalogue from the device (client only).
+  useEffect(() => {
+    startQueryPersistence(queryClient);
+  }, [queryClient]);
+
+
 
   return (
     <QueryClientProvider client={queryClient}>

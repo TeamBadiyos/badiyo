@@ -1,3 +1,4 @@
+import { getAuthUser } from "@/lib/authUser";
 import { useEffect, useRef, useState } from "react";
 import { CheckCircle2, XCircle, Loader2, ArrowLeft, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -64,7 +65,7 @@ export function PaymentScreen({
   async function createBooking(paymentId: string, orderId: string) {
     setSaveFailed(false);
     try {
-      const { data: userData } = await supabase.auth.getUser();
+      const { data: userData } = await getAuthUser();
       const uid = userData.user?.id;
       if (!uid) throw new Error("Not authenticated");
 
@@ -267,7 +268,7 @@ export function PaymentScreen({
         throw new Error("Invalid order response");
       }
 
-      const { data: userData } = await supabase.auth.getUser();
+      const { data: userData } = await getAuthUser();
       const contact = userData.user?.phone || undefined;
 
       const resp = await payWithRazorpay({

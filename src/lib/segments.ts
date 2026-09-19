@@ -1,5 +1,12 @@
 import { supabase } from "@/integrations/supabase/client";
 import { serviceImageUrl, serviceImageUrls } from "@/lib/serviceImage";
+import {
+  SEGMENTS_SELECT,
+  SERVICES_SELECT,
+  SERVICE_CATEGORIES_SELECT,
+  takeEarlyJson,
+} from "@/lib/earlyData";
+
 
 export type DisplayTemplate = "CATEGORY_FIRST" | "STORE_FIRST" | "SEARCH_FIRST" | (string & {});
 
@@ -56,27 +63,46 @@ export type SegmentService = {
 
 
 export async function fetchSegments(): Promise<Segment[]> {
+  // Reuse the request the head script already started, when there is one.
+  const early = takeEarlyJson<Segment[]>("segments");
+  if (early) {
+    try {
+      return (await early) ?? [];
+    } catch {
+      /* fall through to the normal client call */
+    }
+  }
   const { data, error } = await supabase
     .from("segments")
-    .select("id, name, short_name, slug, vertical_type, display_template, rank")
+    .select(SEGMENTS_SELECT)
     .eq("is_active", true)
     .order("rank", { ascending: true });
   if (error) throw error;
   return (data ?? []) as Segment[];
 }
 
+function mapCategories(rows: ServiceCategory[]): ServiceCategory[] {
+  return rows.map((c) => ({ ...c, icon_url: serviceImageUrl(c.icon_url) }));
+}
+
 export async function fetchServiceCategories(): Promise<ServiceCategory[]> {
+  const early = takeEarlyJson<ServiceCategory[]>("service_categories");
+  if (early) {
+    try {
+      return mapCategories((await early) ?? []);
+    } catch {
+      /* fall through */
+    }
+  }
   const { data, error } = await supabase
     .from("service_categories")
-    .select("id, segment_id, name, slug, icon_url, rank")
+    .select(SERVICE_CATEGORIES_SELECT)
     .eq("is_active", true)
     .order("rank", { ascending: true });
   if (error) throw error;
-  return ((data ?? []) as ServiceCategory[]).map((c) => ({
-    ...c,
-    icon_url: serviceImageUrl(c.icon_url),
-  }));
+  return mapCategories((data ?? []) as ServiceCategory[]);
 }
+
 
 /**
  * Bookable items = every active price option of every active service, flattened
@@ -90,19 +116,31 @@ function list(value: unknown): string[] {
   return value.filter((v): v is string => typeof v === "string" && v.trim().length > 0);
 }
 
-export async function fetchSegmentServices(): Promise<SegmentService[]> {
+/* eslint-disable @typescript-eslint/no-explicit-any */
+async function fetchServicesRaw(): Promise<any[]> {
+  const early = takeEarlyJson<any[]>("segment_services");
+  if (early) {
+    try {
+      return (await early) ?? [];
+    } catch {
+      /* fall through */
+    }
+  }
   const { data, error } = await supabase
     .from("services")
-    .select(
-      "id, name, image_url, pricing_type, display_order, category_id, description, gallery_urls, video_url, inclusions, exclusions, service_categories(segment_id, icon_url), service_price_options(id, label, duration_minutes, unit_label, customer_price, strikethrough_price, display_order, is_active, image_url, description, gallery_urls, video_url, inclusions, exclusions, item_task_types(display_order, task_types(id, name, inclusions, exclusions, is_active, rank)))",
-    )
-
+    .select(SERVICES_SELECT)
     .eq("is_active", true)
     .order("display_order", { ascending: true });
   if (error) throw error;
+  return (data ?? []) as any[];
+}
+
+export async function fetchSegmentServices(): Promise<SegmentService[]> {
+  const data = await fetchServicesRaw();
 
   const rows: SegmentService[] = [];
-  for (const svc of (data ?? []) as any[]) {
+  for (const svc of data as any[]) {
+
     const options = (svc.service_price_options ?? [])
       .filter((o: any) => o.is_active)
       .sort((a: any, b: any) => (a.display_order ?? 0) - (b.display_order ?? 0));

@@ -1,3 +1,4 @@
+import { getAuthUser } from "@/lib/authUser";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -64,7 +65,7 @@ function statusMeta(status: string) {
 }
 
 async function fetchAll() {
-  const { data: userData } = await supabase.auth.getUser();
+  const { data: userData } = await getAuthUser();
   const uid = userData.user?.id;
   if (!uid) throw new Error("Not signed in");
 

@@ -1,3 +1,4 @@
+import { getAuthUser } from "@/lib/authUser";
 /**
  * Dependency-free i18n (same pattern as the Partner App).
  *
@@ -69,7 +70,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     (async () => {
       try {
-        const { data: userData } = await supabase.auth.getUser();
+        const { data: userData } = await getAuthUser();
         const uid = userData.user?.id;
         if (!uid) return;
         const { data } = await supabase
@@ -102,7 +103,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     } catch {
       /* ignore */
     }
-    const { data: userData } = await supabase.auth.getUser();
+    const { data: userData } = await getAuthUser();
     if (!userData.user?.id) return;
     const { error } = await supabase.rpc("customer_set_language", { _lang: next });
     if (error) throw error;

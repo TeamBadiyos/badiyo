@@ -1,3 +1,4 @@
+import { getAuthUser } from "@/lib/authUser";
 import { ArrowLeft, User, Camera } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -26,7 +27,7 @@ export function EditProfileScreen({ onBack }: { onBack: () => void }) {
 
   useEffect(() => {
     (async () => {
-      const { data: userRes } = await supabase.auth.getUser();
+      const { data: userRes } = await getAuthUser();
       const u = userRes.user;
       if (!u) return;
       setUid(u.id);

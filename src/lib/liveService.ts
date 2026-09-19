@@ -1,3 +1,4 @@
+import { getAuthUser } from "@/lib/authUser";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,7 +14,7 @@ export type ActiveBooking = {
 export const ACTIVE_BOOKING_KEY = ["active-live-booking"] as const;
 
 async function fetchActiveBooking(): Promise<ActiveBooking | null> {
-  const { data: userData } = await supabase.auth.getUser();
+  const { data: userData } = await getAuthUser();
   if (!userData.user) return null;
   const { data, error } = await supabase
     .from("bookings")

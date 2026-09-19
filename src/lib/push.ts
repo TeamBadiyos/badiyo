@@ -1,3 +1,4 @@
+import { getAuthUser } from "@/lib/authUser";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getFirebaseConfig, type FirebaseWebConfig } from "./firebaseConfig.functions";
@@ -70,7 +71,7 @@ async function saveToken(token: string, platform: "android" | "ios" | "web") {
 export async function registerPushForCurrentUser() {
   if (typeof window === "undefined") return;
 
-  const { data: userRes } = await supabase.auth.getUser();
+  const { data: userRes } = await getAuthUser();
   const uid = userRes.user?.id;
   if (!uid) return;
 

@@ -1,3 +1,4 @@
+import { getAuthUser } from "@/lib/authUser";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { usePullToRefresh, PullToRefreshIndicator } from "@/lib/usePullToRefresh";
@@ -207,7 +208,7 @@ export function HomeScreen({
   const { data: defaultAddress } = useQuery({
     queryKey: ["home_default_address"],
     queryFn: async (): Promise<SavedAddress | null> => {
-      const { data: userData } = await supabase.auth.getUser();
+      const { data: userData } = await getAuthUser();
       const uid = userData.user?.id;
       if (!uid) return null;
       const { data } = await supabase

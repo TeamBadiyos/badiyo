@@ -1,3 +1,4 @@
+import { getAuthUser } from "@/lib/authUser";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Home, MapPin, MoreVertical, Pencil, Plus, Trash2 } from "lucide-react";
@@ -22,7 +23,7 @@ type Address = {
 };
 
 async function fetchAddresses(): Promise<Address[]> {
-  const { data: userData } = await supabase.auth.getUser();
+  const { data: userData } = await getAuthUser();
   const uid = userData.user?.id;
   if (!uid) return [];
   const { data, error } = await supabase
@@ -97,7 +98,7 @@ export function AddressSelectionScreen({
 
   const editMutation = useMutation({
     mutationFn: async (input: PickedAddress & { id: string }) => {
-      const { data: userData } = await supabase.auth.getUser();
+      const { data: userData } = await getAuthUser();
       const uid = userData.user?.id;
       if (!uid) throw new Error("You need to sign in before saving an address.");
 
@@ -146,7 +147,7 @@ export function AddressSelectionScreen({
 
   const addMutation = useMutation({
     mutationFn: async (input: PickedAddress) => {
-      const { data: userData } = await supabase.auth.getUser();
+      const { data: userData } = await getAuthUser();
       const uid = userData.user?.id;
       if (!uid) {
         throw new Error("You need to sign in before saving an address.");

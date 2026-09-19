@@ -1,3 +1,4 @@
+import { getAuthUser } from "@/lib/authUser";
 import { supabase } from "@/integrations/supabase/client";
 
 export type ServiceabilityResult = {
@@ -44,7 +45,7 @@ export type WaitlistLocation = {
 
 /** Has this customer already waitlisted (roughly) this location for this segment? */
 export async function findExistingWaitlistRequest(loc: WaitlistLocation) {
-  const { data: userData } = await supabase.auth.getUser();
+  const { data: userData } = await getAuthUser();
   const uid = userData.user?.id;
   if (!uid || !loc.segmentId) return null;
 
@@ -66,7 +67,7 @@ export async function findExistingWaitlistRequest(loc: WaitlistLocation) {
 
 /** Insert a waitlist row for the signed-in customer (RLS: user_id = auth.uid()). */
 export async function joinWaitlist(loc: WaitlistLocation) {
-  const { data: userData } = await supabase.auth.getUser();
+  const { data: userData } = await getAuthUser();
   const uid = userData.user?.id;
   if (!uid) throw new Error("Please sign in to join the waitlist.");
   if (!loc.segmentId) throw new Error("We couldn't tell which service you're interested in.");

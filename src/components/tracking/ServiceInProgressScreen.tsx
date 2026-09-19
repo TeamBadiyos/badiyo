@@ -1,3 +1,4 @@
+import { getAuthUser } from "@/lib/authUser";
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -299,7 +300,7 @@ export function ServiceInProgressScreen({
       if (error) throw new Error(error.message);
       if (!data?.order_id || !data?.key_id) throw new Error("Invalid order response");
 
-      const { data: userData } = await supabase.auth.getUser();
+      const { data: userData } = await getAuthUser();
       const contact = userData.user?.phone || undefined;
 
       const resp = await payWithRazorpay({
@@ -357,7 +358,7 @@ export function ServiceInProgressScreen({
       if (error) throw new Error(error.message);
       if (!data?.order_id || !data?.key_id) throw new Error("Invalid order response");
 
-      const { data: userData } = await supabase.auth.getUser();
+      const { data: userData } = await getAuthUser();
       const contact = userData.user?.phone || undefined;
 
       const resp = await payWithRazorpay({
