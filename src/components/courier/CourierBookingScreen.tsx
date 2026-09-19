@@ -328,6 +328,32 @@ export function CourierBookingScreen({
                           {vehicle.max_weight_kg ? t("courier.upToKg", { weight: vehicle.max_weight_kg }) : t("courier.smallParcels")}
                         </p>
                         <p className="mt-1 text-xs text-muted-foreground">{t("courier.doorstepDelivery")}</p>
+                        {!!vehicle.inclusions?.length && (
+                          <div className="mt-3">
+                            <p className="text-[11px] font-extrabold uppercase tracking-wide text-primary">{t("courier.included")}</p>
+                            <ul className="mt-1 space-y-1">
+                              {vehicle.inclusions.map((item) => (
+                                <li key={item} className="flex items-start gap-1.5 text-xs font-normal leading-4 text-muted-foreground">
+                                  <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+                                  <span className="min-w-0">{item}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {!!vehicle.exclusions?.length && (
+                          <div className="mt-3">
+                            <p className="text-[11px] font-extrabold uppercase tracking-wide text-destructive">{t("courier.notIncluded")}</p>
+                            <ul className="mt-1 space-y-1">
+                              {vehicle.exclusions.map((item) => (
+                                <li key={item} className="flex items-start gap-1.5 text-xs font-normal leading-4 text-muted-foreground">
+                                  <X className="mt-0.5 h-3.5 w-3.5 shrink-0 text-destructive" />
+                                  <span className="min-w-0">{item}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
                       </div>
                       <div className="flex h-40 items-center justify-center bg-primary/10 p-2">
                         <img src={courierBike} alt="Delivery bike" width={1024} height={768} loading="lazy" className="h-auto w-full object-contain" />
@@ -380,7 +406,13 @@ export function CourierBookingScreen({
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <label className="space-y-1.5 text-sm font-bold text-foreground">
                 {t("courier.weight")}
-                <Input inputMode="decimal" value={weight} onChange={(event) => setWeight(event.target.value)} className="h-12" />
+                <Input
+                  inputMode="decimal"
+                  value={weight}
+                  onChange={(event) => setWeight(event.target.value.replace(/[^\d.]/g, ""))}
+                  onBlur={() => setWeight(formatWeight(weight))}
+                  className="h-12"
+                />
               </label>
               <label className="space-y-1.5 text-sm font-bold text-foreground">
                 {t("courier.note")}
