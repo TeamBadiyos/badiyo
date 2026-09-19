@@ -9,8 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { courierQuote, courierCreateOrder, courierConfirmPayment } from "@/lib/courier.functions";
-import { payWithRazorpay } from "@/lib/razorpayCheckout";
-import { toPaymentError, paymentErrorKey } from "@/lib/paymentError";
+import { payWithRazorpay, toPaymentError } from "@/lib/razorpayCheckout";
+import { paymentErrorKey } from "@/lib/paymentError";
 import { useT } from "@/i18n";
 import { fetchCourierVehicles, fetchCourierTypes } from "./courierData";
 
