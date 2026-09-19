@@ -1,3 +1,4 @@
+import { getAuthUser } from "@/lib/authUser";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { usePullToRefresh, PullToRefreshIndicator } from "@/lib/usePullToRefresh";
 import { ArrowLeft, Coins, Wallet as WalletIcon } from "lucide-react";
@@ -12,7 +13,7 @@ type WalletTx = {
 };
 
 async function fetchTransactions(): Promise<WalletTx[]> {
-  const { data: userRes } = await supabase.auth.getUser();
+  const { data: userRes } = await getAuthUser();
   const uid = userRes.user?.id;
   if (!uid) return [];
   const { data, error } = await supabase

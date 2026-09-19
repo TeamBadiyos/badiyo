@@ -1,3 +1,4 @@
+import { getAuthUser } from "@/lib/authUser";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Loader2, LocateFixed, MapPin, Plus, Search, X } from "lucide-react";
@@ -23,7 +24,7 @@ export type SavedAddress = {
 };
 
 async function fetchAddresses(): Promise<SavedAddress[]> {
-  const { data: userData } = await supabase.auth.getUser();
+  const { data: userData } = await getAuthUser();
   const uid = userData.user?.id;
   if (!uid) return [];
   const { data, error } = await supabase
@@ -77,7 +78,7 @@ export function LocationPickerSheet({
 
   const addMutation = useMutation({
     mutationFn: async (input: PickedAddress) => {
-      const { data: userData } = await supabase.auth.getUser();
+      const { data: userData } = await getAuthUser();
       const uid = userData.user?.id;
       if (!uid) throw new Error("Please sign in to save an address.");
       await supabase.from("users").upsert({ id: uid }, { onConflict: "id" });

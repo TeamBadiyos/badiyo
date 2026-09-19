@@ -1,3 +1,4 @@
+import { getAuthUser } from "@/lib/authUser";
 import { useState } from "react";
 import {
   ArrowLeft,
@@ -89,7 +90,7 @@ export function HelpSupportScreen({
     setSubmitting(true);
     setError(null);
     try {
-      const { data: userRes } = await supabase.auth.getUser();
+      const { data: userRes } = await getAuthUser();
       const uid = userRes.user?.id;
       if (!uid) {
         setError("Please sign in to raise a ticket.");

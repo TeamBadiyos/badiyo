@@ -1,3 +1,4 @@
+import { getAuthUser } from "@/lib/authUser";
 import { supabase } from "@/integrations/supabase/client";
 
 /**
@@ -8,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
  * Returns the auth user id, or null if there is no session.
  */
 export async function ensureUserRow(phone?: string | null): Promise<string | null> {
-  const { data } = await supabase.auth.getUser();
+  const { data } = await getAuthUser();
   const user = data.user;
   if (!user) return null;
 

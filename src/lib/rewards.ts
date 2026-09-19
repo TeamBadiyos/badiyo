@@ -1,3 +1,4 @@
+import { getAuthUser } from "@/lib/authUser";
 import { supabase } from "@/integrations/supabase/client";
 
 export type RewardLedgerRow = {
@@ -49,7 +50,7 @@ function num(v: unknown): number {
 }
 
 export async function fetchCustomerRewards(): Promise<RewardsSnapshot> {
-  const { data: userRes } = await supabase.auth.getUser();
+  const { data: userRes } = await getAuthUser();
   const uid = userRes.user?.id;
   if (!uid) return EMPTY;
 

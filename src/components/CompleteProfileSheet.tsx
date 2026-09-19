@@ -1,3 +1,4 @@
+import { getAuthUser } from "@/lib/authUser";
 import { useEffect, useRef, useState } from "react";
 import { Camera, User, X } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -90,7 +91,7 @@ export function CompleteProfileSheet({ enabled }: { enabled: boolean }) {
     checkingRef.current = true;
     (async () => {
       try {
-        const { data: userRes } = await supabase.auth.getUser();
+        const { data: userRes } = await getAuthUser();
         const u = userRes.user;
         if (!u) return;
         const { data } = await supabase

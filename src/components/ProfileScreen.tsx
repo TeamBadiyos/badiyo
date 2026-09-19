@@ -1,3 +1,4 @@
+import { getAuthUser } from "@/lib/authUser";
 import {
   ArrowLeft,
   ChevronRight,
@@ -57,7 +58,7 @@ export function ProfileScreen({
 
   useEffect(() => {
     (async () => {
-      const { data: userRes } = await supabase.auth.getUser();
+      const { data: userRes } = await getAuthUser();
       const uid = userRes.user?.id;
       if (!uid) return;
       const { data } = await supabase

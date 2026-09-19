@@ -1,3 +1,4 @@
+import { getAuthUser } from "@/lib/authUser";
 import { ArrowLeft } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -21,7 +22,7 @@ export function NotificationsScreen({ onBack }: { onBack: () => void }) {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data: userRes } = await supabase.auth.getUser();
+      const { data: userRes } = await getAuthUser();
       const id = userRes.user?.id ?? null;
       if (cancelled) return;
       setUid(id);

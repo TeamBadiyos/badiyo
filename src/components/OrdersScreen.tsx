@@ -1,3 +1,4 @@
+import { getAuthUser } from "@/lib/authUser";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { usePullToRefresh, PullToRefreshIndicator } from "@/lib/usePullToRefresh";
 import { CalendarCheck, MapPin, Clock } from "lucide-react";
@@ -10,7 +11,7 @@ import {
 } from "./MyBookingsScreen";
 
 async function fetchBookings(): Promise<BookingRow[]> {
-  const { data: userRes } = await supabase.auth.getUser();
+  const { data: userRes } = await getAuthUser();
   const uid = userRes.user?.id;
   if (!uid) return [];
   const { data, error } = await supabase
