@@ -10,11 +10,12 @@
  * Paytm) can be launched, because a WebView is not allowed to hand a payment
  * over to another app — which is why those options are missing today.
  *
- * The native plugin is registered by NAME (`Checkout`, the plugin id used by
- * `@capacitor-community/razorpay`) instead of imported from npm, so the web
- * bundle stays dependency-free and the current APK keeps working unchanged:
- * when the native side isn't present we transparently fall back to the web
- * sheet. See native/android/MANUAL_MERGE.md for the build step.
+ * The native plugin is registered by NAME (`Checkout`, the plugin id exposed
+ * by Razorpay's own `capacitor-razorpay` package) instead of imported from
+ * npm, so the web bundle stays dependency-free and the current APK keeps
+ * working unchanged. When the native side is missing inside the app we log a
+ * warning and fall back to the web sheet — never silently.
+ * See native/android/MANUAL_MERGE.md for the build step.
  */
 import { registerPlugin, Capacitor } from "@capacitor/core";
 import { isNativeShell } from "@/lib/nativeServerFn";
@@ -95,9 +96,21 @@ type NativeCheckoutPlugin = {
 
 const NativeCheckout = registerPlugin<NativeCheckoutPlugin>("Checkout");
 
+let warnedMissingPlugin = false;
+
 function nativeSheetAvailable(): boolean {
   try {
-    return isNativeShell() && Capacitor.isPluginAvailable("Checkout");
+    if (!isNativeShell()) return false;
+    if (Capacitor.isPluginAvailable("Checkout")) return true;
+    if (!warnedMissingPlugin) {
+      warnedMissingPlugin = true;
+      console.warn(
+        "[razorpay] native Checkout plugin missing — falling back to the web sheet, " +
+          "so UPI apps (GPay/PhonePe/Paytm) will not be listed. Run " +
+          "`npm install capacitor-razorpay && npx cap sync android` (see native/android/MANUAL_MERGE.md).",
+      );
+    }
+    return false;
   } catch {
     return false;
   }

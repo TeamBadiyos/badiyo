@@ -113,37 +113,130 @@ Optional `title` / `body` keys in `data` override the built-in copy.
 
 ---
 
-# Native Razorpay payment sheet (UPI apps inside the app)
+# Native build checklist (run once, produces the new APK)
 
-Razorpay's web checkout hides GPay / PhonePe / Paytm when it runs inside a
-WebView, because a WebView may not hand a payment to another app. The app
-therefore uses Razorpay's NATIVE Android sheet when it is available.
+Three things ship together in this build:
 
-The web code already calls the plugin by its Capacitor id (`Checkout`) via
-`registerPlugin` in `src/lib/razorpayCheckout.ts`, and falls back to the web
-sheet when the native side is missing — so the currently published APK keeps
-working unchanged. To enable UPI apps, one new APK build is required.
+1. **Razorpay native payment sheet** — `capacitor-razorpay` (Razorpay's own
+   package, plugin id `Checkout`).
+2. **Play Install Referrer** — `@capgo/capacitor-install-referrer`
+   (plugin id `InstallReferrer`).
+3. **Verified app links** for `user.badiyos.com` (`autoVerify` intent filter).
 
-## Build steps (run locally, once)
+Both plugins are registered BY NAME in the web code
+(`src/lib/razorpayCheckout.ts`, `src/lib/installReferrer.ts`), so the web
+bundle needs no npm dependency and the currently published APK keeps working.
+If a plugin is missing at runtime the app logs a `console.warn` (never a silent
+no-op) and falls back.
+
+## 1. Install + sync
 
 ```bash
 bun install
-npm install @capacitor-community/razorpay   # native plugin (npm, not this sandbox)
+npm install capacitor-razorpay @capgo/capacitor-install-referrer
 bun run build:capacitor
 npx cap sync android
+npx cap ls android
 ```
 
-`npx cap sync android` registers the plugin and pulls in Razorpay's Android
-SDK through Gradle. Nothing else to wire: the plugin id it exposes is
-`Checkout`, which is exactly what the app registers.
+`npx cap ls android` MUST list both plugins, e.g.:
 
-## Verify after installing the new APK
+```
+capacitor-razorpay@1.3.0
+@capgo/capacitor-install-referrer@8.x
+```
+
+If either one is missing, the sync did not pick it up — re-run
+`npm install` in the project root and `npx cap sync android` again.
+`cap sync` also pulls Razorpay's Android SDK and
+`com.android.installreferrer:installreferrer` through Gradle.
+
+## 2. AndroidManifest.xml — verified app links
+
+Add this **inside the existing `MainActivity` `<activity>` element** in
+`android/app/src/main/AndroidManifest.xml` (next to the existing
+`badiyos://open` filter, which stays as-is):
+
+```xml
+<!-- BEGIN badiyos verified app links -->
+<intent-filter android:autoVerify="true">
+    <action android:name="android.intent.action.VIEW" />
+    <category android:name="android.intent.category.DEFAULT" />
+    <category android:name="android.intent.category.BROWSABLE" />
+    <data android:scheme="https" android:host="user.badiyos.com" />
+</intent-filter>
+<!-- END badiyos verified app links -->
+```
+
+With this, `https://user.badiyos.com/invite/CODE` opens the app instead of
+Chrome. The app handles it in `src/routes/index.tsx` (`appUrlOpen` +
+`App.getLaunchUrl()`): the invite code is stored and applied at sign-in.
+
+## 3. assetlinks.json / SHA-256 fingerprint
+
+`public/.well-known/assetlinks.json` is served from
+`https://user.badiyos.com/.well-known/assetlinks.json` and must contain:
+
+```json
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.badiyos.customer",
+    "sha256_cert_fingerprints": ["AA:BB:..."]
+  }
+}]
+```
+
+The fingerprint must be the **Play App Signing** certificate, NOT the upload
+key. Get it from:
+
+> Play Console → badiyos → **Test and release → Setup → App integrity** →
+> **App signing key certificate** → `SHA-256 certificate fingerprint`
+
+Copy that value into the `sha256_cert_fingerprints` array (the array may hold
+more than one entry if you also want debug builds to verify:
+`keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey
+-storepass android`).
+
+## 4. Verify after installing the new APK
+
+App links:
+
+```bash
+adb shell pm verify-app-links --re-verify com.badiyos.customer
+adb shell pm get-app-links com.badiyos.customer
+```
+
+The output must show:
+
+```
+com.badiyos.customer:
+    ID: ...
+    Signatures: [...]
+    Domain verification state:
+      user.badiyos.com: verified
+```
+
+`none`, `legacy_failure` or `1024` (verification failed) means the served
+`assetlinks.json` fingerprint or package name does not match the installed
+build — fix assetlinks, republish, then re-run the two commands.
+
+Razorpay sheet:
 
 1. Open a booking and tap Pay.
-2. The Razorpay **native** sheet should appear (not the web page inside the app).
-3. UPI section should list the UPI apps installed on the phone.
-4. Cancel once — the app must show "Payment cancelled" and return to the summary.
-5. Complete one real payment — booking must be created and tracking must open.
+2. Razorpay's **native** sheet appears (not the web page inside the app).
+3. The UPI section lists the UPI apps installed on the phone.
+4. Cancel once — the app shows "Payment cancelled" and returns to the summary.
+5. Complete one real payment — booking is created and tracking opens.
 
 Extension top-ups and tips on the live service screen use the same helper and
 are covered by the same build.
+
+Install referrer:
+
+1. Uninstall the app, open an invite link on the phone, install from the Play
+   Store page it lands on (URL carries `referrer=ref%3DCODE`).
+2. First launch, then sign up — the referral must show under the inviter's
+   "Joined" count.
+3. Logcat should show no `[installReferrer]` warning.
