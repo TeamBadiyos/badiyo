@@ -315,7 +315,9 @@ export function ServiceInProgressScreen({
         amount: data.amount,
         currency: data.currency,
         description: `Extend by ${opt.duration_label}`,
-        ...prefill,
+        contact: prefill.contact,
+        email: prefill.email,
+        customerName: prefill.name,
       });
 
       const { data: newEnd, error: extErr } = await supabase.rpc("extend_booking", {
@@ -389,7 +391,9 @@ export function ServiceInProgressScreen({
         amount: data.amount,
         currency: data.currency,
         description: `Tip for ${expert?.name ?? "your expert"}`,
-        ...tipPrefill,
+        contact: tipPrefill.contact,
+        email: tipPrefill.email,
+        customerName: tipPrefill.name,
       });
 
       // Server verifies the payment with Razorpay before crediting.

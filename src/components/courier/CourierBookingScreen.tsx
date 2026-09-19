@@ -211,6 +211,7 @@ export function CourierBookingScreen({
         description: "Parcel delivery",
         contact: prefill.contact,
         email: prefill.email,
+        customerName: prefill.name,
       });
       await courierConfirmPayment({
         data: {

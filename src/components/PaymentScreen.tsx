@@ -291,7 +291,9 @@ export function PaymentScreen({
         amount: data.amount,
         currency: data.currency,
         description: service.duration_label,
-        ...prefill,
+        contact: prefill.contact,
+        email: prefill.email,
+        customerName: prefill.name,
       });
 
       paymentRef.current = {

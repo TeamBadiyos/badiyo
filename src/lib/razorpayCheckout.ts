@@ -40,7 +40,10 @@ export type RazorpayCheckoutOptions = {
   description?: string;
   contact?: string;
   email?: string;
+  /** Merchant/business name shown at the top of the sheet. */
   name?: string;
+  /** Customer's own name, used for prefill only. */
+  customerName?: string;
 };
 
 /**
@@ -157,7 +160,7 @@ function buildPrefill(opts: RazorpayCheckoutOptions): Record<string, string> {
   const prefill: Record<string, string> = {};
   if (opts.contact?.trim()) prefill.contact = opts.contact.trim();
   if (opts.email?.trim()) prefill.email = opts.email.trim();
-  if (opts.name?.trim()) prefill.name = opts.name.trim();
+  if (opts.customerName?.trim()) prefill.name = opts.customerName.trim();
   return prefill;
 }
 
