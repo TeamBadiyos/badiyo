@@ -34,7 +34,7 @@ export const logPaymentFailure = createServerFn({ method: "POST" })
         action: "payment_failed",
         target_table: "payment_intents",
         target_id: null,
-        after_state: detail,
+        after_state: JSON.parse(JSON.stringify(detail)),
       });
     } catch {
       /* logging must never break the payment screen */
