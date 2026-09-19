@@ -232,6 +232,14 @@ export function BookingSummaryScreen({
               {t("common.rupees", { amount: tax })}
             </span>
           </div>
+          {discount > 0 && (
+            <div className="mt-2 flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Coupon discount</span>
+              <span className="font-bold text-primary">
+                −{t("common.rupees", { amount: Math.round(discount) })}
+              </span>
+            </div>
+          )}
           <div className="my-4 h-px bg-border" />
           <div className="flex items-center justify-between">
             <span className="text-base font-bold text-foreground">{t("common.total")}</span>
