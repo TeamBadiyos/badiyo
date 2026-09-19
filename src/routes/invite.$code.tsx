@@ -26,10 +26,7 @@ export const Route = createFileRoute("/invite/$code")({
   component: InvitePage,
 });
 
-function playStoreUrl(code: string) {
-  const referrer = encodeURIComponent(`ref=${code}`);
-  return `https://play.google.com/store/apps/details?id=${ANDROID_PACKAGE}&referrer=${referrer}`;
-}
+const playStoreUrl = buildPlayStoreInviteUrl;
 
 function InvitePage() {
   const { code } = useParams({ from: "/invite/$code" });
