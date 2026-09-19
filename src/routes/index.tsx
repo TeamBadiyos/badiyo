@@ -862,6 +862,7 @@ function Index() {
             coupon={appliedCoupon}
             onBack={() => setPhase("summary")}
             onDone={resetAndGoHome}
+            onOpenHelp={() => setPhase("help")}
             onTrackBooking={(id) => {
               if (!id) return;
               setActiveBookingId(id);

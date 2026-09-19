@@ -12,7 +12,14 @@ import { hapticImpact } from "@/lib/haptics";
 import { totalWithGst, useGstPercent } from "@/lib/gst";
 import type { AppliedCoupon } from "@/lib/coupons";
 
-import { payWithRazorpay, PaymentCancelledError } from "@/lib/razorpayCheckout";
+import { payWithRazorpay, toPaymentError } from "@/lib/razorpayCheckout";
+import {
+  paymentErrorKey,
+  paymentRefId,
+  type RazorpayErrorCategory,
+} from "@/lib/paymentError";
+import { logPaymentFailure } from "@/lib/paymentLog.functions";
+import { toast } from "sonner";
 
 
 type Status = "loading" | "success" | "failed";
@@ -39,6 +46,7 @@ export function PaymentScreen({
   onBack,
   onDone,
   onTrackBooking,
+  onOpenHelp,
 }: {
   service: SelectedService;
   slot: SelectedSlot;
@@ -47,11 +55,13 @@ export function PaymentScreen({
   onBack: () => void;
   onDone: () => void;
   onTrackBooking: (bookingId: string | null) => void;
+  onOpenHelp?: () => void;
 }) {
   const t = useT();
   const gstPercent = useGstPercent();
   const [status, setStatus] = useState<Status>("loading");
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [errCategory, setErrCategory] = useState<RazorpayErrorCategory>("unknown");
+  const [refId, setRefId] = useState<string | null>(null);
   const [bookingId, setBookingId] = useState<string | null>(null);
   const [booking, setBooking] = useState<BookingRow | null>(null);
   const [bookingLoadError, setBookingLoadError] = useState<string | null>(null);
@@ -227,8 +237,10 @@ export function PaymentScreen({
 
   async function startCheckout() {
     setStatus("loading");
-    setErrorMsg(null);
+    setErrCategory("unknown");
+    setRefId(null);
     setBookingLoadError(null);
+    let rzpOrderId: string | null = null;
     try {
       const receipt = `bk_${Date.now()}`;
 
@@ -268,6 +280,8 @@ export function PaymentScreen({
         throw new Error("Invalid order response");
       }
 
+      rzpOrderId = data.order_id as string;
+
       const { data: userData } = await getAuthUser();
       const contact = userData.user?.phone || undefined;
 
@@ -287,13 +301,26 @@ export function PaymentScreen({
       setStatus("success");
       void createBooking(resp.razorpay_payment_id, resp.razorpay_order_id);
     } catch (e) {
-      if (e instanceof PaymentCancelledError) {
-        setErrorMsg("Payment cancelled");
-        setStatus("failed");
+      const err = toPaymentError(e);
+      // Raw detail: console + server log only, never the screen.
+      console.error("Razorpay checkout error", err.category, err.parsed, e);
+      void logPaymentFailure({
+        data: {
+          razorpay_order_id: rzpOrderId,
+          purpose: "booking",
+          category: err.category,
+          raw: err.parsed.raw,
+          parsed: { ...err.parsed } as Record<string, unknown>,
+        },
+      }).catch(() => {});
+
+      if (err.category === "cancelled") {
+        toast(t("payment.cancelledToast"));
+        onBack();
         return;
       }
-      console.error("Razorpay checkout error", e);
-      setErrorMsg(await getErrorMessage(e));
+      setErrCategory(err.category);
+      setRefId(paymentRefId(rzpOrderId));
       setStatus("failed");
     }
   }
@@ -520,8 +547,13 @@ export function PaymentScreen({
               {t("payment.failed")}
             </h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              {errorMsg || t("payment.failedSub")}
+              {t(paymentErrorKey(errCategory))}
             </p>
+            {refId && (
+              <p className="mt-2 text-xs text-muted-foreground/70">
+                {t("payment.refId", { id: refId })}
+              </p>
+            )}
             <button
               onClick={() => { void hapticImpact("medium"); startCheckout(); }}
               className="mt-8 w-full rounded-[14px] bg-primary px-4 py-3.5 text-sm font-bold text-primary-foreground transition active:scale-[0.99]"
@@ -534,6 +566,14 @@ export function PaymentScreen({
             >
               {t("payment.backToSummary")}
             </button>
+            {onOpenHelp && (
+              <button
+                onClick={onOpenHelp}
+                className="mt-4 text-sm font-semibold text-primary underline-offset-2 hover:underline"
+              >
+                {t("payment.helpSupport")}
+              </button>
+            )}
           </div>
         )}
       </div>

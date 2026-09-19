@@ -62,7 +62,10 @@ type CatalogueItem = {
 
 const TIP_AMOUNTS = [25, 50, 100];
 
-import { payWithRazorpay, PaymentCancelledError } from "@/lib/razorpayCheckout";
+import { payWithRazorpay, toPaymentError } from "@/lib/razorpayCheckout";
+import { paymentErrorKey } from "@/lib/paymentError";
+import { logPaymentFailure } from "@/lib/paymentLog.functions";
+import { toast } from "sonner";
 
 
 function beep(kind: "warning" | "end") {
@@ -287,6 +290,7 @@ export function ServiceInProgressScreen({
     if (!bookingId) return;
     setBusyOptionId(opt.id);
     setExtError(null);
+    let extOrderId: string | null = null;
     try {
       const receipt = `ext_${Date.now()}`;
       const { data, error } = await supabase.functions.invoke("create-razorpay-order", {
@@ -299,6 +303,8 @@ export function ServiceInProgressScreen({
       });
       if (error) throw new Error(error.message);
       if (!data?.order_id || !data?.key_id) throw new Error("Invalid order response");
+
+      extOrderId = data.order_id as string;
 
       const { data: userData } = await getAuthUser();
       const contact = userData.user?.phone || undefined;
@@ -328,9 +334,23 @@ export function ServiceInProgressScreen({
       endedRef.current = false;
       setSheetOpen(false);
     } catch (e) {
-      setExtError(
-        e instanceof PaymentCancelledError ? "Payment cancelled" : await getErrorMessage(e),
-      );
+      const err = toPaymentError(e);
+      console.error("Extension payment error", err.category, err.parsed, e);
+      void logPaymentFailure({
+        data: {
+          razorpay_order_id: extOrderId,
+          purpose: "extension",
+          category: err.category,
+          raw: err.parsed.raw,
+          parsed: { ...err.parsed } as Record<string, unknown>,
+        },
+      }).catch(() => {});
+      if (err.category === "cancelled") {
+        toast(t("payment.cancelledToast"));
+        setExtError(null);
+      } else {
+        setExtError(t(paymentErrorKey(err.category)));
+      }
     } finally {
       setBusyOptionId(null);
     }
@@ -346,6 +366,7 @@ export function ServiceInProgressScreen({
     if (!bookingId) return;
     setTipBusy(amount);
     setTipError(null);
+    let tipOrderId: string | null = null;
     try {
       const { data, error } = await supabase.functions.invoke("create-razorpay-order", {
         body: {
@@ -357,6 +378,8 @@ export function ServiceInProgressScreen({
       });
       if (error) throw new Error(error.message);
       if (!data?.order_id || !data?.key_id) throw new Error("Invalid order response");
+
+      tipOrderId = data.order_id as string;
 
       const { data: userData } = await getAuthUser();
       const contact = userData.user?.phone || undefined;
@@ -381,9 +404,23 @@ export function ServiceInProgressScreen({
       });
       setTipPaid(amount);
     } catch (e) {
-      setTipError(
-        e instanceof PaymentCancelledError ? "Payment cancelled" : await getErrorMessage(e),
-      );
+      const err = toPaymentError(e);
+      console.error("Tip payment error", err.category, err.parsed, e);
+      void logPaymentFailure({
+        data: {
+          razorpay_order_id: tipOrderId,
+          purpose: "tip",
+          category: err.category,
+          raw: err.parsed.raw,
+          parsed: { ...err.parsed } as Record<string, unknown>,
+        },
+      }).catch(() => {});
+      if (err.category === "cancelled") {
+        toast(t("payment.cancelledToast"));
+        setTipError(null);
+      } else {
+        setTipError(t(paymentErrorKey(err.category)));
+      }
     } finally {
       setTipBusy(null);
     }

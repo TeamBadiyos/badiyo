@@ -19,6 +19,12 @@
  */
 import { registerPlugin, Capacitor } from "@capacitor/core";
 import { isNativeShell } from "@/lib/nativeServerFn";
+import {
+  mapRazorpayError,
+  parseRazorpayError,
+  type ParsedRazorpayError,
+  type RazorpayErrorCategory,
+} from "@/lib/paymentError";
 
 export type RazorpaySuccess = {
   razorpay_payment_id: string;
@@ -37,12 +43,35 @@ export type RazorpayCheckoutOptions = {
   name?: string;
 };
 
+/**
+ * Every checkout failure surfaces as this error, already classified.
+ * Screens read `category` and show a translated line — never `message`.
+ */
+export class RazorpayPaymentError extends Error {
+  category: RazorpayErrorCategory;
+  parsed: ParsedRazorpayError;
+  constructor(category: RazorpayErrorCategory, parsed: ParsedRazorpayError) {
+    super(parsed.raw || category);
+    this.name = "RazorpayPaymentError";
+    this.category = category;
+    this.parsed = parsed;
+  }
+}
+
 /** Thrown when the customer closes the sheet without paying. */
-export class PaymentCancelledError extends Error {
-  constructor(message = "Payment cancelled") {
-    super(message);
+export class PaymentCancelledError extends RazorpayPaymentError {
+  constructor(raw = "payment_cancelled") {
+    super("cancelled", parseRazorpayError(raw));
     this.name = "PaymentCancelledError";
   }
+}
+
+/** Classifies anything thrown by either checkout into our error type. */
+export function toPaymentError(err: unknown): RazorpayPaymentError {
+  if (err instanceof RazorpayPaymentError) return err;
+  const { category, parsed } = mapRazorpayError(err);
+  if (category === "cancelled") return new PaymentCancelledError(parsed.raw);
+  return new RazorpayPaymentError(category, parsed);
 }
 
 type WebRazorpayOptions = {
@@ -60,7 +89,10 @@ type WebRazorpayOptions = {
 
 declare global {
   interface Window {
-    Razorpay?: new (options: WebRazorpayOptions) => { open: () => void };
+    Razorpay?: new (options: WebRazorpayOptions) => {
+      open: () => void;
+      on?: (event: string, cb: (payload: unknown) => void) => void;
+    };
   }
 }
 
@@ -116,15 +148,6 @@ function nativeSheetAvailable(): boolean {
   }
 }
 
-function isCancellation(err: unknown): boolean {
-  const msg = (err instanceof Error ? err.message : String(err ?? "")).toLowerCase();
-  return (
-    msg.includes("cancel") ||
-    msg.includes("dismiss") ||
-    msg.includes("back pressed") ||
-    msg.includes("user closed")
-  );
-}
 
 async function openNative(opts: RazorpayCheckoutOptions): Promise<RazorpaySuccess> {
   const result = await NativeCheckout.open({
@@ -153,9 +176,10 @@ function openWeb(opts: RazorpayCheckoutOptions): Promise<RazorpaySuccess> {
   return new Promise<RazorpaySuccess>((resolve, reject) => {
     void loadWebCheckout().then((ok) => {
       if (!ok || !window.Razorpay) {
-        reject(new Error("Failed to load Razorpay Checkout"));
+        reject(toPaymentError("network: failed to load razorpay checkout"));
         return;
       }
+      let settled = false;
       const rzp = new window.Razorpay({
         key: opts.key,
         order_id: opts.order_id,
@@ -165,9 +189,28 @@ function openWeb(opts: RazorpayCheckoutOptions): Promise<RazorpaySuccess> {
         description: opts.description,
         prefill: { contact: opts.contact, email: opts.email },
         theme: { color: "#00B97A" },
-        handler: (resp) => resolve(resp),
-        modal: { ondismiss: () => reject(new PaymentCancelledError()) },
+        handler: (resp) => {
+          settled = true;
+          resolve(resp);
+        },
+        modal: {
+          ondismiss: () => {
+            if (settled) return;
+            settled = true;
+            reject(new PaymentCancelledError());
+          },
+        },
       });
+      // Bank / card / UPI rejections arrive here, not via ondismiss.
+      try {
+        rzp.on?.("payment.failed", (payload: unknown) => {
+          if (settled) return;
+          settled = true;
+          reject(toPaymentError(payload));
+        });
+      } catch {
+        /* older checkout builds have no event bus */
+      }
       rzp.open();
     });
   });
@@ -175,7 +218,8 @@ function openWeb(opts: RazorpayCheckoutOptions): Promise<RazorpaySuccess> {
 
 /**
  * Opens Razorpay and resolves with the payment details once the customer has
- * paid. Rejects with {@link PaymentCancelledError} if they close the sheet.
+ * paid. Always rejects with {@link RazorpayPaymentError} (a
+ * {@link PaymentCancelledError} when the customer closed the sheet).
  */
 export async function payWithRazorpay(
   opts: RazorpayCheckoutOptions,
@@ -184,9 +228,12 @@ export async function payWithRazorpay(
     try {
       return await openNative(opts);
     } catch (err) {
-      if (isCancellation(err)) throw new PaymentCancelledError();
-      throw err instanceof Error ? err : new Error("Payment failed");
+      throw toPaymentError(err);
     }
   }
-  return openWeb(opts);
+  try {
+    return await openWeb(opts);
+  } catch (err) {
+    throw toPaymentError(err);
+  }
 }
