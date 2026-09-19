@@ -11,8 +11,10 @@ const ANDROID_PACKAGE = "com.badiyos.customer";
  */
 export function buildPlayStoreInviteUrl(code: string): string {
   const clean = code.trim().toUpperCase();
+  const base = `https://play.google.com/store/apps/details?id=${ANDROID_PACKAGE}`;
+  if (!clean) return base;
   const referrer = encodeURIComponent(`ref=${clean}`);
-  return `https://play.google.com/store/apps/details?id=${ANDROID_PACKAGE}&referrer=${referrer}`;
+  return `${base}&referrer=${referrer}`;
 }
 
 /** Extract a referral code from the current URL, either ?ref=CODE or /invite/CODE. */
