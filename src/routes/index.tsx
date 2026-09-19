@@ -210,6 +210,8 @@ type Phase =
   | "language"
   | "device-limit"
   | "legal"
+  | "courier"
+  | "courier-track"
   | "not-serviceable";
 
 
