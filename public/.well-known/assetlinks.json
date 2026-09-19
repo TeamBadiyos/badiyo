@@ -2,7 +2,7 @@
   "relation": ["delegate_permission/common.handle_all_urls"],
   "target": {
     "namespace": "android_app",
-    "package_name": "com.badiyo.customer",
+    "package_name": "com.badiyos.customer",
     "sha256_cert_fingerprints": ["BB:68:6C:F8:60:27:EE:D4:A3:89:46:E9:3C:F4:E8:8D:96:9D:D2:07:57:C7:42:52:E3:29:A3:D2:21:1E:5D:C3"]
   }
 }]
