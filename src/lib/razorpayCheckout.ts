@@ -96,9 +96,21 @@ type NativeCheckoutPlugin = {
 
 const NativeCheckout = registerPlugin<NativeCheckoutPlugin>("Checkout");
 
+let warnedMissingPlugin = false;
+
 function nativeSheetAvailable(): boolean {
   try {
-    return isNativeShell() && Capacitor.isPluginAvailable("Checkout");
+    if (!isNativeShell()) return false;
+    if (Capacitor.isPluginAvailable("Checkout")) return true;
+    if (!warnedMissingPlugin) {
+      warnedMissingPlugin = true;
+      console.warn(
+        "[razorpay] native Checkout plugin missing — falling back to the web sheet, " +
+          "so UPI apps (GPay/PhonePe/Paytm) will not be listed. Run " +
+          "`npm install capacitor-razorpay && npx cap sync android` (see native/android/MANUAL_MERGE.md).",
+      );
+    }
+    return false;
   } catch {
     return false;
   }
