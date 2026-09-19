@@ -1,0 +1,124 @@
+// Shared reads for the courier (parcel delivery) flow.
+// Everything here is read-only config; fares and dispatch stay server-side.
+import { supabase } from "@/integrations/supabase/client";
+
+export type CourierVehicle = {
+  id: string;
+  name: string;
+  icon: string | null;
+  max_weight_kg: number | null;
+  inclusions: string | null;
+  exclusions: string | null;
+};
+
+export type CourierType = {
+  id: string;
+  name: string;
+  icon: string | null;
+  extra_fee: number | null;
+  instructions: string | null;
+};
+
+export type CourierOrder = {
+  id: string;
+  order_code: string | null;
+  status: string;
+  city: string | null;
+  pickup_address: string;
+  pickup_contact_name: string | null;
+  pickup_contact_phone: string | null;
+  pickup_contact_edit_count: number | null;
+  drop_address: string;
+  drop_contact_name: string | null;
+  drop_contact_phone: string | null;
+  drop_contact_edit_count: number | null;
+  distance_km: number | null;
+  total_amount: number | null;
+  payment_status: string | null;
+  package_description: string | null;
+  created_at: string;
+};
+
+/** Is courier live for this city? */
+export async function fetchCourierEnabled(city?: string | null) {
+  const { data, error } = await supabase
+    .from("service_flags")
+    .select("is_active, city")
+    .eq("service_key", "courier");
+  if (error) return false;
+  const rows = data ?? [];
+  if (!rows.length) return false;
+  const forCity = city
+    ? rows.find((r) => (r.city ?? "").toLowerCase() === city.toLowerCase())
+    : null;
+  return Boolean((forCity ?? rows[0])?.is_active);
+}
+
+export async function fetchCourierVehicles(): Promise<CourierVehicle[]> {
+  const { data, error } = await supabase
+    .from("courier_vehicle_types")
+    .select("id, name, icon, max_weight_kg, inclusions, exclusions, sort_order")
+    .eq("is_active", true)
+    .order("sort_order");
+  if (error) throw new Error(error.message);
+  return (data ?? []) as CourierVehicle[];
+}
+
+export async function fetchCourierTypes(vehicleId?: string | null): Promise<CourierType[]> {
+  const { data, error } = await supabase
+    .from("courier_types")
+    .select("id, name, icon, extra_fee, instructions, sort_order")
+    .eq("is_active", true)
+    .order("sort_order");
+  if (error) throw new Error(error.message);
+  const all = (data ?? []) as CourierType[];
+  if (!vehicleId) return all;
+
+  const { data: map } = await supabase
+    .from("courier_vehicle_courier_types")
+    .select("courier_type_id")
+    .eq("vehicle_type_id", vehicleId)
+    .eq("is_active", true);
+  const allowed = new Set((map ?? []).map((m) => m.courier_type_id));
+  return allowed.size ? all.filter((c) => allowed.has(c.id)) : all;
+}
+
+export async function fetchMyCourierOrders(): Promise<CourierOrder[]> {
+  const { data, error } = await supabase
+    .from("courier_orders")
+    .select(
+      "id, order_code, status, city, pickup_address, pickup_contact_name, pickup_contact_phone, pickup_contact_edit_count, drop_address, drop_contact_name, drop_contact_phone, drop_contact_edit_count, distance_km, total_amount, payment_status, package_description, created_at",
+    )
+    .order("created_at", { ascending: false })
+    .limit(30);
+  if (error) throw new Error(error.message);
+  return (data ?? []) as CourierOrder[];
+}
+
+export async function fetchCourierOrder(id: string): Promise<CourierOrder | null> {
+  const { data, error } = await supabase
+    .from("courier_orders")
+    .select(
+      "id, order_code, status, city, pickup_address, pickup_contact_name, pickup_contact_phone, pickup_contact_edit_count, drop_address, drop_contact_name, drop_contact_phone, drop_contact_edit_count, distance_km, total_amount, payment_status, package_description, created_at",
+    )
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return (data as CourierOrder | null) ?? null;
+}
+
+export const COURIER_STEPS: Array<{ key: string; label: string }> = [
+  { key: "REQUESTED", label: "Order placed" },
+  { key: "SEARCHING", label: "Finding a rider" },
+  { key: "DRIVER_ASSIGNED", label: "Rider on the way" },
+  { key: "ARRIVED_PICKUP", label: "At pickup" },
+  { key: "PICKED_UP", label: "Parcel picked up" },
+  { key: "IN_TRANSIT", label: "On the way to drop" },
+  { key: "DELIVERED", label: "Delivered" },
+];
+
+export function courierStepIndex(status: string) {
+  const i = COURIER_STEPS.findIndex((s) => s.key === status);
+  if (status === "COMPLETED") return COURIER_STEPS.length - 1;
+  return i;
+}
