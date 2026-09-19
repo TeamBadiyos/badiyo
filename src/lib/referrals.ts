@@ -2,6 +2,19 @@ import { supabase } from "@/integrations/supabase/client";
 
 const STORAGE_KEY = "badiyo.referralCode";
 
+const ANDROID_PACKAGE = "com.badiyos.customer";
+
+/**
+ * Shareable invite link: opens the Play Store listing directly, carrying the
+ * referral code in `referrer`. On install, Play hands `ref=CODE` to the
+ * Install Referrer API, which captureInstallReferrer() reads on first launch.
+ */
+export function buildPlayStoreInviteUrl(code: string): string {
+  const clean = code.trim().toUpperCase();
+  const referrer = encodeURIComponent(`ref=${clean}`);
+  return `https://play.google.com/store/apps/details?id=${ANDROID_PACKAGE}&referrer=${referrer}`;
+}
+
 /** Extract a referral code from the current URL, either ?ref=CODE or /invite/CODE. */
 export function readReferralCodeFromUrl(): string | null {
   if (typeof window === "undefined") return null;
