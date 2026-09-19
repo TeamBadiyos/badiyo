@@ -60,6 +60,15 @@ export const Route = createFileRoute("/api/public/webhooks/razorpay")({
         if (purpose === "extension" || purpose === "tip") {
           return new Response(`ignored-${purpose}`);
         }
+        // Courier parcels are their own flow: mark paid and start the rider
+        // search, or auto-refund when the payment lands after cancellation.
+        if (purpose === "courier") {
+          const courierOrderId = entity.notes?.courier_order_id;
+          if (!courierOrderId) return new Response("ignored-courier");
+          const { markCourierPaid } = await import("@/lib/courier.functions");
+          const result = await markCourierPaid(courierOrderId, paymentId);
+          return new Response(result.ok ? "ok-courier" : "courier-not-found");
+        }
         if (!orderId) {
           console.error("[razorpay-webhook] event without order_id", event);
           return new Response("ok");

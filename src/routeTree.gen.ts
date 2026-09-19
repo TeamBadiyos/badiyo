@@ -15,6 +15,7 @@ import { Route as ApiPublicServiceImageRouteImport } from './routes/api/public/s
 import { Route as ApiPublicReverseGeocodeRouteImport } from './routes/api/public/reverse-geocode'
 import { Route as ApiPublicHasLoginPinRouteImport } from './routes/api/public/has-login-pin'
 import { Route as ApiPublicWebhooksRazorpayRouteImport } from './routes/api/public/webhooks/razorpay'
+import { Route as ApiPublicCourierProcessRefundsRouteImport } from './routes/api/public/courier/process-refunds'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -47,6 +48,12 @@ const ApiPublicWebhooksRazorpayRoute =
     path: '/api/public/webhooks/razorpay',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicCourierProcessRefundsRoute =
+  ApiPublicCourierProcessRefundsRouteImport.update({
+    id: '/api/public/courier/process-refunds',
+    path: '/api/public/courier/process-refunds',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -54,6 +61,7 @@ export interface FileRoutesByFullPath {
   '/api/public/has-login-pin': typeof ApiPublicHasLoginPinRoute
   '/api/public/reverse-geocode': typeof ApiPublicReverseGeocodeRoute
   '/api/public/service-image': typeof ApiPublicServiceImageRoute
+  '/api/public/courier/process-refunds': typeof ApiPublicCourierProcessRefundsRoute
   '/api/public/webhooks/razorpay': typeof ApiPublicWebhooksRazorpayRoute
 }
 export interface FileRoutesByTo {
@@ -62,6 +70,7 @@ export interface FileRoutesByTo {
   '/api/public/has-login-pin': typeof ApiPublicHasLoginPinRoute
   '/api/public/reverse-geocode': typeof ApiPublicReverseGeocodeRoute
   '/api/public/service-image': typeof ApiPublicServiceImageRoute
+  '/api/public/courier/process-refunds': typeof ApiPublicCourierProcessRefundsRoute
   '/api/public/webhooks/razorpay': typeof ApiPublicWebhooksRazorpayRoute
 }
 export interface FileRoutesById {
@@ -71,6 +80,7 @@ export interface FileRoutesById {
   '/api/public/has-login-pin': typeof ApiPublicHasLoginPinRoute
   '/api/public/reverse-geocode': typeof ApiPublicReverseGeocodeRoute
   '/api/public/service-image': typeof ApiPublicServiceImageRoute
+  '/api/public/courier/process-refunds': typeof ApiPublicCourierProcessRefundsRoute
   '/api/public/webhooks/razorpay': typeof ApiPublicWebhooksRazorpayRoute
 }
 export interface FileRouteTypes {
@@ -81,6 +91,7 @@ export interface FileRouteTypes {
     | '/api/public/has-login-pin'
     | '/api/public/reverse-geocode'
     | '/api/public/service-image'
+    | '/api/public/courier/process-refunds'
     | '/api/public/webhooks/razorpay'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -89,6 +100,7 @@ export interface FileRouteTypes {
     | '/api/public/has-login-pin'
     | '/api/public/reverse-geocode'
     | '/api/public/service-image'
+    | '/api/public/courier/process-refunds'
     | '/api/public/webhooks/razorpay'
   id:
     | '__root__'
@@ -97,6 +109,7 @@ export interface FileRouteTypes {
     | '/api/public/has-login-pin'
     | '/api/public/reverse-geocode'
     | '/api/public/service-image'
+    | '/api/public/courier/process-refunds'
     | '/api/public/webhooks/razorpay'
   fileRoutesById: FileRoutesById
 }
@@ -106,6 +119,7 @@ export interface RootRouteChildren {
   ApiPublicHasLoginPinRoute: typeof ApiPublicHasLoginPinRoute
   ApiPublicReverseGeocodeRoute: typeof ApiPublicReverseGeocodeRoute
   ApiPublicServiceImageRoute: typeof ApiPublicServiceImageRoute
+  ApiPublicCourierProcessRefundsRoute: typeof ApiPublicCourierProcessRefundsRoute
   ApiPublicWebhooksRazorpayRoute: typeof ApiPublicWebhooksRazorpayRoute
 }
 
@@ -153,6 +167,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicWebhooksRazorpayRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/courier/process-refunds': {
+      id: '/api/public/courier/process-refunds'
+      path: '/api/public/courier/process-refunds'
+      fullPath: '/api/public/courier/process-refunds'
+      preLoaderRoute: typeof ApiPublicCourierProcessRefundsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -162,6 +183,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHasLoginPinRoute: ApiPublicHasLoginPinRoute,
   ApiPublicReverseGeocodeRoute: ApiPublicReverseGeocodeRoute,
   ApiPublicServiceImageRoute: ApiPublicServiceImageRoute,
+  ApiPublicCourierProcessRefundsRoute: ApiPublicCourierProcessRefundsRoute,
   ApiPublicWebhooksRazorpayRoute: ApiPublicWebhooksRazorpayRoute,
 }
 export const routeTree = rootRouteImport
