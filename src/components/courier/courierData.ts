@@ -7,8 +7,8 @@ export type CourierVehicle = {
   name: string;
   icon: string | null;
   max_weight_kg: number | null;
-  inclusions: string | null;
-  exclusions: string | null;
+  inclusions: string[] | null;
+  exclusions: string[] | null;
 };
 
 export type CourierType = {
