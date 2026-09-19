@@ -214,7 +214,9 @@ never returns, this file is the first place to check.
 ```
 
 The fingerprint must be the **Play App Signing** certificate, NOT the upload
-key. Get it from:
+key. The currently published value is
+`A8:82:51:BE:D1:8B:58:74:FB:E0:32:B7:A9:1B:DC:F5:65:7C:D1:4F:29:9A:01:69:4F:5B:A8:3C:02:1A:B4:A6`.
+Get it from:
 
 > Play Console → badiyos → **Test and release → Setup → App integrity** →
 > **App signing key certificate** → `SHA-256 certificate fingerprint`
