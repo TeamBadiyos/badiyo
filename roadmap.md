@@ -1,6 +1,6 @@
 # Roadmap
 
-## Courier (Porter-type) backend foundation — DONE (UI pending)
+## Courier (Porter-type) — DONE
 
 - [x] M1 config: service_flags, courier_vehicle_types, courier_vehicle_rates (placeholder), courier_types + mapping, hidden courier segment/skill category, ops_settings keys, Vault OTP key
 - [x] M2 core: courier_orders, courier_order_secrets (no client access), courier_order_events, courier_offers, transition guard + event triggers, RLS
@@ -8,7 +8,7 @@
 - [x] M4 existing bookings: service_flag check (fail-open when no flag row)
 - [x] Server layer: src/lib/courier.functions.ts (Routes distance, Razorpay `courier` purpose, WhatsApp OTP hook), /api/public/courier/process-refunds, webhook `courier` handling + late-payment auto-refund
 - [x] Cron: `courier-sweeper` every 30s (isolated from dispatch-radius-expand); refunds fire on-event via trigger + sweeper retry
-- [ ] Courier UI (customer + rider) — not started, by design
+- [x] Customer courier UI: guided locations, bike, parcel details, review/payment and tracking
 
 ### Rollback SQL (courier foundation)
 
