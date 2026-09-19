@@ -270,37 +270,33 @@ export function PaymentScreen({
       const { data: userData } = await supabase.auth.getUser();
       const contact = userData.user?.phone || undefined;
 
-      const rzp = new window.Razorpay({
+      const resp = await payWithRazorpay({
         key: data.key_id,
         order_id: data.order_id,
         amount: data.amount,
         currency: data.currency,
-        name: "badiyos",
         description: service.duration_label,
-        prefill: { contact },
-        theme: { color: "#00B97A" },
-        handler: (resp) => {
-          paymentRef.current = {
-            paymentId: resp.razorpay_payment_id,
-            orderId: resp.razorpay_order_id,
-          };
-          setStatus("success");
-          void createBooking(resp.razorpay_payment_id, resp.razorpay_order_id);
-        },
-        modal: {
-          ondismiss: () => {
-            setErrorMsg("Payment cancelled");
-            setStatus("failed");
-          },
-        },
+        contact,
       });
-      rzp.open();
+
+      paymentRef.current = {
+        paymentId: resp.razorpay_payment_id,
+        orderId: resp.razorpay_order_id,
+      };
+      setStatus("success");
+      void createBooking(resp.razorpay_payment_id, resp.razorpay_order_id);
     } catch (e) {
+      if (e instanceof PaymentCancelledError) {
+        setErrorMsg("Payment cancelled");
+        setStatus("failed");
+        return;
+      }
       console.error("Razorpay checkout error", e);
       setErrorMsg(await getErrorMessage(e));
       setStatus("failed");
     }
   }
+
 
   useEffect(() => {
     if (startedRef.current) return;
