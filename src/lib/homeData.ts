@@ -1,6 +1,7 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchSegmentServices, fetchSegments, fetchServiceCategories } from "@/lib/segments";
+import { HOMEPAGE_SECTIONS_SELECT, takeEarlyJson } from "@/lib/earlyData";
 
 export type HomepageSection = {
   section_type: string;
@@ -10,14 +11,23 @@ export type HomepageSection = {
 };
 
 export async function fetchSections(): Promise<HomepageSection[]> {
+  const early = takeEarlyJson<HomepageSection[]>("homepage_sections");
+  if (early) {
+    try {
+      return (await early) ?? [];
+    } catch {
+      /* fall through to the normal client call */
+    }
+  }
   const { data, error } = await supabase
     .from("homepage_sections")
-    .select("section_type, display_order, payload")
+    .select(HOMEPAGE_SECTIONS_SELECT)
     .eq("is_active", true)
     .order("display_order", { ascending: true });
   if (error) throw error;
   return (data ?? []) as HomepageSection[];
 }
+
 
 /**
  * Warms the three Home queries in parallel. Called as early as possible
