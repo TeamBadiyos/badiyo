@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ReferralCodeInput } from "@/components/ReferralCodeInput";
+import { fetchReferralProgress } from "@/lib/coupons";
 import { toast } from "sonner";
 
 
@@ -166,8 +167,14 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
       ),
     [transactions],
   );
-  const joinedCount = transactions.length;
-  const qualifiedCount = successful.length;
+  const { data: progress } = useQuery({
+    queryKey: ["referral_progress"],
+    queryFn: fetchReferralProgress,
+    staleTime: 60_000,
+  });
+  const invitedCount = progress?.invited ?? transactions.length;
+  const joinedCount = progress?.joined ?? transactions.length;
+  const qualifiedCount = progress?.qualified ?? successful.length;
   const totalRewards = useMemo(
     () => successful.reduce((sum, t) => sum + Number(t.reward_amount ?? 0), 0),
     [successful],
