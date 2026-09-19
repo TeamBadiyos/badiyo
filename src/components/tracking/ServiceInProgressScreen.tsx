@@ -404,9 +404,23 @@ export function ServiceInProgressScreen({
       });
       setTipPaid(amount);
     } catch (e) {
-      setTipError(
-        e instanceof PaymentCancelledError ? "Payment cancelled" : await getErrorMessage(e),
-      );
+      const err = toPaymentError(e);
+      console.error("Tip payment error", err.category, err.parsed, e);
+      void logPaymentFailure({
+        data: {
+          razorpay_order_id: tipOrderId,
+          purpose: "tip",
+          category: err.category,
+          raw: err.parsed.raw,
+          parsed: { ...err.parsed } as Record<string, unknown>,
+        },
+      }).catch(() => {});
+      if (err.category === "cancelled") {
+        toast(t("payment.cancelledToast"));
+        setTipError(null);
+      } else {
+        setTipError(t(paymentErrorKey(err.category)));
+      }
     } finally {
       setTipBusy(null);
     }
