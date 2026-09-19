@@ -146,6 +146,7 @@ export function HomeScreen({
   onOpenRewards,
   onOpenOrders,
   onSearch,
+  onOpenCourier,
 }: {
   onBookService?: (service: BookServicePayload) => void;
   onQuickBook?: (service: BookServicePayload) => void;
