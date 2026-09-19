@@ -4918,6 +4918,7 @@ export type Database = {
         Returns: boolean
       }
       staff_clear_notifications: { Args: never; Returns: undefined }
+      staff_courier_confirm_rate: { Args: { _id: string }; Returns: undefined }
       staff_courier_force_cancel: {
         Args: { _order_id: string; _reason: string; _refund_amount?: number }
         Returns: Json
@@ -4939,9 +4940,66 @@ export type Database = {
         }
         Returns: Json
       }
+      staff_courier_set_courier_type_active: {
+        Args: { _id: string; _is_active: boolean }
+        Returns: undefined
+      }
       staff_courier_set_service_flag: {
         Args: { _city: string; _is_active: boolean; _service_key: string }
         Returns: Json
+      }
+      staff_courier_set_vehicle_courier_type: {
+        Args: {
+          _courier_type_id: string
+          _is_active: boolean
+          _vehicle_type_id: string
+        }
+        Returns: undefined
+      }
+      staff_courier_set_vehicle_type_active: {
+        Args: { _id: string; _is_active: boolean }
+        Returns: undefined
+      }
+      staff_courier_upsert_courier_type: {
+        Args: {
+          _extra_fee: number
+          _icon: string
+          _id: string
+          _instructions: string
+          _is_active: boolean
+          _name: string
+          _sort_order: number
+        }
+        Returns: string
+      }
+      staff_courier_upsert_rate: {
+        Args: {
+          _base_fare: number
+          _city: string
+          _commission_pct: number
+          _id: string
+          _included_km: number
+          _min_fare: number
+          _per_km: number
+          _platform_fee: number
+          _vehicle_type_id: string
+        }
+        Returns: string
+      }
+      staff_courier_upsert_vehicle_type: {
+        Args: {
+          _exclusions: string[]
+          _icon: string
+          _id: string
+          _inclusions: string[]
+          _is_active: boolean
+          _max_weight_kg: number
+          _name: string
+          _required_documents: string[]
+          _required_skill: string
+          _sort_order: number
+        }
+        Returns: string
       }
       staff_create_service_catalogue_row: {
         Args: { _payload: Json }
