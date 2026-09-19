@@ -4468,6 +4468,7 @@ export type Database = {
         Returns: undefined
       }
       courier_sweeper: { Args: never; Returns: undefined }
+      courier_verify_job_secret: { Args: { _secret: string }; Returns: boolean }
       courier_verify_otp: {
         Args: {
           _order_id: string
