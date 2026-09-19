@@ -258,6 +258,7 @@ function Index() {
   }, []);
 
   const [legal, setLegal] = useState<{ slug: LegalSlug; from: Phase } | null>(null);
+  const [activeTicketId, setActiveTicketId] = useState<string | null>(null);
   const [selectedService, setSelectedService] = useState<SelectedService | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<SelectedSlot | null>(null);
   const [selectedAddress, setSelectedAddress] = useState<SelectedAddress | null>(null);

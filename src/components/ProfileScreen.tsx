@@ -11,7 +11,7 @@ import {
   HelpCircle,
   Gift,
   LogOut,
-  CreditCard,
+  MessageCircle,
   MapPin,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
