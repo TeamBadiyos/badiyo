@@ -129,6 +129,14 @@ const SearchResultsScreen = lazyNamed(
   "SearchResultsScreen",
 );
 const OrdersScreen = lazyNamed(() => import("@/components/OrdersScreen"), "OrdersScreen");
+const CourierBookingScreen = lazyNamed(
+  () => import("@/components/courier/CourierBookingScreen"),
+  "CourierBookingScreen",
+);
+const CourierTrackingScreen = lazyNamed(
+  () => import("@/components/courier/CourierTrackingScreen"),
+  "CourierTrackingScreen",
+);
 const NoInternetScreen = lazyNamed(
   () => import("@/components/utility/NoInternetScreen"),
   "NoInternetScreen",
