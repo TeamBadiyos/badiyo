@@ -110,3 +110,40 @@ Optional `title` / `body` keys in `data` override the built-in copy.
 - Alarm screen: shows over the lock screen, turns the screen on, streams
   `sound_url` on the ALARM stream (looping) + vibration, single **OK** button,
   auto-dismiss after 20 s, tap anywhere → deep link `badiyos://open/booking/<id>`.
+
+---
+
+# Native Razorpay payment sheet (UPI apps inside the app)
+
+Razorpay's web checkout hides GPay / PhonePe / Paytm when it runs inside a
+WebView, because a WebView may not hand a payment to another app. The app
+therefore uses Razorpay's NATIVE Android sheet when it is available.
+
+The web code already calls the plugin by its Capacitor id (`Checkout`) via
+`registerPlugin` in `src/lib/razorpayCheckout.ts`, and falls back to the web
+sheet when the native side is missing — so the currently published APK keeps
+working unchanged. To enable UPI apps, one new APK build is required.
+
+## Build steps (run locally, once)
+
+```bash
+bun install
+npm install @capacitor-community/razorpay   # native plugin (npm, not this sandbox)
+bun run build:capacitor
+npx cap sync android
+```
+
+`npx cap sync android` registers the plugin and pulls in Razorpay's Android
+SDK through Gradle. Nothing else to wire: the plugin id it exposes is
+`Checkout`, which is exactly what the app registers.
+
+## Verify after installing the new APK
+
+1. Open a booking and tap Pay.
+2. The Razorpay **native** sheet should appear (not the web page inside the app).
+3. UPI section should list the UPI apps installed on the phone.
+4. Cancel once — the app must show "Payment cancelled" and return to the summary.
+5. Complete one real payment — booking must be created and tracking must open.
+
+Extension top-ups and tips on the live service screen use the same helper and
+are covered by the same build.

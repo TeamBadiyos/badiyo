@@ -11,51 +11,8 @@ import { hapticImpact } from "@/lib/haptics";
 import { totalWithGst, useGstPercent } from "@/lib/gst";
 import type { AppliedCoupon } from "@/lib/coupons";
 
-type RazorpayOptions = {
-  key: string;
-  order_id: string;
-  amount: number;
-  currency: string;
-  name: string;
-  description?: string;
-  prefill?: { name?: string; email?: string; contact?: string };
-  theme?: { color?: string };
-  handler: (response: {
-    razorpay_payment_id: string;
-    razorpay_order_id: string;
-    razorpay_signature: string;
-  }) => void;
-  modal?: { ondismiss?: () => void };
-};
+import { payWithRazorpay, PaymentCancelledError } from "@/lib/razorpayCheckout";
 
-declare global {
-  interface Window {
-    Razorpay?: new (options: RazorpayOptions) => { open: () => void };
-  }
-}
-
-const SCRIPT_SRC = "https://checkout.razorpay.com/v1/checkout.js";
-
-function loadRazorpay(): Promise<boolean> {
-  return new Promise((resolve) => {
-    if (typeof window === "undefined") return resolve(false);
-    if (window.Razorpay) return resolve(true);
-    const existing = document.querySelector(
-      `script[src="${SCRIPT_SRC}"]`,
-    ) as HTMLScriptElement | null;
-    if (existing) {
-      existing.addEventListener("load", () => resolve(true));
-      existing.addEventListener("error", () => resolve(false));
-      return;
-    }
-    const s = document.createElement("script");
-    s.src = SCRIPT_SRC;
-    s.async = true;
-    s.onload = () => resolve(true);
-    s.onerror = () => resolve(false);
-    document.body.appendChild(s);
-  });
-}
 
 type Status = "loading" | "success" | "failed";
 
@@ -272,12 +229,8 @@ export function PaymentScreen({
     setErrorMsg(null);
     setBookingLoadError(null);
     try {
-      const ok = await loadRazorpay();
-      if (!ok || !window.Razorpay) {
-        throw new Error("Failed to load Razorpay Checkout");
-      }
-
       const receipt = `bk_${Date.now()}`;
+
       const { data, error } = await supabase.functions.invoke(
         "create-razorpay-order",
         {
@@ -317,37 +270,33 @@ export function PaymentScreen({
       const { data: userData } = await supabase.auth.getUser();
       const contact = userData.user?.phone || undefined;
 
-      const rzp = new window.Razorpay({
+      const resp = await payWithRazorpay({
         key: data.key_id,
         order_id: data.order_id,
         amount: data.amount,
         currency: data.currency,
-        name: "badiyos",
         description: service.duration_label,
-        prefill: { contact },
-        theme: { color: "#00B97A" },
-        handler: (resp) => {
-          paymentRef.current = {
-            paymentId: resp.razorpay_payment_id,
-            orderId: resp.razorpay_order_id,
-          };
-          setStatus("success");
-          void createBooking(resp.razorpay_payment_id, resp.razorpay_order_id);
-        },
-        modal: {
-          ondismiss: () => {
-            setErrorMsg("Payment cancelled");
-            setStatus("failed");
-          },
-        },
+        contact,
       });
-      rzp.open();
+
+      paymentRef.current = {
+        paymentId: resp.razorpay_payment_id,
+        orderId: resp.razorpay_order_id,
+      };
+      setStatus("success");
+      void createBooking(resp.razorpay_payment_id, resp.razorpay_order_id);
     } catch (e) {
+      if (e instanceof PaymentCancelledError) {
+        setErrorMsg("Payment cancelled");
+        setStatus("failed");
+        return;
+      }
       console.error("Razorpay checkout error", e);
       setErrorMsg(await getErrorMessage(e));
       setStatus("failed");
     }
   }
+
 
   useEffect(() => {
     if (startedRef.current) return;
