@@ -4400,6 +4400,7 @@ export type Database = {
         Returns: string
       }
       courier_dispatch_next: { Args: { _order_id: string }; Returns: boolean }
+      courier_dispatch_refund_job: { Args: never; Returns: undefined }
       courier_eligible_riders: {
         Args: { _order_id: string; _radius: number }
         Returns: {
