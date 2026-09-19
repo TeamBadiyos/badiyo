@@ -19,6 +19,12 @@
  */
 import { registerPlugin, Capacitor } from "@capacitor/core";
 import { isNativeShell } from "@/lib/nativeServerFn";
+import {
+  mapRazorpayError,
+  parseRazorpayError,
+  type ParsedRazorpayError,
+  type RazorpayErrorCategory,
+} from "@/lib/paymentError";
 
 export type RazorpaySuccess = {
   razorpay_payment_id: string;
