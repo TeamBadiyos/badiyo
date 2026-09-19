@@ -564,6 +564,14 @@ export function PaymentScreen({
             >
               {t("payment.backToSummary")}
             </button>
+            {onOpenHelp && (
+              <button
+                onClick={onOpenHelp}
+                className="mt-4 text-sm font-semibold text-primary underline-offset-2 hover:underline"
+              >
+                {t("payment.helpSupport")}
+              </button>
+            )}
           </div>
         )}
       </div>
