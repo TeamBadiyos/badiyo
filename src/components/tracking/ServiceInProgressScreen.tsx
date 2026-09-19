@@ -304,6 +304,8 @@ export function ServiceInProgressScreen({
       if (error) throw new Error(error.message);
       if (!data?.order_id || !data?.key_id) throw new Error("Invalid order response");
 
+      extOrderId = data.order_id as string;
+
       const { data: userData } = await getAuthUser();
       const contact = userData.user?.phone || undefined;
 
