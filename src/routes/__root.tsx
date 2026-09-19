@@ -109,6 +109,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "stylesheet", href: appCss },
       { rel: "icon", type: "image/png", href: "/favicon.png" },
       { rel: "apple-touch-icon", href: "/favicon.png" },
+      // Open the TLS connection to the data host while the bundle downloads,
+      // so the first data request doesn't pay for a fresh handshake.
+      ...(SUPABASE_URL
+        ? [
+            { rel: "preconnect", href: SUPABASE_URL, crossOrigin: "anonymous" },
+            { rel: "dns-prefetch", href: SUPABASE_URL },
+          ]
+        : []),
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
@@ -116,7 +124,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: "https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800&display=swap",
       },
     ],
+    scripts: [
+      // Kicks off Home's public config requests before the app bundle is parsed.
+      { children: buildEarlyBootScript(SUPABASE_URL, SUPABASE_KEY) },
+    ],
   }),
+
   shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
