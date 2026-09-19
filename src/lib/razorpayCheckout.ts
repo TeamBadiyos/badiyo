@@ -89,7 +89,10 @@ type WebRazorpayOptions = {
 
 declare global {
   interface Window {
-    Razorpay?: new (options: WebRazorpayOptions) => { open: () => void };
+    Razorpay?: new (options: WebRazorpayOptions) => {
+      open: () => void;
+      on?: (event: string, cb: (payload: unknown) => void) => void;
+    };
   }
 }
 
