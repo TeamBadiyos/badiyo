@@ -1,0 +1,1 @@
+drop function if exists public.courier_rider_advance(uuid, text, numeric, numeric);
