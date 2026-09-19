@@ -1820,6 +1820,45 @@ export type Database = {
         }
         Relationships: []
       }
+      expert_zones: {
+        Row: {
+          created_at: string
+          expert_id: string
+          id: string
+          is_primary: boolean
+          zone_id: string
+        }
+        Insert: {
+          created_at?: string
+          expert_id: string
+          id?: string
+          is_primary?: boolean
+          zone_id: string
+        }
+        Update: {
+          created_at?: string
+          expert_id?: string
+          id?: string
+          is_primary?: boolean
+          zone_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expert_zones_expert_id_fkey"
+            columns: ["expert_id"]
+            isOneToOne: false
+            referencedRelation: "experts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expert_zones_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "zones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       experts: {
         Row: {
           address: string | null
@@ -3850,6 +3889,42 @@ export type Database = {
         }
         Relationships: []
       }
+      staff_user_zones: {
+        Row: {
+          created_at: string
+          id: string
+          staff_user_id: string
+          zone_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          staff_user_id: string
+          zone_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          staff_user_id?: string
+          zone_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_user_zones_staff_user_id_fkey"
+            columns: ["staff_user_id"]
+            isOneToOne: false
+            referencedRelation: "staff_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staff_user_zones_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "zones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       staff_users: {
         Row: {
           auth_user_id: string
@@ -5377,6 +5452,10 @@ export type Database = {
         Args: { _active: boolean; _id: string }
         Returns: undefined
       }
+      staff_set_expert_zones: {
+        Args: { _expert_id: string; _primary?: string; _zone_ids: string[] }
+        Returns: undefined
+      }
       staff_set_homepage_section_active: {
         Args: { _active: boolean; _id: string }
         Returns: undefined
@@ -5399,6 +5478,10 @@ export type Database = {
       }
       staff_set_reward_program_active: {
         Args: { _id: string; _is_active: boolean }
+        Returns: undefined
+      }
+      staff_set_staff_user_zones: {
+        Args: { _staff_user_id: string; _zone_ids: string[] }
         Returns: undefined
       }
       staff_soft_delete_area_partner: {
@@ -5539,6 +5622,7 @@ export type Database = {
         }
         Returns: string
       }
+      staff_zone_ids: { Args: { _auth_user_id: string }; Returns: string[] }
       start_service: { Args: { _booking_id: string }; Returns: string }
       submit_booking_review: {
         Args: { _booking_id: string; _rating: number; _review: string }
