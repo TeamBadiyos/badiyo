@@ -129,6 +129,14 @@ const SearchResultsScreen = lazyNamed(
   "SearchResultsScreen",
 );
 const OrdersScreen = lazyNamed(() => import("@/components/OrdersScreen"), "OrdersScreen");
+const CourierBookingScreen = lazyNamed(
+  () => import("@/components/courier/CourierBookingScreen"),
+  "CourierBookingScreen",
+);
+const CourierTrackingScreen = lazyNamed(
+  () => import("@/components/courier/CourierTrackingScreen"),
+  "CourierTrackingScreen",
+);
 const NoInternetScreen = lazyNamed(
   () => import("@/components/utility/NoInternetScreen"),
   "NoInternetScreen",
@@ -210,6 +218,8 @@ type Phase =
   | "language"
   | "device-limit"
   | "legal"
+  | "courier"
+  | "courier-track"
   | "not-serviceable";
 
 
@@ -253,6 +263,7 @@ function Index() {
   const [activeBookingStatus, setActiveBookingStatus] = useState<string | null>(null);
   const [selectedBooking, setSelectedBooking] = useState<BookingRow | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [courierOrderId, setCourierOrderId] = useState<string | null>(null);
   const [pendingPhone, setPendingPhone] = useState<string | null>(null);
   const [forceResetPin, setForceResetPin] = useState(false);
   // Always start "online" so SSR and first client render match; a real offline
@@ -780,8 +791,28 @@ function Index() {
               setSearchQuery(q);
               setPhase("search-results");
             }}
+            onOpenCourier={() => setPhase("courier")}
           />
 
+        </div>
+      )}
+      {phase === "courier" && (
+        <div className="animate-fade-slide-in">
+          <CourierBookingScreen
+            onBack={() => setPhase("home")}
+            onBooked={(id) => {
+              setCourierOrderId(id);
+              setPhase("courier-track");
+            }}
+          />
+        </div>
+      )}
+      {phase === "courier-track" && courierOrderId && (
+        <div className="animate-fade-slide-in">
+          <CourierTrackingScreen
+            orderId={courierOrderId}
+            onBack={() => setPhase("home")}
+          />
         </div>
       )}
       {phase === "slot" && selectedService && (

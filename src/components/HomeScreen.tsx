@@ -2,7 +2,7 @@ import { getAuthUser } from "@/lib/authUser";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { usePullToRefresh, PullToRefreshIndicator } from "@/lib/usePullToRefresh";
-import { ChevronDown, ChevronRight, Clock, Gift, Home, MapPin, Mic, Search, Sparkles, User, Wind, type LucideIcon } from "lucide-react";
+import { ChevronDown, ChevronRight, Clock, Gift, Home, MapPin, Mic, Package, Search, Sparkles, User, Wind, type LucideIcon } from "lucide-react";
 import { BadiyoLogo } from "./BadiyoLogo";
 import { BottomNav } from "./BottomNav";
 import { LocationPickerSheet, type SavedAddress } from "./LocationPickerSheet";
@@ -18,6 +18,7 @@ import {
   type ServiceCategory,
 } from "@/lib/segments";
 import { ServiceProductCard } from "./home/ServiceProductCard";
+import { fetchCourierEnabled } from "./courier/courierData";
 import { SectionHeading } from "./SectionHeading";
 import { BrandWatermark } from "./BrandWatermark";
 import { anchorPrice } from "@/lib/price";
@@ -145,6 +146,7 @@ export function HomeScreen({
   onOpenRewards,
   onOpenOrders,
   onSearch,
+  onOpenCourier,
 }: {
   onBookService?: (service: BookServicePayload) => void;
   onQuickBook?: (service: BookServicePayload) => void;
@@ -152,7 +154,13 @@ export function HomeScreen({
   onOpenRewards?: () => void;
   onOpenOrders?: () => void;
   onSearch?: (query: string) => void;
+  onOpenCourier?: () => void;
 }) {
+  const { data: courierEnabled = false } = useQuery({
+    queryKey: ["courier_enabled"],
+    queryFn: () => fetchCourierEnabled(),
+    staleTime: 5 * 60_000,
+  });
   const { data: segments = [] } = useQuery({ queryKey: ["segments"], queryFn: fetchSegments });
   const { data: services = [] } = useQuery({
     queryKey: ["segment_services"],
@@ -301,6 +309,26 @@ export function HomeScreen({
             <Mic className="h-5 w-5 text-muted-foreground" />
           </button>
         </form>
+
+        {/* Parcel delivery — only shown where the service is switched on */}
+        {courierEnabled && onOpenCourier && (
+          <button
+            type="button"
+            onClick={onOpenCourier}
+            className="mt-3 flex w-full items-center gap-3 rounded-[16px] border border-border bg-card px-4 py-3 text-left shadow-sm"
+          >
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+              <Package className="h-5 w-5 text-primary" />
+            </span>
+            <span className="flex-1">
+              <span className="block text-sm font-semibold text-foreground">Send a parcel</span>
+              <span className="block text-xs text-muted-foreground">
+                Pickup &amp; drop anywhere in the city
+              </span>
+            </span>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </button>
+        )}
 
         {/* Services bar (segment tabs) */}
         <ServicesBar
