@@ -37,12 +37,35 @@ export type RazorpayCheckoutOptions = {
   name?: string;
 };
 
+/**
+ * Every checkout failure surfaces as this error, already classified.
+ * Screens read `category` and show a translated line — never `message`.
+ */
+export class RazorpayPaymentError extends Error {
+  category: RazorpayErrorCategory;
+  parsed: ParsedRazorpayError;
+  constructor(category: RazorpayErrorCategory, parsed: ParsedRazorpayError) {
+    super(parsed.raw || category);
+    this.name = "RazorpayPaymentError";
+    this.category = category;
+    this.parsed = parsed;
+  }
+}
+
 /** Thrown when the customer closes the sheet without paying. */
-export class PaymentCancelledError extends Error {
-  constructor(message = "Payment cancelled") {
-    super(message);
+export class PaymentCancelledError extends RazorpayPaymentError {
+  constructor(raw = "payment_cancelled") {
+    super("cancelled", parseRazorpayError(raw));
     this.name = "PaymentCancelledError";
   }
+}
+
+/** Classifies anything thrown by either checkout into our error type. */
+export function toPaymentError(err: unknown): RazorpayPaymentError {
+  if (err instanceof RazorpayPaymentError) return err;
+  const { category, parsed } = mapRazorpayError(err);
+  if (category === "cancelled") return new PaymentCancelledError(parsed.raw);
+  return new RazorpayPaymentError(category, parsed);
 }
 
 type WebRazorpayOptions = {
