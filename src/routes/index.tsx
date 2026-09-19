@@ -137,6 +137,7 @@ const ForceUpdateScreen = lazyNamed(
 
 import type { SelectedService, SelectedSlot } from "@/components/SlotSelectionScreen";
 import type { SelectedAddress } from "@/components/BookingSummaryScreen";
+import type { AppliedCoupon } from "@/lib/coupons";
 import type { BookingRow } from "@/components/MyBookingsScreen";
 import type { LegalSlug } from "@/components/profile/LegalPageScreen";
 import { ACTIVE_TRACKING_STATUSES } from "@/lib/bookingStatus";
@@ -763,6 +764,8 @@ function Index() {
             service={selectedService}
             slot={selectedSlot}
             address={selectedAddress}
+            coupon={appliedCoupon}
+            onCouponChange={setAppliedCoupon}
             onBack={() => setPhase("address")}
             onEditAddress={() => setPhase("address")}
             onProceedToPay={() => setPhase("payment")}
