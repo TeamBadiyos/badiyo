@@ -152,7 +152,13 @@ export function HomeScreen({
   onOpenRewards?: () => void;
   onOpenOrders?: () => void;
   onSearch?: (query: string) => void;
+  onOpenCourier?: () => void;
 }) {
+  const { data: courierEnabled = false } = useQuery({
+    queryKey: ["courier_enabled"],
+    queryFn: () => fetchCourierEnabled(),
+    staleTime: 5 * 60_000,
+  });
   const { data: segments = [] } = useQuery({ queryKey: ["segments"], queryFn: fetchSegments });
   const { data: services = [] } = useQuery({
     queryKey: ["segment_services"],
