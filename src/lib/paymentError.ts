@@ -177,10 +177,10 @@ export function mapRazorpayError(input: unknown): {
     category = "cancelled";
   } else if (hit(hay, UPI_HINTS)) {
     category = "upi_unavailable";
-  } else if (hit(hay, NETWORK_HINTS)) {
-    category = "network";
   } else if (hit(hay, DECLINE_HINTS)) {
     category = "declined";
+  } else if (hit(hay, NETWORK_HINTS)) {
+    category = "network";
   }
 
   return { category, parsed };
