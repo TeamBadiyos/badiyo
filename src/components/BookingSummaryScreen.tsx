@@ -40,6 +40,8 @@ export function BookingSummaryScreen({
   service,
   slot,
   address,
+  coupon,
+  onCouponChange,
   onBack,
   onEditAddress,
   onProceedToPay,
@@ -47,6 +49,8 @@ export function BookingSummaryScreen({
   service: SelectedService;
   slot: SelectedSlot;
   address: SelectedAddress;
+  coupon: AppliedCoupon | null;
+  onCouponChange: (coupon: AppliedCoupon | null) => void;
   onBack: () => void;
   onEditAddress: () => void;
   onProceedToPay: () => void;
@@ -55,7 +59,31 @@ export function BookingSummaryScreen({
   const slotInfo = formatSlot(slot, t);
   const gstPercent = useGstPercent();
   const tax = gstAmount(Number(service.price), gstPercent);
-  const total = totalWithGst(Number(service.price), gstPercent);
+  const grossTotal = totalWithGst(Number(service.price), gstPercent);
+  const discount = Math.min(coupon?.discount ?? 0, grossTotal);
+  const total = Math.max(grossTotal - discount, 0);
+
+  const [codeInput, setCodeInput] = useState("");
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [checking, setChecking] = useState(false);
+
+  async function applyCode() {
+    setChecking(true);
+    setCouponError(null);
+    const res = await previewCoupon(
+      codeInput,
+      Number(service.price),
+      service.duration_minutes,
+    );
+    setChecking(false);
+    if (res.ok) {
+      onCouponChange(res.coupon);
+      setCodeInput("");
+    } else {
+      onCouponChange(null);
+      setCouponError(res.message);
+    }
+  }
 
   return (
     <main className="min-h-screen w-full bg-background pb-28">
