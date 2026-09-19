@@ -30,7 +30,7 @@ import { payWithRazorpay, toPaymentError } from "@/lib/razorpayCheckout";
 import { getPaymentPrefill } from "@/lib/paymentPrefill";
 import { paymentErrorKey } from "@/lib/paymentError";
 import { useT } from "@/i18n";
-import { pickContact } from "@/lib/contactPicker";
+import { contactPickerAvailable, pickContact } from "@/lib/contactPicker";
 import { fetchCourierVehicles, fetchCourierTypes, fetchCourierService } from "./courierData";
 
 type Addr = {
@@ -517,6 +517,11 @@ function AddressStop({ kind, address, onClick }: { kind: AddressTarget; address:
 function ContactFields({ title, name, phone, onName, onPhone }: { title: string; name: string; phone: string; onName: (value: string) => void; onPhone: (value: string) => void }) {
   const t = useT();
   const [picking, setPicking] = useState(false);
+  // Only devices that can actually open a phonebook show the button.
+  const [canPick, setCanPick] = useState(false);
+  useEffect(() => {
+    setCanPick(contactPickerAvailable());
+  }, []);
 
   const handlePick = async () => {
     setPicking(true);
@@ -529,7 +534,7 @@ function ContactFields({ title, name, phone, onName, onPhone }: { title: string;
         return;
       }
       if (result.reason === "denied") toast.error(t("courier.contactDenied"));
-      else if (result.reason === "unsupported") toast.error(t("courier.contactUnsupported"));
+      else if (result.reason === "unsupported") setCanPick(false);
       else if (result.reason === "error") toast.error(t("courier.contactFailed"));
     } finally {
       setPicking(false);
@@ -540,18 +545,20 @@ function ContactFields({ title, name, phone, onName, onPhone }: { title: string;
     <div>
       <div className="mb-2 flex items-center justify-between">
         <h3 className="text-sm font-extrabold text-foreground">{title}</h3>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={handlePick}
-          disabled={picking}
-          aria-label={t("courier.pickFromContacts")}
-          className="h-8 gap-1.5 px-2 text-primary"
-        >
-          {picking ? <Loader2 className="h-4 w-4 animate-spin" /> : <BookUser className="h-4 w-4" />}
-          <span className="text-xs font-bold">{t("courier.pickFromContacts")}</span>
-        </Button>
+        {canPick ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={handlePick}
+            disabled={picking}
+            aria-label={t("courier.pickFromContacts")}
+            className="h-8 gap-1.5 px-2 text-primary"
+          >
+            {picking ? <Loader2 className="h-4 w-4 animate-spin" /> : <BookUser className="h-4 w-4" />}
+            <span className="text-xs font-bold">{t("courier.pickFromContacts")}</span>
+          </Button>
+        ) : null}
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="relative"><UserRound className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" /><Input value={name} onChange={(event) => onName(event.target.value)} placeholder={t("courier.contactName")} className="h-12 pl-10" /></div>
