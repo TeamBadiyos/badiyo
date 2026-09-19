@@ -275,7 +275,8 @@ Deno.serve(async (req) => {
         _user_id: userId,
         _code: couponCode,
         _order_id: order.id,
-        _discount: discountPaise / 100,
+        _base_amount: price!,
+        _duration_minutes: Number.isInteger(durationMinutes) ? durationMinutes : 0,
       });
       if (reserveErr) console.error("system_coupon_reserve failed", reserveErr);
     }
