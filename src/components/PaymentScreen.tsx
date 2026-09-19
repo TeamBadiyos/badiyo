@@ -46,6 +46,7 @@ export function PaymentScreen({
   onBack,
   onDone,
   onTrackBooking,
+  onOpenHelp,
 }: {
   service: SelectedService;
   slot: SelectedSlot;
