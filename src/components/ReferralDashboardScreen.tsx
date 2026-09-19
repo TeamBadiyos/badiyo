@@ -158,10 +158,16 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
   const user = data?.user ?? null;
   const config = data?.config ?? null;
 
+  // Qualified = the friend has completed their first booking (reward credited or pending credit).
   const successful = useMemo(
-    () => transactions.filter((t) => t.status === "reward_credited"),
+    () =>
+      transactions.filter(
+        (t) => t.status === "reward_credited" || t.status === "first_booking_completed",
+      ),
     [transactions],
   );
+  const joinedCount = transactions.length;
+  const qualifiedCount = successful.length;
   const totalRewards = useMemo(
     () => successful.reduce((sum, t) => sum + Number(t.reward_amount ?? 0), 0),
     [successful],
