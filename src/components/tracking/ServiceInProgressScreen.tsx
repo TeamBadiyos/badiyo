@@ -328,9 +328,23 @@ export function ServiceInProgressScreen({
       endedRef.current = false;
       setSheetOpen(false);
     } catch (e) {
-      setExtError(
-        e instanceof PaymentCancelledError ? "Payment cancelled" : await getErrorMessage(e),
-      );
+      const err = toPaymentError(e);
+      console.error("Extension payment error", err.category, err.parsed, e);
+      void logPaymentFailure({
+        data: {
+          razorpay_order_id: extOrderId,
+          purpose: "extension",
+          category: err.category,
+          raw: err.parsed.raw,
+          parsed: { ...err.parsed } as Record<string, unknown>,
+        },
+      }).catch(() => {});
+      if (err.category === "cancelled") {
+        toast(t("payment.cancelledToast"));
+        setExtError(null);
+      } else {
+        setExtError(t(paymentErrorKey(err.category)));
+      }
     } finally {
       setBusyOptionId(null);
     }
