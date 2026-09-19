@@ -18,6 +18,7 @@ import {
   type ServiceCategory,
 } from "@/lib/segments";
 import { ServiceProductCard } from "./home/ServiceProductCard";
+import { fetchCourierEnabled } from "./courier/courierData";
 import { SectionHeading } from "./SectionHeading";
 import { BrandWatermark } from "./BrandWatermark";
 import { anchorPrice } from "@/lib/price";
