@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, useParams } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Capacitor } from "@capacitor/core";
-import { captureReferralCode } from "@/lib/referrals";
+import { buildPlayStoreInviteUrl, captureReferralCode } from "@/lib/referrals";
 
 const ANDROID_PACKAGE = "com.badiyos.customer";
 
