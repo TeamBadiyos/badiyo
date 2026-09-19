@@ -61,6 +61,26 @@ export function RewardsScreen({
       <div className="mx-auto w-full max-w-md px-5 pt-6">
         <h1 className="text-lg font-bold text-foreground">Rewards</h1>
 
+        {/* Tabs */}
+        <div className="mt-4 flex rounded-[14px] border border-border bg-card p-1">
+          {(["rewards", "offers"] as const).map((k) => (
+            <button
+              key={k}
+              type="button"
+              onClick={() => setTab(k)}
+              className={`flex-1 rounded-[11px] py-2 text-sm font-bold capitalize transition ${
+                tab === k ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+              }`}
+            >
+              {k === "rewards" ? "Rewards" : "Offers"}
+            </button>
+          ))}
+        </div>
+
+        {tab === "offers" && <OffersList />}
+
+        {tab === "rewards" && (
+          <>
         {/* Summary card */}
         <section className="mt-5 rounded-[18px] bg-primary/10 p-5">
           <div className="flex items-center justify-between">
