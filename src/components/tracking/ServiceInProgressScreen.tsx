@@ -306,8 +306,7 @@ export function ServiceInProgressScreen({
 
       extOrderId = data.order_id as string;
 
-      const { data: userData } = await getAuthUser();
-      const contact = userData.user?.phone || undefined;
+      const prefill = await getPaymentPrefill();
 
       const resp = await payWithRazorpay({
         key: data.key_id,
@@ -315,7 +314,7 @@ export function ServiceInProgressScreen({
         amount: data.amount,
         currency: data.currency,
         description: `Extend by ${opt.duration_label}`,
-        contact,
+        ...prefill,
       });
 
       const { data: newEnd, error: extErr } = await supabase.rpc("extend_booking", {
@@ -381,8 +380,7 @@ export function ServiceInProgressScreen({
 
       tipOrderId = data.order_id as string;
 
-      const { data: userData } = await getAuthUser();
-      const contact = userData.user?.phone || undefined;
+      const tipPrefill = await getPaymentPrefill();
 
       const resp = await payWithRazorpay({
         key: data.key_id,
@@ -390,7 +388,7 @@ export function ServiceInProgressScreen({
         amount: data.amount,
         currency: data.currency,
         description: `Tip for ${expert?.name ?? "your expert"}`,
-        contact,
+        ...tipPrefill,
       });
 
       // Server verifies the payment with Razorpay before crediting.

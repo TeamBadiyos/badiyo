@@ -282,8 +282,7 @@ export function PaymentScreen({
 
       rzpOrderId = data.order_id as string;
 
-      const { data: userData } = await getAuthUser();
-      const contact = userData.user?.phone || undefined;
+      const prefill = await getPaymentPrefill();
 
       const resp = await payWithRazorpay({
         key: data.key_id,
@@ -291,7 +290,7 @@ export function PaymentScreen({
         amount: data.amount,
         currency: data.currency,
         description: service.duration_label,
-        contact,
+        ...prefill,
       });
 
       paymentRef.current = {

@@ -200,6 +200,7 @@ export function CourierBookingScreen({
           prohibited_items_confirmed: true as const,
         },
       });
+      const prefill = await getPaymentPrefill(pickupPhone);
       const result = await payWithRazorpay({
         key: order.key_id,
         amount: order.amount,
@@ -207,6 +208,8 @@ export function CourierBookingScreen({
         order_id: order.razorpay_order_id,
         name: "Badiyos",
         description: "Parcel delivery",
+        contact: prefill.contact,
+        email: prefill.email,
       });
       await courierConfirmPayment({
         data: {
