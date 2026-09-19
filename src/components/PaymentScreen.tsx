@@ -9,6 +9,7 @@ import { getCurrentCoords } from "@/lib/nativeGeolocation";
 import { useT } from "@/i18n";
 import { hapticImpact } from "@/lib/haptics";
 import { totalWithGst, useGstPercent } from "@/lib/gst";
+import type { AppliedCoupon } from "@/lib/coupons";
 
 type RazorpayOptions = {
   key: string;
@@ -76,6 +77,7 @@ export function PaymentScreen({
   service,
   slot,
   address,
+  coupon,
   onBack,
   onDone,
   onTrackBooking,
@@ -83,6 +85,7 @@ export function PaymentScreen({
   service: SelectedService;
   slot: SelectedSlot;
   address: SelectedAddress;
+  coupon?: AppliedCoupon | null;
   onBack: () => void;
   onDone: () => void;
   onTrackBooking: (bookingId: string | null) => void;
