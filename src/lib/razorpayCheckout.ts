@@ -145,15 +145,6 @@ function nativeSheetAvailable(): boolean {
   }
 }
 
-function isCancellation(err: unknown): boolean {
-  const msg = (err instanceof Error ? err.message : String(err ?? "")).toLowerCase();
-  return (
-    msg.includes("cancel") ||
-    msg.includes("dismiss") ||
-    msg.includes("back pressed") ||
-    msg.includes("user closed")
-  );
-}
 
 async function openNative(opts: RazorpayCheckoutOptions): Promise<RazorpaySuccess> {
   const result = await NativeCheckout.open({
