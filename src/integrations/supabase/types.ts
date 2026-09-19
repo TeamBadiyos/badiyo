@@ -4959,6 +4959,7 @@ export type Database = {
         Args: { object_name: string }
         Returns: boolean
       }
+      is_super_admin_user: { Args: never; Returns: boolean }
       is_target_unavailable: {
         Args: { _target_id: string; _target_type: string }
         Returns: boolean
@@ -5367,6 +5368,10 @@ export type Database = {
         Args: { _city?: string; _segment_id?: string }
         Returns: number
       }
+      staff_permanently_delete_user: {
+        Args: { _confirm_phone: string; _user_id: string }
+        Returns: Json
+      }
       staff_reassign_expert: {
         Args: { _booking_id: string; _new_expert_id: string }
         Returns: undefined
@@ -5484,6 +5489,10 @@ export type Database = {
         Args: { _staff_user_id: string; _zone_ids: string[] }
         Returns: undefined
       }
+      staff_set_user_deleted: {
+        Args: { _deleted: boolean; _user_id: string }
+        Returns: Json
+      }
       staff_soft_delete_area_partner: {
         Args: { _partner_id: string; _reason: string }
         Returns: undefined
@@ -5525,6 +5534,15 @@ export type Database = {
           _ticket_id: string
         }
         Returns: undefined
+      }
+      staff_update_user: {
+        Args: {
+          _email: string
+          _full_name: string
+          _preferred_language: string
+          _user_id: string
+        }
+        Returns: Json
       }
       staff_update_zone: {
         Args: { _payload: Json; _zone_id: string }
