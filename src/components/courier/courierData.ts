@@ -39,19 +39,29 @@ export type CourierOrder = {
   created_at: string;
 };
 
-/** Is courier live for this city? */
-export async function fetchCourierEnabled(city?: string | null) {
+/** Is courier live, and for which city? */
+export async function fetchCourierService(
+  city?: string | null,
+): Promise<{ enabled: boolean; city: string | null }> {
   const { data, error } = await supabase
     .from("service_flags")
     .select("is_active, city")
     .eq("service_key", "courier");
-  if (error) return false;
+  if (error) return { enabled: false, city: null };
   const rows = data ?? [];
-  if (!rows.length) return false;
-  const forCity = city
-    ? rows.find((r) => (r.city ?? "").toLowerCase() === city.toLowerCase())
+  if (!rows.length) return { enabled: false, city: null };
+  const key = (city ?? "").trim().toLowerCase();
+  const forCity = key
+    ? rows.find((r) => (r.city ?? "").trim().toLowerCase() === key)
     : null;
-  return Boolean((forCity ?? rows[0])?.is_active);
+  const active = rows.find((r) => r.is_active) ?? null;
+  const row = forCity ?? active ?? rows[0];
+  return { enabled: Boolean(row?.is_active), city: row?.city ?? null };
+}
+
+/** Is courier live for this city? */
+export async function fetchCourierEnabled(city?: string | null) {
+  return (await fetchCourierService(city)).enabled;
 }
 
 export async function fetchCourierVehicles(): Promise<CourierVehicle[]> {

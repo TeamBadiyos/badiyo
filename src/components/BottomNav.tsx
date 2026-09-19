@@ -1,8 +1,8 @@
-import { Home, ClipboardList, Gift, type LucideIcon } from "lucide-react";
+import { Home, ClipboardList, Gift, Package, type LucideIcon } from "lucide-react";
 import { useT } from "@/i18n";
 import { hapticSelection } from "@/lib/haptics";
 
-type TabKey = "home" | "orders" | "rewards";
+type TabKey = "home" | "orders" | "parcel" | "rewards";
 
 type Tab = {
   key: TabKey;
@@ -17,11 +17,15 @@ export function BottomNav({
   onHome,
   onOrders,
   onRewards,
+  onParcel,
+  showParcel = false,
 }: {
   activeKey: TabKey;
   onHome: () => void;
   onOrders: () => void;
   onRewards: () => void;
+  onParcel?: () => void;
+  showParcel?: boolean;
 }) {
   const t = useT();
   const withHaptic = (fn: () => void) => () => {
@@ -31,6 +35,16 @@ export function BottomNav({
   const tabs: Tab[] = [
     { key: "home", label: t("nav.home"), Icon: Home, onClick: withHaptic(onHome) },
     { key: "orders", label: t("nav.orders"), Icon: ClipboardList, onClick: withHaptic(onOrders), primary: true },
+    ...(showParcel && onParcel
+      ? [
+          {
+            key: "parcel" as const,
+            label: t("nav.parcel"),
+            Icon: Package,
+            onClick: withHaptic(onParcel),
+          },
+        ]
+      : []),
     { key: "rewards", label: t("nav.rewards"), Icon: Gift, onClick: withHaptic(onRewards) },
   ];
 
