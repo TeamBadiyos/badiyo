@@ -357,6 +357,28 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
               </div>
             </section>
 
+            {/* Referral progress */}
+            <section className="mt-6 grid grid-cols-3 gap-2">
+              {[
+                { label: "Invited", value: joinedCount },
+                { label: "Joined", value: joinedCount },
+                { label: "Qualified", value: qualifiedCount },
+              ].map((s) => (
+                <div
+                  key={s.label}
+                  className="rounded-[16px] border border-border bg-card p-3 text-center"
+                >
+                  <p className="text-xl font-extrabold text-foreground">{s.value}</p>
+                  <p className="mt-0.5 text-[11px] font-semibold text-muted-foreground">
+                    {s.label}
+                  </p>
+                </div>
+              ))}
+            </section>
+            <p className="mt-2 text-[11px] text-muted-foreground">
+              A referral qualifies once your friend completes their first booking.
+            </p>
+
             {/* Milestone */}
             <section className="mt-8 rounded-[18px] border border-border bg-card p-4">
               <div className="flex items-center justify-between">
