@@ -685,20 +685,26 @@ export type Database = {
       campaign_deliveries: {
         Row: {
           campaign_id: string
+          error: string | null
           id: string
           sent_at: string
+          status: string
           user_id: string
         }
         Insert: {
           campaign_id: string
+          error?: string | null
           id?: string
           sent_at?: string
+          status?: string
           user_id: string
         }
         Update: {
           campaign_id?: string
+          error?: string | null
           id?: string
           sent_at?: string
+          status?: string
           user_id?: string
         }
         Relationships: [
@@ -4083,6 +4089,19 @@ export type Database = {
         Args: { _expert_id: string }
         Returns: number
       }
+      offers_audit: {
+        Args: {
+          _action: string
+          _after: Json
+          _before: Json
+          _table: string
+          _target: string
+        }
+        Returns: undefined
+      }
+      offers_caller_city: { Args: { _uid?: string }; Returns: string }
+      offers_caller_role: { Args: { _uid?: string }; Returns: string }
+      offers_require_writer: { Args: never; Returns: string }
       partner_decide_extension: {
         Args: { _decision: string; _extension_id: string }
         Returns: Json
@@ -4337,6 +4356,7 @@ export type Database = {
         Args: { _payload: Json }
         Returns: undefined
       }
+      staff_send_campaign: { Args: { _id: string }; Returns: number }
       staff_set_availability_override: {
         Args: {
           _is_unavailable: boolean
@@ -4348,12 +4368,20 @@ export type Database = {
         }
         Returns: string
       }
+      staff_set_coupon_active: {
+        Args: { _active: boolean; _id: string }
+        Returns: undefined
+      }
       staff_set_homepage_section_active: {
         Args: { _active: boolean; _id: string }
         Returns: undefined
       }
       staff_set_merchant_fee_tier: {
         Args: { _fee_tier_id: string; _merchant_id: string }
+        Returns: undefined
+      }
+      staff_set_milestone_active: {
+        Args: { _active: boolean; _id: string }
         Returns: undefined
       }
       staff_set_ops_setting: {
@@ -4415,6 +4443,37 @@ export type Database = {
         Returns: undefined
       }
       staff_upsert_area_partner: { Args: { _payload: Json }; Returns: string }
+      staff_upsert_campaign: {
+        Args: {
+          _audience: string
+          _body: string
+          _coupon_id: string
+          _deep_link: string
+          _id: string
+          _image_url: string
+          _show_in_offers: boolean
+          _title: string
+        }
+        Returns: string
+      }
+      staff_upsert_coupon: {
+        Args: {
+          _audience: string
+          _code: string
+          _description: string
+          _discount_type: string
+          _discount_value: number
+          _id: string
+          _max_discount: number
+          _min_order_amount: number
+          _per_user_limit: number
+          _title: string
+          _total_usage_limit: number
+          _valid_from: string
+          _valid_until: string
+        }
+        Returns: string
+      }
       staff_upsert_expert: { Args: { _payload: Json }; Returns: string }
       staff_upsert_fee_tier: { Args: { _payload: Json }; Returns: string }
       staff_upsert_homepage_section: {
@@ -4422,6 +4481,20 @@ export type Database = {
         Returns: string
       }
       staff_upsert_legal_page: { Args: { _payload: Json }; Returns: string }
+      staff_upsert_milestone_program: {
+        Args: {
+          _description: string
+          _id: string
+          _name: string
+          _required_referrals: number
+          _reward_discount_type: string
+          _reward_discount_value: number
+          _reward_max_discount: number
+          _reward_min_order_amount: number
+          _reward_validity_days: number
+        }
+        Returns: string
+      }
       staff_upsert_notification_sound: {
         Args: { _payload: Json }
         Returns: string
