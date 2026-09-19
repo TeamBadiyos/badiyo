@@ -3,25 +3,13 @@
 // refunded at most once: Razorpay is given a stable idempotency key built from
 // the order id and its refund reason, and a successful refund is recorded.
 import { createFileRoute } from "@tanstack/react-router";
-import { timingSafeEqual } from "crypto";
-
-function safeEqual(a: string, b: string): boolean {
-  const bufA = Buffer.from(a);
-  const bufB = Buffer.from(b);
-  if (bufA.length !== bufB.length) return false;
-  return timingSafeEqual(bufA, bufB);
-}
 
 export const Route = createFileRoute("/api/public/courier/process-refunds")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const secret = process.env["COURIER_JOB_SECRET"];
-        if (!secret) return new Response("Not configured", { status: 500 });
         const provided = request.headers.get("x-courier-job-secret") ?? "";
-        if (!provided || !safeEqual(provided, secret)) {
-          return new Response("Unauthorized", { status: 401 });
-        }
+        if (!provided) return new Response("Unauthorized", { status: 401 });
 
         const keyId = process.env["RAZORPAY_KEY_ID"];
         const keySecret = process.env["RAZORPAY_KEY_SECRET"];
@@ -29,6 +17,12 @@ export const Route = createFileRoute("/api/public/courier/process-refunds")({
         const auth = Buffer.from(`${keyId}:${keySecret}`).toString("base64");
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        // The shared secret lives only in the database vault.
+        const { data: valid } = await supabaseAdmin.rpc(
+          "courier_verify_job_secret" as never,
+          { _secret: provided } as never,
+        );
+        if (valid !== true) return new Response("Unauthorized", { status: 401 });
         const { data: rows, error } = await supabaseAdmin
           .from("courier_orders")
           .select("id, razorpay_payment_id, refund_amount, refund_attempts, refund_reason")
