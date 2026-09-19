@@ -4563,6 +4563,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_alert_claim_batch: {
+        Args: { _limit?: number }
+        Returns: {
+          attempts: number
+          id: string
+          order_id: string
+          order_type: string
+          v_amount: string
+          v_customer: string
+          v_order: string
+          v_time: string
+        }[]
+      }
       admin_alert_clean: { Args: { _v: string }; Returns: string }
       admin_alert_dispatch: { Args: never; Returns: undefined }
       admin_alert_enabled: { Args: { _key: string }; Returns: boolean }
@@ -4575,6 +4588,10 @@ export type Database = {
           _order_type: string
           _time: string
         }
+        Returns: undefined
+      }
+      admin_alert_mark: {
+        Args: { _error?: string; _id: string; _ok: boolean }
         Returns: undefined
       }
       admin_alert_verify_job_secret: {

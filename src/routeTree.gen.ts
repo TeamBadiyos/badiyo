@@ -16,6 +16,7 @@ import { Route as ApiPublicReverseGeocodeRouteImport } from './routes/api/public
 import { Route as ApiPublicHasLoginPinRouteImport } from './routes/api/public/has-login-pin'
 import { Route as ApiPublicWebhooksRazorpayRouteImport } from './routes/api/public/webhooks/razorpay'
 import { Route as ApiPublicCourierProcessRefundsRouteImport } from './routes/api/public/courier/process-refunds'
+import { Route as ApiPublicAdminAlertProcessRouteImport } from './routes/api/public/admin-alert/process'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -54,6 +55,12 @@ const ApiPublicCourierProcessRefundsRoute =
     path: '/api/public/courier/process-refunds',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicAdminAlertProcessRoute =
+  ApiPublicAdminAlertProcessRouteImport.update({
+    id: '/api/public/admin-alert/process',
+    path: '/api/public/admin-alert/process',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -61,6 +68,7 @@ export interface FileRoutesByFullPath {
   '/api/public/has-login-pin': typeof ApiPublicHasLoginPinRoute
   '/api/public/reverse-geocode': typeof ApiPublicReverseGeocodeRoute
   '/api/public/service-image': typeof ApiPublicServiceImageRoute
+  '/api/public/admin-alert/process': typeof ApiPublicAdminAlertProcessRoute
   '/api/public/courier/process-refunds': typeof ApiPublicCourierProcessRefundsRoute
   '/api/public/webhooks/razorpay': typeof ApiPublicWebhooksRazorpayRoute
 }
@@ -70,6 +78,7 @@ export interface FileRoutesByTo {
   '/api/public/has-login-pin': typeof ApiPublicHasLoginPinRoute
   '/api/public/reverse-geocode': typeof ApiPublicReverseGeocodeRoute
   '/api/public/service-image': typeof ApiPublicServiceImageRoute
+  '/api/public/admin-alert/process': typeof ApiPublicAdminAlertProcessRoute
   '/api/public/courier/process-refunds': typeof ApiPublicCourierProcessRefundsRoute
   '/api/public/webhooks/razorpay': typeof ApiPublicWebhooksRazorpayRoute
 }
@@ -80,6 +89,7 @@ export interface FileRoutesById {
   '/api/public/has-login-pin': typeof ApiPublicHasLoginPinRoute
   '/api/public/reverse-geocode': typeof ApiPublicReverseGeocodeRoute
   '/api/public/service-image': typeof ApiPublicServiceImageRoute
+  '/api/public/admin-alert/process': typeof ApiPublicAdminAlertProcessRoute
   '/api/public/courier/process-refunds': typeof ApiPublicCourierProcessRefundsRoute
   '/api/public/webhooks/razorpay': typeof ApiPublicWebhooksRazorpayRoute
 }
@@ -91,6 +101,7 @@ export interface FileRouteTypes {
     | '/api/public/has-login-pin'
     | '/api/public/reverse-geocode'
     | '/api/public/service-image'
+    | '/api/public/admin-alert/process'
     | '/api/public/courier/process-refunds'
     | '/api/public/webhooks/razorpay'
   fileRoutesByTo: FileRoutesByTo
@@ -100,6 +111,7 @@ export interface FileRouteTypes {
     | '/api/public/has-login-pin'
     | '/api/public/reverse-geocode'
     | '/api/public/service-image'
+    | '/api/public/admin-alert/process'
     | '/api/public/courier/process-refunds'
     | '/api/public/webhooks/razorpay'
   id:
@@ -109,6 +121,7 @@ export interface FileRouteTypes {
     | '/api/public/has-login-pin'
     | '/api/public/reverse-geocode'
     | '/api/public/service-image'
+    | '/api/public/admin-alert/process'
     | '/api/public/courier/process-refunds'
     | '/api/public/webhooks/razorpay'
   fileRoutesById: FileRoutesById
@@ -119,6 +132,7 @@ export interface RootRouteChildren {
   ApiPublicHasLoginPinRoute: typeof ApiPublicHasLoginPinRoute
   ApiPublicReverseGeocodeRoute: typeof ApiPublicReverseGeocodeRoute
   ApiPublicServiceImageRoute: typeof ApiPublicServiceImageRoute
+  ApiPublicAdminAlertProcessRoute: typeof ApiPublicAdminAlertProcessRoute
   ApiPublicCourierProcessRefundsRoute: typeof ApiPublicCourierProcessRefundsRoute
   ApiPublicWebhooksRazorpayRoute: typeof ApiPublicWebhooksRazorpayRoute
 }
@@ -174,6 +188,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCourierProcessRefundsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/admin-alert/process': {
+      id: '/api/public/admin-alert/process'
+      path: '/api/public/admin-alert/process'
+      fullPath: '/api/public/admin-alert/process'
+      preLoaderRoute: typeof ApiPublicAdminAlertProcessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -183,6 +204,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHasLoginPinRoute: ApiPublicHasLoginPinRoute,
   ApiPublicReverseGeocodeRoute: ApiPublicReverseGeocodeRoute,
   ApiPublicServiceImageRoute: ApiPublicServiceImageRoute,
+  ApiPublicAdminAlertProcessRoute: ApiPublicAdminAlertProcessRoute,
   ApiPublicCourierProcessRefundsRoute: ApiPublicCourierProcessRefundsRoute,
   ApiPublicWebhooksRazorpayRoute: ApiPublicWebhooksRazorpayRoute,
 }
