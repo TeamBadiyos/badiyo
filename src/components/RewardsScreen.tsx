@@ -1,7 +1,9 @@
+import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { usePullToRefresh, PullToRefreshIndicator } from "@/lib/usePullToRefresh";
 import { Coins, Gift, Sparkles } from "lucide-react";
 import { fetchCustomerRewards, formatRewardValue } from "@/lib/rewards";
+import { OffersList } from "./OffersList";
 import { BottomNav } from "./BottomNav";
 
 function formatDate(iso: string): string {
@@ -17,16 +19,22 @@ function formatDate(iso: string): string {
 }
 
 export function RewardsScreen({
+  initialTab = "rewards",
   onOpenHome,
   onOpenRewards,
   onOpenReferrals,
   onOpenBookings,
 }: {
+  initialTab?: "rewards" | "offers";
   onOpenHome: () => void;
   onOpenRewards: () => void;
   onOpenReferrals: () => void;
   onOpenBookings: () => void;
 }) {
+  const [tab, setTab] = useState<"rewards" | "offers">(initialTab);
+  useEffect(() => {
+    setTab(initialTab);
+  }, [initialTab]);
   const { data, isLoading } = useQuery({
     queryKey: ["customer_rewards"],
     queryFn: fetchCustomerRewards,
