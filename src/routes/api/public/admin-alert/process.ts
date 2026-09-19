@@ -109,7 +109,11 @@ export const Route = createFileRoute("/api/public/admin-alert/process")({
           }
         }
 
-        return Response.json({ processed: (rows ?? []).length, sent, failed });
+        return Response.json({
+          processed: ((rows ?? []) as QueueRow[]).length,
+          sent,
+          failed,
+        });
       },
     },
   },
