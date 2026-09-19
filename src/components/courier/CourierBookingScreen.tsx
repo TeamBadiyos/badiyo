@@ -27,6 +27,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getAuthUser } from "@/lib/authUser";
 import { courierQuote, courierCreateOrder, courierConfirmPayment } from "@/lib/courier.functions";
 import { payWithRazorpay, toPaymentError } from "@/lib/razorpayCheckout";
+import { getPaymentPrefill } from "@/lib/paymentPrefill";
 import { paymentErrorKey } from "@/lib/paymentError";
 import { useT } from "@/i18n";
 import { pickContact } from "@/lib/contactPicker";
