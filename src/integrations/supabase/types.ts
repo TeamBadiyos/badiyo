@@ -3673,6 +3673,7 @@ export type Database = {
         Returns: undefined
       }
       apply_referral_code: { Args: { _code: string }; Returns: string }
+      award_referral_milestones: { Args: { _user_id: string }; Returns: number }
       broadcast_booking_to_experts: {
         Args: { _booking_id: string; _radius?: number }
         Returns: number
@@ -3739,6 +3740,23 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      coupon_preview: {
+        Args: {
+          _base_amount: number
+          _code: string
+          _duration_minutes?: number
+        }
+        Returns: Json
+      }
+      coupon_quote: {
+        Args: {
+          _base_amount: number
+          _code: string
+          _duration_minutes?: number
+          _user_id: string
+        }
+        Returns: Json
       }
       credit_referral_for_booking: {
         Args: { _booking_id: string }
@@ -3977,6 +3995,23 @@ export type Database = {
         Args: { p_phone: string; p_pin: string }
         Returns: Json
       }
+      my_coupons: {
+        Args: never
+        Returns: {
+          code: string
+          description: string
+          discount_type: string
+          discount_value: number
+          id: string
+          is_personal: boolean
+          max_discount: number
+          min_order_amount: number
+          source: string
+          title: string
+          valid_until: string
+        }[]
+      }
+      my_referral_progress: { Args: never; Returns: Json }
       notify_customer_alert: {
         Args: {
           _alert_type: string
@@ -4076,6 +4111,7 @@ export type Database = {
         Args: { p_fcm_token: string; p_platform: string }
         Returns: string
       }
+      release_stale_coupon_reservations: { Args: never; Returns: number }
       resolve_booking_payouts: {
         Args: { _booking_id: string }
         Returns: {
@@ -4444,6 +4480,17 @@ export type Database = {
         Returns: Json
       }
       system_check_no_accept_alerts: { Args: never; Returns: string[] }
+      system_coupon_release: { Args: { _order_id: string }; Returns: undefined }
+      system_coupon_reserve: {
+        Args: {
+          _base_amount: number
+          _code: string
+          _duration_minutes: number
+          _order_id: string
+          _user_id: string
+        }
+        Returns: Json
+      }
       system_credit_referral_for_booking: {
         Args: { _booking_id: string }
         Returns: undefined
@@ -4492,6 +4539,10 @@ export type Database = {
           phone: string
           template_name: string
         }[]
+      }
+      system_send_marketing_campaign: {
+        Args: { _campaign_id: string }
+        Returns: number
       }
       verify_login_pin: {
         Args: { p_phone: string; p_pin: string; p_user_type: string }
