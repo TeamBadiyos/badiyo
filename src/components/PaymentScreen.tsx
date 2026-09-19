@@ -299,13 +299,26 @@ export function PaymentScreen({
       setStatus("success");
       void createBooking(resp.razorpay_payment_id, resp.razorpay_order_id);
     } catch (e) {
-      if (e instanceof PaymentCancelledError) {
-        setErrorMsg("Payment cancelled");
-        setStatus("failed");
+      const err = toPaymentError(e);
+      // Raw detail: console + server log only, never the screen.
+      console.error("Razorpay checkout error", err.category, err.parsed, e);
+      void logPaymentFailure({
+        data: {
+          razorpay_order_id: rzpOrderId,
+          purpose: "booking",
+          category: err.category,
+          raw: err.parsed.raw,
+          parsed: { ...err.parsed } as Record<string, unknown>,
+        },
+      }).catch(() => {});
+
+      if (err.category === "cancelled") {
+        toast(t("payment.cancelledToast"));
+        onBack();
         return;
       }
-      console.error("Razorpay checkout error", e);
-      setErrorMsg(await getErrorMessage(e));
+      setErrCategory(err.category);
+      setRefId(paymentRefId(rzpOrderId));
       setStatus("failed");
     }
   }
