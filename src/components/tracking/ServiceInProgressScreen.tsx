@@ -62,7 +62,10 @@ type CatalogueItem = {
 
 const TIP_AMOUNTS = [25, 50, 100];
 
-import { payWithRazorpay, PaymentCancelledError } from "@/lib/razorpayCheckout";
+import { payWithRazorpay, toPaymentError } from "@/lib/razorpayCheckout";
+import { paymentErrorKey } from "@/lib/paymentError";
+import { logPaymentFailure } from "@/lib/paymentLog.functions";
+import { toast } from "sonner";
 
 
 function beep(kind: "warning" | "end") {
