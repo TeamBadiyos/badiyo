@@ -269,6 +269,17 @@ Deno.serve(async (req) => {
       console.error("payment intent capture failed", intentErr);
     }
 
+    // Hold the coupon against this order so the booking trigger can apply it once.
+    if (discountPaise > 0 && couponCode && userId) {
+      const { error: reserveErr } = await supabase.rpc("system_coupon_reserve", {
+        _user_id: userId,
+        _code: couponCode,
+        _order_id: order.id,
+        _discount: discountPaise / 100,
+      });
+      if (reserveErr) console.error("system_coupon_reserve failed", reserveErr);
+    }
+
     return json({
       order_id: order.id,
       amount: order.amount,
