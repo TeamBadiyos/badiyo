@@ -211,6 +211,8 @@ export function OrdersScreen({
         onHome={onOpenHome}
         onOrders={() => {}}
         onRewards={onOpenRewards}
+        onParcel={onOpenCourier}
+        showParcel={courierEnabled}
       />
     </main>
   );

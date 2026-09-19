@@ -246,6 +246,8 @@ export function RewardsScreen({
         onHome={onOpenHome}
         onOrders={onOpenBookings}
         onRewards={onOpenRewards}
+        onParcel={onOpenCourier}
+        showParcel={courierEnabled}
       />
     </main>
   );
