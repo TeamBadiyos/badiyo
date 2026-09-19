@@ -987,43 +987,61 @@ export type Database = {
         Row: {
           created_at: string
           delivery_attempts: number
+          delivery_last_sent_at: string | null
           delivery_otp_expires_at: string | null
           delivery_otp_hash: string | null
           delivery_otp_issued_at: string | null
+          delivery_send_count: number
+          delivery_verified_at: string | null
           locked_until: string | null
           order_id: string
           pickup_attempts: number
+          pickup_last_sent_at: string | null
           pickup_otp_expires_at: string | null
           pickup_otp_hash: string | null
           pickup_otp_issued_at: string | null
+          pickup_send_count: number
+          pickup_verified_at: string | null
           updated_at: string
         }
         Insert: {
           created_at?: string
           delivery_attempts?: number
+          delivery_last_sent_at?: string | null
           delivery_otp_expires_at?: string | null
           delivery_otp_hash?: string | null
           delivery_otp_issued_at?: string | null
+          delivery_send_count?: number
+          delivery_verified_at?: string | null
           locked_until?: string | null
           order_id: string
           pickup_attempts?: number
+          pickup_last_sent_at?: string | null
           pickup_otp_expires_at?: string | null
           pickup_otp_hash?: string | null
           pickup_otp_issued_at?: string | null
+          pickup_send_count?: number
+          pickup_verified_at?: string | null
           updated_at?: string
         }
         Update: {
           created_at?: string
           delivery_attempts?: number
+          delivery_last_sent_at?: string | null
           delivery_otp_expires_at?: string | null
           delivery_otp_hash?: string | null
           delivery_otp_issued_at?: string | null
+          delivery_send_count?: number
+          delivery_verified_at?: string | null
           locked_until?: string | null
           order_id?: string
           pickup_attempts?: number
+          pickup_last_sent_at?: string | null
           pickup_otp_expires_at?: string | null
           pickup_otp_hash?: string | null
           pickup_otp_issued_at?: string | null
+          pickup_send_count?: number
+          pickup_verified_at?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -1060,6 +1078,7 @@ export type Database = {
           distance_km: number
           distance_source: string
           drop_address: string
+          drop_contact_edit_count: number
           drop_contact_name: string
           drop_contact_phone: string
           drop_lat: number
@@ -1081,6 +1100,7 @@ export type Database = {
           payment_status: string
           picked_up_at: string | null
           pickup_address: string
+          pickup_contact_edit_count: number
           pickup_contact_name: string
           pickup_contact_phone: string
           pickup_lat: number
@@ -1129,6 +1149,7 @@ export type Database = {
           distance_km?: number
           distance_source?: string
           drop_address: string
+          drop_contact_edit_count?: number
           drop_contact_name: string
           drop_contact_phone: string
           drop_lat: number
@@ -1150,6 +1171,7 @@ export type Database = {
           payment_status?: string
           picked_up_at?: string | null
           pickup_address: string
+          pickup_contact_edit_count?: number
           pickup_contact_name: string
           pickup_contact_phone: string
           pickup_lat: number
@@ -1198,6 +1220,7 @@ export type Database = {
           distance_km?: number
           distance_source?: string
           drop_address?: string
+          drop_contact_edit_count?: number
           drop_contact_name?: string
           drop_contact_phone?: string
           drop_lat?: number
@@ -1219,6 +1242,7 @@ export type Database = {
           payment_status?: string
           picked_up_at?: string | null
           pickup_address?: string
+          pickup_contact_edit_count?: number
           pickup_contact_name?: string
           pickup_contact_phone?: string
           pickup_lat?: number
@@ -4419,6 +4443,15 @@ export type Database = {
         Args: { _order_id: string; _purpose: string }
         Returns: string
       }
+      courier_log_otp_send: {
+        Args: {
+          _detail: string
+          _ok: boolean
+          _order_id: string
+          _purpose: string
+        }
+        Returns: undefined
+      }
       courier_mark_refund_pending: {
         Args: { _amount: number; _order_id: string; _reason: string }
         Returns: undefined
@@ -4428,6 +4461,86 @@ export type Database = {
         Returns: Json
       }
       courier_otp_key: { Args: never; Returns: string }
+      courier_otp_owner_gate: {
+        Args: { _order_id: string; _purpose: string }
+        Returns: {
+          arrived_pickup_at: string | null
+          assigned_at: string | null
+          assigned_expert_id: string | null
+          base_amount: number
+          cancel_reason_code: string | null
+          cancellation_fee: number
+          cancelled_at: string | null
+          cancelled_by: string | null
+          city: string
+          commission_pct: number
+          completed_at: string | null
+          coupon_code: string | null
+          coupon_id: string | null
+          courier_type_id: string
+          created_at: string
+          current_search_radius_km: number | null
+          customer_id: string
+          delivered_at: string | null
+          discount_amount: number
+          distance_km: number
+          distance_source: string
+          drop_address: string
+          drop_contact_edit_count: number
+          drop_contact_name: string
+          drop_contact_phone: string
+          drop_lat: number
+          drop_lng: number
+          earnings_credited_at: string | null
+          extra_fee: number
+          fare_breakdown: Json
+          gst_amount: number
+          gst_percent: number
+          id: string
+          in_transit_at: string | null
+          incident_code: string | null
+          incident_notes: string | null
+          incident_resolution: string | null
+          needs_ops_attention: boolean
+          order_code: string
+          otp_attempts: number
+          package_description: string | null
+          payment_status: string
+          picked_up_at: string | null
+          pickup_address: string
+          pickup_contact_edit_count: number
+          pickup_contact_name: string
+          pickup_contact_phone: string
+          pickup_lat: number
+          pickup_lng: number
+          platform_fee: number
+          prohibited_items_confirmed: boolean
+          proof_photo_url: string | null
+          quote_expires_at: string | null
+          razorpay_order_id: string | null
+          razorpay_payment_id: string | null
+          refund_amount: number
+          refund_attempts: number
+          refund_id: string | null
+          refund_next_attempt_at: string | null
+          refund_reason: string | null
+          refund_status: string
+          rider_cancel_count: number
+          search_started_at: string | null
+          status: string
+          total_amount: number
+          updated_at: string
+          vehicle_type_id: string
+          wallet_amount: number
+          weight_kg: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "courier_orders"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       courier_quote_internal: {
         Args: {
           _city: string
@@ -4440,8 +4553,16 @@ export type Database = {
         }
         Returns: Json
       }
+      courier_refresh_otp: {
+        Args: { _order_id: string; _purpose: string }
+        Returns: Json
+      }
       courier_report_incident: {
         Args: { _code: string; _notes: string; _order_id: string }
+        Returns: Json
+      }
+      courier_resend_otp: {
+        Args: { _order_id: string; _purpose: string }
         Returns: Json
       }
       courier_rider_advance: {
@@ -4469,6 +4590,10 @@ export type Database = {
       }
       courier_sweeper: { Args: never; Returns: undefined }
       courier_sweeper_tick: { Args: never; Returns: undefined }
+      courier_update_contact: {
+        Args: { _new_phone: string; _order_id: string; _purpose: string }
+        Returns: Json
+      }
       courier_verify_job_secret: { Args: { _secret: string }; Returns: boolean }
       courier_verify_otp: {
         Args: {
