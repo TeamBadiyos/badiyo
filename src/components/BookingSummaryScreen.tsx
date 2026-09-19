@@ -1,8 +1,10 @@
-import { ArrowLeft, Clock, Calendar, Home as HomeIcon } from "lucide-react";
+import { ArrowLeft, Clock, Calendar, Home as HomeIcon, Tag, X } from "lucide-react";
+import { useState } from "react";
 import type { SelectedService, SelectedSlot } from "./SlotSelectionScreen";
 import { useT, type TFunction } from "@/i18n";
 import { hapticImpact } from "@/lib/haptics";
 import { gstAmount, totalWithGst, useGstPercent } from "@/lib/gst";
+import { previewCoupon, type AppliedCoupon } from "@/lib/coupons";
 
 export type SelectedAddress = {
   id: string;
