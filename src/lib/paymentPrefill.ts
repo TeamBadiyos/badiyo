@@ -45,7 +45,7 @@ export async function getPaymentPrefill(
       const { data: profile } = await supabase
         .from("users")
         .select("full_name, phone")
-        .eq("auth_user_id", user.id)
+        .eq("id", user.id)
         .maybeSingle();
       if (profile?.full_name) name = profile.full_name;
       if (profile?.phone) phone = profile.phone;
