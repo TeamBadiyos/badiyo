@@ -177,7 +177,27 @@ With this, `https://user.badiyos.com/invite/CODE` opens the app instead of
 Chrome. The app handles it in `src/routes/index.tsx` (`appUrlOpen` +
 `App.getLaunchUrl()`): the invite code is stored and applied at sign-in.
 
-## 3. assetlinks.json / SHA-256 fingerprint
+## 3. ProGuard / R8 (release builds only)
+
+Release APKs run R8 minification (`minifyEnabled true` in
+`android/app/build.gradle`). Razorpay's Android SDK talks to its web layer
+through `@JavascriptInterface` reflection — if R8 strips those methods the
+native sheet opens but payments silently fail. Add to
+`android/app/proguard-rules.pro`:
+
+```proguard
+# Razorpay
+-keepclassmembers class * {
+    @android.webkit.JavascriptInterface <methods>;
+}
+-keep class com.razorpay.** { *; }
+-dontwarn com.razorpay.**
+```
+
+If the release build ever shows the sheet closing instantly or a payment that
+never returns, this file is the first place to check.
+
+## 4. assetlinks.json / SHA-256 fingerprint
 
 `public/.well-known/assetlinks.json` is served from
 `https://user.badiyos.com/.well-known/assetlinks.json` and must contain:
