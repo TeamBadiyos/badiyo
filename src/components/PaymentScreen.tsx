@@ -12,7 +12,14 @@ import { hapticImpact } from "@/lib/haptics";
 import { totalWithGst, useGstPercent } from "@/lib/gst";
 import type { AppliedCoupon } from "@/lib/coupons";
 
-import { payWithRazorpay, PaymentCancelledError } from "@/lib/razorpayCheckout";
+import { payWithRazorpay, toPaymentError } from "@/lib/razorpayCheckout";
+import {
+  paymentErrorKey,
+  paymentRefId,
+  type RazorpayErrorCategory,
+} from "@/lib/paymentError";
+import { logPaymentFailure } from "@/lib/paymentLog.functions";
+import { toast } from "sonner";
 
 
 type Status = "loading" | "success" | "failed";
@@ -51,7 +58,8 @@ export function PaymentScreen({
   const t = useT();
   const gstPercent = useGstPercent();
   const [status, setStatus] = useState<Status>("loading");
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [errCategory, setErrCategory] = useState<RazorpayErrorCategory>("unknown");
+  const [refId, setRefId] = useState<string | null>(null);
   const [bookingId, setBookingId] = useState<string | null>(null);
   const [booking, setBooking] = useState<BookingRow | null>(null);
   const [bookingLoadError, setBookingLoadError] = useState<string | null>(null);
