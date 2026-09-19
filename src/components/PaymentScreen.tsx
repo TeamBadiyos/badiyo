@@ -229,12 +229,8 @@ export function PaymentScreen({
     setErrorMsg(null);
     setBookingLoadError(null);
     try {
-      const ok = await loadRazorpay();
-      if (!ok || !window.Razorpay) {
-        throw new Error("Failed to load Razorpay Checkout");
-      }
-
       const receipt = `bk_${Date.now()}`;
+
       const { data, error } = await supabase.functions.invoke(
         "create-razorpay-order",
         {
