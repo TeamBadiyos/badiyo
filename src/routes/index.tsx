@@ -1106,6 +1106,7 @@ function Index() {
           <OrdersScreen
             onOpenHome={() => setPhase("home")}
             onOpenRewards={() => setPhase("rewards")}
+            onOpenCourier={() => setPhase("courier")}
             onOpenBooking={(b) => {
               if (ACTIVE_TRACKING_STATUSES.includes(b.status)) {
                 const addr = b.addresses;
@@ -1157,6 +1158,7 @@ function Index() {
             onOpenRewards={() => setPhase("rewards")}
             onOpenReferrals={() => setPhase("referrals")}
             onOpenBookings={() => setPhase("orders")}
+            onOpenCourier={() => setPhase("courier")}
           />
 
         </div>

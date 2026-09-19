@@ -5,6 +5,7 @@ import { Coins, Gift, Sparkles } from "lucide-react";
 import { fetchCustomerRewards, formatRewardValue } from "@/lib/rewards";
 import { OffersList } from "./OffersList";
 import { BottomNav } from "./BottomNav";
+import { fetchCourierEnabled } from "./courier/courierData";
 
 function formatDate(iso: string): string {
   try {
@@ -24,13 +25,20 @@ export function RewardsScreen({
   onOpenRewards,
   onOpenReferrals,
   onOpenBookings,
+  onOpenCourier,
 }: {
   initialTab?: "rewards" | "offers";
   onOpenHome: () => void;
   onOpenRewards: () => void;
   onOpenReferrals: () => void;
   onOpenBookings: () => void;
+  onOpenCourier?: () => void;
 }) {
+  const { data: courierEnabled = false } = useQuery({
+    queryKey: ["courier_enabled"],
+    queryFn: () => fetchCourierEnabled(),
+    staleTime: 5 * 60_000,
+  });
   const [tab, setTab] = useState<"rewards" | "offers">(initialTab);
   useEffect(() => {
     setTab(initialTab);

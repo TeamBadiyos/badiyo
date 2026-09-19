@@ -12,7 +12,7 @@ import { courierQuote, courierCreateOrder, courierConfirmPayment } from "@/lib/c
 import { payWithRazorpay, toPaymentError } from "@/lib/razorpayCheckout";
 import { paymentErrorKey } from "@/lib/paymentError";
 import { useT } from "@/i18n";
-import { fetchCourierVehicles, fetchCourierTypes } from "./courierData";
+import { fetchCourierVehicles, fetchCourierTypes, fetchCourierService } from "./courierData";
 
 type Addr = {
   id: string;
@@ -86,7 +86,15 @@ export function CourierBookingScreen({
     if (types.length && !types.some((x) => x.id === typeId)) setTypeId(types[0].id);
   }, [types, typeId]);
 
-  const city = pickup?.city || drop?.city || "Latur";
+  // Fall back to the city parcel delivery is switched on for when the saved
+  // address has no usable city.
+  const { data: courierService } = useQuery({
+    queryKey: ["courier_service"],
+    queryFn: () => fetchCourierService(),
+    staleTime: 5 * 60_000,
+  });
+  const city =
+    (pickup?.city || drop?.city || "").trim() || courierService?.city || "Latur";
   const ready =
     pickup?.latitude != null &&
     drop?.latitude != null &&
