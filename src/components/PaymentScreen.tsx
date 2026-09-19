@@ -545,8 +545,13 @@ export function PaymentScreen({
               {t("payment.failed")}
             </h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              {errorMsg || t("payment.failedSub")}
+              {t(paymentErrorKey(errCategory))}
             </p>
+            {refId && (
+              <p className="mt-2 text-xs text-muted-foreground/70">
+                {t("payment.refId", { id: refId })}
+              </p>
+            )}
             <button
               onClick={() => { void hapticImpact("medium"); startCheckout(); }}
               className="mt-8 w-full rounded-[14px] bg-primary px-4 py-3.5 text-sm font-bold text-primary-foreground transition active:scale-[0.99]"
