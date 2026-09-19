@@ -39,7 +39,7 @@ Har value se newline hata ke 60 chars par trim. Phone number, address, order id 
 - Shared secret header se guarded — secret Vault me (`admin_alert_job_secret`), verify ek `admin_alert_verify_job_secret()` RPC se (courier refunds jaisa hi pattern). Secret galat/missing = 401, koi info leak nahi.
 - Pending rows (max 20 per run) uthata hai, AiSensy campaign API call karta hai (`send-otp` jaisa hi shape), phir row ko `sent` ya `failed` mark karta hai.
 - Retry: max 3 attempts, backoff ke saath; 3 ke baad `failed` + log.
-- Rate cap: agar 1 minute me 20 se zyada alerts hain, to baaki ek single digest message me ("N naye orders, total Rs X") — spam aur AiSensy throttle dono se bachav.
+- Digest hata diya — approved template sirf 4 variables (Order, Customer, Amount, Time) ka hai, aur digest us shape me theek nahi baithta. Uski jagah sirf rate cap: ek minute me max 20 alerts bhejenge; bache hue rows queue me `pending` rahenge aur agle minute ke run me apne-apne message ke saath jaayenge (koi order chhootega nahi, sirf thoda der se).
 - Poora loop try/catch me; ek order ka fail dusre ko nahi rokta.
 
 ## Secrets (kuch bhi hardcode nahi)
