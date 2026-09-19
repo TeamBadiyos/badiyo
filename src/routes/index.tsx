@@ -527,11 +527,35 @@ function Index() {
       if (!cancelled && min && isBelow(APP_VERSION, min)) setForceUpdate(true);
     });
 
-    // If we're returning from Google OAuth, a session will already exist —
-    // skip the splash and go straight to home once it's confirmed.
+    // The splash is a brand moment, not a loading wait: it stays on screen only
+    // while the session check runs, with a short minimum so it doesn't flash,
+    // and a hard cap so a slow network can never freeze the app on it.
+    const bootStartedAt = Date.now();
+    const SPLASH_MIN_MS = 450;
+    const SPLASH_MAX_MS = 2500;
+    let settled = false;
+
+    const goToLogin = () => {
+      if (cancelled || settled) return;
+      settled = true;
+      const elapsed = Date.now() - bootStartedAt;
+      const wait = Math.max(0, SPLASH_MIN_MS - elapsed);
+      setTimeout(() => {
+        if (cancelled) return;
+        setPhase("splash-out");
+        setTimeout(() => !cancelled && setPhase("login"), 220);
+      }, wait);
+    };
+
+    // Safety net: if the session check hangs, show login anyway.
+    const splashCap = setTimeout(goToLogin, SPLASH_MAX_MS);
+
+    // If a session already exists, skip the splash and go straight to home.
     supabase.auth.getSession().then(({ data }) => {
       if (cancelled) return;
       if (data.session?.user && !data.session.user.is_anonymous) {
+        settled = true;
+        clearTimeout(splashCap);
         enterAppAfterAuth("home");
         ensureUserRow()
           .then(() => import("@/lib/referrals").then((m) => m.linkReferralIfAny()))
@@ -544,10 +568,11 @@ function Index() {
       void import("@/components/PinLoginScreen");
       void import("@/components/OtpVerifyScreen");
       void import("@/components/HomeScreen");
-      setTimeout(() => !cancelled && setPhase("splash-out"), 1800);
-      setTimeout(() => !cancelled && setPhase("login"), 2300);
+      clearTimeout(splashCap);
+      goToLogin();
       ensureUserRow().catch((e) => console.error("startup ensureUserRow failed:", e));
     });
+
 
 
     const { data: sub } = supabase.auth.onAuthStateChange(async (event) => {
