@@ -1,49 +1,64 @@
-# Courier (Porter-type) — backend foundation (v2)
+# Courier (Porter-type) — backend foundation (v3)
 
-Latur, intra-city, single pickup + single drop. Abhi sirf bike/moped, lekin sab config data-driven. Is round me koi UI nahi — sirf database + server logic.
+Latur, intra-city, single pickup + single drop. Bike/moped, sab config data-driven. Is round me UI nahi — sirf database + server logic.
 
-## Aapke sawal ka jawab: scheduler
+## Aapke sawalon ke jawab
 
-`pg_cron` aur `pg_net` dono installed hain aur 7 jobs already chal rahe hain. `expand_stale_broadcasts()` ko cron job `dispatch-radius-expand` har 30 second par chalata hai. Courier sweeper alag job nahi banega — wahi 30-second job extend karke courier offers ka timeout + radius expand + SEARCHING auto-cancel handle karega, taaki nayi recurring cost na aaye.
+**Scheduler**: `pg_cron` + `pg_net` dono installed. `expand_stale_broadcasts()` ko job `dispatch-radius-expand` har 30 second chalata hai. Courier ke liye **alag cron job** banega (`courier-dispatch-sweeper`, 30s) taaki home-service dispatch bilkul isolate rahe; uske andar bhi exception block hoga.
 
-## Kya reuse ho raha hai (koi duplicate table nahi)
+**`is_active_staff` exact signature**:
+```sql
+is_active_staff(_uid uuid, _roles text[]) RETURNS boolean
+-- STABLE SECURITY DEFINER, search_path = public
+-- _uid != auth.uid() ho to false; warna staff_users me status='active' aur role = ANY(_roles)
+```
+Rider identity ke liye `get_expert_id_for_auth(auth.uid())`, generic caller ke liye `resolve_caller_identity(auth.uid())` (returns user_type, user_id) — dono already caller-scoped hain.
 
-- **City**: existing text city (`zones.city = 'Latur'`, `dispatch_config.city`).
-- **Riders**: existing `experts` + `partner_skills` (courier skill = ek service category).
-- **Dispatch config**: `dispatch_config` (radius, expand step, timeout) aur `haversine_km`.
-- **Payment**: prepaid — `payment_intents` + `/api/public/webhooks/razorpay`, purpose tag `courier`.
-- **Coupon / wallet**: `coupon_quote`, `coupon_redemptions`, `wallet_ledger`.
-- **GST**: `get_gst_percent()`. **Audit**: `audit_logs`. **Roles**: `staff_users` + `is_active_staff()`.
-- **Notifications**: existing push/notify functions.
+**WhatsApp OTP**: existing login wala hi structure — AiSensy campaign API (`AISENSY_API_KEY`, campaign name env se), jaise `send-otp` karta hai. Courier ke liye alag campaign name env var, pickup OTP pickup contact ko, delivery OTP drop contact ko. Jab tak courier campaign approve nahi hota, fallback: OTP customer app me dikhega.
+
+## Reuse (koi duplicate table nahi)
+
+City = text (`zones.city`), riders = `experts` + `partner_skills`, dispatch tuning = `dispatch_config` + `haversine_km`, payment = `payment_intents` + Razorpay webhook (purpose `courier`), coupons = `coupon_quote`/`coupon_redemptions`, wallet = `wallet_ledger`, GST = `get_gst_percent()`, audit = `audit_logs`, roles = `staff_users`/`is_active_staff`, push = existing notify functions.
 
 ## Nayi tables
 
-1. **service_flags** — `service_key`, `city`, `is_active`, `label`, `sort_order`. Seed me courier ke saath existing services bhi (maid, cleaning, delivery, merchant/store, jo bhi segments me hain). Existing booking create path me bhi flag check lagega — off service par booking reject.
-2. **courier_vehicle_types** — name, icon, is_active, sort_order, max_weight_kg, inclusions[], exclusions[], required_skill (service_category_id), required_documents[].
-3. **courier_vehicle_rates** — (city, vehicle_type_id) unique: base_fare, included_km, per_km, min_fare, platform_fee, commission_pct. (Waiting-charge fields is round me nahi.)
-4. **courier_types** — Document, Food, Grocery, Medicine, Other: name, icon, is_active, sort_order, extra_fee, instructions. Mapping table **courier_vehicle_courier_types**.
-5. **courier_orders** — customer, city, vehicle_type, courier_type, pickup/drop (lat, lng, address, contact_name, contact_phone), package_description, weight_kg, prohibited_items_confirmed, distance_km, fare_breakdown jsonb, quote_expires_at, subtotal/discount/gst/total, coupon + wallet fields, razorpay ids + payment_status, status, rider (expert_id), otp_attempts, cancel_reason_code, refund fields, proof_photo_url, stage timestamps.
-6. **courier_order_secrets** — order_id (PK), pickup_otp_hash, delivery_otp_hash, pickup_expires_at, delivery_expires_at, attempts. **Customer aur rider dono ke liye zero read access** — RLS deny-all, sirf SECURITY DEFINER functions padhte hain.
-7. **courier_order_events** — har status change ka history (from, to, actor_type, actor_id, meta).
+1. **service_flags** — service_key, city, is_active, label, sort_order. **Courier flag OFF seed** hoga.
+2. **courier_vehicle_types** — name, icon, is_active, sort_order, max_weight_kg, inclusions[], exclusions[], required_skill, required_documents[]. Latur bike **is_active = false** seed.
+3. **courier_vehicle_rates** — (city, vehicle_type_id): base_fare, included_km, per_km, min_fare, platform_fee, commission_pct, `is_placeholder boolean default true` — placeholder rate par order create block, ops confirm karke hi live.
+4. **courier_types** — Document, Food, Grocery, Medicine, Other + mapping **courier_vehicle_courier_types**.
+5. **courier_orders** — customer, city, vehicle_type, courier_type, pickup/drop (lat, lng, address, contact_name, contact_phone), package_description, weight_kg, prohibited_items_confirmed, distance_km, fare_breakdown jsonb, quote_expires_at, amounts, coupon + wallet fields, razorpay ids + payment_status, status, rider, otp_attempts, rider_cancel_count, cancel_reason_code, refund fields, proof_photo_url, stage timestamps.
+6. **courier_order_secrets** — order_id PK, pickup/delivery otp hash + expiry + attempts. RLS deny-all; sirf definer functions padhte hain.
+7. **courier_order_events** — status history.
 8. **courier_offers** — order_id, expert_id, sent_at, expires_at, status, distance_km.
 
 Sab par GRANT + RLS + updated_at trigger.
 
-## Status flow aur cancel/refund matrix
+## OTP
 
-`REQUESTED → SEARCHING → DRIVER_ASSIGNED → ARRIVED_PICKUP → PICKED_UP → IN_TRANSIT → DELIVERED → COMPLETED`, plus `CANCELLED` aur `FAILED_DELIVERY`.
+- HMAC se derive: `HMAC(secret, order_id || ':' || purpose || ':' || issued_at)` ke digits. **Secret Supabase Vault me** (`vault.create_secret`), migration me plaintext nahi; functions `vault.decrypted_secrets` se padhenge.
+- Sirf hash + expiry `courier_order_secrets` me, plain kahin store nahi. Max 5 attempts, phir lock + ops alert.
+- **Send**: AiSensy campaign se — pickup OTP pickup contact ko, delivery OTP drop contact ko.
+- **Customer-visible RPC** `courier_get_otp(order_id, purpose)` — stage-gated: pickup OTP sirf `ARRIVED_PICKUP` ke baad, delivery OTP sirf `IN_TRANSIT` ke baad, aur sirf order ke owner ko. Ye WhatsApp fallback bhi hai.
+- Rider kabhi OTP read nahi karta; verify sirf definer RPC me.
 
-| Stage | Customer cancel | Rider cancel | Refund |
+## Status flow, cancel/refund matrix
+
+`REQUESTED → SEARCHING → DRIVER_ASSIGNED → ARRIVED_PICKUP → PICKED_UP → IN_TRANSIT → DELIVERED → COMPLETED`, plus `CANCELLED`, `FAILED_DELIVERY`.
+
+| Stage | Customer cancel | Rider cancel | Paisa |
 |---|---|---|---|
-| REQUESTED / SEARCHING | Haan | — | 100% refund + coupon release |
-| SEARCHING timeout (dispatch exhausted) | Auto-cancel | — | 100% refund + coupon release, dono ko notify |
-| DRIVER_ASSIGNED | Haan | Haan (order wapas SEARCHING) | 100% refund |
-| ARRIVED_PICKUP | Haan, cancellation fee lag sakti hai (config) | Haan, reason ke saath | Total − fee |
-| PICKED_UP ke baad | **Nahi** | **Nahi** | Sirf incident se |
-| FAILED_DELIVERY (incident) | — | Rider raise karega | Ops decide kare: full / partial / no refund, staff RPC se, audit ke saath |
+| REQUESTED unpaid | Auto-expire (15 min, config) | — | Coupon release, koi charge nahi |
+| SEARCHING | Haan | — | 100% refund + coupon release |
+| SEARCHING timeout | Auto-cancel | — | 100% refund + coupon release + notify |
+| DRIVER_ASSIGNED | Haan | Haan → wapas SEARCHING | 100% refund |
+| ARRIVED_PICKUP | Haan, cancellation fee | Haan, reason ke saath | Total − fee refund; **fee rider ko wallet_ledger me credit** |
+| PICKED_UP ke baad | Nahi | Nahi | Sirf incident se |
+| FAILED_DELIVERY | — | Rider raise kare | Ops decide: full/partial/none (staff RPC, audited). Rider payout: pickup ho chuka hai to base fare ka config% (default 50%) minus commission credit |
 | DELIVERED → COMPLETED | — | — | Refund nahi |
 
-FAILED_DELIVERY reason codes: consignee unreachable, address galat, consignee refused, parcel damaged, accident/other. Order `FAILED_DELIVERY` par rukta hai aur ops resolution ka wait karta hai (return-to-sender ya close).
+- **DELIVERED → COMPLETED**: delivery OTP verify hote hi order DELIVERED; COMPLETED tab jab (a) proof/OTP dono set ho aur (b) settlement run ho — sweeper DELIVERED orders ko turant (ya config delay ke baad) COMPLETED karta hai. **Earnings credit sirf COMPLETED par**, idempotent (`wallet_ledger` unique reason key).
+- **Rider-cancel attempts cap**: ek order par rider cancels ki max limit (config, default 3); cap cross hone par order ops queue me jata hai, endlessly SEARCHING nahi ghoomta.
+- **Refunds Razorpay API se**, idempotent — refund key = order id + stage, `refund_id` store, dobara call safe.
 
 ## Fare (sirf server par)
 
@@ -51,57 +66,46 @@ FAILED_DELIVERY reason codes: consignee unreachable, address galat, consignee re
 base  = max(min_fare, base_fare + max(0, km - included_km) * per_km)
 total = (base + courier_type.extra_fee + platform_fee - discount) + GST
 ```
-
-- Distance Google Routes API se (key server-side); fail par haversine × road-factor fallback.
-- Quote lock: `fare_breakdown` + `quote_expires_at` (10 min). Client ka bheja total hamesha ignore.
-- **Quote rate limit**: per user per minute cap (config se), limit paar hone par error.
-
-## OTP
-
-- Pickup OTP: `ARRIVED_PICKUP → PICKED_UP`. Delivery OTP: `IN_TRANSIT → DELIVERED`.
-- Value HMAC se derive: `HMAC(secret, order_id || ':' || purpose || ':' || issued_at)` ke digits — plain kahin store nahi, sirf hash `courier_order_secrets` me.
-- Expiry, max 5 attempts, uske baad lock + ops alert.
-- Verify sirf SECURITY DEFINER RPC me, rider app kabhi OTP read nahi karta.
-- **Delivery**: pickup OTP pickup contact ko, delivery OTP drop contact ko WhatsApp/SMS. Abhi sirf hook — `courier_send_otp_message(order_id, purpose)` server function jo provider call ke liye taiyar hai; template baad me plug hoga. Fail hone par ops ko alert.
+Distance Google Routes API (key server-side), fail par haversine × road-factor. Quote lock 10 min. Client ka total ignore. Quote par per-user rate limit.
 
 ## Dispatch
 
-- Eligible rider: online, approved, courier skill, **na koi active courier order na koi active home-service booking** (dono tables check).
-- Nearest-first offers, 30s timeout (`dispatch_config`), expire par agla rider, radius expand wahi config se.
-- **Accept atomic**: offer row `SELECT ... FOR UPDATE SKIP LOCKED` + order status guard, taaki do rider ek order na le. Ek rider par ek hi active job ka constraint.
-- 30-second cron sweeper (existing `dispatch-radius-expand` job extend) — offer expiry, radius expand, aur SEARCHING timeout par auto-cancel + refund.
-- **Geofence**: `ARRIVED_PICKUP` tabhi allowed jab rider ki live location pickup point ke X meters (config) ke andar ho.
-
-## Earnings
-
-`COMPLETED` par rider ko `wallet_ledger` me credit: `base + extra_fee − commission_pct%` (platform fee aur GST platform ke paas). Idempotent — dobara credit nahi.
+- Eligible rider: online, approved, courier skill, koi active courier order nahi, koi active home-service booking nahi, **aur agla scheduled home-service slot buffer minutes (config) ke andar nahi**.
+- Nearest-first, 30s offer timeout, expire par agla, radius expand `dispatch_config` se.
+- Accept atomic: `SELECT ... FOR UPDATE SKIP LOCKED` on offer + order status guard; ek rider = ek active job.
+- Alag cron job `courier-dispatch-sweeper` (30s, exception-wrapped): offer expiry, radius expand, SEARCHING timeout cancel+refund, unpaid REQUESTED expiry, DELIVERED→COMPLETED settlement.
+- `ARRIVED_PICKUP` par geofence: rider location pickup se X meters (config) ke andar.
 
 ## Security
 
-- Customer sirf apne orders, rider sirf apne offers + assigned order. Secrets table dono ke liye deny.
-- Config tables: write sirf `super_admin`, `ops_manager` read-only, public ko sirf active rows.
-- **Har RPC**: caller role check andar, `SECURITY DEFINER` + `SET search_path = public`, `REVOKE EXECUTE FROM PUBLIC, anon`, grant sirf zaroori role ko.
-- Create order reject: service flag off, vehicle inactive, courier type allowed nahi, weight limit paar, prohibited items confirm nahi, quote expire.
-- Har config change aur staff action `audit_logs` me before/after ke saath.
+- Customer sirf apne orders; rider sirf apne offers + assigned order — **pickup/drop contact number sirf assigned order par, assign hone ke baad** (column-level view/RPC se, warna masked).
+- Secrets table dono ke liye deny.
+- Config tables: write sirf `super_admin`, `ops_manager` read-only, public sirf active rows.
+- Har RPC: `SECURITY DEFINER`, `SET search_path = public`, andar caller role check, `REVOKE EXECUTE FROM PUBLIC, anon`.
+- Create reject: flag off, vehicle inactive, rate placeholder, courier type allowed nahi, weight paar, prohibited confirm nahi, quote expire.
+- Har config/staff action audit_logs me before/after.
 
-## Staff RPCs (backend abhi, UI baad me)
+## Staff RPCs (backend abhi)
 
-`staff_courier_reassign_rider`, `staff_courier_force_cancel`, `staff_courier_refund`, `staff_courier_resolve_incident`, `staff_courier_set_service_flag`, plus vehicle/rate/courier-type CRUD — sab role-checked aur audited.
+force reassign, force cancel, refund, resolve incident, set service flag, vehicle/rate/courier-type CRUD — sab role-checked + audited.
 
 ## Notifications
 
-Har status change par existing engine me event: customer ko (rider mila, pohoncha, parcel utha, transit, delivered, cancel/refund) aur rider ko (naya offer, assign, cancel, earning credit). Rider na milne par ops alert.
+Har status change par existing engine: customer (rider mila, pohoncha, picked, transit, delivered, cancel/refund) aur rider (offer, assign, cancel, earning credit). Rider na mile to ops alert.
 
-## Technical details
+## Migrations
 
-- Migration 1: config tables + seed (service_flags me courier + existing services, Latur bike/moped vehicle + rates, 5 courier types, mapping).
-- Migration 2: courier_orders / secrets / events / offers + RLS + grants + transition guard trigger + event logging trigger.
-- Migration 3: RPCs — quote, create, cancel, dispatch_next, offer_respond, advance_status, verify_pickup_otp, verify_delivery_otp, report_incident, staff set, plus sweeper function; cron job 1 ka command update.
-- Migration 4: existing booking create path me service_flag check.
-- Server functions (`src/lib/courier.functions.ts`): Google Routes distance, Razorpay order create purpose `courier`, webhook `courier` handling, OTP send hook.
-- Koi Supabase Edge Function nahi — TanStack server functions + Postgres RPC.
-- **Verification**: typecheck, production build, DB linter, aur RLS tests sirf admin SQL se nahi — `set local role authenticated` + JWT claim simulate karke customer aur rider dono ke perspective se read/write attempts test honge (cross-user read deny, secrets table deny, config write deny).
+1. Config tables + seed (courier flag OFF, bike inactive, placeholder rates, courier types, mapping) + Vault OTP secret.
+2. courier_orders / secrets / events / offers + RLS + grants + transition guard + event trigger.
+3. RPCs + sweeper function + naya cron job.
+4. **Alag apply**: existing booking create path me service_flag check — **missing flag row = active** (fail-open), taaki koi existing service band na ho. Iske saath rollback SQL milega (check hatane ka aur poore courier schema ko drop karne ka).
+
+Server side: `src/lib/courier.functions.ts` — Routes distance, Razorpay create purpose `courier`, webhook handling, refund call, AiSensy OTP send. Koi nayi Edge Function nahi.
+
+## Verification
+
+Typecheck, production build, DB linter, aur RLS tests **customer + rider role simulate karke** (`set local role authenticated` + JWT claim): cross-user order read deny, secrets table deny, config write deny, contact number masking, offer accept race test.
 
 ## Out of scope
 
-Waiting charges (baad me), customer/rider/Command Center UI, inter-city, multi-stop.
+Waiting charges, sab UI (customer/rider/Command Center), inter-city, multi-stop.
