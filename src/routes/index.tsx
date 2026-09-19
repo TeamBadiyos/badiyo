@@ -120,9 +120,13 @@ const ReferralDashboardScreen = lazyNamed(
   () => import("@/components/ReferralDashboardScreen"),
   "ReferralDashboardScreen",
 );
-const PaymentMethodsScreen = lazyNamed(
-  () => import("@/components/profile/PaymentMethodsScreen"),
-  "PaymentMethodsScreen",
+const SupportTicketsScreen = lazyNamed(
+  () => import("@/components/profile/SupportTicketsScreen"),
+  "SupportTicketsScreen",
+);
+const SupportTicketDetailScreen = lazyNamed(
+  () => import("@/components/profile/SupportTicketDetailScreen"),
+  "SupportTicketDetailScreen",
 );
 const SearchResultsScreen = lazyNamed(
   () => import("@/components/SearchResultsScreen"),
@@ -211,7 +215,8 @@ type Phase =
   | "help"
   | "about"
   | "referrals"
-  | "payment-methods"
+  | "support-tickets"
+  | "support-ticket"
   | "search-results"
   | "orders"
   | "active-devices"
@@ -253,6 +258,7 @@ function Index() {
   }, []);
 
   const [legal, setLegal] = useState<{ slug: LegalSlug; from: Phase } | null>(null);
+  const [activeTicketId, setActiveTicketId] = useState<string | null>(null);
   const [selectedService, setSelectedService] = useState<SelectedService | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<SelectedSlot | null>(null);
   const [selectedAddress, setSelectedAddress] = useState<SelectedAddress | null>(null);
@@ -1047,7 +1053,7 @@ function Index() {
             onOpenSettings={() => setPhase("settings")}
             onOpenHelp={() => setPhase("help")}
             onOpenReferrals={() => setPhase("referrals")}
-            onOpenPaymentMethods={() => setPhase("payment-methods")}
+            onOpenTickets={() => setPhase("support-tickets")}
             onOpenAddresses={() => setPhase("manage-addresses")}
             onLogout={() => setPhase("login")}
           />
@@ -1058,9 +1064,23 @@ function Index() {
           <AddressSelectionScreen manage onBack={() => setPhase("profile")} />
         </div>
       )}
-      {phase === "payment-methods" && (
+      {phase === "support-tickets" && (
         <div className="animate-fade-slide-in">
-          <PaymentMethodsScreen onBack={() => setPhase("profile")} />
+          <SupportTicketsScreen
+            onBack={() => setPhase("profile")}
+            onOpenTicket={(id) => {
+              setActiveTicketId(id);
+              setPhase("support-ticket");
+            }}
+          />
+        </div>
+      )}
+      {phase === "support-ticket" && activeTicketId && (
+        <div className="animate-fade-slide-in">
+          <SupportTicketDetailScreen
+            ticketId={activeTicketId}
+            onBack={() => setPhase("support-tickets")}
+          />
         </div>
       )}
       {phase === "search-results" && (
@@ -1175,6 +1195,7 @@ function Index() {
               setPhase("legal");
             }}
             onOpenAbout={() => setPhase("about")}
+            onOpenTickets={() => setPhase("support-tickets")}
           />
         </div>
       )}

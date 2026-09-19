@@ -16,6 +16,7 @@ export function EditProfileScreen({ onBack }: { onBack: () => void }) {
   const [initialPhone, setInitialPhone] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -91,19 +92,38 @@ export function EditProfileScreen({ onBack }: { onBack: () => void }) {
 
   async function handleSave() {
     if (!uid) return;
+    const name = fullName.trim();
+    const mobile = phone.replace(/\D/g, "").slice(-10);
+    if (!name) {
+      setFormError("Please enter your name");
+      return;
+    }
+    if (!phoneReadOnly && !/^[6-9]\d{9}$/.test(mobile)) {
+      setFormError("Please enter a valid 10-digit mobile number");
+      return;
+    }
+    if (email.trim() && !/^\S+@\S+\.\S+$/.test(email.trim())) {
+      setFormError("Please enter a valid email or leave it blank");
+      return;
+    }
+    setFormError(null);
     setSaving(true);
     setSaved(false);
     const update: { full_name: string | null; email: string | null; phone?: string | null } = {
-      full_name: fullName || null,
+      full_name: name,
       email: email ? email : syntheticEmail,
     };
     if (!phoneReadOnly) {
-      update.phone = phone || null;
+      update.phone = mobile;
     }
     const { error } = await supabase.from("users").update(update).eq("id", uid);
     setSaving(false);
+    if (error) {
+      setFormError(error.message);
+    }
     if (!error) {
-      setInitialPhone(phone);
+      setPhone(mobile);
+      setInitialPhone(mobile);
       setSaved(true);
       setTimeout(() => setSaved(false), 1500);
     }
@@ -158,7 +178,7 @@ export function EditProfileScreen({ onBack }: { onBack: () => void }) {
         </section>
 
         <section className="mt-8 space-y-4">
-          <Field label="Full Name">
+          <Field label="Full Name *">
             <input
               type="text"
               value={fullName}
@@ -167,7 +187,7 @@ export function EditProfileScreen({ onBack }: { onBack: () => void }) {
               className="w-full rounded-[14px] border border-border bg-card px-4 py-3 text-sm text-foreground outline-none focus:border-primary"
             />
           </Field>
-          <Field label="Email">
+          <Field label="Email (optional)">
             <input
               type="email"
               value={email}
@@ -176,7 +196,7 @@ export function EditProfileScreen({ onBack }: { onBack: () => void }) {
               className="w-full rounded-[14px] border border-border bg-card px-4 py-3 text-sm text-foreground outline-none focus:border-primary"
             />
           </Field>
-          <Field label="Phone">
+          <Field label="Mobile Number *">
             <input
               type="tel"
               inputMode="tel"
@@ -196,6 +216,9 @@ export function EditProfileScreen({ onBack }: { onBack: () => void }) {
           </Field>
         </section>
 
+        {formError && (
+          <p className="mt-4 text-xs font-semibold text-destructive">{formError}</p>
+        )}
         <button
           onClick={handleSave}
           disabled={saving}
