@@ -3,8 +3,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { signAddressPhotoUrl } from "./storageUrl";
 
 async function fetchAvatarUrl(): Promise<string | null> {
-  const { data: userRes } = await supabase.auth.getUser();
-  const uid = userRes.user?.id;
+  // getSession() reads the locally stored session — no network round trip,
+  // unlike getUser(), which used to add a full request before the photo query.
+  const { data: sessionRes } = await supabase.auth.getSession();
+  const uid = sessionRes.session?.user?.id;
+
   if (!uid) return null;
   const { data } = await supabase
     .from("users")
