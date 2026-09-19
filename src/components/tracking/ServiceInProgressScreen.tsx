@@ -366,6 +366,7 @@ export function ServiceInProgressScreen({
     if (!bookingId) return;
     setTipBusy(amount);
     setTipError(null);
+    let tipOrderId: string | null = null;
     try {
       const { data, error } = await supabase.functions.invoke("create-razorpay-order", {
         body: {
