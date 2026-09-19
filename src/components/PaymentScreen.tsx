@@ -235,8 +235,10 @@ export function PaymentScreen({
 
   async function startCheckout() {
     setStatus("loading");
-    setErrorMsg(null);
+    setErrCategory("unknown");
+    setRefId(null);
     setBookingLoadError(null);
+    let rzpOrderId: string | null = null;
     try {
       const receipt = `bk_${Date.now()}`;
 
