@@ -888,6 +888,24 @@ export type Database = {
         }
         Relationships: []
       }
+      courier_location_read_log: {
+        Row: {
+          created_at: string
+          customer_id: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          id?: string
+        }
+        Relationships: []
+      }
       courier_offers: {
         Row: {
           created_at: string
@@ -4493,6 +4511,7 @@ export type Database = {
         Args: { _order_id: string; _purpose: string }
         Returns: Json
       }
+      courier_get_rider_location: { Args: { _order_id: string }; Returns: Json }
       courier_hash_otp: { Args: { _otp: string }; Returns: string }
       courier_is_ops_staff: { Args: never; Returns: boolean }
       courier_is_super_admin: { Args: never; Returns: boolean }
@@ -4622,15 +4641,27 @@ export type Database = {
         Args: { _order_id: string; _purpose: string }
         Returns: Json
       }
-      courier_rider_advance: {
-        Args: {
-          _lat?: number
-          _lng?: number
-          _order_id: string
-          _to_status: string
-        }
-        Returns: Json
-      }
+      courier_rider_advance:
+        | {
+            Args: {
+              _lat?: number
+              _lng?: number
+              _order_id: string
+              _to_status: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              _accuracy_m?: number
+              _fix_at?: string
+              _lat?: number
+              _lng?: number
+              _order_id: string
+              _to_status: string
+            }
+            Returns: Json
+          }
       courier_rider_cancel: {
         Args: { _order_id: string; _reason: string }
         Returns: Json
