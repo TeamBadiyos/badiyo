@@ -1,35 +1,39 @@
 # Native build: Razorpay sheet, Install Referrer, verified app links
 
-Teen cheezein ek hi naye APK build me bundle karni hain, aur `native/android/MANUAL_MERGE.md` me step-by-step likhni hain taaki build machine par bina guesswork ke chale.
+Teen cheezein ek naye APK build me bundle karni hain, aur `native/android/MANUAL_MERGE.md` me exact steps likhni hain.
 
-## 1. Razorpay native sheet (already half-done)
+## Package verification (done — npm registry par check kiya)
 
-Web side taiyaar hai (`src/lib/razorpayCheckout.ts` plugin id `Checkout` register karta hai, warna web sheet par fallback). Sirf build steps confirm karne hain in MANUAL_MERGE.md:
+| Kaam | Package | Status |
+| --- | --- | --- |
+| Razorpay native sheet | `capacitor-razorpay` v1.3.0 (Razorpay ka apna, author sachin.nautiyal@razorpay.com, Sep 2025, peer `@capacitor/core >=7`) | exists |
+| Install Referrer | `@capgo/capacitor-install-referrer` v8.1.11 | exists |
+| ~~`@capacitor-community/razorpay`~~ | npm par **exist nahi karta** (404) | hata denge |
+| ~~`@capacitor-community/install-referrer`~~ | npm par **exist nahi karta** (404) | hata denge |
 
-```
-bun install
-npm install @capacitor-community/razorpay
-bun run build:capacitor
-npx cap sync android
-```
+Plugin IDs source se confirm kiye: Razorpay ka Android class `Checkout` → plugin id **`Checkout`**, method `open(options)` → `{ response }`. Capgo ka `@CapacitorPlugin(name = "InstallReferrer")` → method `getReferrer()`.
 
-Yeh section already likha hai — isko naye consolidated "Native build checklist" ke andar la denge taaki teeno steps ek jagah hon.
+## 1. Razorpay native sheet
+
+- `src/lib/razorpayCheckout.ts` already `registerPlugin("Checkout")` karta hai aur `result.response ?? result` padhta hai — yeh asli package ke API se match karta hai, isliye code change minimal.
+- Change: plugin missing hone par ab **chupchap** fallback nahi — `console.warn("[razorpay] native Checkout plugin missing, falling back to web sheet")` (dev log) ke saath web sheet chalega, taaki build me plugin chhoot jaye to pata chale.
+- MANUAL_MERGE.md me package name `capacitor-razorpay` (galat community wala hata denge).
 
 ## 2. Install Referrer (Play Store se aaya referral code)
 
-- Plugin: `@capacitor-community/install-referrer` (npm install + `npx cap sync android`; Gradle `com.android.installreferrer:installreferrer` plugin khud le aata hai).
-- Web side: naya helper `src/lib/installReferrer.ts` —
-  - app ke pehle launch par ek hi baar plugin se referrer string padhta hai,
-  - `ref=CODE` parse karta hai,
-  - agar pehle se koi referral code stored nahi hai to `src/lib/referrals.ts` ke storage me daal deta hai,
-  - `installreferrer_read` flag localStorage me set karta hai (dobara na padhe),
-  - plugin na mile (web / purana APK) to chup-chaap skip.
-- Call site: app bootstrap (`src/routes/index.tsx` ke startup effect) me ek baar, sign-in se pehle.
-- Play Store link pehle se `?referrer=ref=CODE` bhejta hai (`src/routes/invite.$code.tsx`), to code end-to-end track hoga: link → Play Store → install → pehla launch → referral apply.
+- Package `@capgo/capacitor-install-referrer`, plugin id `InstallReferrer`.
+- Naya `src/lib/installReferrer.ts`:
+  - pehle launch par ek hi baar `InstallReferrer.getReferrer()`,
+  - referrer string ko `decodeURIComponent` karke `ref=CODE` parse (Play Store value URL-encoded aati hai),
+  - agar koi code pehle se stored nahi hai to `src/lib/referrals.ts` ke storage me set,
+  - `installreferrer_read` flag se dobara na pade,
+  - plugin unavailable → `console.warn` (silent no-op nahi).
+- Bootstrap se ek baar call (`src/routes/index.tsx` startup effect), sign-in se pehle.
+- `src/routes/invite.$code.tsx`: Play Store URL me referrer value ab properly encode hogi → `...&referrer=ref%3DCODE`.
 
-## 3. autoVerify intent filter for user.badiyos.com
+## 3. AndroidManifest — autoVerify intent filter + in-app routing
 
-MainActivity me add karna hai (MANUAL_MERGE.md me exact block):
+`android/app/src/main/AndroidManifest.xml` ke **MainActivity `<activity>`** block ke andar:
 
 ```xml
 <intent-filter android:autoVerify="true">
@@ -40,21 +44,38 @@ MainActivity me add karna hai (MANUAL_MERGE.md me exact block):
 </intent-filter>
 ```
 
-Isse `https://user.badiyos.com/invite/CODE` Chrome me nahi, seedha app me khulega. Existing `badiyos://open` filter waisa hi rahega.
+Existing `badiyos://open` filter waisa hi rahega. App side par `App.addListener("appUrlOpen", ...)` ko extend karenge: agar URL path `/invite/<CODE>` hai to code capture/apply hoga aur user home par land karega (Chrome hop ke bina).
 
 ## 4. assetlinks.json + SHA-256 fingerprint
 
-- File: `public/.well-known/assetlinks.json` — package pehle se `com.badiyos.customer` hai (sahi hai), isme koi badlav nahi.
-- Fingerprint abhi `BB:68:6C:...:5D:C3` hai. Yeh **Play App Signing** wale key ka hona chahiye, upload key ka nahi.
-- Kahan se milega (aap karenge, mere paas access nahi):
-  Play Console → apna app → **Test and release → Setup → App integrity** → **App signing key certificate** → `SHA-256 certificate fingerprint` copy karein.
-- Agar wo current value se alag nikla, mujhe bhej dein — main `assetlinks.json` update kar dunga (aur ek hi publish ke baad Android verification pass ho jayegi).
-- MANUAL_MERGE.md me yeh jagah aur verification command bhi likhi jayegi:
-  `adb shell pm verify-app-links --re-verify com.badiyos.customer` + `adb shell pm get-app-links com.badiyos.customer`.
+- `public/.well-known/assetlinks.json` already sahi shape me hai: package `com.badiyos.customer`, `sha256_cert_fingerprints` ek **array** — yeh format hi rakhenge.
+- Current fingerprint `BB:68:6C:…:5D:C3`. Yeh **Play App Signing** key ki honi chahiye (upload key ki nahi).
+- Kahan se milegi (yeh aapko karna hoga): Play Console → app → **Test and release → Setup → App integrity → App signing key certificate → SHA-256 certificate fingerprint**.
+- Alag nikle to mujhe bhej dein, main file update kar dunga; ek publish ke baad Android verification pass ho jayegi.
+
+## 5. MANUAL_MERGE.md me likhe jaane wale checks
+
+```bash
+bun install
+npm install capacitor-razorpay @capgo/capacitor-install-referrer
+bun run build:capacitor
+npx cap sync android
+npx cap ls android        # dono plugins list me dikhne chahiye
+```
+
+App-links verification:
+
+```bash
+adb shell pm verify-app-links --re-verify com.badiyos.customer
+adb shell pm get-app-links com.badiyos.customer
+# output me: user.badiyos.com: verified   (agar "none"/"legacy_failure" hai to assetlinks fingerprint galat hai)
+```
+
+Plus Razorpay sheet verification steps (UPI apps dikhein, cancel par "Payment cancelled", ek real payment).
 
 ## Technical notes
 
-- Files changed: `native/android/MANUAL_MERGE.md` (naya "Native build checklist" section: dono npm plugins, manifest block, verification), naya `src/lib/installReferrer.ts`, chhota bootstrap call `src/routes/index.tsx`, aur `src/lib/referrals.ts` me ek exported setter agar zaroori hua.
-- Koi plugin sandbox me install nahi hoga (registry 404) — sab kuch name se register hota hai aur missing hone par no-op, isliye current published APK aur website bilkul waise hi chalte rahenge.
+- Files: `native/android/MANUAL_MERGE.md`, naya `src/lib/installReferrer.ts`, `src/lib/razorpayCheckout.ts` (warning), `src/routes/invite.$code.tsx` (encoded referrer), `src/routes/index.tsx` (bootstrap + appUrlOpen invite routing), zaroorat pade to `src/lib/referrals.ts` me ek setter export.
+- Sandbox me native plugins install nahi honge; sab name se register hote hain aur missing par warning + fallback, isliye current published APK aur website bilkul waise hi chalenge.
 - Verification: `bunx tsgo --noEmit` + production build.
 - Design, pricing, GST, dispatch, rewards rules me koi badlav nahi.
