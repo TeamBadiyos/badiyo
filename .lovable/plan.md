@@ -16,9 +16,11 @@ payment confirm  ->  trigger  ->  admin_alert_queue (row)
 
 ## Trigger (sirf paid par)
 
-- Home service: `bookings` par AFTER INSERT/UPDATE trigger — tabhi enqueue jab `razorpay_payment_id` pehli baar set ho (null se non-null / insert par already set).
-- Courier: `courier_orders` par AFTER INSERT/UPDATE — tabhi jab `payment_status` `paid` bane.
-- Merchant orders: same pattern, par `ops_settings.admin_whatsapp_alert_merchant_enabled` (default `0`) ke peeche.
+Har trigger par SQL-level `WHEN (...)` condition, taaki baaki updates par function chale hi na:
+
+- Home service: `bookings` par AFTER INSERT `WHEN (NEW.razorpay_payment_id IS NOT NULL)` aur AFTER UPDATE `WHEN (OLD.razorpay_payment_id IS NULL AND NEW.razorpay_payment_id IS NOT NULL)`.
+- Courier: `courier_orders` par AFTER INSERT `WHEN (NEW.payment_status = 'paid')` aur AFTER UPDATE `WHEN (OLD.payment_status IS DISTINCT FROM 'paid' AND NEW.payment_status = 'paid')`.
+- Merchant orders: same shape, par `ops_settings.admin_whatsapp_alert_merchant_enabled` (default `0`) ke peeche.
 - Trigger sirf ek row insert karta hai (exception-wrapped, `BEGIN ... EXCEPTION WHEN OTHERS THEN RETURN`), taaki alert fail hone par order kabhi block na ho. Trigger ke andar koi HTTP call nahi.
 - Master toggle `ops_settings.admin_whatsapp_alert_enabled` (default `0`) off ho to trigger kuch bhi enqueue nahi karta.
 
