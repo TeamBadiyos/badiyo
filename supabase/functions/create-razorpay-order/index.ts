@@ -226,6 +226,9 @@ Deno.serve(async (req) => {
           purpose,
           gst_percent: String(gstPercent),
           base_price: String(price),
+          ...(discountPaise > 0 && couponCode
+            ? { coupon_code: couponCode, discount: String(discountPaise / 100) }
+            : {}),
         },
       }),
     });
