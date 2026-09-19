@@ -1,4 +1,3 @@
-import { getAuthUser } from "@/lib/authUser";
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -63,6 +62,7 @@ type CatalogueItem = {
 const TIP_AMOUNTS = [25, 50, 100];
 
 import { payWithRazorpay, toPaymentError } from "@/lib/razorpayCheckout";
+import { getPaymentPrefill } from "@/lib/paymentPrefill";
 import { paymentErrorKey } from "@/lib/paymentError";
 import { logPaymentFailure } from "@/lib/paymentLog.functions";
 import { toast } from "sonner";
@@ -306,8 +306,7 @@ export function ServiceInProgressScreen({
 
       extOrderId = data.order_id as string;
 
-      const { data: userData } = await getAuthUser();
-      const contact = userData.user?.phone || undefined;
+      const prefill = await getPaymentPrefill();
 
       const resp = await payWithRazorpay({
         key: data.key_id,
@@ -315,7 +314,9 @@ export function ServiceInProgressScreen({
         amount: data.amount,
         currency: data.currency,
         description: `Extend by ${opt.duration_label}`,
-        contact,
+        contact: prefill.contact,
+        email: prefill.email,
+        customerName: prefill.name,
       });
 
       const { data: newEnd, error: extErr } = await supabase.rpc("extend_booking", {
@@ -381,8 +382,7 @@ export function ServiceInProgressScreen({
 
       tipOrderId = data.order_id as string;
 
-      const { data: userData } = await getAuthUser();
-      const contact = userData.user?.phone || undefined;
+      const tipPrefill = await getPaymentPrefill();
 
       const resp = await payWithRazorpay({
         key: data.key_id,
@@ -390,7 +390,9 @@ export function ServiceInProgressScreen({
         amount: data.amount,
         currency: data.currency,
         description: `Tip for ${expert?.name ?? "your expert"}`,
-        contact,
+        contact: tipPrefill.contact,
+        email: tipPrefill.email,
+        customerName: tipPrefill.name,
       });
 
       // Server verifies the payment with Razorpay before crediting.

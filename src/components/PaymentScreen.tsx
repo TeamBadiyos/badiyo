@@ -13,6 +13,7 @@ import { totalWithGst, useGstPercent } from "@/lib/gst";
 import type { AppliedCoupon } from "@/lib/coupons";
 
 import { payWithRazorpay, toPaymentError } from "@/lib/razorpayCheckout";
+import { getPaymentPrefill } from "@/lib/paymentPrefill";
 import {
   paymentErrorKey,
   paymentRefId,
@@ -282,8 +283,7 @@ export function PaymentScreen({
 
       rzpOrderId = data.order_id as string;
 
-      const { data: userData } = await getAuthUser();
-      const contact = userData.user?.phone || undefined;
+      const prefill = await getPaymentPrefill();
 
       const resp = await payWithRazorpay({
         key: data.key_id,
@@ -291,7 +291,9 @@ export function PaymentScreen({
         amount: data.amount,
         currency: data.currency,
         description: service.duration_label,
-        contact,
+        contact: prefill.contact,
+        email: prefill.email,
+        customerName: prefill.name,
       });
 
       paymentRef.current = {

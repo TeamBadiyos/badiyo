@@ -27,6 +27,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getAuthUser } from "@/lib/authUser";
 import { courierQuote, courierCreateOrder, courierConfirmPayment } from "@/lib/courier.functions";
 import { payWithRazorpay, toPaymentError } from "@/lib/razorpayCheckout";
+import { getPaymentPrefill } from "@/lib/paymentPrefill";
 import { paymentErrorKey } from "@/lib/paymentError";
 import { useT } from "@/i18n";
 import { pickContact } from "@/lib/contactPicker";
@@ -200,6 +201,7 @@ export function CourierBookingScreen({
           prohibited_items_confirmed: true as const,
         },
       });
+      const prefill = await getPaymentPrefill(pickupPhone);
       const result = await payWithRazorpay({
         key: order.key_id,
         amount: order.amount,
@@ -207,6 +209,9 @@ export function CourierBookingScreen({
         order_id: order.razorpay_order_id,
         name: "Badiyos",
         description: "Parcel delivery",
+        contact: prefill.contact,
+        email: prefill.email,
+        customerName: prefill.name,
       });
       await courierConfirmPayment({
         data: {
