@@ -16,9 +16,11 @@ payment confirm  ->  trigger  ->  admin_alert_queue (row)
 
 ## Trigger (sirf paid par)
 
-- Home service: `bookings` par AFTER INSERT/UPDATE trigger — tabhi enqueue jab `razorpay_payment_id` pehli baar set ho (null se non-null / insert par already set).
-- Courier: `courier_orders` par AFTER INSERT/UPDATE — tabhi jab `payment_status` `paid` bane.
-- Merchant orders: same pattern, par `ops_settings.admin_whatsapp_alert_merchant_enabled` (default `0`) ke peeche.
+Har trigger par SQL-level `WHEN (...)` condition, taaki baaki updates par function chale hi na:
+
+- Home service: `bookings` par AFTER INSERT `WHEN (NEW.razorpay_payment_id IS NOT NULL)` aur AFTER UPDATE `WHEN (OLD.razorpay_payment_id IS NULL AND NEW.razorpay_payment_id IS NOT NULL)`.
+- Courier: `courier_orders` par AFTER INSERT `WHEN (NEW.payment_status = 'paid')` aur AFTER UPDATE `WHEN (OLD.payment_status IS DISTINCT FROM 'paid' AND NEW.payment_status = 'paid')`.
+- Merchant orders: same shape, par `ops_settings.admin_whatsapp_alert_merchant_enabled` (default `0`) ke peeche.
 - Trigger sirf ek row insert karta hai (exception-wrapped, `BEGIN ... EXCEPTION WHEN OTHERS THEN RETURN`), taaki alert fail hone par order kabhi block na ho. Trigger ke andar koi HTTP call nahi.
 - Master toggle `ops_settings.admin_whatsapp_alert_enabled` (default `0`) off ho to trigger kuch bhi enqueue nahi karta.
 
@@ -37,7 +39,7 @@ Har value se newline hata ke 60 chars par trim. Phone number, address, order id 
 - Shared secret header se guarded — secret Vault me (`admin_alert_job_secret`), verify ek `admin_alert_verify_job_secret()` RPC se (courier refunds jaisa hi pattern). Secret galat/missing = 401, koi info leak nahi.
 - Pending rows (max 20 per run) uthata hai, AiSensy campaign API call karta hai (`send-otp` jaisa hi shape), phir row ko `sent` ya `failed` mark karta hai.
 - Retry: max 3 attempts, backoff ke saath; 3 ke baad `failed` + log.
-- Rate cap: agar 1 minute me 20 se zyada alerts hain, to baaki ek single digest message me ("N naye orders, total Rs X") — spam aur AiSensy throttle dono se bachav.
+- Digest hata diya — approved template sirf 4 variables (Order, Customer, Amount, Time) ka hai, aur digest us shape me theek nahi baithta. Uski jagah sirf rate cap: ek minute me max 20 alerts bhejenge; bache hue rows queue me `pending` rahenge aur agle minute ke run me apne-apne message ke saath jaayenge (koi order chhootega nahi, sirf thoda der se).
 - Poora loop try/catch me; ek order ka fail dusre ko nahi rokta.
 
 ## Secrets (kuch bhi hardcode nahi)
@@ -62,12 +64,15 @@ Har value se newline hata ke 60 chars par trim. Phone number, address, order id 
 - Migrations: (M1) tables + RLS + grants + ops_settings keys + Vault secret, (M2) enqueue function + triggers + pg_net dispatch function, (M3) rollback script (`admin_alert_teardown.sql` style, plan ke saath diya jaayega) — sab drop: triggers, functions, tables, ops_settings keys, Vault secret.
 - Har nayi function `SECURITY DEFINER`, `SET search_path = public`, `REVOKE EXECUTE ... FROM anon, public`.
 - pg_net dispatch `courier_dispatch_refund_job` jaisa: pending row ho tabhi HTTP post, exception-wrapped warning.
+- `net._http_response` cleanup: pg_net har call ka response isi table me rakhta hai aur wo apne aap nahi hatta. Dispatch function har run me pehle `delete from net._http_response where created < now() - interval '1 hour'` chalayega (exception-wrapped), aur teardown migration bhi purani rows saaf karegi. Isse ye table badhta nahi rahega.
 - Naye files: `src/routes/api/public/admin-alert/process.ts` (naya), `supabase/config.toml` unchanged, kisi existing payment/courier file me change nahi.
 
 ## Tests (report karunga)
 
 - Idempotency: same order do baar enqueue → ek hi message.
-- Trigger sirf paid par: unpaid/abandoned order → queue khaali.
+- Trigger sirf paid par: unpaid/abandoned order → queue khaali; non-payment update (status/address) par trigger fire hi nahi (WHEN condition).
 - Toggle off → kuch enqueue nahi.
 - AiSensy fail (galat campaign) → order/booking normal bane, row `failed` + log entry, retry schedule.
+- Load: ek minute me 25 orders → 20 bheje jaate hain, 5 pending rehte hain aur agle run me chale jaate hain, koi duplicate nahi.
+- Processing route bina secret ke (aur galat secret ke saath) call → 401, queue untouched.
 - RLS: customer/rider/anon queue+log par denied.
