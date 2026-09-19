@@ -43,7 +43,11 @@ export function RewardsScreen({
 
   const queryClient = useQueryClient();
   const { pull, refreshing } = usePullToRefresh(async () => {
-    await queryClient.refetchQueries({ queryKey: ["customer_rewards"] });
+    await Promise.all([
+      queryClient.refetchQueries({ queryKey: ["customer_rewards"] }),
+      queryClient.refetchQueries({ queryKey: ["my_coupons"] }),
+      queryClient.refetchQueries({ queryKey: ["campaign_offers"] }),
+    ]);
   });
 
   const ledger = data?.ledger ?? [];
