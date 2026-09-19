@@ -55,6 +55,7 @@ export function PaymentScreen({
   onBack: () => void;
   onDone: () => void;
   onTrackBooking: (bookingId: string | null) => void;
+  onOpenHelp?: () => void;
 }) {
   const t = useT();
   const gstPercent = useGstPercent();
