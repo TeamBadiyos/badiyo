@@ -64,12 +64,15 @@ Har value se newline hata ke 60 chars par trim. Phone number, address, order id 
 - Migrations: (M1) tables + RLS + grants + ops_settings keys + Vault secret, (M2) enqueue function + triggers + pg_net dispatch function, (M3) rollback script (`admin_alert_teardown.sql` style, plan ke saath diya jaayega) — sab drop: triggers, functions, tables, ops_settings keys, Vault secret.
 - Har nayi function `SECURITY DEFINER`, `SET search_path = public`, `REVOKE EXECUTE ... FROM anon, public`.
 - pg_net dispatch `courier_dispatch_refund_job` jaisa: pending row ho tabhi HTTP post, exception-wrapped warning.
+- `net._http_response` cleanup: pg_net har call ka response isi table me rakhta hai aur wo apne aap nahi hatta. Dispatch function har run me pehle `delete from net._http_response where created < now() - interval '1 hour'` chalayega (exception-wrapped), aur teardown migration bhi purani rows saaf karegi. Isse ye table badhta nahi rahega.
 - Naye files: `src/routes/api/public/admin-alert/process.ts` (naya), `supabase/config.toml` unchanged, kisi existing payment/courier file me change nahi.
 
 ## Tests (report karunga)
 
 - Idempotency: same order do baar enqueue → ek hi message.
-- Trigger sirf paid par: unpaid/abandoned order → queue khaali.
+- Trigger sirf paid par: unpaid/abandoned order → queue khaali; non-payment update (status/address) par trigger fire hi nahi (WHEN condition).
 - Toggle off → kuch enqueue nahi.
 - AiSensy fail (galat campaign) → order/booking normal bane, row `failed` + log entry, retry schedule.
+- Load: ek minute me 25 orders → 20 bheje jaate hain, 5 pending rehte hain aur agle run me chale jaate hain, koi duplicate nahi.
+- Processing route bina secret ke (aur galat secret ke saath) call → 401, queue untouched.
 - RLS: customer/rider/anon queue+log par denied.
