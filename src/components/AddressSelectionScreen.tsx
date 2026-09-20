@@ -434,6 +434,8 @@ export function AddressSelectionScreen({
       {/* Full-screen map picker */}
       {sheetOpen && (
         <AddAddressMapScreen
+          serviceCheck={serviceCheck}
+          segmentId={segmentId}
           onBack={() => setSheetOpen(false)}
           onSave={(input) => addMutation.mutate(input)}
           isSaving={addMutation.isPending}
@@ -444,6 +446,8 @@ export function AddressSelectionScreen({
       {/* Edit an existing address (same map + label + details flow) */}
       {editing && (
         <AddAddressMapScreen
+          serviceCheck={serviceCheck}
+          segmentId={segmentId}
           initial={{
             id: editing.id,
             label: editing.label,
