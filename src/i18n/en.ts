@@ -86,6 +86,7 @@ export const en = {
   "courier.confirmSafe": "I confirm this parcel has no cash, jewellery, alcohol, explosives, illegal or banned items.",
   "courier.confirmRequired": "Please confirm that your parcel has no restricted items.",
   "courier.priceError": "Could not get the price right now.",
+  "courier.confirmRetry": "Payment received. Tap again to finish confirming your parcel booking.",
   "courier.payBook": "Pay & Book {vehicle}",
   "courier.pickup": "Pickup",
   "courier.drop": "Drop",
