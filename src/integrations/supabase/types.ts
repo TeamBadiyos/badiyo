@@ -76,6 +76,7 @@ export type Database = {
           landmark_photo_url: string | null
           latitude: number | null
           longitude: number | null
+          pincode: string | null
           user_id: string | null
         }
         Insert: {
@@ -89,6 +90,7 @@ export type Database = {
           landmark_photo_url?: string | null
           latitude?: number | null
           longitude?: number | null
+          pincode?: string | null
           user_id?: string | null
         }
         Update: {
@@ -102,6 +104,7 @@ export type Database = {
           landmark_photo_url?: string | null
           latitude?: number | null
           longitude?: number | null
+          pincode?: string | null
           user_id?: string | null
         }
         Relationships: [
@@ -4986,6 +4989,7 @@ export type Database = {
           landmark_photo_url: string | null
           latitude: number | null
           longitude: number | null
+          pincode: string | null
           user_id: string | null
         }
         SetofOptions: {
