@@ -379,7 +379,7 @@ export function AddressSelectionScreen({
                             <Pencil className="h-4 w-4" /> Edit
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            variant="destructive"
+                            className="text-destructive focus:text-destructive"
                             onSelect={() => setConfirmDelete(a)}
                           >
                             <Trash2 className="h-4 w-4" /> Delete
