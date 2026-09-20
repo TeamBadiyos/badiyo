@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Loader2, LocateFixed, MapPin, Plus, Search, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AddAddressMapScreen, type PickedAddress } from "./AddAddressMapScreen";
-import { reverseGeocode } from "@/lib/geocode.functions";
+import { searchAddresses, type AddressSearchResult } from "@/lib/addressSearch";
 import {
   getCurrentCoords,
   openAppSettings,
