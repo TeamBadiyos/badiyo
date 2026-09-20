@@ -360,47 +360,32 @@ export function AddressSelectionScreen({
                       </button>
 
                       {/* Per-address actions */}
-                      <button
-                        type="button"
-                        aria-label="Address options"
-                        onClick={() => {
-                          void hapticSelection();
-                          setMenuFor((cur) => (cur === a.id ? null : a.id));
-                        }}
-                        className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground active:bg-muted"
+                      <DropdownMenu
+                        open={menuFor === a.id}
+                        onOpenChange={(open) => setMenuFor(open ? a.id : null)}
                       >
-                        <MoreVertical className="h-4 w-4" />
-                      </button>
-                      {menuFor === a.id && (
-                        <>
-                          <div
-                            className="fixed inset-0 z-10"
-                            onClick={() => setMenuFor(null)}
-                          />
-                          <div className="absolute right-2 top-11 z-20 w-36 overflow-hidden rounded-[14px] border border-border bg-card shadow-lg">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setMenuFor(null);
-                                setEditing(a);
-                              }}
-                              className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm font-semibold text-foreground active:bg-muted"
-                            >
-                              <Pencil className="h-4 w-4" /> Edit
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setMenuFor(null);
-                                setConfirmDelete(a);
-                              }}
-                              className="flex w-full items-center gap-2 border-t border-border px-3 py-2.5 text-left text-sm font-semibold text-destructive active:bg-muted"
-                            >
-                              <Trash2 className="h-4 w-4" /> Delete
-                            </button>
-                          </div>
-                        </>
-                      )}
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            type="button"
+                            aria-label="Address options"
+                            onClick={() => void hapticSelection()}
+                            className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground active:bg-muted"
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" sideOffset={6} className="w-40">
+                          <DropdownMenuItem onSelect={() => setEditing(a)}>
+                            <Pencil className="h-4 w-4" /> Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            variant="destructive"
+                            onSelect={() => setConfirmDelete(a)}
+                          >
+                            <Trash2 className="h-4 w-4" /> Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </SwipeableRow>
 
