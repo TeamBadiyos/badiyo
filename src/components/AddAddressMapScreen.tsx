@@ -405,10 +405,10 @@ export function AddAddressMapScreen({
                   </button>
                 )}
               </div>
-              {suggestions.length > 0 && (
+              {suggestions.length > 0 ? (
                 <ul className="absolute inset-x-0 top-full z-20 mt-2 max-h-64 overflow-y-auto rounded-[14px] border border-border bg-card shadow-lg">
-                  {suggestions.map((s) => (
-                    <li key={s.placeId}>
+                  {suggestions.map((s, i) => (
+                    <li key={`${s.lat},${s.lng},${i}`}>
                       <button
                         type="button"
                         onClick={() => handleSelectSuggestion(s)}
@@ -417,18 +417,24 @@ export function AddAddressMapScreen({
                         <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                         <span className="min-w-0">
                           <span className="block truncate text-sm font-semibold text-foreground">
-                            {s.primary}
+                            {s.title}
                           </span>
-                          {s.secondary && (
-                            <span className="block truncate text-xs text-muted-foreground">
-                              {s.secondary}
-                            </span>
-                          )}
+                          <span className="block truncate text-xs text-muted-foreground">
+                            {s.address}
+                          </span>
                         </span>
                       </button>
                     </li>
                   ))}
                 </ul>
+              ) : (
+                searchError &&
+                query.trim().length >= 3 &&
+                !searching && (
+                  <div className="absolute inset-x-0 top-full z-20 mt-2 rounded-[14px] border border-border bg-card px-3 py-2.5 text-xs text-muted-foreground shadow-lg">
+                    {searchError}
+                  </div>
+                )
               )}
             </div>
           </div>
@@ -454,53 +460,68 @@ export function AddAddressMapScreen({
       <div className="rounded-t-[24px] border-t border-border bg-card p-5 pb-6 shadow-2xl">
         <div className="mx-auto w-full max-w-md space-y-4">
           <div>
-            <div className="mb-1 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            <div className="mb-1 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Delivery details
+              <Lock className="h-3 w-3" />
             </div>
-            {editingAuto ? (
-              <textarea
-                autoFocus
-                value={autoAddress}
-                onChange={(e) => setAutoAddress(e.target.value)}
-                onBlur={() => setEditingAuto(false)}
-                rows={2}
-                className="w-full rounded-[14px] border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-              />
-            ) : (
-              <button
-                onClick={() => setEditingAuto(true)}
-                className="flex w-full items-start gap-2 rounded-[14px] border border-border bg-background px-3 py-2.5 text-left"
+            <div className="flex w-full items-start gap-2 rounded-[14px] border border-border bg-muted/50 px-3 py-2.5">
+              {geocoding ? (
+                <Loader2 className="mt-0.5 h-4 w-4 shrink-0 animate-spin text-primary" />
+              ) : (
+                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+              )}
+              <span
+                className={`flex-1 text-sm ${
+                  geocoding || (!autoAddress && !geocodeFailed)
+                    ? "text-muted-foreground"
+                    : geocodeFailed
+                      ? "text-destructive"
+                      : "text-foreground"
+                }`}
               >
-                {geocoding ? (
-                  <Loader2 className="mt-0.5 h-4 w-4 shrink-0 animate-spin text-primary" />
-                ) : (
-                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                )}
-                <span
-                  className={`flex-1 text-sm ${
-                    geocoding || (!autoAddress && !geocodeFailed)
-                      ? "text-muted-foreground"
-                      : geocodeFailed && !autoAddress
-                        ? "text-red-600"
-                        : "text-foreground"
-                  }`}
-                >
-                  {geocoding
-                    ? "Finding address…"
-                    : autoAddress
-                      ? autoAddress
-                      : geocodeFailed
-                        ? "Unable to fetch address, please enter manually"
-                        : "Move the pin to select a location"}
-                </span>
+                {geocoding
+                  ? "Finding address…"
+                  : autoAddress
+                    ? autoAddress
+                    : geocodeFailed
+                      ? "Could not detect the address for this pin."
+                      : "Move the pin to select a location"}
+              </span>
+            </div>
+            {!geocoding && geocodeFailed && (
+              <button
+                type="button"
+                onClick={() => setGeocodeNonce((n) => n + 1)}
+                className="mt-2 flex items-center gap-1.5 rounded-[12px] border border-border bg-card px-3 py-2 text-xs font-bold text-primary active:scale-[0.98]"
+              >
+                <RotateCw className="h-3.5 w-3.5" />
+                Tap to retry
               </button>
             )}
-            {geocodeFailed && geocodeError && (
-              <p className="mt-1 break-words text-[11px] leading-snug text-destructive/80">
-                {geocodeError}
+            {!geocodeFailed && (
+              <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
+                Detected from the map pin — move the pin or search to change it.
               </p>
             )}
 
+            {/* Live serviceability for this pin */}
+            {zoneState === "checking" && (
+              <p className="mt-2 text-[11px] font-semibold text-muted-foreground">
+                Checking service area…
+              </p>
+            )}
+            {zoneState === "in" && (
+              <p className="mt-2 flex items-center gap-1.5 text-[11px] font-bold text-primary">
+                <ShieldCheck className="h-3.5 w-3.5" />
+                Deliverable area
+              </p>
+            )}
+            {zoneState === "out" && (
+              <p className="mt-2 flex items-center gap-1.5 text-[11px] font-bold text-destructive">
+                <ShieldAlert className="h-3.5 w-3.5" />
+                Outside our service area — move the pin inside the city we serve.
+              </p>
+            )}
           </div>
 
 
