@@ -341,6 +341,11 @@ export function AddressSelectionScreen({
                               {a.area}
                             </div>
                           )}
+                          {!isServiceable(a.id) && (
+                            <div className="mt-1.5 inline-flex rounded-full bg-destructive/10 px-2 py-0.5 text-[11px] font-bold text-destructive">
+                              {t("address.notServiceable")}
+                            </div>
+                          )}
                         </div>
                         <span
                           aria-hidden
