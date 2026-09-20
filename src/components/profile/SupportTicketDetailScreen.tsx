@@ -90,6 +90,37 @@ export function SupportTicketDetailScreen({
     onError: async (e) => toast.error(await getErrorMessage(e)),
   });
 
+  // One chat timeline: the original request, every reply, and the closing note.
+  const timeline = useMemo(() => {
+    type Item = { id: string; kind: "mine" | "other" | "system"; body: string; at: string };
+    const items: Item[] = [];
+    if (ticket && messages[0]?.body !== ticket.message) {
+      items.push({ id: "original", kind: "mine", body: ticket.message, at: ticket.created_at });
+    }
+    for (const m of messages) {
+      items.push({
+        id: m.id,
+        kind: m.sender_type === "customer" ? "mine" : "other",
+        body: m.body,
+        at: m.created_at,
+      });
+    }
+    if (ticket?.resolution_summary) {
+      items.push({
+        id: "resolution",
+        kind: "system",
+        body: ticket.resolution_summary,
+        at: ticket.resolved_at ?? ticket.last_message_at ?? ticket.created_at,
+      });
+    }
+    return items.sort((a, b) => new Date(a.at).getTime() - new Date(b.at).getTime());
+  }, [ticket, messages]);
+
+  const bottomRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ block: "end" });
+  }, [timeline.length]);
+
   const categoryLabel =
     TICKET_CATEGORIES.find((c) => c.value === ticket?.category)?.label ?? "Other";
 
