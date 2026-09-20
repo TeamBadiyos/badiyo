@@ -92,6 +92,7 @@ export const Route = createFileRoute("/api/public/reverse-geocode")({
           formatted_address: top.formatted_address,
           area: pick(["sublocality", "sublocality_level_1", "neighborhood"]) ?? pick(["locality"]),
           city: pick(["locality"]) ?? pick(["administrative_area_level_2"]),
+          pincode: pick(["postal_code"]),
         });
       },
     },

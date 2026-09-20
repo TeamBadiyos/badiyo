@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Loader2, LocateFixed, MapPin, Plus, Search, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AddAddressMapScreen, type PickedAddress } from "./AddAddressMapScreen";
-import { reverseGeocode } from "@/lib/geocode.functions";
+import { searchAddresses, type AddressSearchResult } from "@/lib/addressSearch";
 import {
   getCurrentCoords,
   openAppSettings,
@@ -49,10 +49,16 @@ export function LocationPickerSheet({
 }) {
   const qc = useQueryClient();
   const [showMap, setShowMap] = useState(false);
+  /** Where the map picker should start (search hit or GPS position). */
+  const [mapPoint, setMapPoint] = useState<{ lat: number; lng: number } | null>(
+    null,
+  );
   const [query, setQuery] = useState("");
+  const [results, setResults] = useState<AddressSearchResult[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
   const [locLoading, setLocLoading] = useState(false);
   const [locError, setLocError] = useState<string | null>(null);
-  const [currentLoc, setCurrentLoc] = useState<string | null>(null);
 
   const { data: addresses = [], isLoading } = useQuery({
     queryKey: ["addresses"],
@@ -63,7 +69,10 @@ export function LocationPickerSheet({
   useEffect(() => {
     if (!open) {
       setShowMap(false);
+      setMapPoint(null);
       setQuery("");
+      setResults([]);
+      setSearchError(null);
       setLocError(null);
     }
   }, [open]);
@@ -75,6 +84,38 @@ export function LocationPickerSheet({
     return pushBackHandler(() => onClose());
   }, [open, showMap, onClose]);
 
+  // Live place search (Geocoding API) alongside the saved-address filter.
+  useEffect(() => {
+    const q = query.trim();
+    if (!open || q.length < 3) {
+      setResults([]);
+      setSearching(false);
+      setSearchError(null);
+      return;
+    }
+    let cancelled = false;
+    setSearching(true);
+    setSearchError(null);
+    const t = setTimeout(() => {
+      searchAddresses(q)
+        .then((r) => {
+          if (cancelled) return;
+          setResults(r);
+          setSearchError(r.length === 0 ? "No matching places found." : null);
+        })
+        .catch((e) => {
+          if (cancelled) return;
+          console.error("[address] search failed:", e);
+          setResults([]);
+          setSearchError("Search isn't working right now. Please try again.");
+        })
+        .finally(() => !cancelled && setSearching(false));
+    }, 350);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [query, open]);
 
   const addMutation = useMutation({
     mutationFn: async (input: PickedAddress) => {
@@ -91,6 +132,7 @@ export function LocationPickerSheet({
           full_address: input.full_address,
           area: input.area,
           city: input.city ?? undefined,
+          pincode: input.pincode ?? undefined,
           latitude: input.latitude,
           longitude: input.longitude,
           is_default: addresses.length === 0,
@@ -124,28 +166,24 @@ export function LocationPickerSheet({
     onSuccess: (created) => {
       qc.invalidateQueries({ queryKey: ["addresses"] });
       setShowMap(false);
+      setMapPoint(null);
       onSelect(created);
     },
   });
 
+  const openMapAt = (point: { lat: number; lng: number } | null) => {
+    setMapPoint(point);
+    setShowMap(true);
+  };
+
+  // Current location no longer creates a throwaway address — it opens the map
+  // picker at the customer's position so the address is actually saved.
   const handleUseCurrentLocation = async () => {
     setLocError(null);
     setLocLoading(true);
     try {
       const coords = await getCurrentCoords();
-      const res = await reverseGeocode({
-        data: { lat: coords.lat, lng: coords.lng },
-      });
-      const virtual: SavedAddress = {
-        id: `current-${Date.now()}`,
-        label: "Current location",
-        full_address: res.formatted_address,
-        area: res.area,
-        city: res.city,
-        is_default: false,
-      };
-      setCurrentLoc(res.formatted_address);
-      onSelect(virtual);
+      openMapAt({ lat: coords.lat, lng: coords.lng });
     } catch (e) {
       console.error("[location] current location failed:", e);
       if (e instanceof LocationPermissionError) {
@@ -169,7 +207,6 @@ export function LocationPickerSheet({
     } finally {
       setLocLoading(false);
     }
-
   };
 
   if (!open) return null;
@@ -178,7 +215,11 @@ export function LocationPickerSheet({
     return (
       <div className="fixed inset-0 z-50 bg-background">
         <AddAddressMapScreen
-          onBack={() => setShowMap(false)}
+          initialPoint={mapPoint}
+          onBack={() => {
+            setShowMap(false);
+            setMapPoint(null);
+          }}
           onSave={(a) => addMutation.mutate(a)}
           isSaving={addMutation.isPending}
           error={addMutation.error ? (addMutation.error as Error).message : null}
@@ -220,13 +261,26 @@ export function LocationPickerSheet({
 
         {/* Search */}
         <div className="mt-4 flex items-center gap-2 rounded-[14px] border border-border bg-background px-3 py-2.5">
-          <Search className="h-4 w-4 text-muted-foreground" />
+          {searching ? (
+            <Loader2 className="h-4 w-4 animate-spin text-primary" />
+          ) : (
+            <Search className="h-4 w-4 text-muted-foreground" />
+          )}
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search for area, street name..."
             className="flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
           />
+          {query && (
+            <button
+              type="button"
+              aria-label="Clear search"
+              onClick={() => setQuery("")}
+            >
+              <X className="h-4 w-4 text-muted-foreground" />
+            </button>
+          )}
         </div>
 
         {/* Actions */}
@@ -248,15 +302,13 @@ export function LocationPickerSheet({
                 Use current location
               </div>
               <div className="truncate text-xs text-muted-foreground">
-                {locError
-                  ? locError
-                  : currentLoc ?? "Get your exact location automatically"}
+                {locError ?? "Get your exact location automatically"}
               </div>
             </div>
           </button>
 
           <button
-            onClick={() => setShowMap(true)}
+            onClick={() => openMapAt(null)}
             className="flex w-full items-center gap-3 rounded-[14px] border border-dashed border-primary/60 bg-primary/5 p-3 text-left transition active:scale-[0.99]"
           >
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/15">
@@ -266,56 +318,95 @@ export function LocationPickerSheet({
           </button>
         </div>
 
-        {/* Saved */}
         <div className="mt-5 flex min-h-0 flex-1 flex-col">
-          <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-            Your saved addresses
-          </div>
-          <div className="mt-2 flex-1 space-y-2 overflow-y-auto pr-1">
-
-            {isLoading ? (
-              <p className="py-6 text-center text-sm text-muted-foreground">
-                Loading…
-              </p>
-            ) : filtered.length === 0 ? (
-              <p className="py-4 text-center text-sm text-muted-foreground">
-                {addresses.length === 0
-                  ? "No saved addresses yet"
-                  : "No addresses match your search"}
-              </p>
-            ) : (
-              filtered.map((a) => {
-                const active = a.id === activeId;
-                return (
-                  <button
-                    key={a.id}
-                    onClick={() => onSelect(a)}
-                    className={`flex w-full items-start gap-3 rounded-[16px] border p-3 text-left transition ${
-                      active
-                        ? "border-primary bg-primary/5"
-                        : "border-border bg-card"
-                    }`}
-                  >
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                      <MapPin className="h-4 w-4 text-primary" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-sm font-bold text-foreground">
-                        {a.label ?? "Address"}
-                      </div>
-                      <div className="line-clamp-2 text-xs text-muted-foreground">
-                        {a.full_address}
-                      </div>
-                    </div>
-                    {active && (
-                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary">
-                        <Check className="h-3.5 w-3.5 text-primary-foreground" />
-                      </div>
-                    )}
-                  </button>
-                );
-              })
+          <div className="flex-1 space-y-4 overflow-y-auto pr-1">
+            {/* Live search results */}
+            {q.length >= 3 && (
+              <div>
+                <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                  Search results
+                </div>
+                <div className="mt-2 space-y-2">
+                  {results.length === 0 ? (
+                    <p className="py-2 text-xs text-muted-foreground">
+                      {searching ? "Searching…" : (searchError ?? "")}
+                    </p>
+                  ) : (
+                    results.map((r, i) => (
+                      <button
+                        key={`${r.lat},${r.lng},${i}`}
+                        onClick={() => openMapAt({ lat: r.lat, lng: r.lng })}
+                        className="flex w-full items-start gap-3 rounded-[16px] border border-border bg-card p-3 text-left transition active:scale-[0.99]"
+                      >
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                          <Search className="h-4 w-4 text-primary" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-sm font-bold text-foreground">
+                            {r.title}
+                          </div>
+                          <div className="line-clamp-2 text-xs text-muted-foreground">
+                            {r.address}
+                          </div>
+                        </div>
+                      </button>
+                    ))
+                  )}
+                </div>
+              </div>
             )}
+
+            {/* Saved */}
+            <div>
+              <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                Your saved addresses
+              </div>
+              <div className="mt-2 space-y-2">
+                {isLoading ? (
+                  <p className="py-6 text-center text-sm text-muted-foreground">
+                    Loading…
+                  </p>
+                ) : filtered.length === 0 ? (
+                  <p className="py-4 text-center text-sm text-muted-foreground">
+                    {addresses.length === 0
+                      ? "No saved addresses yet"
+                      : "No saved addresses match your search"}
+                  </p>
+                ) : (
+                  filtered.map((a) => {
+                    const active = a.id === activeId;
+                    return (
+                      <button
+                        key={a.id}
+                        onClick={() => onSelect(a)}
+                        className={`flex w-full items-start gap-3 rounded-[16px] border p-3 text-left transition ${
+                          active
+                            ? "border-primary bg-primary/5"
+                            : "border-border bg-card"
+                        }`}
+                      >
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                          <MapPin className="h-4 w-4 text-primary" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-sm font-bold text-foreground">
+                            {a.label ?? "Address"}
+                          </div>
+                          <div className="line-clamp-2 text-xs text-muted-foreground">
+                            {a.full_address}
+                          </div>
+                        </div>
+                        {active && (
+                          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary">
+                            <Check className="h-3.5 w-3.5 text-primary-foreground" />
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>

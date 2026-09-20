@@ -1,12 +1,19 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Camera, Crosshair, Loader2, MapPin, Search, X } from "lucide-react";
-import { useServerFn } from "@tanstack/react-start";
-import { toast } from "sonner";
 import {
-  searchPlaces,
-  getPlaceDetails,
-  type PlaceSuggestion,
-} from "@/lib/geocode.functions";
+  ArrowLeft,
+  Camera,
+  Crosshair,
+  Loader2,
+  Lock,
+  MapPin,
+  RotateCw,
+  Search,
+  ShieldAlert,
+  ShieldCheck,
+  X,
+} from "lucide-react";
+import { toast } from "sonner";
+import { searchAddresses, type AddressSearchResult } from "@/lib/addressSearch";
 import { resolveAddress } from "@/lib/reverseGeocode";
 import {
   getCurrentCoords,
@@ -14,13 +21,17 @@ import {
   LocationPermissionError,
 } from "@/lib/nativeGeolocation";
 import { loadMapsScript } from "@/lib/googleMapsLoader";
-import { browserReverseGeocode } from "@/lib/browserGeocode";
+import {
+  checkCourierServiceability,
+  checkServiceability,
+} from "@/lib/serviceability";
 
 
 export type PickedAddress = {
   full_address: string;
   area: string | null;
   city: string | null;
+  pincode: string | null;
   latitude: number;
   longitude: number;
   label: string;
@@ -54,12 +65,19 @@ export function AddAddressMapScreen({
   isSaving,
   error,
   initial = null,
+  initialPoint = null,
+  serviceCheck = "home",
+  segmentId = null,
 }: {
   onBack: () => void;
   onSave: (a: PickedAddress) => void;
   isSaving: boolean;
   error: string | null;
   initial?: EditableAddress | null;
+  /** Start the pin here (e.g. the customer's current GPS position). */
+  initialPoint?: LatLng | null;
+  serviceCheck?: "home" | "courier";
+  segmentId?: string | null;
 }) {
   const initialSplit = initial ? splitExisting(initial.full_address) : null;
   const mapDivRef = useRef<HTMLDivElement>(null);
@@ -67,19 +85,19 @@ export function AddAddressMapScreen({
   const [center, setCenter] = useState<LatLng>(
     initial?.latitude != null && initial?.longitude != null
       ? { lat: Number(initial.latitude), lng: Number(initial.longitude) }
-      : DEFAULT_CENTER,
+      : (initialPoint ?? DEFAULT_CENTER),
   );
   const [mapReady, setMapReady] = useState(false);
   const [autoAddress, setAutoAddress] = useState(initialSplit?.rest ?? "");
   const [area, setArea] = useState<string | null>(null);
   const [city, setCity] = useState<string | null>(null);
+  const [pincode, setPincode] = useState<string | null>(null);
   const [addressDetails, setAddressDetails] = useState(
     initialSplit?.details ?? "",
   );
   const [label, setLabel] = useState<(typeof LABELS)[number]>(
     (LABELS.find((l) => l === initial?.label) ?? "Home") as (typeof LABELS)[number],
   );
-  const [editingAuto, setEditingAuto] = useState(false);
   const [locating, setLocating] = useState(false);
   const [geocoding, setGeocoding] = useState(false);
   const [geocodeFailed, setGeocodeFailed] = useState(false);
@@ -87,59 +105,63 @@ export function AddAddressMapScreen({
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
-  const placeSearch = useServerFn(searchPlaces);
-  const placeDetails = useServerFn(getPlaceDetails);
+
+  const [zoneState, setZoneState] = useState<"idle" | "checking" | "in" | "out">(
+    "idle",
+  );
+
   const centerRef = useRef(center);
   centerRef.current = center;
   const [query, setQuery] = useState("");
-  const [suggestions, setSuggestions] = useState<PlaceSuggestion[]>([]);
+  const [suggestions, setSuggestions] = useState<AddressSearchResult[]>([]);
   const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
   const skipGeocodeRef = useRef(false);
   const [geocodeNonce, setGeocodeNonce] = useState(0);
 
 
-  // Debounced place autocomplete
+  // Debounced address search (Geocoding API — Places is blocked on this key)
   useEffect(() => {
     const q = query.trim();
     if (q.length < 3) {
       setSuggestions([]);
       setSearching(false);
+      setSearchError(null);
       return;
     }
     let cancelled = false;
     setSearching(true);
+    setSearchError(null);
     const t = setTimeout(() => {
-      placeSearch({ data: { query: q, lat: centerRef.current.lat, lng: centerRef.current.lng } })
-        .then((r) => !cancelled && setSuggestions(r))
+      searchAddresses(q, centerRef.current)
+        .then((r) => {
+          if (cancelled) return;
+          setSuggestions(r);
+          setSearchError(r.length === 0 ? "No matching places found." : null);
+        })
         .catch((e) => {
           if (cancelled) return;
-          console.error("Place search failed:", e);
+          console.error("[address] search failed:", e);
           setSuggestions([]);
+          setSearchError("Search isn't working right now. Please move the pin instead.");
         })
         .finally(() => !cancelled && setSearching(false));
-    }, 400);
+    }, 350);
     return () => {
       cancelled = true;
       clearTimeout(t);
       setSearching(false);
     };
-  }, [query, placeSearch]);
+  }, [query]);
 
-  const handleSelectSuggestion = async (s: PlaceSuggestion) => {
+  const handleSelectSuggestion = (s: AddressSearchResult) => {
     setSuggestions([]);
-    setQuery(s.primary);
-    try {
-      const d = await placeDetails({ data: { placeId: s.placeId } });
-      const next = { lat: d.latitude, lng: d.longitude };
-      skipGeocodeRef.current = true;
-      if (mapRef.current) mapRef.current.panTo(next);
-      setCenter(next);
-      setGeocodeFailed(false);
-      setAutoAddress(d.formatted_address || [s.primary, s.secondary].filter(Boolean).join(", "));
-    } catch (e) {
-      console.error("Place details failed:", e);
-    }
+    setSearchError(null);
+    setQuery(s.title);
+    const next = { lat: s.lat, lng: s.lng };
+    if (mapRef.current) mapRef.current.panTo(next);
+    setCenter(next);
+    setGeocodeFailed(false);
   };
 
 
@@ -199,16 +221,16 @@ export function AddAddressMapScreen({
         const outcome = await resolveAddress(center);
         if (cancelled) return;
         if (outcome.ok) {
-          if (!fromPlace) setAutoAddress(outcome.result.formatted_address);
+          setAutoAddress(outcome.result.formatted_address);
           setArea(outcome.result.area);
           setCity(outcome.result.city);
+          setPincode(outcome.result.pincode);
         } else {
+          setAutoAddress("");
+          setGeocodeFailed(true);
+          setGeocodeError(outcome.error);
           if (!fromPlace) {
-            setAutoAddress("");
-            setGeocodeFailed(true);
-            setGeocodeError(outcome.error);
             toast.error("Couldn't fetch the address for this pin.", {
-              description: outcome.error.slice(0, 140),
               action: {
                 label: "Retry",
                 onClick: () => setGeocodeNonce((n) => n + 1),
@@ -217,6 +239,7 @@ export function AddAddressMapScreen({
           }
           setArea(null);
           setCity(null);
+          setPincode(null);
         }
         setGeocoding(false);
       })();
@@ -228,6 +251,31 @@ export function AddAddressMapScreen({
     };
   }, [center, geocodeNonce]);
 
+  // Live serviceability for the current pin, so the user is told before they
+  // fill the whole form. A failed check never blocks saving.
+  useEffect(() => {
+    let cancelled = false;
+    setZoneState("checking");
+    const t = setTimeout(() => {
+      void (async () => {
+        try {
+          const res =
+            serviceCheck === "courier"
+              ? await checkCourierServiceability(center.lat, center.lng)
+              : await checkServiceability(center.lat, center.lng, segmentId);
+          if (cancelled) return;
+          setZoneState(res.serviceable ? "in" : "out");
+        } catch (e) {
+          console.error("[address] zone check failed:", e);
+          if (!cancelled) setZoneState("idle");
+        }
+      })();
+    }, 500);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [center, serviceCheck, segmentId]);
 
   const useCurrentLocation = () => {
     if (locating) return;
@@ -266,17 +314,21 @@ export function AddAddressMapScreen({
 
   };
 
-  const canSave = addressDetails.trim().length > 0 && !isSaving;
+  const canSave =
+    addressDetails.trim().length > 0 &&
+    autoAddress.trim().length > 0 &&
+    !geocoding &&
+    zoneState !== "out" &&
+    !isSaving;
 
   const handleSave = () => {
     if (!canSave) return;
-    const full = autoAddress.trim()
-      ? `${addressDetails.trim()}, ${autoAddress.trim()}`
-      : addressDetails.trim();
+    const full = `${addressDetails.trim()}, ${autoAddress.trim()}`;
     onSave({
       full_address: full,
       area,
       city,
+      pincode,
       latitude: center.lat,
       longitude: center.lng,
       label,
@@ -353,10 +405,10 @@ export function AddAddressMapScreen({
                   </button>
                 )}
               </div>
-              {suggestions.length > 0 && (
+              {suggestions.length > 0 ? (
                 <ul className="absolute inset-x-0 top-full z-20 mt-2 max-h-64 overflow-y-auto rounded-[14px] border border-border bg-card shadow-lg">
-                  {suggestions.map((s) => (
-                    <li key={s.placeId}>
+                  {suggestions.map((s, i) => (
+                    <li key={`${s.lat},${s.lng},${i}`}>
                       <button
                         type="button"
                         onClick={() => handleSelectSuggestion(s)}
@@ -365,18 +417,24 @@ export function AddAddressMapScreen({
                         <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                         <span className="min-w-0">
                           <span className="block truncate text-sm font-semibold text-foreground">
-                            {s.primary}
+                            {s.title}
                           </span>
-                          {s.secondary && (
-                            <span className="block truncate text-xs text-muted-foreground">
-                              {s.secondary}
-                            </span>
-                          )}
+                          <span className="block truncate text-xs text-muted-foreground">
+                            {s.address}
+                          </span>
                         </span>
                       </button>
                     </li>
                   ))}
                 </ul>
+              ) : (
+                searchError &&
+                query.trim().length >= 3 &&
+                !searching && (
+                  <div className="absolute inset-x-0 top-full z-20 mt-2 rounded-[14px] border border-border bg-card px-3 py-2.5 text-xs text-muted-foreground shadow-lg">
+                    {searchError}
+                  </div>
+                )
               )}
             </div>
           </div>
@@ -402,53 +460,68 @@ export function AddAddressMapScreen({
       <div className="rounded-t-[24px] border-t border-border bg-card p-5 pb-6 shadow-2xl">
         <div className="mx-auto w-full max-w-md space-y-4">
           <div>
-            <div className="mb-1 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            <div className="mb-1 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Delivery details
+              <Lock className="h-3 w-3" />
             </div>
-            {editingAuto ? (
-              <textarea
-                autoFocus
-                value={autoAddress}
-                onChange={(e) => setAutoAddress(e.target.value)}
-                onBlur={() => setEditingAuto(false)}
-                rows={2}
-                className="w-full rounded-[14px] border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-              />
-            ) : (
-              <button
-                onClick={() => setEditingAuto(true)}
-                className="flex w-full items-start gap-2 rounded-[14px] border border-border bg-background px-3 py-2.5 text-left"
+            <div className="flex w-full items-start gap-2 rounded-[14px] border border-border bg-muted/50 px-3 py-2.5">
+              {geocoding ? (
+                <Loader2 className="mt-0.5 h-4 w-4 shrink-0 animate-spin text-primary" />
+              ) : (
+                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+              )}
+              <span
+                className={`flex-1 text-sm ${
+                  geocoding || (!autoAddress && !geocodeFailed)
+                    ? "text-muted-foreground"
+                    : geocodeFailed
+                      ? "text-destructive"
+                      : "text-foreground"
+                }`}
               >
-                {geocoding ? (
-                  <Loader2 className="mt-0.5 h-4 w-4 shrink-0 animate-spin text-primary" />
-                ) : (
-                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                )}
-                <span
-                  className={`flex-1 text-sm ${
-                    geocoding || (!autoAddress && !geocodeFailed)
-                      ? "text-muted-foreground"
-                      : geocodeFailed && !autoAddress
-                        ? "text-red-600"
-                        : "text-foreground"
-                  }`}
-                >
-                  {geocoding
-                    ? "Finding address…"
-                    : autoAddress
-                      ? autoAddress
-                      : geocodeFailed
-                        ? "Unable to fetch address, please enter manually"
-                        : "Move the pin to select a location"}
-                </span>
+                {geocoding
+                  ? "Finding address…"
+                  : autoAddress
+                    ? autoAddress
+                    : geocodeFailed
+                      ? "Could not detect the address for this pin."
+                      : "Move the pin to select a location"}
+              </span>
+            </div>
+            {!geocoding && geocodeFailed && (
+              <button
+                type="button"
+                onClick={() => setGeocodeNonce((n) => n + 1)}
+                className="mt-2 flex items-center gap-1.5 rounded-[12px] border border-border bg-card px-3 py-2 text-xs font-bold text-primary active:scale-[0.98]"
+              >
+                <RotateCw className="h-3.5 w-3.5" />
+                Tap to retry
               </button>
             )}
-            {geocodeFailed && geocodeError && (
-              <p className="mt-1 break-words text-[11px] leading-snug text-destructive/80">
-                {geocodeError}
+            {!geocodeFailed && (
+              <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
+                Detected from the map pin — move the pin or search to change it.
               </p>
             )}
 
+            {/* Live serviceability for this pin */}
+            {zoneState === "checking" && (
+              <p className="mt-2 text-[11px] font-semibold text-muted-foreground">
+                Checking service area…
+              </p>
+            )}
+            {zoneState === "in" && (
+              <p className="mt-2 flex items-center gap-1.5 text-[11px] font-bold text-primary">
+                <ShieldCheck className="h-3.5 w-3.5" />
+                Deliverable area
+              </p>
+            )}
+            {zoneState === "out" && (
+              <p className="mt-2 flex items-center gap-1.5 text-[11px] font-bold text-destructive">
+                <ShieldAlert className="h-3.5 w-3.5" />
+                Outside our service area — move the pin inside the city we serve.
+              </p>
+            )}
           </div>
 
 

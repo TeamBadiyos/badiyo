@@ -209,6 +209,7 @@ export function AddressSelectionScreen({
           full_address: input.full_address,
           area: input.area,
           city: input.city ?? undefined,
+          pincode: input.pincode ?? undefined,
           latitude: input.latitude,
           longitude: input.longitude,
           is_default: addresses.length === 0,
