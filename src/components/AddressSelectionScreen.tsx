@@ -249,7 +249,8 @@ export function AddressSelectionScreen({
     },
   });
 
-  const selected = addresses.find((a) => a.id === selectedId) ?? null;
+  const selectedRaw = addresses.find((a) => a.id === selectedId) ?? null;
+  const selected = selectedRaw && isServiceable(selectedRaw.id) ? selectedRaw : null;
 
   return (
     <main className={`min-h-screen w-full bg-background ${manage ? "pb-10" : "pb-28"}`}>
