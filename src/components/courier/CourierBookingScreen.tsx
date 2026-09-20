@@ -143,18 +143,58 @@ export function CourierBookingScreen({
   const city = (pickup?.city || drop?.city || "").trim() || courierService?.city || "Latur";
   const selectedVehicle = vehicles.find((item) => item.id === vehicleId) ?? null;
   const selectedType = types.find((item) => item.id === typeId) ?? null;
+  const maxWeight = selectedVehicle?.max_weight_kg ? Number(selectedVehicle.max_weight_kg) : null;
+
+  // Both stops must sit inside a zone mapped to the parcel service.
+  const pickupZone = useQuery({
+    queryKey: ["courier_zone", pickup?.latitude, pickup?.longitude],
+    queryFn: () => checkCourierServiceability(pickup?.latitude, pickup?.longitude),
+    enabled: pickup?.latitude != null && pickup?.longitude != null,
+    staleTime: 5 * 60_000,
+  });
+  const dropZone = useQuery({
+    queryKey: ["courier_zone", drop?.latitude, drop?.longitude],
+    queryFn: () => checkCourierServiceability(drop?.latitude, drop?.longitude),
+    enabled: drop?.latitude != null && drop?.longitude != null,
+    staleTime: 5 * 60_000,
+  });
+  const pickupOutside = pickupZone.data ? !pickupZone.data.serviceable : false;
+  const dropOutside = dropZone.data ? !dropZone.data.serviceable : false;
+  const zonesChecking = pickupZone.isFetching || dropZone.isFetching;
+
+  // Keep the typed weight inside the selected vehicle's limit.
+  useEffect(() => {
+    if (maxWeight == null) return;
+    const current = Number(weight);
+    if (Number.isFinite(current) && current > maxWeight) setWeight(maxWeight.toFixed(2));
+  }, [maxWeight, weight]);
+
+  const weightValue = Number(weight);
+  const weightError =
+    !Number.isFinite(weightValue) || weightValue <= 0
+      ? t("courier.weightRequired")
+      : maxWeight != null && weightValue > maxWeight
+        ? t("courier.weightTooHigh", {
+            vehicle: selectedVehicle?.name ?? t("courier.bike"),
+            weight: maxWeight,
+          })
+        : null;
+
   const validPhone = (value: string) => value.replace(/\D/g, "").length === 10;
   const locationsReady = Boolean(
     pickup?.latitude != null &&
       pickup.longitude != null &&
       drop?.latitude != null &&
       drop.longitude != null &&
+      !pickupOutside &&
+      !dropOutside &&
+      !zonesChecking &&
       pickupName.trim() &&
       validPhone(pickupPhone) &&
       dropName.trim() &&
       validPhone(dropPhone),
   );
-  const parcelReady = Boolean(vehicleId && typeId && Number(weight) > 0);
+  const parcelReady = Boolean(vehicleId && typeId && !weightError);
 
   const payload = useMemo(
     () => ({
