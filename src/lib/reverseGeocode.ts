@@ -20,6 +20,7 @@ export type GeocodeResult = {
   formatted_address: string;
   area: string | null;
   city: string | null;
+  pincode: string | null;
 };
 
 function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
@@ -57,6 +58,7 @@ async function viaHttpRoute(location: { lat: number; lng: number }): Promise<Geo
     formatted_address: body.formatted_address,
     area: body.area ?? null,
     city: body.city ?? null,
+    pincode: body.pincode ?? null,
   };
 }
 

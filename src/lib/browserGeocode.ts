@@ -17,6 +17,7 @@ export type BrowserGeocodeResult = {
   formatted_address: string;
   area: string | null;
   city: string | null;
+  pincode: string | null;
 };
 
 export async function browserReverseGeocode(
@@ -39,5 +40,6 @@ export async function browserReverseGeocode(
       pick(["sublocality", "sublocality_level_1", "neighborhood"]) ??
       pick(["locality"]),
     city: pick(["locality"]) ?? pick(["administrative_area_level_2"]),
+    pincode: pick(["postal_code"]),
   };
 }
