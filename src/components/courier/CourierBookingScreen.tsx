@@ -215,7 +215,7 @@ export function CourierBookingScreen({
       setQuote((await courierQuote({ data: payload })) as Quote);
       setStep(4);
     } catch (error) {
-      setErr((error as Error).message || t("courier.priceError"));
+      setErr(courierErrorMessage(error, t("courier.priceError")));
     } finally {
       setQuoting(false);
     }
@@ -267,6 +267,8 @@ export function CourierBookingScreen({
       const paymentError = toPaymentError(error);
       console.error("[courier] payment error", error);
       if (paymentError.category === "cancelled") toast(t("payment.cancelledToast"));
+      else if (paymentError.category === "unknown")
+        setErr(courierErrorMessage(error, t(paymentErrorKey(paymentError.category))));
       else setErr(t(paymentErrorKey(paymentError.category)));
     } finally {
       setPaying(false);
