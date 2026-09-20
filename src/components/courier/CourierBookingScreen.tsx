@@ -335,6 +335,20 @@ export function CourierBookingScreen({
               <div className="mx-5 border-t border-border" />
               <AddressStop kind="drop" address={drop} onClick={() => setAddressTarget("drop")} />
             </div>
+            {zonesChecking && (
+              <p className="text-xs font-semibold text-muted-foreground">{t("courier.checkingArea")}</p>
+            )}
+            {pickupOutside && (
+              <p className="rounded-lg bg-destructive/10 p-3 text-sm font-semibold text-destructive">
+                {t("courier.pickupOutside")}
+              </p>
+            )}
+            {dropOutside && (
+              <p className="rounded-lg bg-destructive/10 p-3 text-sm font-semibold text-destructive">
+                {t("courier.dropOutside")}
+              </p>
+            )}
+
 
             <ContactFields
               title={t("courier.pickupContact")}
