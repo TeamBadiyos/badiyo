@@ -4914,6 +4914,16 @@ export type Database = {
         Args: { _new_phone: string; _order_id: string; _purpose: string }
         Returns: Json
       }
+      courier_validate_local_route: {
+        Args: {
+          _city: string
+          _drop_lat: number
+          _drop_lng: number
+          _pickup_lat: number
+          _pickup_lng: number
+        }
+        Returns: Json
+      }
       courier_verify_job_secret: { Args: { _secret: string }; Returns: boolean }
       courier_verify_otp: {
         Args: {
@@ -5409,6 +5419,10 @@ export type Database = {
       staff_courier_set_vehicle_type_active: {
         Args: { _id: string; _is_active: boolean }
         Returns: undefined
+      }
+      staff_courier_set_zones: {
+        Args: { _city: string; _zone_ids: string[] }
+        Returns: Json
       }
       staff_courier_upsert_courier_type: {
         Args: {
