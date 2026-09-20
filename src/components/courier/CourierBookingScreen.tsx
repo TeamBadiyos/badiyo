@@ -188,6 +188,16 @@ export function CourierBookingScreen({
     setErr(null);
     setPaying(true);
     try {
+      // Payment already went through earlier: only finish confirming it.
+      // Never charge the customer a second time.
+      if (paidRef.current) {
+        await courierConfirmPayment({ data: paidRef.current });
+        const bookedId = paidRef.current.order_id;
+        paidRef.current = null;
+        onBooked(bookedId);
+        return;
+      }
+
       const order = await courierCreateOrder({
         data: {
           ...payload,
@@ -213,23 +223,31 @@ export function CourierBookingScreen({
         email: prefill.email,
         customerName: prefill.name,
       });
-      await courierConfirmPayment({
-        data: {
-          order_id: order.order_id,
-          razorpay_payment_id: result.razorpay_payment_id,
-          razorpay_order_id: result.razorpay_order_id,
-        },
-      });
+      // From here the money has left the customer's account.
+      paidRef.current = {
+        order_id: order.order_id,
+        razorpay_payment_id: result.razorpay_payment_id,
+        razorpay_order_id: result.razorpay_order_id,
+      };
+      await courierConfirmPayment({ data: paidRef.current });
+      paidRef.current = null;
       onBooked(order.order_id);
     } catch (error) {
       const paymentError = toPaymentError(error);
       console.error("[courier] payment error", error);
-      if (paymentError.category === "cancelled") toast(t("payment.cancelledToast"));
-      else setErr(t(paymentErrorKey(paymentError.category)));
+      if (paidRef.current) {
+        // Charged, but confirmation failed: ask for a retry, not a new payment.
+        setErr(t("courier.confirmRetry"));
+      } else if (paymentError.category === "cancelled") {
+        toast(t("payment.cancelledToast"));
+      } else {
+        setErr(t(paymentErrorKey(paymentError.category)));
+      }
     } finally {
       setPaying(false);
     }
   };
+
 
   if (addressTarget) {
     return (
