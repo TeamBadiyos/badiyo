@@ -278,6 +278,7 @@ export function CourierBookingScreen({
   if (addressTarget) {
     return (
       <AddressSelectionScreen
+        serviceCheck="courier"
         onBack={() => setAddressTarget(null)}
         onContinue={(address) => {
           const next = address as Addr;
