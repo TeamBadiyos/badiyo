@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Send } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -205,6 +205,18 @@ export function SupportTicketDetailScreen({
       </div>
     </main>
   );
+}
+
+/** "Today", "Yesterday" or a short date, used as the chat day divider. */
+function dayLabel(at: string): string {
+  const date = new Date(at);
+  const today = new Date();
+  const sameDay = (a: Date, b: Date) => a.toDateString() === b.toDateString();
+  if (sameDay(date, today)) return "Today";
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+  if (sameDay(date, yesterday)) return "Yesterday";
+  return date.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 }
 
 function Bubble({ mine, body, at }: { mine: boolean; body: string; at: string }) {
