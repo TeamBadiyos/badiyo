@@ -135,6 +135,8 @@ export const mr: Partial<Record<keyof typeof en, string>> = {
   "address.emptyTitle": "अजून कोणताही पत्ता सेव्ह केलेला नाही",
   "address.emptySub": "बुकिंग पुढे नेण्यासाठी पत्ता जोडा",
   "address.addNew": "नवीन पत्ता जोडा",
+  "address.notServiceable": "सेवा उपलब्ध नाही",
+  "address.notServiceableHint": "या पत्त्यावर अजून सेवा उपलब्ध नाही.",
   "address.addNewPlus": "+ नवीन पत्ता जोडा",
   "address.fallbackLabel": "पत्ता",
 

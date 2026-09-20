@@ -133,6 +133,8 @@ export const en = {
   "address.emptyTitle": "No saved addresses yet",
   "address.emptySub": "Add one to continue with your booking",
   "address.addNew": "Add New Address",
+  "address.notServiceable": "Not serviceable",
+  "address.notServiceableHint": "We don't serve this address yet.",
   "address.addNewPlus": "+ Add New Address",
   "address.fallbackLabel": "Address",
 
