@@ -308,14 +308,15 @@ export function AddressSelectionScreen({
                         active
                           ? "border-primary bg-primary/5"
                           : "border-border bg-card"
-                      }`}
+                      } ${isServiceable(a.id) ? "" : "opacity-60"}`}
                     >
                       <button
+                        disabled={!isServiceable(a.id)}
                         onClick={() => {
                           void hapticSelection();
                           setSelectedId(a.id);
                         }}
-                        className="flex w-full items-start gap-3 p-4 pr-12 text-left"
+                        className="flex w-full items-start gap-3 p-4 pr-12 text-left disabled:cursor-not-allowed"
                       >
                         {a.landmark_photo_url ? (
                           <img
