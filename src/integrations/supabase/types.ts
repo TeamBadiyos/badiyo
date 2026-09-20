@@ -5573,6 +5573,10 @@ export type Database = {
         Returns: undefined
       }
       staff_send_campaign: { Args: { _id: string }; Returns: number }
+      staff_send_support_message: {
+        Args: { _body: string; _ticket_id: string }
+        Returns: string
+      }
       staff_set_availability_override: {
         Args: {
           _is_unavailable: boolean
