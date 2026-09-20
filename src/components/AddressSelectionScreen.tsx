@@ -127,11 +127,17 @@ export function AddressSelectionScreen({
   }
 
   useEffect(() => {
-    if (!selectedId && addresses.length > 0) {
-      const def = addresses.find((a) => a.is_default) ?? addresses[0];
+    const usable = addresses.filter((a) => isServiceable(a.id));
+    if (selectedId && !isServiceable(selectedId)) {
+      setSelectedId(usable[0]?.id ?? null);
+      return;
+    }
+    if (!selectedId && usable.length > 0) {
+      const def = usable.find((a) => a.is_default) ?? usable[0];
       setSelectedId(def.id);
     }
-  }, [addresses, selectedId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [addresses, selectedId, serviceMap]);
 
   const editMutation = useMutation({
     mutationFn: async (input: PickedAddress & { id: string }) => {
