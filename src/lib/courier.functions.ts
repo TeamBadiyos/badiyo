@@ -156,13 +156,16 @@ export const courierQuote = createServerFn({ method: "POST" })
 
 export const courierCreateOrder = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data) => createSchema.parse(data))
+  .inputValidator((data) => parseFriendly(createSchema, data))
   .handler(async ({ data, context }) => {
     const keyId = process.env["RAZORPAY_KEY_ID"];
     const keySecret = process.env["RAZORPAY_KEY_SECRET"];
     if (!keyId || !keySecret) throw new Error("Payments are not configured");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await assertWeightAllowed(supabaseAdmin, data.vehicle_type_id, data.weight_kg);
+    await assertInCourierZone(supabaseAdmin, data.pickup, "Pickup");
+    await assertInCourierZone(supabaseAdmin, data.drop, "Drop");
     const { km, source } = await routeDistanceKm(data.pickup, data.drop);
 
     const { data: created, error } = await supabaseAdmin.rpc("courier_create_order" as never, {
