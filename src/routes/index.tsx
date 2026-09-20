@@ -836,6 +836,8 @@ function Index() {
       {phase === "address" && (
         <div className="animate-fade-slide-in">
           <AddressSelectionScreen
+            serviceCheck="home"
+            segmentId={selectedService?.segment_id ?? null}
             onBack={() => setPhase("slot")}
             onContinue={async (addr) => {
               const segmentId = selectedService?.segment_id ?? null;
