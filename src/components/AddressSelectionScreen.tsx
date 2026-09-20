@@ -46,10 +46,15 @@ export function AddressSelectionScreen({
   onContinue,
   /** Manage mode (Profile -> My Addresses): list + edit/delete, no Continue bar. */
   manage = false,
+  /** When set, addresses outside the service area cannot be selected. */
+  serviceCheck,
+  segmentId = null,
 }: {
   onBack: () => void;
   onContinue?: (address: Address) => void;
   manage?: boolean;
+  serviceCheck?: "home" | "courier";
+  segmentId?: string | null;
 }) {
   const t = useT();
   const qc = useQueryClient();
@@ -57,6 +62,31 @@ export function AddressSelectionScreen({
     queryKey: ["addresses"],
     queryFn: fetchAddresses,
   });
+
+  // Which saved addresses fall inside a zone we actually serve.
+  const { data: serviceMap } = useQuery({
+    queryKey: ["address-serviceability", serviceCheck, segmentId, addresses.map((a) => a.id).join(",")],
+    enabled: Boolean(serviceCheck) && addresses.length > 0,
+    staleTime: 5 * 60_000,
+    queryFn: async () => {
+      const entries = await Promise.all(
+        addresses.map(async (a) => {
+          try {
+            const res =
+              serviceCheck === "courier"
+                ? await checkCourierServiceability(a.latitude, a.longitude)
+                : await checkServiceability(a.latitude, a.longitude, segmentId);
+            return [a.id, res.serviceable] as const;
+          } catch {
+            return [a.id, true] as const; // never block on a check failure
+          }
+        }),
+      );
+      return Object.fromEntries(entries) as Record<string, boolean>;
+    },
+  });
+  const isServiceable = (id: string) => (serviceCheck ? serviceMap?.[id] !== false : true);
+
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
