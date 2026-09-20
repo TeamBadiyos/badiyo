@@ -92,6 +92,13 @@ export const mr: Partial<Record<keyof typeof en, string>> = {
   "courier.pickup": "पिकअप",
   "courier.drop": "ड्रॉप",
   "courier.bike": "बाईक",
+  "courier.maxWeightHint": "{vehicle} साठी जास्तीत जास्त {weight} किलो",
+  "courier.weightTooHigh": "{vehicle} जास्तीत जास्त {weight} किलो नेऊ शकते.",
+  "courier.weightRequired": "कृपया पार्सलचे वजन टाका.",
+  "courier.pickupOutside": "पिकअपचे ठिकाण आमच्या डिलिव्हरी भागाबाहेर आहे.",
+  "courier.dropOutside": "ड्रॉपचे ठिकाण आमच्या डिलिव्हरी भागाबाहेर आहे.",
+  "courier.checkingArea": "डिलिव्हरी भाग तपासत आहोत…",
+  "courier.outsideArea": "डिलिव्हरी भागाबाहेर",
 
   // ── Home ─────────────────────────────────────────────────
   "home.searchPlaceholder": "साफसफाईच्या सेवा शोधा…",
@@ -128,6 +135,8 @@ export const mr: Partial<Record<keyof typeof en, string>> = {
   "address.emptyTitle": "अजून कोणताही पत्ता सेव्ह केलेला नाही",
   "address.emptySub": "बुकिंग पुढे नेण्यासाठी पत्ता जोडा",
   "address.addNew": "नवीन पत्ता जोडा",
+  "address.notServiceable": "सेवा उपलब्ध नाही",
+  "address.notServiceableHint": "या पत्त्यावर अजून सेवा उपलब्ध नाही.",
   "address.addNewPlus": "+ नवीन पत्ता जोडा",
   "address.fallbackLabel": "पत्ता",
 

@@ -9,6 +9,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { signAddressPhotoUrl } from "@/lib/storageUrl";
 import { AddAddressMapScreen, type PickedAddress } from "./AddAddressMapScreen";
 import { useT } from "@/i18n";
+import { checkCourierServiceability, checkServiceability } from "@/lib/serviceability";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 type Address = {
   id: string;
@@ -46,10 +53,15 @@ export function AddressSelectionScreen({
   onContinue,
   /** Manage mode (Profile -> My Addresses): list + edit/delete, no Continue bar. */
   manage = false,
+  /** When set, addresses outside the service area cannot be selected. */
+  serviceCheck,
+  segmentId = null,
 }: {
   onBack: () => void;
   onContinue?: (address: Address) => void;
   manage?: boolean;
+  serviceCheck?: "home" | "courier";
+  segmentId?: string | null;
 }) {
   const t = useT();
   const qc = useQueryClient();
@@ -57,6 +69,31 @@ export function AddressSelectionScreen({
     queryKey: ["addresses"],
     queryFn: fetchAddresses,
   });
+
+  // Which saved addresses fall inside a zone we actually serve.
+  const { data: serviceMap } = useQuery({
+    queryKey: ["address-serviceability", serviceCheck, segmentId, addresses.map((a) => a.id).join(",")],
+    enabled: Boolean(serviceCheck) && addresses.length > 0,
+    staleTime: 5 * 60_000,
+    queryFn: async () => {
+      const entries = await Promise.all(
+        addresses.map(async (a) => {
+          try {
+            const res =
+              serviceCheck === "courier"
+                ? await checkCourierServiceability(a.latitude, a.longitude)
+                : await checkServiceability(a.latitude, a.longitude, segmentId);
+            return [a.id, res.serviceable] as const;
+          } catch {
+            return [a.id, true] as const; // never block on a check failure
+          }
+        }),
+      );
+      return Object.fromEntries(entries) as Record<string, boolean>;
+    },
+  });
+  const isServiceable = (id: string) => (serviceCheck ? serviceMap?.[id] !== false : true);
+
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -90,11 +127,17 @@ export function AddressSelectionScreen({
   }
 
   useEffect(() => {
-    if (!selectedId && addresses.length > 0) {
-      const def = addresses.find((a) => a.is_default) ?? addresses[0];
+    const usable = addresses.filter((a) => isServiceable(a.id));
+    if (selectedId && !isServiceable(selectedId)) {
+      setSelectedId(usable[0]?.id ?? null);
+      return;
+    }
+    if (!selectedId && usable.length > 0) {
+      const def = usable.find((a) => a.is_default) ?? usable[0];
       setSelectedId(def.id);
     }
-  }, [addresses, selectedId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [addresses, selectedId, serviceMap]);
 
   const editMutation = useMutation({
     mutationFn: async (input: PickedAddress & { id: string }) => {
@@ -206,7 +249,8 @@ export function AddressSelectionScreen({
     },
   });
 
-  const selected = addresses.find((a) => a.id === selectedId) ?? null;
+  const selectedRaw = addresses.find((a) => a.id === selectedId) ?? null;
+  const selected = selectedRaw && isServiceable(selectedRaw.id) ? selectedRaw : null;
 
   return (
     <main className={`min-h-screen w-full bg-background ${manage ? "pb-10" : "pb-28"}`}>
@@ -271,14 +315,15 @@ export function AddressSelectionScreen({
                         active
                           ? "border-primary bg-primary/5"
                           : "border-border bg-card"
-                      }`}
+                      } ${isServiceable(a.id) ? "" : "opacity-60"}`}
                     >
                       <button
+                        disabled={!isServiceable(a.id)}
                         onClick={() => {
                           void hapticSelection();
                           setSelectedId(a.id);
                         }}
-                        className="flex w-full items-start gap-3 p-4 pr-12 text-left"
+                        className="flex w-full items-start gap-3 p-4 pr-12 text-left disabled:cursor-not-allowed"
                       >
                         {a.landmark_photo_url ? (
                           <img
@@ -303,6 +348,11 @@ export function AddressSelectionScreen({
                               {a.area}
                             </div>
                           )}
+                          {!isServiceable(a.id) && (
+                            <div className="mt-1.5 inline-flex rounded-full bg-destructive/10 px-2 py-0.5 text-[11px] font-bold text-destructive">
+                              {t("address.notServiceable")}
+                            </div>
+                          )}
                         </div>
                         <span
                           aria-hidden
@@ -317,47 +367,32 @@ export function AddressSelectionScreen({
                       </button>
 
                       {/* Per-address actions */}
-                      <button
-                        type="button"
-                        aria-label="Address options"
-                        onClick={() => {
-                          void hapticSelection();
-                          setMenuFor((cur) => (cur === a.id ? null : a.id));
-                        }}
-                        className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground active:bg-muted"
+                      <DropdownMenu
+                        open={menuFor === a.id}
+                        onOpenChange={(open) => setMenuFor(open ? a.id : null)}
                       >
-                        <MoreVertical className="h-4 w-4" />
-                      </button>
-                      {menuFor === a.id && (
-                        <>
-                          <div
-                            className="fixed inset-0 z-10"
-                            onClick={() => setMenuFor(null)}
-                          />
-                          <div className="absolute right-2 top-11 z-20 w-36 overflow-hidden rounded-[14px] border border-border bg-card shadow-lg">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setMenuFor(null);
-                                setEditing(a);
-                              }}
-                              className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm font-semibold text-foreground active:bg-muted"
-                            >
-                              <Pencil className="h-4 w-4" /> Edit
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setMenuFor(null);
-                                setConfirmDelete(a);
-                              }}
-                              className="flex w-full items-center gap-2 border-t border-border px-3 py-2.5 text-left text-sm font-semibold text-destructive active:bg-muted"
-                            >
-                              <Trash2 className="h-4 w-4" /> Delete
-                            </button>
-                          </div>
-                        </>
-                      )}
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            type="button"
+                            aria-label="Address options"
+                            onClick={() => void hapticSelection()}
+                            className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground active:bg-muted"
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" sideOffset={6} className="w-40">
+                          <DropdownMenuItem onSelect={() => setEditing(a)}>
+                            <Pencil className="h-4 w-4" /> Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onSelect={() => setConfirmDelete(a)}
+                          >
+                            <Trash2 className="h-4 w-4" /> Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </SwipeableRow>
 

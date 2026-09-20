@@ -90,6 +90,13 @@ export const en = {
   "courier.pickup": "Pickup",
   "courier.drop": "Drop",
   "courier.bike": "Bike",
+  "courier.maxWeightHint": "Max {weight} kg for {vehicle}",
+  "courier.weightTooHigh": "{vehicle} can carry up to {weight} kg.",
+  "courier.weightRequired": "Please enter the parcel weight.",
+  "courier.pickupOutside": "Pickup location is outside our delivery area.",
+  "courier.dropOutside": "Drop location is outside our delivery area.",
+  "courier.checkingArea": "Checking delivery area…",
+  "courier.outsideArea": "Outside delivery area",
 
   // ── Home ─────────────────────────────────────────────────
   "home.searchPlaceholder": "Search for cleaning services…",
@@ -126,6 +133,8 @@ export const en = {
   "address.emptyTitle": "No saved addresses yet",
   "address.emptySub": "Add one to continue with your booking",
   "address.addNew": "Add New Address",
+  "address.notServiceable": "Not serviceable",
+  "address.notServiceableHint": "We don't serve this address yet.",
   "address.addNewPlus": "+ Add New Address",
   "address.fallbackLabel": "Address",
 

@@ -1612,6 +1612,38 @@ export type Database = {
           },
         ]
       }
+      courier_zones: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          updated_at: string
+          zone_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+          zone_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+          zone_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "courier_zones_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: true
+            referencedRelation: "zones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_coupons: {
         Row: {
           coupon_id: string
@@ -4694,6 +4726,10 @@ export type Database = {
       }
       courier_cancel_order: {
         Args: { _order_id: string; _reason?: string }
+        Returns: Json
+      }
+      courier_check_serviceability: {
+        Args: { _lat: number; _lng: number }
         Returns: Json
       }
       courier_create_order: {

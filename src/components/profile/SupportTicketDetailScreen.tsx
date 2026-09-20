@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Send } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -90,6 +90,37 @@ export function SupportTicketDetailScreen({
     onError: async (e) => toast.error(await getErrorMessage(e)),
   });
 
+  // One chat timeline: the original request, every reply, and the closing note.
+  const timeline = useMemo(() => {
+    type Item = { id: string; kind: "mine" | "other" | "system"; body: string; at: string };
+    const items: Item[] = [];
+    if (ticket && messages[0]?.body !== ticket.message) {
+      items.push({ id: "original", kind: "mine", body: ticket.message, at: ticket.created_at });
+    }
+    for (const m of messages) {
+      items.push({
+        id: m.id,
+        kind: m.sender_type === "customer" ? "mine" : "other",
+        body: m.body,
+        at: m.created_at,
+      });
+    }
+    if (ticket?.resolution_summary) {
+      items.push({
+        id: "resolution",
+        kind: "system",
+        body: ticket.resolution_summary,
+        at: ticket.resolved_at ?? ticket.last_message_at ?? ticket.created_at,
+      });
+    }
+    return items.sort((a, b) => new Date(a.at).getTime() - new Date(b.at).getTime());
+  }, [ticket, messages]);
+
+  const bottomRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ block: "end" });
+  }, [timeline.length]);
+
   const categoryLabel =
     TICKET_CATEGORIES.find((c) => c.value === ticket?.category)?.label ?? "Other";
 
@@ -122,28 +153,33 @@ export function SupportTicketDetailScreen({
         </header>
 
         {ticket && (
-          <section className="mt-5 rounded-[14px] border border-border bg-card p-3 text-[11px] text-muted-foreground shadow-sm">
-            <p>Raised on {formatStamp(ticket.created_at)}</p>
-            <p className="mt-0.5">Last update {formatStamp(ticket.last_message_at)}</p>
-            {ticket.resolved_at && <p className="mt-0.5">Resolved on {formatStamp(ticket.resolved_at)}</p>}
-            {ticket.resolution_summary && (
-              <p className="mt-1 text-foreground">{ticket.resolution_summary}</p>
-            )}
-          </section>
+          <p className="mt-4 text-center text-[11px] text-muted-foreground">
+            Raised on {formatStamp(ticket.created_at)}
+          </p>
         )}
 
-        <section className="mt-5 space-y-3">
-          {messages.length === 0 && ticket && (
-            <Bubble mine body={ticket.message} at={ticket.created_at} />
-          )}
-          {messages.map((m) => (
-            <Bubble
-              key={m.id}
-              mine={m.sender_type === "customer"}
-              body={m.body}
-              at={m.created_at}
-            />
+        <section className="mt-4 space-y-3">
+          {timeline.map((item, index) => (
+            <div key={item.id} className="space-y-3">
+              {dayLabel(item.at) !== (index > 0 ? dayLabel(timeline[index - 1].at) : null) && (
+                <div className="flex justify-center">
+                  <span className="rounded-full bg-muted px-3 py-1 text-[10px] font-bold text-muted-foreground">
+                    {dayLabel(item.at)}
+                  </span>
+                </div>
+              )}
+              {item.kind === "system" ? (
+                <div className="flex justify-center">
+                  <p className="max-w-[90%] rounded-[12px] bg-muted px-3 py-2 text-center text-[11px] font-semibold text-muted-foreground">
+                    {item.body}
+                  </p>
+                </div>
+              ) : (
+                <Bubble mine={item.kind === "mine"} body={item.body} at={item.at} />
+              )}
+            </div>
           ))}
+          <div ref={bottomRef} />
         </section>
       </div>
 
@@ -169,6 +205,18 @@ export function SupportTicketDetailScreen({
       </div>
     </main>
   );
+}
+
+/** "Today", "Yesterday" or a short date, used as the chat day divider. */
+function dayLabel(at: string): string {
+  const date = new Date(at);
+  const today = new Date();
+  const sameDay = (a: Date, b: Date) => a.toDateString() === b.toDateString();
+  if (sameDay(date, today)) return "Today";
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+  if (sameDay(date, yesterday)) return "Yesterday";
+  return date.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 }
 
 function Bubble({ mine, body, at }: { mine: boolean; body: string; at: string }) {

@@ -32,6 +32,26 @@ export async function checkServiceability(
   return (data ?? { serviceable: false, zone_id: null, zone_name: null }) as unknown as ServiceabilityResult;
 }
 
+/**
+ * Is this point inside a zone that the parcel (courier) service covers?
+ * Zones are mapped in the command centre; until at least one is mapped every
+ * active zone counts, so nothing breaks before the mapping is done.
+ */
+export async function checkCourierServiceability(
+  lat: number | null | undefined,
+  lng: number | null | undefined,
+): Promise<ServiceabilityResult> {
+  if (lat == null || lng == null) {
+    return { serviceable: false, zone_id: null, zone_name: null };
+  }
+  const { data, error } = await supabase.rpc("courier_check_serviceability" as never, {
+    _lat: lat,
+    _lng: lng,
+  } as never);
+  if (error) throw error;
+  return (data ?? { serviceable: false, zone_id: null, zone_name: null }) as unknown as ServiceabilityResult;
+}
+
 /** ~250m box — "the same location" for waitlist de-duplication. */
 const DEDUPE_DEG = 0.0025;
 

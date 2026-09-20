@@ -31,6 +31,8 @@ import { getPaymentPrefill } from "@/lib/paymentPrefill";
 import { paymentErrorKey } from "@/lib/paymentError";
 import { useT } from "@/i18n";
 import { contactPickerAvailable, pickContact } from "@/lib/contactPicker";
+import { checkCourierServiceability } from "@/lib/serviceability";
+import { courierErrorMessage } from "@/lib/courierError";
 import { fetchCourierVehicles, fetchCourierTypes, fetchCourierService } from "./courierData";
 
 type Addr = {
@@ -141,18 +143,58 @@ export function CourierBookingScreen({
   const city = (pickup?.city || drop?.city || "").trim() || courierService?.city || "Latur";
   const selectedVehicle = vehicles.find((item) => item.id === vehicleId) ?? null;
   const selectedType = types.find((item) => item.id === typeId) ?? null;
+  const maxWeight = selectedVehicle?.max_weight_kg ? Number(selectedVehicle.max_weight_kg) : null;
+
+  // Both stops must sit inside a zone mapped to the parcel service.
+  const pickupZone = useQuery({
+    queryKey: ["courier_zone", pickup?.latitude, pickup?.longitude],
+    queryFn: () => checkCourierServiceability(pickup?.latitude, pickup?.longitude),
+    enabled: pickup?.latitude != null && pickup?.longitude != null,
+    staleTime: 5 * 60_000,
+  });
+  const dropZone = useQuery({
+    queryKey: ["courier_zone", drop?.latitude, drop?.longitude],
+    queryFn: () => checkCourierServiceability(drop?.latitude, drop?.longitude),
+    enabled: drop?.latitude != null && drop?.longitude != null,
+    staleTime: 5 * 60_000,
+  });
+  const pickupOutside = pickupZone.data ? !pickupZone.data.serviceable : false;
+  const dropOutside = dropZone.data ? !dropZone.data.serviceable : false;
+  const zonesChecking = pickupZone.isFetching || dropZone.isFetching;
+
+  // Keep the typed weight inside the selected vehicle's limit.
+  useEffect(() => {
+    if (maxWeight == null) return;
+    const current = Number(weight);
+    if (Number.isFinite(current) && current > maxWeight) setWeight(maxWeight.toFixed(2));
+  }, [maxWeight, weight]);
+
+  const weightValue = Number(weight);
+  const weightError =
+    !Number.isFinite(weightValue) || weightValue <= 0
+      ? t("courier.weightRequired")
+      : maxWeight != null && weightValue > maxWeight
+        ? t("courier.weightTooHigh", {
+            vehicle: selectedVehicle?.name ?? t("courier.bike"),
+            weight: maxWeight,
+          })
+        : null;
+
   const validPhone = (value: string) => value.replace(/\D/g, "").length === 10;
   const locationsReady = Boolean(
     pickup?.latitude != null &&
       pickup.longitude != null &&
       drop?.latitude != null &&
       drop.longitude != null &&
+      !pickupOutside &&
+      !dropOutside &&
+      !zonesChecking &&
       pickupName.trim() &&
       validPhone(pickupPhone) &&
       dropName.trim() &&
       validPhone(dropPhone),
   );
-  const parcelReady = Boolean(vehicleId && typeId && Number(weight) > 0);
+  const parcelReady = Boolean(vehicleId && typeId && !weightError);
 
   const payload = useMemo(
     () => ({
@@ -173,7 +215,7 @@ export function CourierBookingScreen({
       setQuote((await courierQuote({ data: payload })) as Quote);
       setStep(4);
     } catch (error) {
-      setErr((error as Error).message || t("courier.priceError"));
+      setErr(courierErrorMessage(error, t("courier.priceError")));
     } finally {
       setQuoting(false);
     }
@@ -225,6 +267,8 @@ export function CourierBookingScreen({
       const paymentError = toPaymentError(error);
       console.error("[courier] payment error", error);
       if (paymentError.category === "cancelled") toast(t("payment.cancelledToast"));
+      else if (paymentError.category === "unknown")
+        setErr(courierErrorMessage(error, t(paymentErrorKey(paymentError.category))));
       else setErr(t(paymentErrorKey(paymentError.category)));
     } finally {
       setPaying(false);
@@ -234,6 +278,7 @@ export function CourierBookingScreen({
   if (addressTarget) {
     return (
       <AddressSelectionScreen
+        serviceCheck="courier"
         onBack={() => setAddressTarget(null)}
         onContinue={(address) => {
           const next = address as Addr;
@@ -291,6 +336,20 @@ export function CourierBookingScreen({
               <div className="mx-5 border-t border-border" />
               <AddressStop kind="drop" address={drop} onClick={() => setAddressTarget("drop")} />
             </div>
+            {zonesChecking && (
+              <p className="text-xs font-semibold text-muted-foreground">{t("courier.checkingArea")}</p>
+            )}
+            {pickupOutside && (
+              <p className="rounded-lg bg-destructive/10 p-3 text-sm font-semibold text-destructive">
+                {t("courier.pickupOutside")}
+              </p>
+            )}
+            {dropOutside && (
+              <p className="rounded-lg bg-destructive/10 p-3 text-sm font-semibold text-destructive">
+                {t("courier.dropOutside")}
+              </p>
+            )}
+
 
             <ContactFields
               title={t("courier.pickupContact")}
@@ -421,10 +480,31 @@ export function CourierBookingScreen({
                 <Input
                   inputMode="decimal"
                   value={weight}
-                  onChange={(event) => setWeight(event.target.value.replace(/[^\d.]/g, ""))}
+                  max={maxWeight ?? undefined}
+                  aria-invalid={Boolean(weightError)}
+                  onChange={(event) => {
+                    const cleaned = event.target.value.replace(/[^\d.]/g, "");
+                    const numeric = Number(cleaned);
+                    if (maxWeight != null && Number.isFinite(numeric) && numeric > maxWeight) {
+                      setWeight(maxWeight.toFixed(2));
+                      return;
+                    }
+                    setWeight(cleaned);
+                  }}
                   onBlur={() => setWeight(formatWeight(weight))}
                   className="h-12"
                 />
+                {maxWeight != null && (
+                  <span className="block text-xs font-semibold text-muted-foreground">
+                    {t("courier.maxWeightHint", {
+                      weight: maxWeight.toFixed(2),
+                      vehicle: selectedVehicle?.name ?? t("courier.bike"),
+                    })}
+                  </span>
+                )}
+                {weightError && Number(weight) > 0 && (
+                  <span className="block text-xs font-semibold text-destructive">{weightError}</span>
+                )}
               </label>
               <label className="space-y-1.5 text-sm font-bold text-foreground">
                 {t("courier.note")}
