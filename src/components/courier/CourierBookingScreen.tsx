@@ -31,6 +31,8 @@ import { getPaymentPrefill } from "@/lib/paymentPrefill";
 import { paymentErrorKey } from "@/lib/paymentError";
 import { useT } from "@/i18n";
 import { contactPickerAvailable, pickContact } from "@/lib/contactPicker";
+import { checkCourierServiceability } from "@/lib/serviceability";
+import { courierErrorMessage } from "@/lib/courierError";
 import { fetchCourierVehicles, fetchCourierTypes, fetchCourierService } from "./courierData";
 
 type Addr = {
