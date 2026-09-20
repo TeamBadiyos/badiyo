@@ -77,12 +77,69 @@ function rpcError(message: string): never {
   throw new Error(message);
 }
 
+/** Validation failures become short, human sentences — never raw zod output. */
+function parseFriendly<T extends z.ZodTypeAny>(schema: T, data: unknown): z.infer<T> {
+  const result = schema.safeParse(data);
+  if (result.success) return result.data;
+  const issue = result.error.issues[0];
+  const path = issue?.path.join(".") ?? "";
+  if (path === "weight_kg") throw new Error("Please enter a valid parcel weight.");
+  if (path.startsWith("pickup")) throw new Error("Please choose a valid pickup point.");
+  if (path.startsWith("drop")) throw new Error("Please choose a valid drop point.");
+  throw new Error("Some parcel details are missing. Please check and try again.");
+}
+
+type AdminClient = Awaited<
+  typeof import("@/integrations/supabase/client.server")
+>["supabaseAdmin"];
+
+/** Both stops must sit inside a zone mapped to the parcel service. */
+async function assertInCourierZone(
+  admin: AdminClient,
+  point: { lat: number; lng: number },
+  label: "Pickup" | "Drop",
+) {
+  const { data, error } = await admin.rpc("courier_check_serviceability" as never, {
+    _lat: point.lat,
+    _lng: point.lng,
+  } as never);
+  if (error) rpcError("We could not check the delivery area. Please try again.");
+  const ok = (data as { serviceable?: boolean } | null)?.serviceable === true;
+  if (!ok) {
+    throw new Error(`${label} location is outside our delivery area right now.`);
+  }
+}
+
+/** The parcel must fit the selected vehicle's configured limit. */
+async function assertWeightAllowed(
+  admin: AdminClient,
+  vehicleTypeId: string,
+  weightKg: number,
+) {
+  const { data: vehicle } = await admin
+    .from("courier_vehicle_types")
+    .select("name, max_weight_kg, is_active")
+    .eq("id", vehicleTypeId)
+    .maybeSingle();
+  if (!vehicle || vehicle.is_active === false) {
+    throw new Error("This delivery vehicle is not available right now.");
+  }
+  const max = vehicle.max_weight_kg == null ? null : Number(vehicle.max_weight_kg);
+  if (max != null && weightKg > max) {
+    throw new Error(`${vehicle.name} can carry up to ${max} kg.`);
+  }
+}
+
 export const courierQuote = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data) => quoteSchema.parse(data))
+  .inputValidator((data) => parseFriendly(quoteSchema, data))
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await assertWeightAllowed(supabaseAdmin, data.vehicle_type_id, data.weight_kg);
+    await assertInCourierZone(supabaseAdmin, data.pickup, "Pickup");
+    await assertInCourierZone(supabaseAdmin, data.drop, "Drop");
     const { km, source } = await routeDistanceKm(data.pickup, data.drop);
+
 
     const { data: quote, error } = await supabaseAdmin.rpc("courier_quote_internal" as never, {
       _customer_id: context.userId,
