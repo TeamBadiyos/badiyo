@@ -1,6 +1,6 @@
 // Customer parcel booking: guided locations, vehicle, parcel and review flow.
 // Fare and payment remain server-authoritative.
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   AlertTriangle,
@@ -108,6 +108,13 @@ export function CourierBookingScreen({
   const [quoting, setQuoting] = useState(false);
   const [paying, setPaying] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  // Set once the customer has actually been charged, so a retry only
+  // re-confirms that payment instead of creating a second order.
+  const paidRef = useRef<{
+    order_id: string;
+    razorpay_payment_id: string;
+    razorpay_order_id: string;
+  } | null>(null);
 
   const { data: addresses = [] } = useQuery({ queryKey: ["addresses"], queryFn: fetchAddresses });
   const { data: profile } = useQuery({ queryKey: ["courier_profile"], queryFn: fetchCourierProfile });
