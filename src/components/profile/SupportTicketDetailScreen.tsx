@@ -122,28 +122,33 @@ export function SupportTicketDetailScreen({
         </header>
 
         {ticket && (
-          <section className="mt-5 rounded-[14px] border border-border bg-card p-3 text-[11px] text-muted-foreground shadow-sm">
-            <p>Raised on {formatStamp(ticket.created_at)}</p>
-            <p className="mt-0.5">Last update {formatStamp(ticket.last_message_at)}</p>
-            {ticket.resolved_at && <p className="mt-0.5">Resolved on {formatStamp(ticket.resolved_at)}</p>}
-            {ticket.resolution_summary && (
-              <p className="mt-1 text-foreground">{ticket.resolution_summary}</p>
-            )}
-          </section>
+          <p className="mt-4 text-center text-[11px] text-muted-foreground">
+            Raised on {formatStamp(ticket.created_at)}
+          </p>
         )}
 
-        <section className="mt-5 space-y-3">
-          {messages.length === 0 && ticket && (
-            <Bubble mine body={ticket.message} at={ticket.created_at} />
-          )}
-          {messages.map((m) => (
-            <Bubble
-              key={m.id}
-              mine={m.sender_type === "customer"}
-              body={m.body}
-              at={m.created_at}
-            />
+        <section className="mt-4 space-y-3">
+          {timeline.map((item, index) => (
+            <div key={item.id} className="space-y-3">
+              {dayLabel(item.at) !== (index > 0 ? dayLabel(timeline[index - 1].at) : null) && (
+                <div className="flex justify-center">
+                  <span className="rounded-full bg-muted px-3 py-1 text-[10px] font-bold text-muted-foreground">
+                    {dayLabel(item.at)}
+                  </span>
+                </div>
+              )}
+              {item.kind === "system" ? (
+                <div className="flex justify-center">
+                  <p className="max-w-[90%] rounded-[12px] bg-muted px-3 py-2 text-center text-[11px] font-semibold text-muted-foreground">
+                    {item.body}
+                  </p>
+                </div>
+              ) : (
+                <Bubble mine={item.kind === "mine"} body={item.body} at={item.at} />
+              )}
+            </div>
           ))}
+          <div ref={bottomRef} />
         </section>
       </div>
 
