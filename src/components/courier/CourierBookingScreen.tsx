@@ -479,10 +479,31 @@ export function CourierBookingScreen({
                 <Input
                   inputMode="decimal"
                   value={weight}
-                  onChange={(event) => setWeight(event.target.value.replace(/[^\d.]/g, ""))}
+                  max={maxWeight ?? undefined}
+                  aria-invalid={Boolean(weightError)}
+                  onChange={(event) => {
+                    const cleaned = event.target.value.replace(/[^\d.]/g, "");
+                    const numeric = Number(cleaned);
+                    if (maxWeight != null && Number.isFinite(numeric) && numeric > maxWeight) {
+                      setWeight(maxWeight.toFixed(2));
+                      return;
+                    }
+                    setWeight(cleaned);
+                  }}
                   onBlur={() => setWeight(formatWeight(weight))}
                   className="h-12"
                 />
+                {maxWeight != null && (
+                  <span className="block text-xs font-semibold text-muted-foreground">
+                    {t("courier.maxWeightHint", {
+                      weight: maxWeight.toFixed(2),
+                      vehicle: selectedVehicle?.name ?? t("courier.bike"),
+                    })}
+                  </span>
+                )}
+                {weightError && Number(weight) > 0 && (
+                  <span className="block text-xs font-semibold text-destructive">{weightError}</span>
+                )}
               </label>
               <label className="space-y-1.5 text-sm font-bold text-foreground">
                 {t("courier.note")}
