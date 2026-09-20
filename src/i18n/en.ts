@@ -90,6 +90,13 @@ export const en = {
   "courier.pickup": "Pickup",
   "courier.drop": "Drop",
   "courier.bike": "Bike",
+  "courier.maxWeightHint": "Max {weight} kg for {vehicle}",
+  "courier.weightTooHigh": "{vehicle} can carry up to {weight} kg.",
+  "courier.weightRequired": "Please enter the parcel weight.",
+  "courier.pickupOutside": "Pickup location is outside our delivery area.",
+  "courier.dropOutside": "Drop location is outside our delivery area.",
+  "courier.checkingArea": "Checking delivery area…",
+  "courier.outsideArea": "Outside delivery area",
 
   // ── Home ─────────────────────────────────────────────────
   "home.searchPlaceholder": "Search for cleaning services…",
