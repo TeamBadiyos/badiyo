@@ -1,6 +1,6 @@
 // Customer parcel booking: guided locations, vehicle, parcel and review flow.
 // Fare and payment remain server-authoritative.
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   AlertTriangle,
@@ -108,13 +108,6 @@ export function CourierBookingScreen({
   const [quoting, setQuoting] = useState(false);
   const [paying, setPaying] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  // Set once the customer has actually been charged, so a retry only
-  // re-confirms that payment instead of creating a second order.
-  const paidRef = useRef<{
-    order_id: string;
-    razorpay_payment_id: string;
-    razorpay_order_id: string;
-  } | null>(null);
 
   const { data: addresses = [] } = useQuery({ queryKey: ["addresses"], queryFn: fetchAddresses });
   const { data: profile } = useQuery({ queryKey: ["courier_profile"], queryFn: fetchCourierProfile });
@@ -195,16 +188,6 @@ export function CourierBookingScreen({
     setErr(null);
     setPaying(true);
     try {
-      // Payment already went through earlier: only finish confirming it.
-      // Never charge the customer a second time.
-      if (paidRef.current) {
-        await courierConfirmPayment({ data: paidRef.current });
-        const bookedId = paidRef.current.order_id;
-        paidRef.current = null;
-        onBooked(bookedId);
-        return;
-      }
-
       const order = await courierCreateOrder({
         data: {
           ...payload,
@@ -230,31 +213,23 @@ export function CourierBookingScreen({
         email: prefill.email,
         customerName: prefill.name,
       });
-      // From here the money has left the customer's account.
-      paidRef.current = {
-        order_id: order.order_id,
-        razorpay_payment_id: result.razorpay_payment_id,
-        razorpay_order_id: result.razorpay_order_id,
-      };
-      await courierConfirmPayment({ data: paidRef.current });
-      paidRef.current = null;
+      await courierConfirmPayment({
+        data: {
+          order_id: order.order_id,
+          razorpay_payment_id: result.razorpay_payment_id,
+          razorpay_order_id: result.razorpay_order_id,
+        },
+      });
       onBooked(order.order_id);
     } catch (error) {
       const paymentError = toPaymentError(error);
       console.error("[courier] payment error", error);
-      if (paidRef.current) {
-        // Charged, but confirmation failed: ask for a retry, not a new payment.
-        setErr(t("courier.confirmRetry"));
-      } else if (paymentError.category === "cancelled") {
-        toast(t("payment.cancelledToast"));
-      } else {
-        setErr(t(paymentErrorKey(paymentError.category)));
-      }
+      if (paymentError.category === "cancelled") toast(t("payment.cancelledToast"));
+      else setErr(t(paymentErrorKey(paymentError.category)));
     } finally {
       setPaying(false);
     }
   };
-
 
   if (addressTarget) {
     return (

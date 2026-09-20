@@ -88,7 +88,6 @@ export const mr: Partial<Record<keyof typeof en, string>> = {
   "courier.confirmSafe": "या पार्सलमध्ये रोख रक्कम, दागिने, दारू, स्फोटके, बेकायदेशीर किंवा प्रतिबंधित वस्तू नाहीत याची मी खात्री देतो.",
   "courier.confirmRequired": "तुमच्या पार्सलमध्ये प्रतिबंधित वस्तू नाहीत याची खात्री करा.",
   "courier.priceError": "आत्ता किंमत मिळू शकली नाही.",
-  "courier.confirmRetry": "पेमेंट मिळाले. पार्सल बुकिंग पूर्ण करण्यासाठी पुन्हा टॅप करा.",
   "courier.payBook": "पेमेंट करा आणि {vehicle} बुक करा",
   "courier.pickup": "पिकअप",
   "courier.drop": "ड्रॉप",
