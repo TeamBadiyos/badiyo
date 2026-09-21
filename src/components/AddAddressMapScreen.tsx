@@ -314,11 +314,15 @@ export function AddAddressMapScreen({
 
   };
 
+  // Only the parcel flow needs a hard zone gate; saving/editing a personal
+  // address anywhere else stays possible, with just a warning.
+  const blockOutsideZone = serviceCheck === "courier";
+
   const canSave =
     addressDetails.trim().length > 0 &&
     autoAddress.trim().length > 0 &&
     !geocoding &&
-    zoneState !== "out" &&
+    (!blockOutsideZone || zoneState !== "out") &&
     !isSaving;
 
   const handleSave = () => {
