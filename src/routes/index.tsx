@@ -1131,6 +1131,11 @@ function Index() {
             onOpenHome={() => setPhase("home")}
             onOpenRewards={() => setPhase("rewards")}
             onOpenCourier={() => setPhase("courier")}
+            onOpenCourierOrder={(id) => {
+              setCourierOrderId(id);
+              setCourierTrackFrom("orders");
+              setPhase("courier-track");
+            }}
             onOpenBooking={(b) => {
               if (ACTIVE_TRACKING_STATUSES.includes(b.status)) {
                 const addr = b.addresses;
