@@ -595,6 +595,7 @@ export type Database = {
           gst_amount: number
           gst_percent: number
           id: string
+          last_rebroadcast_at: string | null
           partner_payout_batch_id: string | null
           price: number
           rating: number | null
@@ -655,6 +656,7 @@ export type Database = {
           gst_amount?: number
           gst_percent?: number
           id?: string
+          last_rebroadcast_at?: string | null
           partner_payout_batch_id?: string | null
           price: number
           rating?: number | null
@@ -715,6 +717,7 @@ export type Database = {
           gst_amount?: number
           gst_percent?: number
           id?: string
+          last_rebroadcast_at?: string | null
           partner_payout_batch_id?: string | null
           price?: number
           rating?: number | null
@@ -3955,33 +3958,220 @@ export type Database = {
       service_flags: {
         Row: {
           city: string
+          closed_today_date: string | null
+          closed_today_reason: string | null
+          closed_until: string | null
           created_at: string
+          hours_enabled: boolean
           id: string
           is_active: boolean
           label: string
+          last_order_buffer_minutes: number
+          resume_at: string | null
           service_key: string
           sort_order: number
+          status: string
+          status_message_en: string | null
+          status_message_mr: string | null
+          status_updated_at: string | null
+          status_updated_by: string | null
           updated_at: string
         }
         Insert: {
           city: string
+          closed_today_date?: string | null
+          closed_today_reason?: string | null
+          closed_until?: string | null
           created_at?: string
+          hours_enabled?: boolean
           id?: string
           is_active?: boolean
           label: string
+          last_order_buffer_minutes?: number
+          resume_at?: string | null
           service_key: string
           sort_order?: number
+          status?: string
+          status_message_en?: string | null
+          status_message_mr?: string | null
+          status_updated_at?: string | null
+          status_updated_by?: string | null
           updated_at?: string
         }
         Update: {
           city?: string
+          closed_today_date?: string | null
+          closed_today_reason?: string | null
+          closed_until?: string | null
           created_at?: string
+          hours_enabled?: boolean
           id?: string
           is_active?: boolean
           label?: string
+          last_order_buffer_minutes?: number
+          resume_at?: string | null
           service_key?: string
           sort_order?: number
+          status?: string
+          status_message_en?: string | null
+          status_message_mr?: string | null
+          status_updated_at?: string | null
+          status_updated_by?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      service_focus_snapshots: {
+        Row: {
+          active_orders: Json
+          after: Json
+          before: Json
+          created_at: string
+          created_by: string
+          expires_at: string
+          undo_token: string
+          used_at: string | null
+        }
+        Insert: {
+          active_orders?: Json
+          after: Json
+          before: Json
+          created_at?: string
+          created_by: string
+          expires_at: string
+          undo_token?: string
+          used_at?: string | null
+        }
+        Update: {
+          active_orders?: Json
+          after?: Json
+          before?: Json
+          created_at?: string
+          created_by?: string
+          expires_at?: string
+          undo_token?: string
+          used_at?: string | null
+        }
+        Relationships: []
+      }
+      service_holidays: {
+        Row: {
+          created_at: string
+          end_date: string | null
+          id: string
+          reason: string | null
+          reason_mr: string | null
+          service_flag_id: string | null
+          start_date: string
+        }
+        Insert: {
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          reason?: string | null
+          reason_mr?: string | null
+          service_flag_id?: string | null
+          start_date: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          reason?: string | null
+          reason_mr?: string | null
+          service_flag_id?: string | null
+          start_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_holidays_service_flag_id_fkey"
+            columns: ["service_flag_id"]
+            isOneToOne: false
+            referencedRelation: "service_flags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_hours: {
+        Row: {
+          close_time: string
+          created_at: string
+          id: string
+          is_closed: boolean
+          open_time: string
+          service_flag_id: string
+          updated_at: string
+          weekday: number
+        }
+        Insert: {
+          close_time?: string
+          created_at?: string
+          id?: string
+          is_closed?: boolean
+          open_time?: string
+          service_flag_id: string
+          updated_at?: string
+          weekday: number
+        }
+        Update: {
+          close_time?: string
+          created_at?: string
+          id?: string
+          is_closed?: boolean
+          open_time?: string
+          service_flag_id?: string
+          updated_at?: string
+          weekday?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_hours_service_flag_id_fkey"
+            columns: ["service_flag_id"]
+            isOneToOne: false
+            referencedRelation: "service_flags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_hours_bypass_users: {
+        Row: {
+          created_at: string
+          note: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          note?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          note?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      service_notify_requests: {
+        Row: {
+          created_at: string
+          id: string
+          notified_at: string | null
+          service_key: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notified_at?: string | null
+          service_key: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notified_at?: string | null
+          service_key?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -4848,6 +5038,7 @@ export type Database = {
           gst_amount: number
           gst_percent: number
           id: string
+          last_rebroadcast_at: string | null
           partner_payout_batch_id: string | null
           price: number
           rating: number | null
@@ -5570,7 +5761,37 @@ export type Database = {
       }
       send_completion_reminders: { Args: never; Returns: number }
       send_scheduled_booking_reminders: { Args: never; Returns: number }
+      service_can_order: {
+        Args: { _at?: string; _service_key: string }
+        Returns: boolean
+      }
+      service_effective_state: {
+        Args: { _at?: string; _city?: string; _service_key: string }
+        Returns: Json
+      }
+      service_hours_bypass: { Args: never; Returns: boolean }
+      service_next_open: {
+        Args: { _flag_id: string; _from: string }
+        Returns: string
+      }
+      service_slot_allowed: {
+        Args: {
+          _date: string
+          _duration_minutes?: number
+          _service_key: string
+          _slot: string
+        }
+        Returns: Json
+      }
+      service_window: {
+        Args: { _city?: string; _service_key: string }
+        Returns: Json
+      }
       set_login_pin: { Args: { p_pin: string }; Returns: undefined }
+      slot_start_ist: {
+        Args: { _date: string; _slot: string }
+        Returns: string
+      }
       staff_accept_booking: {
         Args: { _booking_id: string }
         Returns: undefined
