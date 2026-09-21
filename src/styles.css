@@ -35,6 +35,9 @@
   --safe-bottom-min: 0px;
   --app-safe-top: max(var(--safe-top-min), env(safe-area-inset-top, 0px));
   --app-safe-bottom: max(var(--safe-bottom-min), env(safe-area-inset-bottom, 0px));
+  /* Extra breathing room under the status bar / camera cutout: roughly the
+     height of a search bar, so no header or search field hugs the camera. */
+  --app-top-gap: 44px;
   --background: oklch(0.985 0.003 180);
   --foreground: oklch(0.235 0.014 260);
   --card: oklch(1 0 0);
@@ -177,7 +180,7 @@ select,
 }
 
 @utility safe-top {
-  padding-top: var(--app-safe-top);
+  padding-top: calc(var(--app-safe-top) + var(--app-top-gap));
 }
 
 @utility safe-bottom {
@@ -195,7 +198,7 @@ select,
   /* On native shells Android often reports 0 for the status bar inset, so we
      guarantee a minimum breathing room via --safe-top-min (set at runtime).
      Exposed as --app-safe-top so full-bleed headers can paint under it. */
-  padding-top: var(--app-safe-top);
+  padding-top: calc(var(--app-safe-top) + var(--app-top-gap));
   padding-bottom: var(--app-safe-bottom);
   padding-left: env(safe-area-inset-left, 0px);
   padding-right: env(safe-area-inset-right, 0px);
@@ -203,10 +206,13 @@ select,
 }
 
 /* Lets a colored header extend up through the safe-area strip so no
-   background-colored seam appears between the status bar and the header. */
+   background-colored seam appears between the status bar and the header.
+   Cancels the shell's top padding (inset + gap) and repaints it itself. */
 @utility bleed-safe-top {
-  margin-top: calc(-1 * var(--app-safe-top, 0px));
-  padding-top: calc(var(--app-safe-top, 0px) + var(--bleed-top-extra, 0px));
+  margin-top: calc(-1 * (var(--app-safe-top, 0px) + var(--app-top-gap, 0px)));
+  padding-top: calc(
+    var(--app-safe-top, 0px) + var(--app-top-gap, 0px) + var(--bleed-top-extra, 0px)
+  );
 }
 
 
