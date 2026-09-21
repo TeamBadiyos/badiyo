@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { BadiyoLogo } from "./BadiyoLogo";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/lib/invokeFunction";
 import { getErrorMessage } from "@/lib/errorMessage";
 import { hapticImpact } from "@/lib/haptics";
 import { LegalConsentText } from "./LegalConsentText";
