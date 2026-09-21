@@ -41,7 +41,13 @@ export const Route = createFileRoute("/api/public/courier/process-refunds")({
         for (const row of rows ?? []) {
           const attempts = (row.refund_attempts ?? 0) + 1;
 
-          if (!row.razorpay_payment_id) {
+          // Nothing was charged (no payment, or a fully-discounted ₹0 order):
+          // there is no gateway refund to make.
+          if (
+            !row.razorpay_payment_id ||
+            row.razorpay_payment_id.startsWith("free_") ||
+            Math.round(Number(row.refund_amount ?? 0) * 100) <= 0
+          ) {
             await supabaseAdmin
               .from("courier_orders")
               .update({
