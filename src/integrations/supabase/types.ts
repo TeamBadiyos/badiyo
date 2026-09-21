@@ -284,6 +284,9 @@ export type Database = {
           kyc_rejection_reason: string | null
           kyc_status: string
           name: string
+          pan_encrypted: string | null
+          pan_last4: string | null
+          pan_updated_at: string | null
           phone: string
           photo_url: string | null
           setup_fee_status: string
@@ -309,6 +312,9 @@ export type Database = {
           kyc_rejection_reason?: string | null
           kyc_status?: string
           name: string
+          pan_encrypted?: string | null
+          pan_last4?: string | null
+          pan_updated_at?: string | null
           phone: string
           photo_url?: string | null
           setup_fee_status?: string
@@ -334,6 +340,9 @@ export type Database = {
           kyc_rejection_reason?: string | null
           kyc_status?: string
           name?: string
+          pan_encrypted?: string | null
+          pan_last4?: string | null
+          pan_updated_at?: string | null
           phone?: string
           photo_url?: string | null
           setup_fee_status?: string
@@ -561,6 +570,7 @@ export type Database = {
       bookings: {
         Row: {
           address_id: string | null
+          assigned_area_partner_id: string | null
           assigned_expert_id: string | null
           booking_lat: number | null
           booking_lng: number | null
@@ -569,6 +579,7 @@ export type Database = {
           cancellation_reason: string | null
           cancelled_at: string | null
           cancelled_by: string | null
+          commission_rule_id: string | null
           coupon_code: string | null
           coupon_id: string | null
           created_at: string | null
@@ -580,9 +591,11 @@ export type Database = {
           dispatch_alert_sent: boolean
           dispatch_exhausted_at: string | null
           end_otp: string | null
+          expert_payout_batch_id: string | null
           gst_amount: number
           gst_percent: number
           id: string
+          partner_payout_batch_id: string | null
           price: number
           rating: number | null
           razorpay_order_id: string | null
@@ -600,6 +613,10 @@ export type Database = {
           service_end_at: string | null
           service_label: string
           slot_type: string
+          snapshot_expert_payout: number | null
+          snapshot_hourly_rate: number | null
+          snapshot_hq_share: number | null
+          snapshot_partner_payout: number | null
           start_otp: string | null
           started_at: string | null
           status: string
@@ -610,6 +627,7 @@ export type Database = {
         }
         Insert: {
           address_id?: string | null
+          assigned_area_partner_id?: string | null
           assigned_expert_id?: string | null
           booking_lat?: number | null
           booking_lng?: number | null
@@ -618,6 +636,7 @@ export type Database = {
           cancellation_reason?: string | null
           cancelled_at?: string | null
           cancelled_by?: string | null
+          commission_rule_id?: string | null
           coupon_code?: string | null
           coupon_id?: string | null
           created_at?: string | null
@@ -629,9 +648,11 @@ export type Database = {
           dispatch_alert_sent?: boolean
           dispatch_exhausted_at?: string | null
           end_otp?: string | null
+          expert_payout_batch_id?: string | null
           gst_amount?: number
           gst_percent?: number
           id?: string
+          partner_payout_batch_id?: string | null
           price: number
           rating?: number | null
           razorpay_order_id?: string | null
@@ -649,6 +670,10 @@ export type Database = {
           service_end_at?: string | null
           service_label: string
           slot_type: string
+          snapshot_expert_payout?: number | null
+          snapshot_hourly_rate?: number | null
+          snapshot_hq_share?: number | null
+          snapshot_partner_payout?: number | null
           start_otp?: string | null
           started_at?: string | null
           status?: string
@@ -659,6 +684,7 @@ export type Database = {
         }
         Update: {
           address_id?: string | null
+          assigned_area_partner_id?: string | null
           assigned_expert_id?: string | null
           booking_lat?: number | null
           booking_lng?: number | null
@@ -667,6 +693,7 @@ export type Database = {
           cancellation_reason?: string | null
           cancelled_at?: string | null
           cancelled_by?: string | null
+          commission_rule_id?: string | null
           coupon_code?: string | null
           coupon_id?: string | null
           created_at?: string | null
@@ -678,9 +705,11 @@ export type Database = {
           dispatch_alert_sent?: boolean
           dispatch_exhausted_at?: string | null
           end_otp?: string | null
+          expert_payout_batch_id?: string | null
           gst_amount?: number
           gst_percent?: number
           id?: string
+          partner_payout_batch_id?: string | null
           price?: number
           rating?: number | null
           razorpay_order_id?: string | null
@@ -698,6 +727,10 @@ export type Database = {
           service_end_at?: string | null
           service_label?: string
           slot_type?: string
+          snapshot_expert_payout?: number | null
+          snapshot_hourly_rate?: number | null
+          snapshot_hq_share?: number | null
+          snapshot_partner_payout?: number | null
           start_otp?: string | null
           started_at?: string | null
           status?: string
@@ -715,6 +748,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "bookings_assigned_area_partner_id_fkey"
+            columns: ["assigned_area_partner_id"]
+            isOneToOne: false
+            referencedRelation: "area_partners"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "bookings_assigned_expert_id_fkey"
             columns: ["assigned_expert_id"]
             isOneToOne: false
@@ -722,10 +762,31 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "bookings_commission_rule_id_fkey"
+            columns: ["commission_rule_id"]
+            isOneToOne: false
+            referencedRelation: "commission_rules"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "bookings_coupon_id_fkey"
             columns: ["coupon_id"]
             isOneToOne: false
             referencedRelation: "coupons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_expert_payout_batch_id_fkey"
+            columns: ["expert_payout_batch_id"]
+            isOneToOne: false
+            referencedRelation: "payout_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_partner_payout_batch_id_fkey"
+            columns: ["partner_payout_batch_id"]
+            isOneToOne: false
+            referencedRelation: "payout_batches"
             referencedColumns: ["id"]
           },
           {
@@ -869,6 +930,59 @@ export type Database = {
           phone?: string
         }
         Relationships: []
+      }
+      commission_rules: {
+        Row: {
+          created_at: string
+          expert_type: string
+          expert_value: number
+          id: string
+          is_active: boolean
+          min_hq_share: number
+          notes: string | null
+          partner_type: string
+          partner_value: number
+          price_option_id: string | null
+          scope: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          expert_type?: string
+          expert_value?: number
+          id?: string
+          is_active?: boolean
+          min_hq_share?: number
+          notes?: string | null
+          partner_type?: string
+          partner_value?: number
+          price_option_id?: string | null
+          scope?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          expert_type?: string
+          expert_value?: number
+          id?: string
+          is_active?: boolean
+          min_hq_share?: number
+          notes?: string | null
+          partner_type?: string
+          partner_value?: number
+          price_option_id?: string | null
+          scope?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commission_rules_price_option_id_fkey"
+            columns: ["price_option_id"]
+            isOneToOne: false
+            referencedRelation: "service_price_options"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       coupon_redemptions: {
         Row: {
@@ -2013,10 +2127,14 @@ export type Database = {
           location_updated_at: string | null
           name: string
           onboarded_by: string | null
+          pan_encrypted: string | null
+          pan_last4: string | null
+          pan_updated_at: string | null
           phone: string
           photo_url: string | null
           pin_hash: string | null
           preferred_language: string
+          referred_by_expert_id: string | null
           security_deposit_status: string
           status: string
           wallet_balance: number
@@ -2044,10 +2162,14 @@ export type Database = {
           location_updated_at?: string | null
           name: string
           onboarded_by?: string | null
+          pan_encrypted?: string | null
+          pan_last4?: string | null
+          pan_updated_at?: string | null
           phone: string
           photo_url?: string | null
           pin_hash?: string | null
           preferred_language?: string
+          referred_by_expert_id?: string | null
           security_deposit_status?: string
           status?: string
           wallet_balance?: number
@@ -2075,10 +2197,14 @@ export type Database = {
           location_updated_at?: string | null
           name?: string
           onboarded_by?: string | null
+          pan_encrypted?: string | null
+          pan_last4?: string | null
+          pan_updated_at?: string | null
           phone?: string
           photo_url?: string | null
           pin_hash?: string | null
           preferred_language?: string
+          referred_by_expert_id?: string | null
           security_deposit_status?: string
           status?: string
           wallet_balance?: number
@@ -2097,6 +2223,13 @@ export type Database = {
             columns: ["onboarded_by"]
             isOneToOne: false
             referencedRelation: "area_partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "experts_referred_by_expert_id_fkey"
+            columns: ["referred_by_expert_id"]
+            isOneToOne: false
+            referencedRelation: "experts"
             referencedColumns: ["id"]
           },
           {
@@ -3153,36 +3286,57 @@ export type Database = {
           batch_id: string
           booking_ids: string[]
           created_at: string
+          gross_amount: number | null
           id: string
           ledger_ids: string[]
+          net_amount: number | null
           owner_id: string
           owner_type: string
           paid: boolean
           paid_at: string | null
+          pan_last4: string | null
+          tds_amount: number
+          tds_deposited_at: string | null
+          tds_rate: number
+          tds_status: string
         }
         Insert: {
           amount?: number
           batch_id: string
           booking_ids?: string[]
           created_at?: string
+          gross_amount?: number | null
           id?: string
           ledger_ids?: string[]
+          net_amount?: number | null
           owner_id: string
           owner_type: string
           paid?: boolean
           paid_at?: string | null
+          pan_last4?: string | null
+          tds_amount?: number
+          tds_deposited_at?: string | null
+          tds_rate?: number
+          tds_status?: string
         }
         Update: {
           amount?: number
           batch_id?: string
           booking_ids?: string[]
           created_at?: string
+          gross_amount?: number | null
           id?: string
           ledger_ids?: string[]
+          net_amount?: number | null
           owner_id?: string
           owner_type?: string
           paid?: boolean
           paid_at?: string | null
+          pan_last4?: string | null
+          tds_amount?: number
+          tds_deposited_at?: string | null
+          tds_rate?: number
+          tds_status?: string
         }
         Relationships: [
           {
@@ -4198,6 +4352,7 @@ export type Database = {
           internal_note: string | null
           last_message_at: string
           message: string
+          resolution_outcome: string | null
           resolution_summary: string | null
           resolved_at: string | null
           resolved_by: string | null
@@ -4216,6 +4371,7 @@ export type Database = {
           internal_note?: string | null
           last_message_at?: string
           message: string
+          resolution_outcome?: string | null
           resolution_summary?: string | null
           resolved_at?: string | null
           resolved_by?: string | null
@@ -4234,6 +4390,7 @@ export type Database = {
           internal_note?: string | null
           last_message_at?: string
           message?: string
+          resolution_outcome?: string | null
           resolution_summary?: string | null
           resolved_at?: string | null
           resolved_by?: string | null
@@ -4652,6 +4809,7 @@ export type Database = {
         Args: { p_booking_id: string }
         Returns: {
           address_id: string | null
+          assigned_area_partner_id: string | null
           assigned_expert_id: string | null
           booking_lat: number | null
           booking_lng: number | null
@@ -4660,6 +4818,7 @@ export type Database = {
           cancellation_reason: string | null
           cancelled_at: string | null
           cancelled_by: string | null
+          commission_rule_id: string | null
           coupon_code: string | null
           coupon_id: string | null
           created_at: string | null
@@ -4671,9 +4830,11 @@ export type Database = {
           dispatch_alert_sent: boolean
           dispatch_exhausted_at: string | null
           end_otp: string | null
+          expert_payout_batch_id: string | null
           gst_amount: number
           gst_percent: number
           id: string
+          partner_payout_batch_id: string | null
           price: number
           rating: number | null
           razorpay_order_id: string | null
@@ -4691,6 +4852,10 @@ export type Database = {
           service_end_at: string | null
           service_label: string
           slot_type: string
+          snapshot_expert_payout: number | null
+          snapshot_hourly_rate: number | null
+          snapshot_hq_share: number | null
+          snapshot_partner_payout: number | null
           start_otp: string | null
           started_at: string | null
           status: string
@@ -4705,6 +4870,15 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      compute_tds: {
+        Args: { _gross: number; _owner_id: string; _owner_type: string }
+        Returns: {
+          amount: number
+          applicable: boolean
+          pan_last4: string
+          rate: number
+        }[]
       }
       coupon_preview: {
         Args: {
@@ -5123,6 +5297,8 @@ export type Database = {
       }
       get_expert_id_for_auth: { Args: { _auth_uid: string }; Returns: string }
       get_gst_percent: { Args: never; Returns: number }
+      get_ops_flag: { Args: { _key: string }; Returns: boolean }
+      get_ops_num: { Args: { _default: number; _key: string }; Returns: number }
       has_login_pin: { Args: { p_phone: string }; Returns: boolean }
       haversine_km: {
         Args: { lat1: number; lat2: number; lng1: number; lng2: number }
@@ -5281,6 +5457,7 @@ export type Database = {
       offers_caller_city: { Args: { _uid?: string }; Returns: string }
       offers_caller_role: { Args: { _uid?: string }; Returns: string }
       offers_require_writer: { Args: never; Returns: string }
+      pan_key: { Args: never; Returns: string }
       partner_decide_extension: {
         Args: { _decision: string; _extension_id: string }
         Returns: Json
@@ -5324,6 +5501,20 @@ export type Database = {
           user_type: string
         }[]
       }
+      resolve_commission_split: {
+        Args: {
+          _duration_minutes: number
+          _price: number
+          _price_option_id: string
+        }
+        Returns: {
+          expert_amount: number
+          hourly_rate: number
+          hq_amount: number
+          partner_amount: number
+          rule_id: string
+        }[]
+      }
       resolve_zone_for_point: {
         Args: { _lat: number; _lng: number }
         Returns: string
@@ -5335,6 +5526,19 @@ export type Database = {
           _event_ref: string
           _notes?: string
           _program: Database["public"]["Tables"]["reward_programs"]["Row"]
+        }
+        Returns: boolean
+      }
+      reward_check_expert_referral: {
+        Args: { _expert_id: string }
+        Returns: undefined
+      }
+      reward_gates_pass: {
+        Args: {
+          _condition: Json
+          _end: string
+          _expert_id: string
+          _start: string
         }
         Returns: boolean
       }
@@ -5382,6 +5586,10 @@ export type Database = {
         Returns: boolean
       }
       staff_clear_notifications: { Args: never; Returns: undefined }
+      staff_confirm_payout_batch: {
+        Args: { _batch_id: string }
+        Returns: undefined
+      }
       staff_courier_confirm_rate: { Args: { _id: string }; Returns: undefined }
       staff_courier_force_cancel: {
         Args: { _order_id: string; _reason: string; _refund_amount?: number }
@@ -5489,6 +5697,10 @@ export type Database = {
         Args: { _id: string }
         Returns: undefined
       }
+      staff_discard_payout_batch: {
+        Args: { _batch_id: string; _reason: string }
+        Returns: undefined
+      }
       staff_dismiss_notification: {
         Args: { _dismissed?: boolean; _id: string }
         Returns: undefined
@@ -5508,6 +5720,17 @@ export type Database = {
       staff_expert_kyc_decision: {
         Args: { _decision: string; _expert_id: string; _reason: string }
         Returns: undefined
+      }
+      staff_export_raw_pan_tds_report: {
+        Args: { _fy_start_year: number }
+        Returns: {
+          gross_total: number
+          net_total: number
+          owner_name: string
+          owner_type: string
+          pan: string
+          tds_total: number
+        }[]
       }
       staff_force_expert_offline: {
         Args: { _expert_id: string }
@@ -5548,6 +5771,10 @@ export type Database = {
       staff_mark_subscription_invoice_paid: {
         Args: { _invoice_id: string; _paid: boolean }
         Returns: undefined
+      }
+      staff_mark_tds_deposited: {
+        Args: { _fy_start_year: number; _owner_id: string; _owner_type: string }
+        Returns: number
       }
       staff_notify_waitlist_area: {
         Args: { _city?: string; _segment_id?: string }
@@ -5608,6 +5835,23 @@ export type Database = {
           trigger_event_ref: string
         }[]
       }
+      staff_reward_period_preview: {
+        Args: { _period: string; _period_start: string }
+        Returns: {
+          active_days: number
+          amount: number
+          category: string
+          expert_id: string
+          expert_name: string
+          hours: number
+          orders: number
+          program_id: string
+          program_name: string
+          qualifies: boolean
+          reason: string
+          slab: string
+        }[]
+      }
       staff_reward_program_stats: {
         Args: { _from?: string; _to?: string }
         Returns: {
@@ -5642,6 +5886,10 @@ export type Database = {
         }
         Returns: string
       }
+      staff_set_commission_rule_active: {
+        Args: { _id: string; _is_active: boolean }
+        Returns: undefined
+      }
       staff_set_coupon_active: {
         Args: { _active: boolean; _id: string }
         Returns: undefined
@@ -5664,6 +5912,10 @@ export type Database = {
       }
       staff_set_ops_setting: {
         Args: { _key: string; _value: string }
+        Returns: undefined
+      }
+      staff_set_pan: {
+        Args: { _owner_id: string; _owner_type: string; _pan: string }
         Returns: undefined
       }
       staff_set_partner_zones: {
@@ -5695,6 +5947,20 @@ export type Database = {
         Returns: undefined
       }
       staff_sync_notifications: { Args: never; Returns: undefined }
+      staff_tds_report: {
+        Args: { _fy_start_year: number }
+        Returns: {
+          deposited_total: number
+          gross_total: number
+          items: number
+          net_total: number
+          owner_id: string
+          owner_name: string
+          owner_type: string
+          pan_last4: string
+          tds_total: number
+        }[]
+      }
       staff_update_booking_status: {
         Args: { _booking_id: string; _new_status: string; _note?: string }
         Returns: undefined
@@ -5719,6 +5985,7 @@ export type Database = {
         Args: {
           _note?: string
           _resolution?: string
+          _resolution_outcome?: string
           _status: string
           _ticket_id: string
         }
@@ -5748,6 +6015,21 @@ export type Database = {
           _image_url: string
           _show_in_offers: boolean
           _title: string
+        }
+        Returns: string
+      }
+      staff_upsert_commission_rule: {
+        Args: {
+          _expert_type: string
+          _expert_value: number
+          _id: string
+          _is_active: boolean
+          _min_hq_share: number
+          _notes: string
+          _partner_type: string
+          _partner_value: number
+          _price_option_id: string
+          _scope: string
         }
         Returns: string
       }
@@ -5916,6 +6198,19 @@ export type Database = {
       system_send_marketing_campaign: {
         Args: { _campaign_id: string }
         Returns: number
+      }
+      verify_commission_parity: {
+        Args: never
+        Returns: {
+          customer_price: number
+          label: string
+          legacy_expert: number
+          legacy_partner: number
+          matches: boolean
+          new_expert: number
+          new_partner: number
+          price_option_id: string
+        }[]
       }
       verify_login_pin: {
         Args: { p_phone: string; p_pin: string; p_user_type: string }
