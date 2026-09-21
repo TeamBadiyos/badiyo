@@ -161,55 +161,96 @@ export function OrdersScreen({
       <div className="mx-auto w-full max-w-md px-5 pt-6">
         <h1 className="text-lg font-bold text-foreground">Your Orders</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Track your active booking and view past cleanings.
+          Track your active orders and view past ones.
         </p>
 
-        {/* Active booking(s) */}
+        {/* Active orders */}
         {active.length > 0 && (
           <section className="mt-5 space-y-3">
             <h2 className="text-sm font-bold uppercase tracking-wide text-primary/80">
               Active
             </h2>
-            {active.map((b) => (
-              <div
-                key={b.id}
-                className="rounded-[20px] border-2 border-primary/40 bg-primary/5 p-5 shadow-sm"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <h3 className="truncate text-base font-bold text-foreground">
-                      {b.service_label}
-                    </h3>
-                    <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
-                      <Clock className="h-3.5 w-3.5" />
-                      {formatDate(b)}
-                    </p>
-                  </div>
-                  <span
-                    className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ${statusPill(
-                      b.status,
-                    )}`}
-                  >
-                    {statusLabel(b.status)}
-                  </span>
-                </div>
-                {b.addresses && (
-                  <div className="mt-3 flex items-start gap-1.5 text-xs text-muted-foreground">
-                    <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
-                    <span className="line-clamp-1">
-                      {b.addresses.label ? `${b.addresses.label} · ` : ""}
-                      {b.addresses.full_address}
+            {active.map((item) =>
+              item.kind === "booking" ? (
+                <div
+                  key={item.id}
+                  className="rounded-[20px] border-2 border-primary/40 bg-primary/5 p-5 shadow-sm"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h3 className="truncate text-base font-bold text-foreground">
+                        {item.booking.service_label}
+                      </h3>
+                      <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
+                        <Clock className="h-3.5 w-3.5" />
+                        {formatDate(item.booking)}
+                      </p>
+                    </div>
+                    <span
+                      className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ${statusPill(
+                        item.booking.status,
+                      )}`}
+                    >
+                      {statusLabel(item.booking.status)}
                     </span>
                   </div>
-                )}
-                <button
-                  onClick={() => onOpenBooking(b)}
-                  className="mt-4 w-full rounded-[14px] bg-primary py-3 text-sm font-bold text-primary-foreground shadow-sm transition active:scale-[0.99]"
+                  {item.booking.addresses && (
+                    <div className="mt-3 flex items-start gap-1.5 text-xs text-muted-foreground">
+                      <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+                      <span className="line-clamp-1">
+                        {item.booking.addresses.label
+                          ? `${item.booking.addresses.label} · `
+                          : ""}
+                        {item.booking.addresses.full_address}
+                      </span>
+                    </div>
+                  )}
+                  <button
+                    onClick={() => onOpenBooking(item.booking)}
+                    className="mt-4 w-full rounded-[14px] bg-primary py-3 text-sm font-bold text-primary-foreground shadow-sm transition active:scale-[0.99]"
+                  >
+                    Track order
+                  </button>
+                </div>
+              ) : (
+                <div
+                  key={item.id}
+                  className="rounded-[20px] border-2 border-primary/40 bg-primary/5 p-5 shadow-sm"
                 >
-                  Track order
-                </button>
-              </div>
-            ))}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h3 className="flex items-center gap-1.5 truncate text-base font-bold text-foreground">
+                        <Package className="h-4 w-4 shrink-0 text-primary" />
+                        Send a parcel
+                      </h3>
+                      <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
+                        <Clock className="h-3.5 w-3.5" />
+                        {formatStamp(item.parcel.created_at)}
+                      </p>
+                    </div>
+                    <span
+                      className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ${statusPill(
+                        item.parcel.status,
+                      )}`}
+                    >
+                      {statusLabel(item.parcel.status)}
+                    </span>
+                  </div>
+                  <div className="mt-3 flex items-start gap-1.5 text-xs text-muted-foreground">
+                    <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+                    <span className="line-clamp-2">
+                      {item.parcel.pickup_address} → {item.parcel.drop_address}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => openParcel(item.parcel)}
+                    className="mt-4 w-full rounded-[14px] bg-primary py-3 text-sm font-bold text-primary-foreground shadow-sm transition active:scale-[0.99]"
+                  >
+                    Track parcel
+                  </button>
+                </div>
+              ),
+            )}
           </section>
         )}
 
@@ -218,7 +259,7 @@ export function OrdersScreen({
           <h2 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">
             Past Orders
           </h2>
-          {isLoading ? (
+          {isLoading || parcelsLoading ? (
             <p className="py-10 text-center text-sm text-muted-foreground">Loading…</p>
           ) : error ? (
             <p className="py-10 text-center text-sm text-destructive">
@@ -231,7 +272,7 @@ export function OrdersScreen({
               </div>
               <p className="mt-4 text-base font-bold text-foreground">No orders yet</p>
               <p className="mt-1 text-sm text-muted-foreground">
-                Your cleaning bookings will appear here.
+                Your bookings and parcels will appear here.
               </p>
               <button
                 onClick={onOpenHome}
@@ -245,44 +286,90 @@ export function OrdersScreen({
               No past orders yet.
             </p>
           ) : (
-            past.map((b) => (
-              <button
-                key={b.id}
-                onClick={() => onOpenBooking(b)}
-                className="w-full rounded-[18px] border border-border bg-card p-4 text-left shadow-sm transition active:scale-[0.99]"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <h3 className="truncate text-base font-bold text-foreground">
-                      {b.service_label}
-                    </h3>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      {formatDate(b)}
-                    </p>
-                  </div>
-                  <span
-                    className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ${statusPill(
-                      b.status,
-                    )}`}
-                  >
-                    {statusLabel(b.status)}
-                  </span>
-                </div>
-                {b.addresses && (
-                  <div className="mt-3 flex items-start gap-1.5 text-xs text-muted-foreground">
-                    <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
-                    <span className="line-clamp-1">
-                      {b.addresses.label ? `${b.addresses.label} · ` : ""}
-                      {b.addresses.full_address}
+            past.map((item) =>
+              item.kind === "booking" ? (
+                <button
+                  key={item.id}
+                  onClick={() => onOpenBooking(item.booking)}
+                  className="w-full rounded-[18px] border border-border bg-card p-4 text-left shadow-sm transition active:scale-[0.99]"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h3 className="truncate text-base font-bold text-foreground">
+                        {item.booking.service_label}
+                      </h3>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {formatDate(item.booking)}
+                      </p>
+                    </div>
+                    <span
+                      className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ${statusPill(
+                        item.booking.status,
+                      )}`}
+                    >
+                      {statusLabel(item.booking.status)}
                     </span>
                   </div>
-                )}
-                <div className="mt-3 flex items-center justify-between">
-                  <span className="text-sm font-bold text-primary">Rs {b.price}</span>
-                  <span className="text-xs font-semibold text-primary">View details →</span>
-                </div>
-              </button>
-            ))
+                  {item.booking.addresses && (
+                    <div className="mt-3 flex items-start gap-1.5 text-xs text-muted-foreground">
+                      <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+                      <span className="line-clamp-1">
+                        {item.booking.addresses.label
+                          ? `${item.booking.addresses.label} · `
+                          : ""}
+                        {item.booking.addresses.full_address}
+                      </span>
+                    </div>
+                  )}
+                  <div className="mt-3 flex items-center justify-between">
+                    <span className="text-sm font-bold text-primary">
+                      Rs{" "}
+                      {item.booking.total_amount && Number(item.booking.total_amount) > 0
+                        ? Number(item.booking.total_amount)
+                        : item.booking.price}
+                    </span>
+                    <span className="text-xs font-semibold text-primary">View details →</span>
+                  </div>
+                </button>
+              ) : (
+                <button
+                  key={item.id}
+                  onClick={() => openParcel(item.parcel)}
+                  className="w-full rounded-[18px] border border-border bg-card p-4 text-left shadow-sm transition active:scale-[0.99]"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h3 className="flex items-center gap-1.5 truncate text-base font-bold text-foreground">
+                        <Package className="h-4 w-4 shrink-0 text-primary" />
+                        Send a parcel
+                      </h3>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {formatStamp(item.parcel.created_at)}
+                      </p>
+                    </div>
+                    <span
+                      className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ${statusPill(
+                        item.parcel.status,
+                      )}`}
+                    >
+                      {statusLabel(item.parcel.status)}
+                    </span>
+                  </div>
+                  <div className="mt-3 flex items-start gap-1.5 text-xs text-muted-foreground">
+                    <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+                    <span className="line-clamp-2">
+                      {item.parcel.pickup_address} → {item.parcel.drop_address}
+                    </span>
+                  </div>
+                  <div className="mt-3 flex items-center justify-between">
+                    <span className="text-sm font-bold text-primary">
+                      Rs {Number(item.parcel.total_amount ?? 0)}
+                    </span>
+                    <span className="text-xs font-semibold text-primary">View details →</span>
+                  </div>
+                </button>
+              ),
+            )
           )}
         </section>
       </div>
