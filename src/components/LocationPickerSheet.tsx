@@ -72,6 +72,7 @@ export function LocationPickerSheet({
   const [resolvingId, setResolvingId] = useState<string | null>(null);
   const [locLoading, setLocLoading] = useState(false);
   const [locError, setLocError] = useState<string | null>(null);
+  const [locHelp, setLocHelp] = useState<LocationHelpKind>(null);
 
   const { data: addresses = [], isLoading } = useQuery({
     queryKey: ["addresses"],
@@ -263,6 +264,7 @@ export function LocationPickerSheet({
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end">
+      <LocationHelpDialog kind={locHelp} onClose={() => setLocHelp(null)} />
       <button
         aria-label="Close"
         className="flex-1 bg-black/40"
