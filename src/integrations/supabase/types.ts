@@ -6217,6 +6217,18 @@ export type Database = {
         Args: { _campaign_id: string }
         Returns: number
       }
+      system_set_booking_refund_state: {
+        Args: {
+          _booking_id: string
+          _refund_amount?: number
+          _refund_attempts?: number
+          _refund_error?: string
+          _refund_id?: string
+          _refund_next_attempt_at?: string
+          _refund_status: string
+        }
+        Returns: undefined
+      }
       verify_commission_parity: {
         Args: never
         Returns: {
