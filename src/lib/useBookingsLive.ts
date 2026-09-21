@@ -27,7 +27,7 @@ export function useBookingsLive() {
       };
       const refreshCourier = () => {
         qc.invalidateQueries({ queryKey: ["my-courier-orders"] });
-        qc.invalidateQueries({ queryKey: ["courier-order"] });
+        qc.invalidateQueries({ queryKey: ["courier_order"] });
       };
 
       channel = supabase
