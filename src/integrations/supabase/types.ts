@@ -601,7 +601,10 @@ export type Database = {
           razorpay_order_id: string | null
           razorpay_payment_id: string | null
           refund_amount: number | null
+          refund_attempts: number
+          refund_error: string | null
           refund_id: string | null
+          refund_next_attempt_at: string | null
           refund_status: string | null
           reminder_sent: boolean
           review_text: string | null
@@ -658,7 +661,10 @@ export type Database = {
           razorpay_order_id?: string | null
           razorpay_payment_id?: string | null
           refund_amount?: number | null
+          refund_attempts?: number
+          refund_error?: string | null
           refund_id?: string | null
+          refund_next_attempt_at?: string | null
           refund_status?: string | null
           reminder_sent?: boolean
           review_text?: string | null
@@ -715,7 +721,10 @@ export type Database = {
           razorpay_order_id?: string | null
           razorpay_payment_id?: string | null
           refund_amount?: number | null
+          refund_attempts?: number
+          refund_error?: string | null
           refund_id?: string | null
+          refund_next_attempt_at?: string | null
           refund_status?: string | null
           reminder_sent?: boolean
           review_text?: string | null
@@ -4796,6 +4805,8 @@ export type Database = {
       }
       apply_referral_code: { Args: { _code: string }; Returns: string }
       award_referral_milestones: { Args: { _user_id: string }; Returns: number }
+      booking_dispatch_refund_job: { Args: never; Returns: undefined }
+      booking_verify_job_secret: { Args: { _secret: string }; Returns: boolean }
       broadcast_booking_to_experts: {
         Args: { _booking_id: string; _radius?: number }
         Returns: number
@@ -4840,7 +4851,10 @@ export type Database = {
           razorpay_order_id: string | null
           razorpay_payment_id: string | null
           refund_amount: number | null
+          refund_attempts: number
+          refund_error: string | null
           refund_id: string | null
+          refund_next_attempt_at: string | null
           refund_status: string | null
           reminder_sent: boolean
           review_text: string | null
