@@ -105,7 +105,7 @@ export const COURIER_ACTIVE_STATUSES = [
 export const COURIER_PAST_STATUSES = ["DELIVERED", "COMPLETED", "CANCELLED", "EXPIRED", "FAILED"];
 
 export async function fetchMyCourierOrders(): Promise<CourierOrder[]> {
-  const { data: userRes } = await supabase.auth.getUser();
+  const { data: userRes } = await getAuthUser();
   const uid = userRes.user?.id;
   if (!uid) return [];
   const { data, error } = await supabase
