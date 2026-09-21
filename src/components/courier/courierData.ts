@@ -121,7 +121,7 @@ export async function fetchMyCourierOrders(): Promise<CourierOrder[]> {
   const { data, error } = await supabase
     .from("courier_orders")
     .select(
-      "id, order_code, status, city, pickup_address, pickup_contact_name, pickup_contact_phone, pickup_contact_edit_count, drop_address, drop_contact_name, drop_contact_phone, drop_contact_edit_count, distance_km, total_amount, payment_status, package_description, created_at",
+      COURIER_ORDER_COLUMNS,
     )
     .eq("customer_id", uid)
     .order("created_at", { ascending: false })
@@ -134,7 +134,7 @@ export async function fetchCourierOrder(id: string): Promise<CourierOrder | null
   const { data, error } = await supabase
     .from("courier_orders")
     .select(
-      "id, order_code, status, city, pickup_address, pickup_contact_name, pickup_contact_phone, pickup_contact_edit_count, drop_address, drop_contact_name, drop_contact_phone, drop_contact_edit_count, distance_km, total_amount, payment_status, package_description, created_at",
+      COURIER_ORDER_COLUMNS,
     )
     .eq("id", id)
     .maybeSingle();
