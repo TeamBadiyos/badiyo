@@ -3,7 +3,7 @@ import { useState } from "react";
 import type { SelectedService, SelectedSlot } from "./SlotSelectionScreen";
 import { useT, type TFunction } from "@/i18n";
 import { hapticImpact } from "@/lib/haptics";
-import { gstAmount, totalWithGst, useGstPercent } from "@/lib/gst";
+import { billBreakdown, useGstPercent } from "@/lib/gst";
 import { previewCoupon, type AppliedCoupon } from "@/lib/coupons";
 
 export type SelectedAddress = {
@@ -58,10 +58,15 @@ export function BookingSummaryScreen({
   const t = useT();
   const slotInfo = formatSlot(slot, t);
   const gstPercent = useGstPercent();
-  const tax = gstAmount(Number(service.price), gstPercent);
-  const grossTotal = totalWithGst(Number(service.price), gstPercent);
-  const discount = Math.min(coupon?.discount ?? 0, grossTotal);
-  const total = Math.max(grossTotal - discount, 0);
+  const bill = billBreakdown(
+    Number(service.price),
+    gstPercent,
+    coupon?.discount ?? 0,
+  );
+  const tax = bill.gst;
+  const discount = bill.discount;
+  const total = bill.total;
+
 
   const [codeInput, setCodeInput] = useState("");
   const [couponError, setCouponError] = useState<string | null>(null);
@@ -226,12 +231,6 @@ export function BookingSummaryScreen({
               {t("common.rupees", { amount: service.price })}
             </span>
           </div>
-          <div className="mt-2 flex items-center justify-between text-sm text-muted-foreground">
-            <span>{t("summary.gst", { percent: gstPercent })}</span>
-            <span className="text-foreground">
-              {t("common.rupees", { amount: tax })}
-            </span>
-          </div>
           {discount > 0 && (
             <div className="mt-2 flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Coupon discount</span>
@@ -240,7 +239,23 @@ export function BookingSummaryScreen({
               </span>
             </div>
           )}
+          <div className="mt-2 flex items-center justify-between text-sm text-muted-foreground">
+            <span>{t("summary.gst", { percent: gstPercent })}</span>
+            <span className="text-foreground">
+              {t("common.rupees", { amount: tax })}
+            </span>
+          </div>
+          {bill.roundOff !== 0 && (
+            <div className="mt-2 flex items-center justify-between text-sm text-muted-foreground">
+              <span>Round off</span>
+              <span className="text-foreground">
+                {bill.roundOff > 0 ? "+" : "−"}
+                {t("common.rupees", { amount: Math.abs(bill.roundOff).toFixed(2) })}
+              </span>
+            </div>
+          )}
           <div className="my-4 h-px bg-border" />
+
           <div className="flex items-center justify-between">
             <span className="text-base font-bold text-foreground">{t("common.total")}</span>
             <span className="text-base font-bold text-foreground">

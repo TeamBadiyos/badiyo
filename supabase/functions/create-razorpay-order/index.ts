@@ -200,16 +200,45 @@ Deno.serve(async (req) => {
       }
     }
 
+    // GST applies to the taxable value left AFTER the discount, and the
+    // payable amount is rounded to the nearest whole rupee.
     const basePaise = Math.round(price! * 100);
-    const gstPaise = Math.round((basePaise * gstPercent) / 100);
     const discountPaise = Math.min(
       Math.max(Math.round(discount * 100), 0),
-      basePaise + gstPaise,
+      basePaise,
     );
-    const amount = basePaise + gstPaise - discountPaise;
-    if (!Number.isInteger(amount) || amount < 100) {
+    const taxablePaise = basePaise - discountPaise;
+    const gstPaise = Math.round((taxablePaise * gstPercent) / 100);
+    const amount = Math.round((taxablePaise + gstPaise) / 100) * 100;
+    if (!Number.isInteger(amount) || amount < 0) {
       return json({ error: "Invalid service price" }, 400);
     }
+
+    // Fully discounted bill: no gateway payment at all.
+    if (amount === 0) {
+      const freeOrderId = `free_${crypto.randomUUID()}`;
+      if (discountPaise > 0 && couponCode && userId) {
+        const { error: reserveErr } = await supabase.rpc("system_coupon_reserve", {
+          _user_id: userId,
+          _code: couponCode,
+          _order_id: freeOrderId,
+          _base_amount: price!,
+          _duration_minutes: Number.isInteger(durationMinutes) ? durationMinutes : 0,
+        });
+        if (reserveErr) {
+          console.error("system_coupon_reserve failed", reserveErr);
+          return json({ error: "Coupon could not be applied" }, 400);
+        }
+      }
+      return json({
+        free: true,
+        order_id: freeOrderId,
+        amount: 0,
+        currency,
+        key_id: keyId,
+      });
+    }
+
 
     const auth = btoa(`${keyId}:${keySecret}`);
     const rzpRes = await fetch("https://api.razorpay.com/v1/orders", {
