@@ -4,6 +4,32 @@
 // refunded at most once thanks to a stable Razorpay idempotency key.
 import { createFileRoute } from "@tanstack/react-router";
 
+// Booking rows are protected by a database guard: refund bookkeeping has to go
+// through this server-only function instead of a direct table update.
+type AdminClient = { rpc: (fn: never, args: never) => PromiseLike<unknown> };
+async function setRefundState(
+  admin: AdminClient,
+  opts: {
+    id: string;
+    status: string;
+    refundId?: string | null;
+    amount?: number | null;
+    attempts?: number | null;
+    nextAttemptAt?: string | null;
+    error?: string | null;
+  },
+) {
+  await admin.rpc("system_set_booking_refund_state" as never, {
+    _booking_id: opts.id,
+    _refund_status: opts.status,
+    _refund_amount: opts.amount ?? null,
+    _refund_id: opts.refundId ?? null,
+    _refund_attempts: opts.attempts ?? null,
+    _refund_next_attempt_at: opts.nextAttemptAt ?? null,
+    _refund_error: opts.error ?? null,
+  } as never);
+}
+
 const MAX_ATTEMPTS = 6;
 
 export const Route = createFileRoute("/api/public/bookings/process-refunds")({
@@ -50,15 +76,11 @@ export const Route = createFileRoute("/api/public/bookings/process-refunds")({
             row.razorpay_payment_id.startsWith("free_") ||
             amountPaise <= 0
           ) {
-            await supabaseAdmin
-              .from("bookings")
-              .update({
-                refund_status: "not_applicable",
-                refund_attempts: attempts,
-                refund_next_attempt_at: null,
-                refund_error: null,
-              })
-              .eq("id", row.id);
+            await setRefundState(supabaseAdmin, {
+              id: row.id,
+              status: "not_applicable",
+              attempts,
+            });
             done++;
             continue;
           }
@@ -83,32 +105,26 @@ export const Route = createFileRoute("/api/public/bookings/process-refunds")({
 
             if (res.ok) {
               const refund = (await res.json()) as { id?: string };
-              await supabaseAdmin
-                .from("bookings")
-                .update({
-                  refund_status: "processing",
-                  refund_id: refund.id ?? null,
-                  refund_attempts: attempts,
-                  refund_next_attempt_at: null,
-                  refund_error: null,
-                })
-                .eq("id", row.id);
+              await setRefundState(supabaseAdmin, {
+                id: row.id,
+                status: "processing",
+                refundId: refund.id ?? null,
+                attempts,
+              });
               done++;
             } else {
               const text = (await res.text()).slice(0, 500);
               console.error("[booking-refunds] razorpay refused", row.id, res.status, text);
               const giveUp = attempts >= MAX_ATTEMPTS;
-              await supabaseAdmin
-                .from("bookings")
-                .update({
-                  refund_status: giveUp ? "failed" : "pending",
-                  refund_attempts: attempts,
-                  refund_error: `${res.status} ${text}`,
-                  refund_next_attempt_at: giveUp
-                    ? null
-                    : new Date(Date.now() + Math.min(60, 2 ** attempts) * 60_000).toISOString(),
-                })
-                .eq("id", row.id);
+              await setRefundState(supabaseAdmin, {
+                id: row.id,
+                status: giveUp ? "failed" : "pending",
+                attempts,
+                error: `${res.status} ${text}`,
+                nextAttemptAt: giveUp
+                  ? null
+                  : new Date(Date.now() + Math.min(60, 2 ** attempts) * 60_000).toISOString(),
+              });
               if (giveUp) {
                 await supabaseAdmin.from("audit_logs").insert({
                   actor_id: "00000000-0000-0000-0000-000000000000",
@@ -122,14 +138,13 @@ export const Route = createFileRoute("/api/public/bookings/process-refunds")({
             }
           } catch (err) {
             console.error("[booking-refunds] refund call failed", row.id, err);
-            await supabaseAdmin
-              .from("bookings")
-              .update({
-                refund_attempts: attempts,
-                refund_error: String(err).slice(0, 500),
-                refund_next_attempt_at: new Date(Date.now() + 5 * 60_000).toISOString(),
-              })
-              .eq("id", row.id);
+            await setRefundState(supabaseAdmin, {
+              id: row.id,
+              status: "pending",
+              attempts,
+              error: String(err).slice(0, 500),
+              nextAttemptAt: new Date(Date.now() + 5 * 60_000).toISOString(),
+            });
             failed++;
           }
         }
