@@ -21,7 +21,6 @@ type Stage = "searching" | "assigned";
 
 export function CancelBookingButton({
   bookingId,
-  stage,
   price,
   onCancelled,
 }: {
@@ -51,16 +50,18 @@ export function CancelBookingButton({
 
   const fee = quote?.cancellation_fee ?? null;
   const refundable = quote?.refund_amount ?? null;
+  const paid = quote?.paid ?? (typeof price === "number" ? price : null);
 
   const title =
     fee && fee > 0 ? "Cancel with cancellation fee?" : "Cancel this booking?";
   const description = !quote
     ? "Checking your refund…"
-    : quote.paid <= 0
+    : (paid ?? 0) <= 0
       ? "Nothing was charged for this booking, so there is no refund."
       : fee && fee > 0
         ? `A ₹${fee} cancellation fee applies. ₹${refundable} will be refunded to your original payment method in 5-7 working days.`
         : `₹${refundable} will be refunded to your original payment method in 5-7 working days.`;
+
 
   const handleConfirm = async () => {
     if (!bookingId || submitting) return;
