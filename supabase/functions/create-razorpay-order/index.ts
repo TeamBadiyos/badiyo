@@ -73,6 +73,32 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
+    // Service status/hours guard: block NEW booking/courier payments when the
+    // service is closed (status, holiday, outside hours, last-order buffer).
+    // Extension and tip payments for running orders are never blocked.
+    // Fail-open: if the check itself errors, payment proceeds.
+    if (purpose === "booking" || purpose === "courier") {
+      const serviceKey = purpose === "courier" ? "courier" : "clean";
+      const { data: canOrder, error: stateErr } = await supabase.rpc("service_can_order", {
+        _service_key: serviceKey,
+      });
+      if (!stateErr && canOrder === false) {
+        const { data: st } = await supabase.rpc("service_effective_state", {
+          _service_key: serviceKey,
+        });
+        return json(
+          {
+            error: "SERVICE_CLOSED",
+            reason_code: st?.reason_code ?? "closed",
+            next_open_at: st?.next_open_at ?? null,
+            message_en: st?.message_en ?? null,
+            message_mr: st?.message_mr ?? null,
+          },
+          409,
+        );
+      }
+    }
+
     // Tips: fixed server-side whitelist, no GST, no catalogue lookup.
     if (purpose === "tip") {
       const ALLOWED_TIPS = [25, 50, 100];
