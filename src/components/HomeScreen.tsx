@@ -184,9 +184,34 @@ export function HomeScreen({
   });
   const { data: avatarUrl } = useAvatarUrl();
   const t = useT();
+  const { lang } = useLanguage();
+  const { data: cleanState } = useServiceState("clean");
+  const [notifySent, setNotifySent] = useState(false);
+
+  // Closed-service message (custom DB message first, then a default with next-open time).
+  const blockedMessage = (): string | null => {
+    if (!cleanState || cleanState.can_order) return null;
+    const custom = lang === "mr" ? cleanState.message_mr ?? cleanState.message_en : cleanState.message_en ?? cleanState.message_mr;
+    if (custom) return custom;
+    if (cleanState.status === "coming_soon") return t("serviceState.comingSoon");
+    const next = formatNextOpen(cleanState.next_open_at ?? cleanState.resume_at);
+    return next ? t("serviceState.closedBanner", { time: next }) : t("serviceState.closedNow");
+  };
+  const guardBlocked = (): boolean => {
+    const msg = blockedMessage();
+    if (!msg) return false;
+    toast(msg);
+    return true;
+  };
+
   const addToBooking = (s: SegmentService, segment?: Segment | null) => {
+    if (guardBlocked()) return;
     toast(t("home.addedToBooking", { name: s.service_name || s.duration_label }));
     onQuickBook?.(toPayload(s, segment ?? null));
+  };
+  const guardedBookService = (p: BookServicePayload) => {
+    if (guardBlocked()) return;
+    onBookService?.(p);
   };
 
 
