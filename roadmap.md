@@ -1,5 +1,11 @@
 # Roadmap
 
+## Checkout coupons — DONE
+
+- [x] Replace inline code box with coupon summary row
+- [x] Add booking-aware coupon picker with manual code and eligible/unavailable offers
+- [x] Verify type safety and public preview stability; authenticated booking preview unavailable for external Supabase
+
 ## Courier (Porter-type) — DONE
 
 - [x] M1 config: service_flags, courier_vehicle_types, courier_vehicle_rates (placeholder), courier_types + mapping, hidden courier segment/skill category, ops_settings keys, Vault OTP key
