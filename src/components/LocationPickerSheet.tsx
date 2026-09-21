@@ -220,20 +220,11 @@ export function LocationPickerSheet({
     } catch (e) {
       console.error("[location] current location failed:", e);
       if (e instanceof LocationPermissionError) {
-        setLocError("Location permission needed to detect your address.");
-        toast.error("Location permission needed to detect your address", {
-          action: {
-            label: "Open settings",
-            onClick: () => {
-              void openAppSettings().then((ok) => {
-                if (!ok)
-                  toast.info(
-                    "Enable Location for badiyos in your phone's app settings.",
-                  );
-              });
-            },
-          },
-        });
+        setLocError(null);
+        setLocHelp("denied");
+      } else if (e instanceof LocationDisabledError) {
+        setLocError(null);
+        setLocHelp("disabled");
       } else {
         setLocError((e as Error).message || "Could not resolve location.");
       }
