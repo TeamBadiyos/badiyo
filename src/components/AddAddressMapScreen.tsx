@@ -20,6 +20,7 @@ import {
   type AddressSuggestion,
 } from "@/lib/addressSearch";
 import { PlaceSuggestionList } from "./PlaceSuggestionList";
+import { pushBackHandler } from "@/lib/backHandler";
 import { useT } from "@/i18n";
 import { resolveAddress } from "@/lib/reverseGeocode";
 import {
