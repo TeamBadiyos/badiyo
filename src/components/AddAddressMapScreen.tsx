@@ -25,9 +25,13 @@ import { useT } from "@/i18n";
 import { resolveAddress } from "@/lib/reverseGeocode";
 import {
   getCurrentCoords,
-  openAppSettings,
+  LocationDisabledError,
   LocationPermissionError,
 } from "@/lib/nativeGeolocation";
+import {
+  LocationHelpDialog,
+  type LocationHelpKind,
+} from "./LocationHelpDialog";
 import { loadMapsScript } from "@/lib/googleMapsLoader";
 import {
   checkCourierServiceability,
