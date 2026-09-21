@@ -396,10 +396,10 @@ export function AddAddressMapScreen({
         )}
 
         {/* Top search overlay */}
-        <div className="pointer-events-none absolute inset-x-0 top-[var(--app-safe-top)] z-30 p-4">
+        <div className="pointer-events-none absolute inset-x-0 top-[calc(var(--app-safe-top)+var(--app-top-gap))] z-30 px-4 pb-4">
           <div className="mx-auto flex w-full max-w-md items-center gap-2">
             <button
-              onClick={onBack}
+              onClick={handleBack}
               aria-label="Back"
               className="pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card shadow-sm"
             >
