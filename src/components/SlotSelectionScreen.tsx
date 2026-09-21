@@ -429,7 +429,8 @@ export function SlotSelectionScreen({
                           setSelectedDay(key);
                           if (
                             selectedHour !== null &&
-                            !isHourBookable(key, selectedHour)
+                            (!isHourBookable(key, selectedHour) ||
+                              slotDisabled(selectedHour))
                           ) {
                             setSelectedHour(null);
                           }
@@ -458,24 +459,39 @@ export function SlotSelectionScreen({
                   {t("slot.noSlots")}
                 </p>
               ) : (
-                <div className="mt-3 grid grid-cols-3 gap-2">
-                  {visibleSlots.map((slot) => {
-                    const active = selectedHour === slot.hour;
-                    return (
-                      <button
-                        key={slot.hour}
-                        onClick={() => { void hapticSelection(); setSelectedHour(slot.hour); }}
-                        className={`rounded-[14px] border px-3 py-3 text-sm font-semibold transition ${
-                          active
-                            ? "border-primary bg-primary/10 text-primary"
-                            : "border-border bg-card text-foreground"
-                        }`}
-                      >
-                        {slot.label}
-                      </button>
-                    );
-                  })}
-                </div>
+                <>
+                  <div className="mt-3 grid grid-cols-3 gap-2">
+                    {visibleSlots.map((slot) => {
+                      const active = selectedHour === slot.hour;
+                      const disabled = slotDisabled(slot.hour);
+                      return (
+                        <button
+                          key={slot.hour}
+                          disabled={disabled}
+                          onClick={() => { void hapticSelection(); setSelectedHour(slot.hour); }}
+                          className={`rounded-[14px] border px-3 py-3 text-sm font-semibold transition ${
+                            disabled
+                              ? "border-border bg-muted text-muted-foreground/50"
+                              : active
+                                ? "border-primary bg-primary/10 text-primary"
+                                : "border-border bg-card text-foreground"
+                          }`}
+                        >
+                          {slot.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {allDayBlocked ? (
+                    <p className="mt-3 text-sm font-semibold text-muted-foreground">
+                      {formatNextOpen(cleanState?.next_open_at)
+                        ? t("serviceState.nextAvailable", {
+                            time: formatNextOpen(cleanState?.next_open_at)!,
+                          })
+                        : t("slot.noSlots")}
+                    </p>
+                  ) : null}
+                </>
               )}
             </>
           )}
@@ -498,6 +514,11 @@ export function SlotSelectionScreen({
             disabled={!canContinue}
             onClick={() => {
               if (mode === "now") {
+                const msg = closedMessage();
+                if (msg) {
+                  toast(msg);
+                  return;
+                }
                 onContinue({ mode: "now" });
               } else if (selectedDay && selectedHour !== null) {
                 const s = allSlots.find((x) => x.hour === selectedHour)!;
