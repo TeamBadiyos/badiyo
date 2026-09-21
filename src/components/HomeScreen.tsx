@@ -278,7 +278,7 @@ export function HomeScreen({
     null;
   const tileService = cleanSegment ? servicesFor(cleanSegment)[0] ?? null : null;
   const bookTileService = () => {
-    if (tileService) onBookService?.(toPayload(tileService, cleanSegment));
+    if (tileService) guardedBookService(toPayload(tileService, cleanSegment));
   };
 
   return (
@@ -350,7 +350,7 @@ export function HomeScreen({
           segment={activeSegment}
           categories={categories.filter((c) => c.segment_id === activeSegment.id)}
           services={servicesFor(activeSegment)}
-          onBookService={onBookService}
+          onBookService={guardedBookService}
           onAdd={(s) => addToBooking(s, activeSegment)}
           onOpenTask={bookTileService}
           availability={availability}
@@ -380,7 +380,7 @@ export function HomeScreen({
                       key={category.id}
                       category={category}
                       services={servicesForCategory(category).slice(0, 3)}
-                      onViewDetail={(s) => onBookService?.(toPayload(s, segment))}
+                      onViewDetail={(s) => guardedBookService(toPayload(s, segment))}
                       onAdd={(s) => addToBooking(s, segment)}
                       availability={availability}
                     />
