@@ -112,6 +112,7 @@ export function AddAddressMapScreen({
     (LABELS.find((l) => l === initial?.label) ?? "Home") as (typeof LABELS)[number],
   );
   const [locating, setLocating] = useState(false);
+  const [locHelp, setLocHelp] = useState<LocationHelpKind>(null);
   const [geocoding, setGeocoding] = useState(false);
   const [geocodeFailed, setGeocodeFailed] = useState(false);
   const [geocodeError, setGeocodeError] = useState<string | null>(null);
@@ -406,6 +407,7 @@ export function AddAddressMapScreen({
 
   return (
     <div className="fixed inset-0 z-30 flex flex-col bg-background pb-[var(--app-safe-bottom)]">
+      <LocationHelpDialog kind={locHelp} onClose={() => setLocHelp(null)} />
       {/* Map area */}
       <div className="relative flex-1 min-h-0">
         <div ref={mapDivRef} className="absolute inset-0 bg-muted" />
