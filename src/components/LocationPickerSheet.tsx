@@ -269,7 +269,7 @@ export function LocationPickerSheet({
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search for area, street name..."
+            placeholder={t("search.placeholder")}
             className="flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
           />
           {query && (
@@ -324,34 +324,16 @@ export function LocationPickerSheet({
             {q.length >= 3 && (
               <div>
                 <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                  Search results
+                  {t("search.results")}
                 </div>
-                <div className="mt-2 space-y-2">
-                  {results.length === 0 ? (
-                    <p className="py-2 text-xs text-muted-foreground">
-                      {searching ? "Searching…" : (searchError ?? "")}
-                    </p>
-                  ) : (
-                    results.map((r, i) => (
-                      <button
-                        key={`${r.lat},${r.lng},${i}`}
-                        onClick={() => openMapAt({ lat: r.lat, lng: r.lng })}
-                        className="flex w-full items-start gap-3 rounded-[16px] border border-border bg-card p-3 text-left transition active:scale-[0.99]"
-                      >
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                          <Search className="h-4 w-4 text-primary" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="truncate text-sm font-bold text-foreground">
-                            {r.title}
-                          </div>
-                          <div className="line-clamp-2 text-xs text-muted-foreground">
-                            {r.address}
-                          </div>
-                        </div>
-                      </button>
-                    ))
-                  )}
+                <div className="mt-2 overflow-hidden rounded-[16px] border border-border bg-card">
+                  <PlaceSuggestionList
+                    suggestions={results}
+                    searching={searching}
+                    message={searchError}
+                    busyId={resolvingId}
+                    onPick={handlePickSuggestion}
+                  />
                 </div>
               </div>
             )}

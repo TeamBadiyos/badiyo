@@ -412,7 +412,7 @@ export function AddAddressMapScreen({
                 <input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search for area, street name..."
+                  placeholder={t("search.placeholder")}
                   className="flex-1 bg-transparent text-sm text-foreground outline-none"
                 />
                 {query && (
