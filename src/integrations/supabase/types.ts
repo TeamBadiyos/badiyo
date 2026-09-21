@@ -5345,6 +5345,7 @@ export type Database = {
         Returns: boolean
       }
       customer_list_devices: { Args: never; Returns: Json }
+      customer_notify_me: { Args: { _service_key: string }; Returns: Json }
       customer_register_device: {
         Args: { _device_id: string; _device_label?: string }
         Returns: Json
@@ -5653,6 +5654,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      notify_service_waiters: {
+        Args: { _service_key: string }
+        Returns: number
+      }
       notify_waitlist_for_expert: {
         Args: { _expert_id: string }
         Returns: number
@@ -5686,6 +5691,10 @@ export type Database = {
       reactivate_customer_after_otp: {
         Args: { _phone: string; _user_id: string }
         Returns: undefined
+      }
+      rebroadcast_pending_advance_to_expert: {
+        Args: { _expert_id: string }
+        Returns: number
       }
       record_booking_tip: {
         Args: {
@@ -5835,6 +5844,10 @@ export type Database = {
         Returns: boolean
       }
       staff_clear_notifications: { Args: never; Returns: undefined }
+      staff_close_service_today: {
+        Args: { _reason?: string; _service_key: string; _until?: string }
+        Returns: Json
+      }
       staff_confirm_payout_batch: {
         Args: { _batch_id: string }
         Returns: undefined
@@ -6045,10 +6058,19 @@ export type Database = {
         Args: { _booking_id: string; _reason: string }
         Returns: undefined
       }
+      staff_remove_service_holiday: {
+        Args: { _holiday_id: string }
+        Returns: Json
+      }
+      staff_reopen_service_today: {
+        Args: { _service_key: string }
+        Returns: Json
+      }
       staff_reorder_homepage_sections: {
         Args: { _orders: Json }
         Returns: undefined
       }
+      staff_require_super_admin: { Args: never; Returns: undefined }
       staff_reverse_referral_reward: {
         Args: { _reason: string; _txn_id: string }
         Returns: undefined
@@ -6151,6 +6173,10 @@ export type Database = {
         Args: { _active: boolean; _id: string }
         Returns: undefined
       }
+      staff_set_last_order_buffer: {
+        Args: { _minutes: number; _service_key: string }
+        Returns: Json
+      }
       staff_set_merchant_fee_tier: {
         Args: { _fee_tier_id: string; _merchant_id: string }
         Returns: undefined
@@ -6174,6 +6200,49 @@ export type Database = {
       staff_set_reward_program_active: {
         Args: { _id: string; _is_active: boolean }
         Returns: undefined
+      }
+      staff_set_service_focus: {
+        Args: {
+          _live_service_key: string
+          _message_en?: string
+          _message_mr?: string
+          _others_status?: string
+        }
+        Returns: Json
+      }
+      staff_set_service_holiday: {
+        Args: {
+          _end_date?: string
+          _reason?: string
+          _reason_mr?: string
+          _service_key: string
+          _start_date: string
+        }
+        Returns: Json
+      }
+      staff_set_service_hours: {
+        Args: {
+          _close_time: string
+          _is_closed?: boolean
+          _open_time: string
+          _service_key: string
+          _weekday: number
+        }
+        Returns: Json
+      }
+      staff_set_service_hours_enabled: {
+        Args: { _enabled: boolean; _service_key: string }
+        Returns: Json
+      }
+      staff_set_service_status: {
+        Args: {
+          _message_en?: string
+          _message_mr?: string
+          _resume_at?: string
+          _service_key: string
+          _status: string
+        }
+        Returns: Json
       }
       staff_set_staff_user_zones: {
         Args: { _staff_user_id: string; _zone_ids: string[] }
@@ -6210,6 +6279,7 @@ export type Database = {
           tds_total: number
         }[]
       }
+      staff_undo_service_focus: { Args: { _undo_token: string }; Returns: Json }
       staff_update_booking_status: {
         Args: { _booking_id: string; _new_status: string; _note?: string }
         Returns: undefined
