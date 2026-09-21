@@ -270,29 +270,3 @@ Install referrer:
 2. First launch, then sign up — the referral must show under the inviter's
    "Joined" count.
 3. Logcat should show no `[installReferrer]` warning.
-
-## Contacts picker (pickup / drop contact)
-
-The parcel booking screen has a "From contacts" button next to each contact
-block. On the web it uses the browser Contact Picker API; on Android it uses
-`@capacitor-community/contacts`, which is already a project dependency — so
-`npx cap sync android` wires the plugin in automatically. No install step.
-
-1. Add the permission to `android/app/src/main/AndroidManifest.xml`, inside
-   `<manifest>` and above `<application>`:
-
-   ```xml
-   <uses-permission android:name="android.permission.READ_CONTACTS" />
-   ```
-
-2. Nothing else is required — the app requests the permission only when the
-   user taps "From contacts". When the plugin or the browser API is missing
-   (desktop browser, older APK) the button is hidden and manual typing is the
-   only path; denying the permission shows a message and keeps typing available.
-
-Verify:
-
-1. Open Send Parcel, tap "From contacts" on Pickup contact.
-2. Android asks for contacts permission the first time; allow it.
-3. Pick a contact — name and the last 10 digits of the number fill in.
-4. Deny the permission once — a message appears and manual typing still works.
