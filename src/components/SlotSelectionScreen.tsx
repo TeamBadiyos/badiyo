@@ -5,8 +5,16 @@ import {
   isHourBookable,
   toDateKey,
 } from "@/lib/hourSlots";
-import { useT } from "@/i18n";
+import { useLanguage, useT } from "@/i18n";
 import { hapticSelection } from "@/lib/haptics";
+import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
+import {
+  fetchSlotAllowed,
+  formatNextOpen,
+  slotFitsWindow,
+  useServiceState,
+} from "@/lib/serviceHours";
 import { MediaGallery, type MediaItem } from "./product/MediaGallery";
 
 export type TaskTypeDetail = {
@@ -175,13 +183,56 @@ export function SlotSelectionScreen({
   const isFlat = service.pricing_type === "flat";
   const title = service.service_name?.trim() || service.duration_label;
 
+  // Service status + hours (server-side IST). Fail-open when not loaded.
+  const { lang } = useLanguage();
+  const { data: cleanState } = useServiceState("clean");
+  const durationMinutes = service.duration_minutes ?? 60;
+
+  const closedMessage = (): string | null => {
+    if (!cleanState || cleanState.can_order) return null;
+    const custom = lang === "mr" ? cleanState.message_mr ?? cleanState.message_en : cleanState.message_en ?? cleanState.message_mr;
+    if (custom) return custom;
+    const next = formatNextOpen(cleanState.next_open_at ?? cleanState.resume_at);
+    return next ? t("serviceState.closedBanner", { time: next }) : t("serviceState.closedNow");
+  };
+  const nowBlocked = cleanState != null && !cleanState.can_order;
+
+  // Per-day slot availability from the server (holidays, weekly off, window fit).
+  const { data: dayAllowed } = useQuery({
+    queryKey: ["service-slots", selectedDay, durationMinutes],
+    enabled: mode === "later" && selectedDay !== null,
+    staleTime: 60_000,
+    queryFn: async () => {
+      const entries = await Promise.all(
+        allSlots.map(
+          async (s) =>
+            [s.hour, await fetchSlotAllowed("clean", selectedDay!, s.range, durationMinutes)] as const,
+        ),
+      );
+      return new Map(entries);
+    },
+  });
+
+  const slotDisabled = (hour: number): boolean => {
+    if (!slotFitsWindow(cleanState, hour, durationMinutes)) return true;
+    if (dayAllowed?.get(hour) === false) return true;
+    return false;
+  };
+
   const visibleSlots = useMemo(() => {
     if (!selectedDay) return allSlots;
     return allSlots.filter((s) => isHourBookable(selectedDay, s.hour));
   }, [selectedDay, allSlots]);
 
+  const allDayBlocked =
+    selectedDay !== null && visibleSlots.every((s) => slotDisabled(s.hour));
+
   const canContinue =
-    mode === "now" || (selectedDay !== null && selectedHour !== null);
+    (mode === "now" && !nowBlocked) ||
+    (mode === "later" &&
+      selectedDay !== null &&
+      selectedHour !== null &&
+      !slotDisabled(selectedHour));
 
   return (
     <main className="min-h-screen w-full bg-background pb-32">
