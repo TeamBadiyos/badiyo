@@ -14,9 +14,13 @@ import { PlaceSuggestionList } from "./PlaceSuggestionList";
 import { useT } from "@/i18n";
 import {
   getCurrentCoords,
-  openAppSettings,
+  LocationDisabledError,
   LocationPermissionError,
 } from "@/lib/nativeGeolocation";
+import {
+  LocationHelpDialog,
+  type LocationHelpKind,
+} from "./LocationHelpDialog";
 import { toast } from "sonner";
 import { pushBackHandler } from "@/lib/backHandler";
 
@@ -68,6 +72,7 @@ export function LocationPickerSheet({
   const [resolvingId, setResolvingId] = useState<string | null>(null);
   const [locLoading, setLocLoading] = useState(false);
   const [locError, setLocError] = useState<string | null>(null);
+  const [locHelp, setLocHelp] = useState<LocationHelpKind>(null);
 
   const { data: addresses = [], isLoading } = useQuery({
     queryKey: ["addresses"],
@@ -216,20 +221,11 @@ export function LocationPickerSheet({
     } catch (e) {
       console.error("[location] current location failed:", e);
       if (e instanceof LocationPermissionError) {
-        setLocError("Location permission needed to detect your address.");
-        toast.error("Location permission needed to detect your address", {
-          action: {
-            label: "Open settings",
-            onClick: () => {
-              void openAppSettings().then((ok) => {
-                if (!ok)
-                  toast.info(
-                    "Enable Location for badiyos in your phone's app settings.",
-                  );
-              });
-            },
-          },
-        });
+        setLocError(null);
+        setLocHelp("denied");
+      } else if (e instanceof LocationDisabledError) {
+        setLocError(null);
+        setLocHelp("disabled");
       } else {
         setLocError((e as Error).message || "Could not resolve location.");
       }
@@ -268,6 +264,7 @@ export function LocationPickerSheet({
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end">
+      <LocationHelpDialog kind={locHelp} onClose={() => setLocHelp(null)} />
       <button
         aria-label="Close"
         className="flex-1 bg-black/40"

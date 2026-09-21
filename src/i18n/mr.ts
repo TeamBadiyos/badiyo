@@ -143,6 +143,19 @@ export const mr: Partial<Record<keyof typeof en, string>> = {
   "search.detailFailed": "ही जागा उघडता आली नाही. दुसरी जागा निवडा.",
   "search.away": "अंतरावर",
 
+  // ── Location permission / GPS ────────────────────────────
+  "loc.offTitle": "फोनचे लोकेशन सुरू करा",
+  "loc.offBody":
+    "तुमच्या फोनचे लोकेशन (GPS) बंद आहे. अचूक पत्ता ओळखण्यासाठी ते सुरू करा.",
+  "loc.turnOn": "लोकेशन सुरू करा",
+  "loc.deniedTitle": "लोकेशन परवानगी आवश्यक",
+  "loc.deniedBody":
+    "पत्ता अचूक ओळखण्यासाठी badiyos ला लोकेशन परवानगी हवी आहे. सेटिंग्जमधून परवानगी द्या.",
+  "loc.openSettings": "सेटिंग्ज उघडा",
+  "loc.searchManually": "स्वतः शोधा",
+  "loc.settingsUnavailable":
+    "कृपया फोनच्या सेटिंग्जमधून badiyos साठी लोकेशन सुरू करा.",
+
   // ── Booking summary ──────────────────────────────────────
   "summary.title": "बुकिंग सारांश",
   "summary.priceDetails": "किंमत तपशील",

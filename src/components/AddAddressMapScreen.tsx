@@ -25,9 +25,13 @@ import { useT } from "@/i18n";
 import { resolveAddress } from "@/lib/reverseGeocode";
 import {
   getCurrentCoords,
-  openAppSettings,
+  LocationDisabledError,
   LocationPermissionError,
 } from "@/lib/nativeGeolocation";
+import {
+  LocationHelpDialog,
+  type LocationHelpKind,
+} from "./LocationHelpDialog";
 import { loadMapsScript } from "@/lib/googleMapsLoader";
 import {
   checkCourierServiceability,
@@ -108,6 +112,7 @@ export function AddAddressMapScreen({
     (LABELS.find((l) => l === initial?.label) ?? "Home") as (typeof LABELS)[number],
   );
   const [locating, setLocating] = useState(false);
+  const [locHelp, setLocHelp] = useState<LocationHelpKind>(null);
   const [geocoding, setGeocoding] = useState(false);
   const [geocodeFailed, setGeocodeFailed] = useState(false);
   const [geocodeError, setGeocodeError] = useState<string | null>(null);
@@ -306,32 +311,20 @@ export function AddAddressMapScreen({
         console.info("[address] got coords", c);
         if (mapRef.current) mapRef.current.panTo(c);
         setCenter(c);
-
       })
       .catch((err: unknown) => {
         console.error("[address] location failed:", err);
-        const msg =
-          (err as Error)?.message || "Couldn't detect your location.";
         if (err instanceof LocationPermissionError) {
-          toast.error("Location permission needed to detect your address", {
-            action: {
-              label: "Open settings",
-              onClick: () => {
-                void openAppSettings().then((ok) => {
-                  if (!ok)
-                    toast.info(
-                      "Enable Location for badiyos in your phone's app settings.",
-                    );
-                });
-              },
-            },
-          });
+          setLocHelp("denied");
+        } else if (err instanceof LocationDisabledError) {
+          setLocHelp("disabled");
         } else {
-          toast.error(msg);
+          toast.error(
+            (err as Error)?.message || "Couldn't detect your location.",
+          );
         }
       })
       .finally(() => setLocating(false));
-
   };
 
   // Only the parcel flow needs a hard zone gate; saving/editing a personal
@@ -414,6 +407,7 @@ export function AddAddressMapScreen({
 
   return (
     <div className="fixed inset-0 z-30 flex flex-col bg-background pb-[var(--app-safe-bottom)]">
+      <LocationHelpDialog kind={locHelp} onClose={() => setLocHelp(null)} />
       {/* Map area */}
       <div className="relative flex-1 min-h-0">
         <div ref={mapDivRef} className="absolute inset-0 bg-muted" />
