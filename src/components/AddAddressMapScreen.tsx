@@ -368,7 +368,12 @@ export function AddAddressMapScreen({
   };
   const handleBackRef = useRef(handleBack);
   handleBackRef.current = handleBack;
-  useEffect(() => pushBackHandler(() => handleBackRef.current()), []);
+  // The native stack pops the handler once it runs, so re-register whenever
+  // the search state changes (closing search must not close the screen).
+  useEffect(
+    () => pushBackHandler(() => handleBackRef.current()),
+    [searchActive],
+  );
 
   const handleSave = () => {
     if (!canSave) return;
