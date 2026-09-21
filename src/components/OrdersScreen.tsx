@@ -5,6 +5,8 @@ import { CalendarCheck, MapPin, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { BottomNav } from "./BottomNav";
 import { fetchCourierEnabled } from "./courier/courierData";
+import { useBookingsLive } from "@/lib/useBookingsLive";
+
 import {
   ACTIVE_TRACKING_STATUSES,
   PAST_STATUSES,
@@ -72,7 +74,14 @@ export function OrdersScreen({
   const { data: bookings = [], isLoading, error } = useQuery({
     queryKey: ["my-bookings"],
     queryFn: fetchBookings,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+    refetchOnMount: "always",
+    refetchInterval: 15_000,
+    refetchIntervalInBackground: false,
   });
+  useBookingsLive();
+
 
   const queryClient = useQueryClient();
   const { pull, refreshing } = usePullToRefresh(async () => {
