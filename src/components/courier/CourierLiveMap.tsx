@@ -1,7 +1,7 @@
 // Live parcel map: pickup pin, drop pin and the rider's moving marker.
 // Rider coordinates come from an owner-only server RPC that is rate limited,
 // so we poll gently and only while the order is actually on the move.
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { MapPin, Navigation } from "lucide-react";
 import { loadMapsScript } from "@/lib/googleMapsLoader";
@@ -30,9 +30,13 @@ export function CourierLiveMap({
   const mapDivRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
   const riderMarkerRef = useRef<any>(null);
+  const [ready, setReady] = useState(false);
+  const [failed, setFailed] = useState(false);
   const readyRef = useRef(false);
-  const failedRef = useRef(false);
-  const [, force] = useForceRender();
+  const markReady = useCallback(() => {
+    readyRef.current = true;
+    setReady(true);
+  }, []);
 
   const live = LIVE_STATUSES.includes(status);
   const hasPickup = pickup.lat != null && pickup.lng != null;
@@ -118,19 +122,17 @@ export function CourierLiveMap({
           map.fitBounds(b, 50);
         }
         mapRef.current = map;
-        readyRef.current = true;
-        force();
+        markReady();
       })
       .catch(() => {
-        if (cancelled) return;
-        failedRef.current = true;
-        force();
+        if (!cancelled) setFailed(true);
       });
     return () => {
       cancelled = true;
       mapRef.current = null;
       riderMarkerRef.current = null;
       readyRef.current = false;
+      setReady(false);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasAny, hasPickup, hasDrop, pickup.lat, pickup.lng, drop.lat, drop.lng]);
@@ -189,7 +191,7 @@ export function CourierLiveMap({
     note = "Waiting for the rider's location…";
   }
 
-  const showMap = hasAny && !failedRef.current;
+  const showMap = hasAny && !failed;
 
   return (
     <section className="overflow-hidden rounded-[20px] border border-border bg-card shadow-sm">
@@ -197,7 +199,7 @@ export function CourierLiveMap({
         {showMap ? (
           <>
             <div ref={mapDivRef} className="h-full w-full" />
-            {!readyRef.current && (
+            {!ready && (
               <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
                 <MapPin className="h-10 w-10 text-primary/60" />
               </div>
@@ -228,15 +230,3 @@ export function CourierLiveMap({
     </section>
   );
 }
-
-/** Tiny re-render helper so map readiness can live in refs. */
-function useForceRender(): [number, () => void] {
-  const ref = useRef(0);
-  const setRef = useRef<((n: number) => void) | null>(null);
-  const [n, setN] = useStateShim(0);
-  setRef.current = setN;
-  return [n, () => setRef.current?.(++ref.current)];
-}
-
-// Local import kept at the bottom so the helper above reads cleanly.
-import { useState as useStateShim } from "react";
