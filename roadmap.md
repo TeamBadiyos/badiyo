@@ -1,10 +1,10 @@
 # Roadmap
 
-## Checkout coupons — IN PROGRESS
+## Checkout coupons — DONE
 
 - [x] Replace inline code box with coupon summary row
 - [x] Add booking-aware coupon picker with manual code and eligible/unavailable offers
-- [ ] Verify type safety and mobile interaction
+- [x] Verify type safety and public preview stability; authenticated booking preview unavailable for external Supabase
 
 ## Courier (Porter-type) — DONE
 
