@@ -288,6 +288,7 @@ drop function if exists public.staff_set_service_status(text, text, text, text, 
 drop function if exists public.notify_service_waiters(text);
 drop function if exists public.customer_notify_me(text);
 drop function if exists public.staff_set_service_hours(text, int, time, time, boolean);
+drop function if exists public.staff_set_last_order_buffer(text, int);
 drop function if exists public.staff_set_service_holiday(text, date, date, text, text);
 drop function if exists public.staff_remove_service_holiday(uuid);
 drop function if exists public.staff_close_service_today(text, text, timestamptz);
