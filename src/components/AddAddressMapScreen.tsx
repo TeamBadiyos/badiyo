@@ -310,32 +310,20 @@ export function AddAddressMapScreen({
         console.info("[address] got coords", c);
         if (mapRef.current) mapRef.current.panTo(c);
         setCenter(c);
-
       })
       .catch((err: unknown) => {
         console.error("[address] location failed:", err);
-        const msg =
-          (err as Error)?.message || "Couldn't detect your location.";
         if (err instanceof LocationPermissionError) {
-          toast.error("Location permission needed to detect your address", {
-            action: {
-              label: "Open settings",
-              onClick: () => {
-                void openAppSettings().then((ok) => {
-                  if (!ok)
-                    toast.info(
-                      "Enable Location for badiyos in your phone's app settings.",
-                    );
-                });
-              },
-            },
-          });
+          setLocHelp("denied");
+        } else if (err instanceof LocationDisabledError) {
+          setLocHelp("disabled");
         } else {
-          toast.error(msg);
+          toast.error(
+            (err as Error)?.message || "Couldn't detect your location.",
+          );
         }
       })
       .finally(() => setLocating(false));
-
   };
 
   // Only the parcel flow needs a hard zone gate; saving/editing a personal
