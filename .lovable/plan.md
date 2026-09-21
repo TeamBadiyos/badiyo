@@ -108,9 +108,38 @@ Chal rahe jobs (dispatch, reminders, sweeper, refunds, rewards) me koi check nah
 - Future-scheduled booking jisne slot se pehle hi kuch bhi na dekha ho, wo expiry list me hi nahi aayegi.
 - `expand_stale_broadcasts` (30s) bhi same guard lega: advance booking par radius-expand tabhi jab slot threshold ke andar ho — warna raat bhar experts ko bekar ke broadcasts/offers nahi bajenge.
 
-**Subah online aane wale experts:**
-- `expert_set_online(true)` (Expert App me expert online hone par) me hook: apne zone ki pending advance bookings (slot aaj, koi expert nahi) ko dobara `broadcast_booking_to_experts` se offer — taaki subah 9 baje online aate hi kal wali pending bookings turant dikhen. Throttle: har expert par max 1 re-broadcast per booking.
-- Service hours system ke "Expert auto-offline" (after-hours experts offline) se **pehle** ye advance-expiry logic kaam karega — dono independent hain, lekin expiry sirf slot-window ke andar hi chalega.
+**Subah online aane wale experts — ek hi merged `expert_set_online`:**
+Customer App (ye project) aur Expert App project dono ka hook **ek hi function** me merge hoga, taaki dono projects ek doosre ko overwrite na karein. Migration isi project se jayega aur Expert App ke hours-guard ko saath me shaamil karega:
+
+```sql
+create or replace function public.expert_set_online(_online boolean)
+returns void language plpgsql security definer set search_path = public as $$
+declare _expert_id uuid;
+begin
+  if auth.uid() is null then raise exception 'Not authenticated'; end if;
+  _expert_id := public.get_expert_id_for_auth(auth.uid());
+  if _expert_id is null then raise exception 'Not an expert'; end if;
+
+  -- (1) Service-hours guard (Expert App wala hissa): online jaate waqt
+  -- clean service band ho aur expert bypass list me na ho → reject.
+  -- is_online=false (offline jaana) kabhi block nahi hota.
+  if coalesce(_online, false)
+     and not (select can_order from public.service_effective_state('clean'))
+     and not public.service_hours_bypass() then
+    raise exception 'SERVICE_CLOSED:%', (select reason_code from public.service_effective_state('clean'));
+  end if;
+
+  update public.experts set is_online = coalesce(_online, false) where id = _expert_id;
+
+  -- (2) Advance-booking re-broadcast (Customer App wala hissa): online aate hi
+  -- apne zones ki pending advance bookings dobara offer.
+  if coalesce(_online, false) then
+    perform public.rebroadcast_pending_advance_to_expert(_expert_id);
+  end if;
+end $$;
+```
+- `rebroadcast_pending_advance_to_expert(_expert_id)` (naya, security definer): us expert ke zones ki wo bookings jo `status in ('confirmed','accepted')`, `assigned_expert_id is null`, `deleted_at is null`, slot aaj/future, aur abhi expiry window ke bahar — unhe `broadcast_booking_to_experts` se dobara offer. Throttle: `bookings.last_rebroadcast_at` column se har booking par max 1 re-broadcast per 30 min — ek hi booking har expert ke online hone par baar-baar nahi bajegi.
+- Expert App ke auto-offline (after-hours experts ko offline karna) se pehle ye expiry/re-broadcast logic kaam karega — dono independent.
 
 **Rollback SQL** (is fix ka):
 ```sql
