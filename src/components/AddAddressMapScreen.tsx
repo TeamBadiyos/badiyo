@@ -536,7 +536,9 @@ export function AddAddressMapScreen({
             {zoneState === "out" && (
               <p className="mt-2 flex items-center gap-1.5 text-[11px] font-bold text-destructive">
                 <ShieldAlert className="h-3.5 w-3.5" />
-                Outside our service area — move the pin inside the city we serve.
+                {blockOutsideZone
+                  ? "Outside our service area — move the pin inside the city we serve."
+                  : "We don't serve this area yet — you can still save this address."}
               </p>
             )}
           </div>
