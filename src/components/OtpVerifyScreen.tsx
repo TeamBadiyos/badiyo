@@ -93,10 +93,8 @@ export function OtpVerifyScreen({
     setResending(true);
     setError(null);
     try {
-      const { error: fnErr } = await supabase.functions.invoke("send-otp", {
-        body: { phone },
-      });
-      if (fnErr) throw fnErr;
+      const data = await invokeFunction<{ error?: string }>("send-otp", { phone });
+      if (data?.error) throw new Error(data.error);
       setCooldown(30);
     } catch (err) {
       console.error("resend send-otp failed", err);
