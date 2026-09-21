@@ -4947,6 +4947,7 @@ export type Database = {
         Args: { _order_id: string; _purpose: string }
         Returns: Json
       }
+      courier_get_rider_info: { Args: { _order_id: string }; Returns: Json }
       courier_get_rider_location: { Args: { _order_id: string }; Returns: Json }
       courier_hash_otp: { Args: { _otp: string }; Returns: string }
       courier_is_ops_staff: { Args: never; Returns: boolean }

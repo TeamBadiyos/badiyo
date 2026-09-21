@@ -26,10 +26,14 @@ export type CourierOrder = {
   status: string;
   city: string | null;
   pickup_address: string;
+  pickup_lat: number | null;
+  pickup_lng: number | null;
   pickup_contact_name: string | null;
   pickup_contact_phone: string | null;
   pickup_contact_edit_count: number | null;
   drop_address: string;
+  drop_lat: number | null;
+  drop_lng: number | null;
   drop_contact_name: string | null;
   drop_contact_phone: string | null;
   drop_contact_edit_count: number | null;
@@ -37,8 +41,14 @@ export type CourierOrder = {
   total_amount: number | null;
   payment_status: string | null;
   package_description: string | null;
+  assigned_expert_id: string | null;
+  cancel_reason_code: string | null;
+  delivered_at: string | null;
   created_at: string;
 };
+
+const COURIER_ORDER_COLUMNS =
+  "id, order_code, status, city, pickup_address, pickup_lat, pickup_lng, pickup_contact_name, pickup_contact_phone, pickup_contact_edit_count, drop_address, drop_lat, drop_lng, drop_contact_name, drop_contact_phone, drop_contact_edit_count, distance_km, total_amount, payment_status, package_description, assigned_expert_id, cancel_reason_code, delivered_at, created_at";
 
 /** Is courier live, and for which city? */
 export async function fetchCourierService(
@@ -111,7 +121,7 @@ export async function fetchMyCourierOrders(): Promise<CourierOrder[]> {
   const { data, error } = await supabase
     .from("courier_orders")
     .select(
-      "id, order_code, status, city, pickup_address, pickup_contact_name, pickup_contact_phone, pickup_contact_edit_count, drop_address, drop_contact_name, drop_contact_phone, drop_contact_edit_count, distance_km, total_amount, payment_status, package_description, created_at",
+      COURIER_ORDER_COLUMNS,
     )
     .eq("customer_id", uid)
     .order("created_at", { ascending: false })
@@ -124,7 +134,7 @@ export async function fetchCourierOrder(id: string): Promise<CourierOrder | null
   const { data, error } = await supabase
     .from("courier_orders")
     .select(
-      "id, order_code, status, city, pickup_address, pickup_contact_name, pickup_contact_phone, pickup_contact_edit_count, drop_address, drop_contact_name, drop_contact_phone, drop_contact_edit_count, distance_km, total_amount, payment_status, package_description, created_at",
+      COURIER_ORDER_COLUMNS,
     )
     .eq("id", id)
     .maybeSingle();
@@ -146,4 +156,64 @@ export function courierStepIndex(status: string) {
   const i = COURIER_STEPS.findIndex((s) => s.key === status);
   if (status === "COMPLETED") return COURIER_STEPS.length - 1;
   return i;
+}
+
+/** Compact 5-stage tracker shown at the top of the tracking screen. */
+export const COURIER_STAGES: Array<{ key: string; label: string; statuses: string[] }> = [
+  { key: "placed", label: "Placed", statuses: ["REQUESTED"] },
+  { key: "rider", label: "Rider", statuses: ["SEARCHING", "DRIVER_ASSIGNED"] },
+  { key: "pickup", label: "Pickup", statuses: ["ARRIVED_PICKUP"] },
+  { key: "transit", label: "On the way", statuses: ["PICKED_UP", "IN_TRANSIT"] },
+  { key: "delivered", label: "Delivered", statuses: ["DELIVERED", "COMPLETED"] },
+];
+
+export function courierStageIndex(status: string) {
+  const i = COURIER_STAGES.findIndex((s) => s.statuses.includes(status));
+  return i < 0 ? 0 : i;
+}
+
+export type RiderLocation = {
+  available: boolean;
+  lat?: number;
+  lng?: number;
+  location_updated_at?: string;
+  stale?: boolean;
+  reason?: string;
+};
+
+export async function fetchRiderLocation(orderId: string): Promise<RiderLocation | null> {
+  const { data, error } = await supabase.rpc("courier_get_rider_location", {
+    _order_id: orderId,
+  });
+  if (error) return null;
+  return (data as unknown as RiderLocation) ?? null;
+}
+
+export type RiderInfo = {
+  available: boolean;
+  name?: string | null;
+  phone?: string | null;
+  photo_url?: string | null;
+};
+
+export async function fetchRiderInfo(orderId: string): Promise<RiderInfo | null> {
+  const { data, error } = await supabase.rpc("courier_get_rider_info", {
+    _order_id: orderId,
+  });
+  if (error) return null;
+  return (data as unknown as RiderInfo) ?? null;
+}
+
+/** Reads the live OTP for the current stage straight into the app. */
+export async function fetchCourierOtp(
+  orderId: string,
+  purpose: "pickup" | "delivery",
+): Promise<string | null> {
+  const { data, error } = await supabase.rpc("courier_get_otp", {
+    _order_id: orderId,
+    _purpose: purpose,
+  });
+  if (error) return null;
+  const payload = data as unknown as { otp?: string | null } | null;
+  return payload?.otp ?? null;
 }
