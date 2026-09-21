@@ -279,7 +279,12 @@ function Index() {
   const [searchQuery, setSearchQuery] = useState("");
   const [courierOrderId, setCourierOrderId] = useState<string | null>(null);
   // Where the parcel tracking screen was opened from, so Back returns there.
-  const [courierTrackFrom, setCourierTrackFrom] = useState<Phase>("home");
+  const [courierTrackFrom, _setCourierTrackFrom] = useState<Phase>("home");
+  const courierTrackFromRef = useRef<Phase>("home");
+  const setCourierTrackFrom = useCallback((p: Phase) => {
+    courierTrackFromRef.current = p;
+    _setCourierTrackFrom(p);
+  }, []);
   const [pendingPhone, setPendingPhone] = useState<string | null>(null);
   const [forceResetPin, setForceResetPin] = useState(false);
   // Always start "online" so SSR and first client render match; a real offline
