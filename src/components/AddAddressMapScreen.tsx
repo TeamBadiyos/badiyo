@@ -424,7 +424,7 @@ export function AddAddressMapScreen({
         )}
 
         {/* Top search overlay */}
-        <div className="pointer-events-none absolute inset-x-0 top-[calc(var(--app-safe-top)+var(--app-top-gap))] z-30 px-4 pb-4">
+        <div className="pointer-events-none absolute inset-x-0 top-[calc(var(--app-safe-top)+var(--app-address-top-gap))] z-30 px-4 pb-4">
           <div className="mx-auto flex w-full max-w-md items-center gap-2">
             <button
               onClick={handleBack}

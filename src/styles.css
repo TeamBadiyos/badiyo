@@ -37,7 +37,9 @@
   --app-safe-bottom: max(var(--safe-bottom-min), env(safe-area-inset-bottom, 0px));
   /* Extra breathing room under the status bar / camera cutout: roughly the
      height of a search bar, so no header or search field hugs the camera. */
-  --app-top-gap: 13px;
+  --app-top-gap: 6px;
+  /* The address/map search screen keeps its current, well-tuned clearance. */
+  --app-address-top-gap: 13px;
   --background: oklch(0.985 0.003 180);
   --foreground: oklch(0.235 0.014 260);
   --card: oklch(1 0 0);
