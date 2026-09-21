@@ -93,6 +93,40 @@ Roles: saare `staff_set_*` — sirf super_admin via service_role; `revoke EXECUT
 
 Chal rahe jobs (dispatch, reminders, sweeper, refunds, rewards) me koi check nahi jodega. Ek naya **hourly** job: `resume_at` beet chuki services ko `live` likhna.
 
+## 9a. Advance-booking expiry fix (scheduled_date-aware)
+
+**Abhi ka logic (verified):**
+- `auto-expire-unassigned-bookings` cron (har minute) → `system_list_expired_unassigned_bookings()`:
+  `status in ('confirmed','accepted') AND assigned_expert_id IS NULL AND deleted_at IS NULL AND COALESCE(broadcast_started_at, created_at) < now() - interval (dispatch_config.no_expert_timeout_minutes, default 30)`.
+- **Problem:** `scheduled_date` / slot ka koi dhyan nahi — kal ki advance booking bhi 30 minute me cancel ho jaati hai agar raat ko koi expert online nahi.
+
+**Naya rule:**
+- Config key `advance_booking_expire_before_slot_hours` (ops_settings, default `2`).
+- Expire condition badal ke: booking tabhi expire ho jab
+  `slot_start_ist(scheduled_date, scheduled_time_slot) - now_ist <= advance_booking_expire_before_slot_hours hours` (yaani slot ke 2 ghante andar aa gayi aur abhi bhi expert nahi mila)
+  **ya** booking ka slot pehle hi guzar chuka ho.
+- Future-scheduled booking jisne slot se pehle hi kuch bhi na dekha ho, wo expiry list me hi nahi aayegi.
+- `expand_stale_broadcasts` (30s) bhi same guard lega: advance booking par radius-expand tabhi jab slot threshold ke andar ho — warna raat bhar experts ko bekar ke broadcasts/offers nahi bajenge.
+
+**Subah online aane wale experts:**
+- `expert_set_online(true)` (Expert App me expert online hone par) me hook: apne zone ki pending advance bookings (slot aaj, koi expert nahi) ko dobara `broadcast_booking_to_experts` se offer — taaki subah 9 baje online aate hi kal wali pending bookings turant dikhen. Throttle: har expert par max 1 re-broadcast per booking.
+- Service hours system ke "Expert auto-offline" (after-hours experts offline) se **pehle** ye advance-expiry logic kaam karega — dono independent hain, lekin expiry sirf slot-window ke andar hi chalega.
+
+**Rollback SQL** (is fix ka):
+```sql
+-- ops_settings se key hatao
+delete from public.ops_settings where key = 'advance_booking_expire_before_slot_hours';
+-- system_list_expired_unassigned_bookings aur expand_stale_broadcasts ke
+-- purane version ka poora CREATE OR REPLACE snapshot rollback file me hoga;
+-- expert_set_online ke purane version ka bhi.
+```
+
+**Tests:**
+1. Raat 9 PM par bani kal 10 AM ki booking, sab experts offline → 30+ minute baad **cancel nahi** honi chahiye.
+2. Aaj ki instant booking (abhi ke slot ki) → pehle ki tarah 30 minute me expire.
+3. Slot se 2 ghante pehle tak koi expert na mile → cancel + refund normal path se.
+4. Subah expert online hote hi pending advance booking usko offer ho.
+
 ## 10. Rollback SQL
 
 `supabase/service_hours_rollback.sql`: hourly cron unschedule, saare naye functions + 4 tables drop, `service_flags` naye columns drop, sync trigger drop, aur `bookings_before_insert` + `courier_create_order` ke **purane version ka poora CREATE OR REPLACE** snapshot.
