@@ -104,7 +104,7 @@ export function SettingsScreen({
 
       {confirmDelete && (
         <div className="fixed inset-0 z-20 flex items-end justify-center bg-black/40 sm:items-center">
-          <div className="w-full max-w-md rounded-t-[20px] bg-card p-5 sm:rounded-[20px]">
+          <div className="w-full max-w-md rounded-t-[20px] bg-card p-5 pb-[calc(var(--app-safe-bottom)+20px)] sm:rounded-[20px] sm:pb-5">
             <div className="flex items-start justify-between">
               <h2 className="text-base font-bold text-foreground">Delete your account?</h2>
               <button

@@ -23,6 +23,9 @@ const BRAND_GREEN = "#00B97A";
 /** Typical Android status bar is 24dp; 32 gives comfortable clearance on
  *  smaller devices / short reported insets. */
 const ANDROID_STATUS_BAR_FALLBACK_PX = 32;
+/** Android edge-to-edge can also report a zero bottom inset. Reserve enough
+ * room for the gesture handle without making ordinary web pages float. */
+const ANDROID_NAVIGATION_FALLBACK_PX = 16;
 
 let initialized = false;
 
@@ -45,6 +48,10 @@ function applyTopInset(): void {
   const min =
     reported >= ANDROID_STATUS_BAR_FALLBACK_PX ? 0 : ANDROID_STATUS_BAR_FALLBACK_PX;
   document.documentElement.style.setProperty("--safe-top-min", `${min}px`);
+  document.documentElement.style.setProperty(
+    "--safe-bottom-min",
+    `${ANDROID_NAVIGATION_FALLBACK_PX}px`,
+  );
   console.info(
     `[statusBar] reported inset=${reported}px -> --safe-top-min=${min}px`,
   );

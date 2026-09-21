@@ -56,7 +56,7 @@ export function OfflineGate() {
   if (!offline) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-background px-8 text-center">
+    <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-background px-8 pb-[calc(var(--app-safe-bottom)+24px)] pt-[calc(var(--app-safe-top)+24px)] text-center">
       <div className="flex h-24 w-24 items-center justify-center rounded-full bg-primary/10">
         <WifiOff className="h-11 w-11 text-primary" strokeWidth={1.8} />
       </div>

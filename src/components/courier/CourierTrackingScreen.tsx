@@ -183,7 +183,7 @@ export function CourierTrackingScreen({
 
   return (
     <div className="min-h-dvh bg-background pb-24">
-      <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-border bg-background px-4 pb-3 pt-[calc(env(safe-area-inset-top)+12px)]">
+      <div className="bleed-safe-top sticky top-0 z-10 flex items-center gap-3 border-b border-border bg-background px-4 pb-3 [--bleed-top-extra:12px]">
         <button type="button" onClick={onBack} aria-label="Back">
           <ArrowLeft className="h-5 w-5" />
         </button>

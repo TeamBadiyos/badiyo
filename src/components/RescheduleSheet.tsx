@@ -51,7 +51,7 @@ export function RescheduleSheet({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end bg-black/40">
-      <div className="mx-auto w-full max-w-md animate-slide-up rounded-t-[24px] bg-card p-5 shadow-xl">
+      <div className="mx-auto w-full max-w-md animate-slide-up rounded-t-[24px] bg-card p-5 pb-[calc(var(--app-safe-bottom)+20px)] shadow-xl">
         <div className="mb-2 flex items-center justify-between">
           <h2 className="text-base font-bold text-foreground">Reschedule booking</h2>
           <button

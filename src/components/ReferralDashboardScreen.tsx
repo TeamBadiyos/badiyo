@@ -125,7 +125,7 @@ function QrModal({ url, onClose }: { url: string; onClose: () => void }) {
   const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=${encodeURIComponent(url)}`;
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center">
-      <div className="mx-auto w-full max-w-md rounded-t-[24px] bg-card p-6 pb-8 sm:rounded-[24px]">
+      <div className="mx-auto w-full max-w-md rounded-t-[24px] bg-card p-6 pb-[calc(var(--app-safe-bottom)+24px)] sm:rounded-[24px] sm:pb-8">
         <div className="flex items-center justify-between">
           <h3 className="text-base font-extrabold text-foreground">Your invite QR</h3>
           <button

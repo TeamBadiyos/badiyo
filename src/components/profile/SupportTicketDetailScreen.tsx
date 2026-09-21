@@ -183,7 +183,7 @@ export function SupportTicketDetailScreen({
         </section>
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 border-t border-border bg-card px-5 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] pt-3">
+      <div className="fixed inset-x-0 bottom-0 border-t border-border bg-card px-5 pb-[calc(var(--app-safe-bottom)+12px)] pt-3">
         <div className="mx-auto flex w-full max-w-md items-end gap-2">
           <textarea
             value={reply}

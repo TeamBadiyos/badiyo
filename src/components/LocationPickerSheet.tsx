@@ -265,7 +265,7 @@ export function LocationPickerSheet({
         className="flex-1 bg-black/40"
         onClick={onClose}
       />
-      <div className="mx-auto flex w-full max-w-md flex-col rounded-t-[24px] bg-card p-5 pb-8 shadow-lg animate-in slide-in-from-bottom duration-200 max-h-[85vh] h-[85vh]">
+      <div className="mx-auto flex h-[85vh] max-h-[85vh] w-full max-w-md flex-col rounded-t-[24px] bg-card p-5 pb-[calc(var(--app-safe-bottom)+24px)] shadow-lg animate-in slide-in-from-bottom duration-200">
         <div className="mx-auto h-1.5 w-10 rounded-full bg-border" />
         <div className="mt-4 flex items-center justify-between">
           <h2 className="text-base font-extrabold text-foreground">

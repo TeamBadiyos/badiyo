@@ -752,7 +752,7 @@ function ExtensionSheet({
   const t = useT();
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center">
-      <div className="w-full max-w-md rounded-t-[22px] bg-card p-5 shadow-xl sm:rounded-[22px]">
+      <div className="w-full max-w-md rounded-t-[22px] bg-card p-5 pb-[calc(var(--app-safe-bottom)+20px)] shadow-xl sm:rounded-[22px] sm:pb-5">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-base font-bold text-foreground">{t("progress.extendTitle")}</h2>

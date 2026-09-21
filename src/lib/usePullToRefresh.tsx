@@ -94,7 +94,7 @@ export function PullToRefreshIndicator({
     <div
       className="pointer-events-none fixed inset-x-0 z-50 flex justify-center"
       style={{
-        top: "env(safe-area-inset-top, 0px)",
+        top: "var(--app-safe-top)",
         transform: `translateY(${Math.min(pull, 80) - 20}px)`,
         opacity: refreshing ? 1 : Math.max(0.35, progress),
       }}

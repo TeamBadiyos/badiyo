@@ -51,7 +51,7 @@ export function PlaceSuggestionList({
               type="button"
               onClick={() => onPick(s)}
               disabled={busyId != null}
-              className="flex w-full items-start gap-3 px-3 py-3 text-left transition active:bg-muted disabled:opacity-60"
+              className="grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3 px-3 py-3 text-left transition active:bg-muted disabled:opacity-60"
             >
               <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
                 {busyId === s.id ? (
@@ -61,13 +61,13 @@ export function PlaceSuggestionList({
                 )}
               </div>
               <div className="min-w-0 flex-1">
-                <div className="truncate text-sm font-bold text-foreground">{s.title}</div>
+                <div className="line-clamp-2 break-words text-sm font-bold leading-snug text-foreground">{s.title}</div>
                 {s.area && (
                   <div className="line-clamp-2 text-xs text-muted-foreground">{s.area}</div>
                 )}
               </div>
               {dist && (
-                <span className="mt-0.5 shrink-0 text-xs font-semibold text-muted-foreground">
+                <span className="mt-0.5 whitespace-nowrap text-xs font-semibold text-muted-foreground">
                   {dist}
                 </span>
               )}

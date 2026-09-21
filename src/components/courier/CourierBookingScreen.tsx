@@ -298,7 +298,7 @@ export function CourierBookingScreen({
 
   return (
     <main className="min-h-dvh bg-background pb-28">
-      <header className="sticky top-0 z-20 border-b border-border bg-card px-4 pb-3 pt-[calc(env(safe-area-inset-top)+12px)]">
+      <header className="bleed-safe-top sticky top-0 z-20 border-b border-border bg-card px-4 pb-3 [--bleed-top-extra:12px]">
         <div className="mx-auto flex w-full max-w-md items-center gap-3">
           <Button type="button" variant="ghost" size="icon" onClick={goBack} aria-label={t("common.back")}>
             <ArrowLeft className="h-5 w-5" />

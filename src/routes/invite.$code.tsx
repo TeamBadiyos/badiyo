@@ -75,7 +75,7 @@ function InvitePage() {
   }, [code, navigate]);
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background px-6 text-center">
+    <main className="flex min-h-screen items-center justify-center bg-background px-6 py-[max(24px,var(--app-safe-top))] text-center">
       <div className="max-w-sm">
         <h1 className="text-2xl font-extrabold text-foreground">You're invited to badiyos</h1>
         <p className="mt-2 text-sm text-muted-foreground">
