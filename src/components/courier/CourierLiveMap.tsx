@@ -178,7 +178,7 @@ export function CourierLiveMap({
       map.fitBounds(bounds, 70);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [riderPos?.lat, riderPos?.lng, status]);
+  }, [ready, riderPos?.lat, riderPos?.lng, status]);
 
   let note: string;
   if (!live) {
