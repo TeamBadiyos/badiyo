@@ -22,8 +22,9 @@ import { fetchCourierEnabled } from "./courier/courierData";
 import { SectionHeading } from "./SectionHeading";
 import { BrandWatermark } from "./BrandWatermark";
 import { anchorPrice } from "@/lib/price";
-import { useT } from "@/i18n";
+import { useLanguage, useT } from "@/i18n";
 import { toast } from "sonner";
+import { formatNextOpen, notifyMeForService, useServiceState } from "@/lib/serviceHours";
 import type { TranslationKey } from "@/i18n/en";
 
 import expertHouse from "@/assets/expert-house-cleaning.jpg";
@@ -183,9 +184,34 @@ export function HomeScreen({
   });
   const { data: avatarUrl } = useAvatarUrl();
   const t = useT();
+  const { lang } = useLanguage();
+  const { data: cleanState } = useServiceState("clean");
+  const [notifySent, setNotifySent] = useState(false);
+
+  // Closed-service message (custom DB message first, then a default with next-open time).
+  const blockedMessage = (): string | null => {
+    if (!cleanState || cleanState.can_order) return null;
+    const custom = lang === "mr" ? cleanState.message_mr ?? cleanState.message_en : cleanState.message_en ?? cleanState.message_mr;
+    if (custom) return custom;
+    if (cleanState.status === "coming_soon") return t("serviceState.comingSoon");
+    const next = formatNextOpen(cleanState.next_open_at ?? cleanState.resume_at);
+    return next ? t("serviceState.closedBanner", { time: next }) : t("serviceState.closedNow");
+  };
+  const guardBlocked = (): boolean => {
+    const msg = blockedMessage();
+    if (!msg) return false;
+    toast(msg);
+    return true;
+  };
+
   const addToBooking = (s: SegmentService, segment?: Segment | null) => {
+    if (guardBlocked()) return;
     toast(t("home.addedToBooking", { name: s.service_name || s.duration_label }));
     onQuickBook?.(toPayload(s, segment ?? null));
+  };
+  const guardedBookService = (p: BookServicePayload) => {
+    if (guardBlocked()) return;
+    onBookService?.(p);
   };
 
 
@@ -252,7 +278,7 @@ export function HomeScreen({
     null;
   const tileService = cleanSegment ? servicesFor(cleanSegment)[0] ?? null : null;
   const bookTileService = () => {
-    if (tileService) onBookService?.(toPayload(tileService, cleanSegment));
+    if (tileService) guardedBookService(toPayload(tileService, cleanSegment));
   };
 
   return (
@@ -312,6 +338,32 @@ export function HomeScreen({
           </button>
         </form>
 
+        {/* Service status banner — closed / coming soon / temporarily stopped */}
+        {blockedMessage() ? (
+          <div className="mt-3 flex items-center gap-3 rounded-[16px] border border-border bg-card px-4 py-3 shadow-sm">
+            <Clock className="h-5 w-5 shrink-0 text-[#E5A50A]" />
+            <p className="flex-1 text-sm font-semibold text-foreground leading-snug">
+              {blockedMessage()}
+            </p>
+            {cleanState?.status === "coming_soon" && !notifySent ? (
+              <button
+                type="button"
+                onClick={async () => {
+                  const r = await notifyMeForService("clean");
+                  if (r === "added" || r === "duplicate") {
+                    setNotifySent(true);
+                    toast(t("serviceState.notifyDone"));
+                  }
+                }}
+                className="shrink-0 rounded-full bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground"
+              >
+                {t("serviceState.notifyMe")}
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+
+
         {/* Services bar (segment tabs) */}
         <ServicesBar
           segments={visibleSegments}
@@ -324,7 +376,7 @@ export function HomeScreen({
           segment={activeSegment}
           categories={categories.filter((c) => c.segment_id === activeSegment.id)}
           services={servicesFor(activeSegment)}
-          onBookService={onBookService}
+          onBookService={guardedBookService}
           onAdd={(s) => addToBooking(s, activeSegment)}
           onOpenTask={bookTileService}
           availability={availability}
@@ -354,7 +406,7 @@ export function HomeScreen({
                       key={category.id}
                       category={category}
                       services={servicesForCategory(category).slice(0, 3)}
-                      onViewDetail={(s) => onBookService?.(toPayload(s, segment))}
+                      onViewDetail={(s) => guardedBookService(toPayload(s, segment))}
                       onAdd={(s) => addToBooking(s, segment)}
                       availability={availability}
                     />

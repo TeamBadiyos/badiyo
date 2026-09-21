@@ -338,4 +338,16 @@ export const mr: Partial<Record<keyof typeof en, string>> = {
   "included.schedule": "वेळ ठरवा",
   "included.bookInstant": "लगेच बुक करा",
   "included.link": "यात काय समाविष्ट आहे?",
+
+  // ── Service hours / status ───────────────────────────────
+  "serviceState.closedNow": "सध्या बंद आहे",
+  "serviceState.opensAt": "{time} वाजता सुरू",
+  "serviceState.closedBanner": "सध्या बंद आहे — {time} वाजता सुरू होईल",
+  "serviceState.comingSoon": "लवकरच येत आहे",
+  "serviceState.notifyMe": "मला कळवा",
+  "serviceState.notifyDone": "तुमची नोंद झाली! सेवा सुरू होताच कळवू.",
+  "serviceState.tempStopped": "तात्पुरते बंद",
+  "serviceState.slotUnavailable": "हा स्लॉट सेवा वेळेबाहेर आहे",
+  "serviceState.nextAvailable": "पुढील उपलब्ध: {time}",
+  "serviceState.closedTitle": "आम्ही सध्या बंद आहोत",
 };

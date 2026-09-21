@@ -340,6 +340,18 @@ export const en = {
   "included.schedule": "Schedule",
   "included.bookInstant": "Book Instant",
   "included.link": "What's included?",
+
+  // ── Service hours / status ───────────────────────────────
+  "serviceState.closedNow": "Currently closed",
+  "serviceState.opensAt": "Opens {time}",
+  "serviceState.closedBanner": "Currently closed — opens {time}",
+  "serviceState.comingSoon": "Coming soon",
+  "serviceState.notifyMe": "Notify me",
+  "serviceState.notifyDone": "You're on the list! We'll tell you when it's live.",
+  "serviceState.tempStopped": "Temporarily unavailable",
+  "serviceState.slotUnavailable": "This slot is outside service hours",
+  "serviceState.nextAvailable": "Next available: {time}",
+  "serviceState.closedTitle": "We're closed right now",
 } as const;
 
 export type TranslationKey = keyof typeof en;
