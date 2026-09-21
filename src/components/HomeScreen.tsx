@@ -22,8 +22,9 @@ import { fetchCourierEnabled } from "./courier/courierData";
 import { SectionHeading } from "./SectionHeading";
 import { BrandWatermark } from "./BrandWatermark";
 import { anchorPrice } from "@/lib/price";
-import { useT } from "@/i18n";
+import { useLanguage, useT } from "@/i18n";
 import { toast } from "sonner";
+import { formatNextOpen, notifyMeForService, useServiceState } from "@/lib/serviceHours";
 import type { TranslationKey } from "@/i18n/en";
 
 import expertHouse from "@/assets/expert-house-cleaning.jpg";
