@@ -165,6 +165,7 @@ import { ensureUserRow } from "@/lib/ensureUserRow";
 import { registerPushForCurrentUser, setPushNavigator } from "@/lib/push";
 import { APP_VERSION, fetchMinSupportedVersion, isBelow } from "@/lib/version";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/lib/invokeFunction";
 
 /** Full-screen brand placeholder shown while a lazy screen chunk loads. */
 function ScreenFallback() {
