@@ -86,6 +86,7 @@ export function AddAddressMapScreen({
   serviceCheck?: "home" | "courier";
   segmentId?: string | null;
 }) {
+  const t = useT();
   const initialSplit = initial ? splitExisting(initial.full_address) : null;
   const mapDivRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
