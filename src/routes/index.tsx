@@ -54,6 +54,10 @@ const BookingSummaryScreen = lazyNamed(
   () => import("@/components/BookingSummaryScreen"),
   "BookingSummaryScreen",
 );
+const CouponPickerScreen = lazyNamed(
+  () => import("@/components/CouponPickerScreen"),
+  "CouponPickerScreen",
+);
 const PaymentScreen = lazyNamed(() => import("@/components/PaymentScreen"), "PaymentScreen");
 const ExpertAssignedScreen = lazyNamed(
   () => import("@/components/tracking/ExpertAssignedScreen"),
@@ -199,6 +203,7 @@ type Phase =
   | "address"
   | "manage-addresses"
   | "summary"
+  | "coupon-picker"
   | "payment"
   | "searching-expert"
   | "expert-assigned"
@@ -888,9 +893,23 @@ function Index() {
             address={selectedAddress}
             coupon={appliedCoupon}
             onCouponChange={setAppliedCoupon}
+            onOpenCoupons={() => setPhase("coupon-picker")}
             onBack={() => setPhase("address")}
             onEditAddress={() => setPhase("address")}
             onProceedToPay={() => setPhase("payment")}
+          />
+        </div>
+      )}
+      {phase === "coupon-picker" && selectedService && (
+        <div className="animate-fade-slide-in">
+          <CouponPickerScreen
+            service={selectedService}
+            appliedCoupon={appliedCoupon}
+            onBack={() => goBack(false)}
+            onApplied={(coupon) => {
+              setAppliedCoupon(coupon);
+              goBack(false);
+            }}
           />
         </div>
       )}

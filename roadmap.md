@@ -1,5 +1,11 @@
 # Roadmap
 
+## Checkout coupons — IN PROGRESS
+
+- [x] Replace inline code box with coupon summary row
+- [x] Add booking-aware coupon picker with manual code and eligible/unavailable offers
+- [ ] Verify type safety and mobile interaction
+
 ## Courier (Porter-type) — DONE
 
 - [x] M1 config: service_flags, courier_vehicle_types, courier_vehicle_rates (placeholder), courier_types + mapping, hidden courier segment/skill category, ops_settings keys, Vault OTP key
