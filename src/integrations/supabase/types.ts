@@ -5595,6 +5595,10 @@ export type Database = {
         Args: { _expert_id: string; _service_category_id: string }
         Returns: string
       }
+      staff_campaign_audience_preview: {
+        Args: { _audience: string }
+        Returns: Json
+      }
       staff_cancel_booking: {
         Args: { _booking_id: string; _reason: string }
         Returns: undefined
