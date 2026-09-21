@@ -381,6 +381,14 @@ function Index() {
         _setPhase("home");
         return;
       }
+      // Parcel tracking never goes back into the parcel booking flow.
+      if (cur === "courier-track") {
+        const back = courierTrackFromRef.current;
+        historyRef.current = [];
+        phaseRef.current = back;
+        _setPhase(back);
+        return;
+      }
       if (!isAtRootPhase(cur) && hist.length > 0) {
         const prev = hist.pop()!;
         phaseRef.current = prev;
