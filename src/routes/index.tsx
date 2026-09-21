@@ -460,6 +460,20 @@ function Index() {
         setPhase(phase);
         return;
       }
+      // Parcel deep link: "/courier/<id>" or data.courierOrderId
+      const courierId =
+        (typeof data?.courierOrderId === "string" && (data.courierOrderId as string)) ||
+        (typeof data?.orderId === "string" && route.includes("courier")
+          ? (data.orderId as string)
+          : null) ||
+        (route.startsWith("courier/") ? route.slice("courier/".length) : null) ||
+        (route.startsWith("/courier/") ? route.slice("/courier/".length) : null);
+      if (courierId) {
+        setCourierOrderId(courierId);
+        setCourierTrackFrom("orders");
+        setPhase("courier-track");
+        return;
+      }
       // Booking deep link: "/booking/<id>" or data.bookingId
       const bookingId =
         (typeof data?.bookingId === "string" && (data.bookingId as string)) ||
