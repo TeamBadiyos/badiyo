@@ -6,6 +6,7 @@ import {
   AlertTriangle,
   ArrowLeft,
   Check,
+  Clock,
   X,
   ChevronRight,
   Loader2,
@@ -17,6 +18,8 @@ import {
   Route as RouteIcon,
   UserRound,
 } from "lucide-react";
+import { useLanguage } from "@/i18n";
+import { formatNextOpen, useServiceState } from "@/lib/serviceHours";
 import { toast } from "sonner";
 import courierBike from "@/assets/courier-bike.png";
 import { AddressSelectionScreen } from "@/components/AddressSelectionScreen";
