@@ -91,6 +91,8 @@ export function CourierBookingScreen({
   onBooked: (orderId: string) => void;
 }) {
   const t = useT();
+  const { lang } = useLanguage();
+  const { data: courierState } = useServiceState("courier");
   const [step, setStep] = useState<Step>(1);
   const [addressTarget, setAddressTarget] = useState<AddressTarget | null>(null);
   const [pickup, setPickup] = useState<Addr | null>(null);
@@ -277,6 +279,32 @@ export function CourierBookingScreen({
       setPaying(false);
     }
   };
+
+  // Service closed (status / hours / holiday / last-order buffer) — block the whole flow.
+  if (courierState && !courierState.can_order) {
+    const custom = lang === "mr" ? courierState.message_mr ?? courierState.message_en : courierState.message_en ?? courierState.message_mr;
+    const next = formatNextOpen(courierState.next_open_at ?? courierState.resume_at);
+    const msg =
+      custom ??
+      (next ? t("serviceState.closedBanner", { time: next }) : t("serviceState.closedNow"));
+    return (
+      <main className="min-h-screen w-full bg-background">
+        <div className="mx-auto flex min-h-screen w-full max-w-md flex-col items-center justify-center px-8 text-center">
+          <Clock className="h-10 w-10 text-[#E5A50A]" />
+          <h1 className="mt-4 text-lg font-bold text-foreground">
+            {t("serviceState.closedTitle")}
+          </h1>
+          <p className="mt-2 text-sm text-muted-foreground">{msg}</p>
+          <button
+            onClick={onBack}
+            className="mt-6 rounded-[14px] bg-primary px-6 py-3 text-sm font-bold text-primary-foreground"
+          >
+            {t("common.back")}
+          </button>
+        </div>
+      </main>
+    );
+  }
 
   if (addressTarget) {
     return (
