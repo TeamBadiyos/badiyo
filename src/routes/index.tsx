@@ -278,6 +278,13 @@ function Index() {
   const [selectedBooking, setSelectedBooking] = useState<BookingRow | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [courierOrderId, setCourierOrderId] = useState<string | null>(null);
+  // Where the parcel tracking screen was opened from, so Back returns there.
+  const [courierTrackFrom, _setCourierTrackFrom] = useState<Phase>("home");
+  const courierTrackFromRef = useRef<Phase>("home");
+  const setCourierTrackFrom = useCallback((p: Phase) => {
+    courierTrackFromRef.current = p;
+    _setCourierTrackFrom(p);
+  }, []);
   const [pendingPhone, setPendingPhone] = useState<string | null>(null);
   const [forceResetPin, setForceResetPin] = useState(false);
   // Always start "online" so SSR and first client render match; a real offline
@@ -374,6 +381,14 @@ function Index() {
         _setPhase("home");
         return;
       }
+      // Parcel tracking never goes back into the parcel booking flow.
+      if (cur === "courier-track") {
+        const back = courierTrackFromRef.current;
+        historyRef.current = [];
+        phaseRef.current = back;
+        _setPhase(back);
+        return;
+      }
       if (!isAtRootPhase(cur) && hist.length > 0) {
         const prev = hist.pop()!;
         phaseRef.current = prev;
@@ -445,6 +460,20 @@ function Index() {
         setPhase(phase);
         return;
       }
+      // Parcel deep link: "/courier/<id>" or data.courierOrderId
+      const courierId =
+        (typeof data?.courierOrderId === "string" && (data.courierOrderId as string)) ||
+        (typeof data?.orderId === "string" && route.includes("courier")
+          ? (data.orderId as string)
+          : null) ||
+        (route.startsWith("courier/") ? route.slice("courier/".length) : null) ||
+        (route.startsWith("/courier/") ? route.slice("/courier/".length) : null);
+      if (courierId) {
+        setCourierOrderId(courierId);
+        setCourierTrackFrom("orders");
+        setPhase("courier-track");
+        return;
+      }
       // Booking deep link: "/booking/<id>" or data.bookingId
       const bookingId =
         (typeof data?.bookingId === "string" && (data.bookingId as string)) ||
@@ -491,7 +520,7 @@ function Index() {
     });
 
     return () => setPushNavigator(null);
-  }, [setPhase]);
+  }, [setPhase, setCourierTrackFrom]);
 
 
 
@@ -816,6 +845,7 @@ function Index() {
             onBack={() => setPhase("home")}
             onBooked={(id) => {
               setCourierOrderId(id);
+              setCourierTrackFrom("orders");
               setPhase("courier-track");
             }}
           />
@@ -825,7 +855,7 @@ function Index() {
         <div className="animate-fade-slide-in">
           <CourierTrackingScreen
             orderId={courierOrderId}
-            onBack={() => setPhase("home")}
+            onBack={() => setPhase(courierTrackFrom)}
           />
         </div>
       )}
@@ -1131,6 +1161,11 @@ function Index() {
             onOpenHome={() => setPhase("home")}
             onOpenRewards={() => setPhase("rewards")}
             onOpenCourier={() => setPhase("courier")}
+            onOpenCourierOrder={(id) => {
+              setCourierOrderId(id);
+              setCourierTrackFrom("orders");
+              setPhase("courier-track");
+            }}
             onOpenBooking={(b) => {
               if (ACTIVE_TRACKING_STATUSES.includes(b.status)) {
                 const addr = b.addresses;

@@ -25,6 +25,10 @@ export function useBookingsLive() {
         qc.invalidateQueries({ queryKey: ["my-bookings"] });
         qc.invalidateQueries({ queryKey: ACTIVE_BOOKING_KEY });
       };
+      const refreshCourier = () => {
+        qc.invalidateQueries({ queryKey: ["my-courier-orders"] });
+        qc.invalidateQueries({ queryKey: ["courier_order"] });
+      };
 
       channel = supabase
         .channel(`my-bookings-${uid}`)
@@ -32,6 +36,16 @@ export function useBookingsLive() {
           "postgres_changes",
           { event: "*", schema: "public", table: "bookings", filter: `user_id=eq.${uid}` },
           refresh,
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "courier_orders",
+            filter: `customer_id=eq.${uid}`,
+          },
+          refreshCourier,
         )
         .subscribe();
     })();

@@ -1,6 +1,7 @@
 // Shared reads for the courier (parcel delivery) flow.
 // Everything here is read-only config; fares and dispatch stay server-side.
 import { supabase } from "@/integrations/supabase/client";
+import { getAuthUser } from "@/lib/authUser";
 
 export type CourierVehicle = {
   id: string;
@@ -93,12 +94,26 @@ export async function fetchCourierTypes(vehicleId?: string | null): Promise<Cour
   return allowed.size ? all.filter((c) => allowed.has(c.id)) : all;
 }
 
+export const COURIER_ACTIVE_STATUSES = [
+  "REQUESTED",
+  "SEARCHING",
+  "DRIVER_ASSIGNED",
+  "ARRIVED_PICKUP",
+  "PICKED_UP",
+  "IN_TRANSIT",
+];
+export const COURIER_PAST_STATUSES = ["DELIVERED", "COMPLETED", "CANCELLED", "EXPIRED", "FAILED"];
+
 export async function fetchMyCourierOrders(): Promise<CourierOrder[]> {
+  const { data: userRes } = await getAuthUser();
+  const uid = userRes.user?.id;
+  if (!uid) return [];
   const { data, error } = await supabase
     .from("courier_orders")
     .select(
       "id, order_code, status, city, pickup_address, pickup_contact_name, pickup_contact_phone, pickup_contact_edit_count, drop_address, drop_contact_name, drop_contact_phone, drop_contact_edit_count, distance_km, total_amount, payment_status, package_description, created_at",
     )
+    .eq("customer_id", uid)
     .order("created_at", { ascending: false })
     .limit(30);
   if (error) throw new Error(error.message);
