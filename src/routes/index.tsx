@@ -180,6 +180,8 @@ export const Route = createFileRoute("/")({
       { name: "description", content: "Book trusted home cleaning services in Latur with badiyos. Fast, reliable experts — just a tap away." },
       { property: "og:title", content: "badiyos — Home cleaning, on demand" },
       { property: "og:description", content: "Book trusted home cleaning services in Latur with badiyos. Fast, reliable experts — just a tap away." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Index,
