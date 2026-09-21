@@ -2047,6 +2047,27 @@ export type Database = {
           },
         ]
       }
+      expert_holiday_notices: {
+        Row: {
+          created_at: string
+          holiday_id: string
+          id: string
+          phase: string
+        }
+        Insert: {
+          created_at?: string
+          holiday_id: string
+          id?: string
+          phase: string
+        }
+        Update: {
+          created_at?: string
+          holiday_id?: string
+          id?: string
+          phase?: string
+        }
+        Relationships: []
+      }
       expert_leads: {
         Row: {
           area: string
@@ -2138,6 +2159,7 @@ export type Database = {
           level: string
           location_updated_at: string | null
           name: string
+          offline_after_job: boolean
           onboarded_by: string | null
           pan_encrypted: string | null
           pan_last4: string | null
@@ -2173,6 +2195,7 @@ export type Database = {
           level?: string
           location_updated_at?: string | null
           name: string
+          offline_after_job?: boolean
           onboarded_by?: string | null
           pan_encrypted?: string | null
           pan_last4?: string | null
@@ -2208,6 +2231,7 @@ export type Database = {
           level?: string
           location_updated_at?: string | null
           name?: string
+          offline_after_job?: boolean
           onboarded_by?: string | null
           pan_encrypted?: string | null
           pan_last4?: string | null
@@ -5421,6 +5445,7 @@ export type Database = {
       }
       expert_revoke_device: { Args: { _device_id: string }; Returns: undefined }
       expert_rewards_overview: { Args: never; Returns: Json }
+      expert_service_schedule: { Args: { _service_key: string }; Returns: Json }
       expert_set_language: { Args: { _lang: string }; Returns: undefined }
       expert_set_online: { Args: { _online: boolean }; Returns: undefined }
       expert_update_location: {
@@ -5778,6 +5803,8 @@ export type Database = {
         Args: { _at?: string; _city?: string; _service_key: string }
         Returns: Json
       }
+      service_holiday_notify: { Args: { _phase: string }; Returns: undefined }
+      service_hours_autooffline: { Args: never; Returns: undefined }
       service_hours_bypass: { Args: never; Returns: boolean }
       service_next_open: {
         Args: { _flag_id: string; _from: string }
