@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -12,18 +12,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { supabase } from "@/integrations/supabase/client";
 import { getErrorMessage } from "@/lib/errorMessage";
 import type { BookingRow } from "@/components/MyBookingsScreen";
 import { hapticImpact } from "@/lib/haptics";
+import { cancelBooking, getCancellationQuote } from "@/lib/bookingCancel.functions";
 
 type Stage = "searching" | "assigned";
 
-const CANCELLATION_FEE = 100;
-
 export function CancelBookingButton({
   bookingId,
-  stage,
   price,
   onCancelled,
 }: {
@@ -34,35 +31,43 @@ export function CancelBookingButton({
 }) {
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [quote, setQuote] = useState<
+    { paid: number; cancellation_fee: number; refund_amount: number } | null
+  >(null);
   const qc = useQueryClient();
 
-  const estimatedRefund =
-    stage === "assigned" && typeof price === "number"
-      ? Math.max(0, price - CANCELLATION_FEE)
-      : typeof price === "number"
-        ? price
-        : null;
+  // The fee is configured server-side, so ask before promising anything.
+  useEffect(() => {
+    if (!open || !bookingId) return;
+    let alive = true;
+    getCancellationQuote({ data: { bookingId } })
+      .then((q) => alive && setQuote(q))
+      .catch(() => alive && setQuote(null));
+    return () => {
+      alive = false;
+    };
+  }, [open, bookingId]);
+
+  const fee = quote?.cancellation_fee ?? null;
+  const refundable = quote?.refund_amount ?? null;
+  const paid = quote?.paid ?? (typeof price === "number" ? price : null);
 
   const title =
-    stage === "searching" ? "Cancel this booking?" : "Cancel with cancellation fee?";
-  const description =
-    stage === "searching"
-      ? "You'll receive a full refund."
-      : `Cancelling now will incur a ₹${CANCELLATION_FEE} cancellation fee.${
-          estimatedRefund !== null ? ` You'll be refunded ₹${estimatedRefund}.` : ""
-        }`;
+    fee && fee > 0 ? "Cancel with cancellation fee?" : "Cancel this booking?";
+  const description = !quote
+    ? "Checking your refund…"
+    : (paid ?? 0) <= 0
+      ? "Nothing was charged for this booking, so there is no refund."
+      : fee && fee > 0
+        ? `A ₹${fee} cancellation fee applies. ₹${refundable} will be refunded to your original payment method in 5-7 working days.`
+        : `₹${refundable} will be refunded to your original payment method in 5-7 working days.`;
+
 
   const handleConfirm = async () => {
     if (!bookingId || submitting) return;
     setSubmitting(true);
     try {
-      const { data, error } = await supabase.functions.invoke(
-        "customer-cancel-booking",
-        { body: { booking_id: bookingId } },
-      );
-      if (error) throw error;
-      const refund =
-        (data as { refund_amount?: number } | null)?.refund_amount ?? estimatedRefund;
+      const result = await cancelBooking({ data: { bookingId } });
 
       // Optimistically reflect cancellation across list/tracking caches so
       // Home/Orders don't render a stale "active" card before realtime lands.
@@ -85,11 +90,22 @@ export function CancelBookingButton({
       );
       await qc.invalidateQueries({ queryKey: ["my-bookings"] });
 
-      toast.success(
-        refund !== null && refund !== undefined
-          ? `Booking cancelled. Refund of ₹${refund} is on its way.`
-          : "Booking cancelled.",
-      );
+      // Tell the customer exactly what happened to their money.
+      if (result.refund_status === "processing") {
+        toast.success(
+          `Booking cancelled. Refund of ₹${result.refund_amount} will reach your account in 5-7 working days.`,
+        );
+      } else if (result.refund_status === "pending") {
+        toast.warning(
+          "Booking cancelled. Your refund could not be started yet — we are retrying it and will update you shortly.",
+        );
+      } else if (result.refund_status === "none") {
+        toast.success(
+          `Booking cancelled. The ₹${result.cancellation_fee} cancellation fee used up the amount paid, so there is no refund.`,
+        );
+      } else {
+        toast.success("Booking cancelled. No payment was charged, so there is no refund.");
+      }
       setOpen(false);
       onCancelled?.();
     } catch (err) {
@@ -98,6 +114,7 @@ export function CancelBookingButton({
       setSubmitting(false);
     }
   };
+
 
   return (
     <>

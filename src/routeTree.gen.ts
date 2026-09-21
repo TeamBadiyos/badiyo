@@ -18,6 +18,7 @@ import { Route as ApiPublicHasLoginPinRouteImport } from './routes/api/public/ha
 import { Route as ApiPublicGeocodeSearchRouteImport } from './routes/api/public/geocode-search'
 import { Route as ApiPublicWebhooksRazorpayRouteImport } from './routes/api/public/webhooks/razorpay'
 import { Route as ApiPublicCourierProcessRefundsRouteImport } from './routes/api/public/courier/process-refunds'
+import { Route as ApiPublicBookingsProcessRefundsRouteImport } from './routes/api/public/bookings/process-refunds'
 import { Route as ApiPublicAdminAlertProcessRouteImport } from './routes/api/public/admin-alert/process'
 
 const IndexRoute = IndexRouteImport.update({
@@ -67,6 +68,12 @@ const ApiPublicCourierProcessRefundsRoute =
     path: '/api/public/courier/process-refunds',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicBookingsProcessRefundsRoute =
+  ApiPublicBookingsProcessRefundsRouteImport.update({
+    id: '/api/public/bookings/process-refunds',
+    path: '/api/public/bookings/process-refunds',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicAdminAlertProcessRoute =
   ApiPublicAdminAlertProcessRouteImport.update({
     id: '/api/public/admin-alert/process',
@@ -83,6 +90,7 @@ export interface FileRoutesByFullPath {
   '/api/public/reverse-geocode': typeof ApiPublicReverseGeocodeRoute
   '/api/public/service-image': typeof ApiPublicServiceImageRoute
   '/api/public/admin-alert/process': typeof ApiPublicAdminAlertProcessRoute
+  '/api/public/bookings/process-refunds': typeof ApiPublicBookingsProcessRefundsRoute
   '/api/public/courier/process-refunds': typeof ApiPublicCourierProcessRefundsRoute
   '/api/public/webhooks/razorpay': typeof ApiPublicWebhooksRazorpayRoute
 }
@@ -95,6 +103,7 @@ export interface FileRoutesByTo {
   '/api/public/reverse-geocode': typeof ApiPublicReverseGeocodeRoute
   '/api/public/service-image': typeof ApiPublicServiceImageRoute
   '/api/public/admin-alert/process': typeof ApiPublicAdminAlertProcessRoute
+  '/api/public/bookings/process-refunds': typeof ApiPublicBookingsProcessRefundsRoute
   '/api/public/courier/process-refunds': typeof ApiPublicCourierProcessRefundsRoute
   '/api/public/webhooks/razorpay': typeof ApiPublicWebhooksRazorpayRoute
 }
@@ -108,6 +117,7 @@ export interface FileRoutesById {
   '/api/public/reverse-geocode': typeof ApiPublicReverseGeocodeRoute
   '/api/public/service-image': typeof ApiPublicServiceImageRoute
   '/api/public/admin-alert/process': typeof ApiPublicAdminAlertProcessRoute
+  '/api/public/bookings/process-refunds': typeof ApiPublicBookingsProcessRefundsRoute
   '/api/public/courier/process-refunds': typeof ApiPublicCourierProcessRefundsRoute
   '/api/public/webhooks/razorpay': typeof ApiPublicWebhooksRazorpayRoute
 }
@@ -122,6 +132,7 @@ export interface FileRouteTypes {
     | '/api/public/reverse-geocode'
     | '/api/public/service-image'
     | '/api/public/admin-alert/process'
+    | '/api/public/bookings/process-refunds'
     | '/api/public/courier/process-refunds'
     | '/api/public/webhooks/razorpay'
   fileRoutesByTo: FileRoutesByTo
@@ -134,6 +145,7 @@ export interface FileRouteTypes {
     | '/api/public/reverse-geocode'
     | '/api/public/service-image'
     | '/api/public/admin-alert/process'
+    | '/api/public/bookings/process-refunds'
     | '/api/public/courier/process-refunds'
     | '/api/public/webhooks/razorpay'
   id:
@@ -146,6 +158,7 @@ export interface FileRouteTypes {
     | '/api/public/reverse-geocode'
     | '/api/public/service-image'
     | '/api/public/admin-alert/process'
+    | '/api/public/bookings/process-refunds'
     | '/api/public/courier/process-refunds'
     | '/api/public/webhooks/razorpay'
   fileRoutesById: FileRoutesById
@@ -159,6 +172,7 @@ export interface RootRouteChildren {
   ApiPublicReverseGeocodeRoute: typeof ApiPublicReverseGeocodeRoute
   ApiPublicServiceImageRoute: typeof ApiPublicServiceImageRoute
   ApiPublicAdminAlertProcessRoute: typeof ApiPublicAdminAlertProcessRoute
+  ApiPublicBookingsProcessRefundsRoute: typeof ApiPublicBookingsProcessRefundsRoute
   ApiPublicCourierProcessRefundsRoute: typeof ApiPublicCourierProcessRefundsRoute
   ApiPublicWebhooksRazorpayRoute: typeof ApiPublicWebhooksRazorpayRoute
 }
@@ -228,6 +242,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCourierProcessRefundsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/bookings/process-refunds': {
+      id: '/api/public/bookings/process-refunds'
+      path: '/api/public/bookings/process-refunds'
+      fullPath: '/api/public/bookings/process-refunds'
+      preLoaderRoute: typeof ApiPublicBookingsProcessRefundsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/admin-alert/process': {
       id: '/api/public/admin-alert/process'
       path: '/api/public/admin-alert/process'
@@ -247,6 +268,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicReverseGeocodeRoute: ApiPublicReverseGeocodeRoute,
   ApiPublicServiceImageRoute: ApiPublicServiceImageRoute,
   ApiPublicAdminAlertProcessRoute: ApiPublicAdminAlertProcessRoute,
+  ApiPublicBookingsProcessRefundsRoute: ApiPublicBookingsProcessRefundsRoute,
   ApiPublicCourierProcessRefundsRoute: ApiPublicCourierProcessRefundsRoute,
   ApiPublicWebhooksRazorpayRoute: ApiPublicWebhooksRazorpayRoute,
 }

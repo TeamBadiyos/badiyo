@@ -1,10 +1,35 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Clock, Calendar, Home as HomeIcon, Star, X } from "lucide-react";
+import { toast } from "sonner";
 import type { BookingRow } from "./MyBookingsScreen";
 import { supabase } from "@/integrations/supabase/client";
 import { RescheduleSheet } from "./RescheduleSheet";
 import { getErrorMessage } from "@/lib/errorMessage";
+import { cancelBooking } from "@/lib/bookingCancel.functions";
+
+function refundLine(b: BookingRow): { label: string; note: string } | null {
+  const status = b.refund_status ?? null;
+  if (!status || status === "none") return null;
+  const amount = Number(b.refund_amount ?? 0);
+  if (status === "not_applicable") {
+    return { label: "No refund applicable", note: "Nothing was charged for this booking." };
+  }
+  if (status === "refunded") {
+    return { label: `Rs ${amount} refunded`, note: "Credited to your original payment method." };
+  }
+  if (status === "processing" || status === "pending") {
+    return {
+      label: `Rs ${amount} refund in progress`,
+      note: "It reaches your original payment method in 5-7 working days.",
+    };
+  }
+  return {
+    label: `Rs ${amount} refund pending`,
+    note: "We hit an issue with this refund. Our team is on it — contact support if it isn't resolved soon.",
+  };
+}
+
 
 function statusPillClasses(status: string): string {
   if (status === "completed") return "bg-primary/15 text-primary";
@@ -67,14 +92,22 @@ export function BookingDetailsScreen({
     setCancelling(true);
     setError(null);
     try {
-      const { error } = await supabase
-        .from("bookings")
-        .update({ status: "cancelled" })
-        .eq("id", booking.id);
-      if (error) throw error;
+      // Goes through the server so the gateway refund actually happens.
+      const result = await cancelBooking({ data: { bookingId: booking.id } });
       await qc.invalidateQueries({ queryKey: ["my-bookings"] });
       setStatus("cancelled");
       setConfirmingCancel(false);
+      if (result.refund_status === "processing") {
+        toast.success(
+          `Booking cancelled. Refund of ₹${result.refund_amount} will reach your account in 5-7 working days.`,
+        );
+      } else if (result.refund_status === "pending") {
+        toast.warning(
+          "Booking cancelled. Your refund could not be started yet — we are retrying it and will update you shortly.",
+        );
+      } else {
+        toast.success("Booking cancelled.");
+      }
       onBack();
     } catch (e) {
       setError(await getErrorMessage(e));
@@ -82,6 +115,7 @@ export function BookingDetailsScreen({
       setCancelling(false);
     }
   }
+
 
   async function handleReschedule(date: string, slotLabel: string) {
     setSaving(true);
@@ -207,6 +241,26 @@ export function BookingDetailsScreen({
             </div>
           </div>
         </section>
+
+        {/* Refund (cancelled bookings) */}
+        {(() => {
+          const refund = refundLine(booking);
+          if (!refund) return null;
+          return (
+            <section className="mt-3 rounded-[18px] border border-border bg-card p-4 shadow-sm">
+              <h3 className="text-sm font-bold text-foreground">Refund</h3>
+              {Number(booking.cancellation_fee ?? 0) > 0 && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Cancellation fee: Rs {Number(booking.cancellation_fee)}
+                </p>
+              )}
+              <p className="mt-1 text-sm font-semibold text-foreground">{refund.label}</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">{refund.note}</p>
+            </section>
+          );
+        })()}
+
+
 
         {/* Rating (if any) */}
         {booking.rating ? (
