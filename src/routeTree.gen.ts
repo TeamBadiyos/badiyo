@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as InviteCodeRouteImport } from './routes/invite.$code'
 import { Route as ApiPublicServiceImageRouteImport } from './routes/api/public/service-image'
 import { Route as ApiPublicReverseGeocodeRouteImport } from './routes/api/public/reverse-geocode'
+import { Route as ApiPublicPlacesSearchRouteImport } from './routes/api/public/places-search'
 import { Route as ApiPublicHasLoginPinRouteImport } from './routes/api/public/has-login-pin'
 import { Route as ApiPublicGeocodeSearchRouteImport } from './routes/api/public/geocode-search'
 import { Route as ApiPublicWebhooksRazorpayRouteImport } from './routes/api/public/webhooks/razorpay'
@@ -37,6 +38,11 @@ const ApiPublicServiceImageRoute = ApiPublicServiceImageRouteImport.update({
 const ApiPublicReverseGeocodeRoute = ApiPublicReverseGeocodeRouteImport.update({
   id: '/api/public/reverse-geocode',
   path: '/api/public/reverse-geocode',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicPlacesSearchRoute = ApiPublicPlacesSearchRouteImport.update({
+  id: '/api/public/places-search',
+  path: '/api/public/places-search',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicHasLoginPinRoute = ApiPublicHasLoginPinRouteImport.update({
@@ -73,6 +79,7 @@ export interface FileRoutesByFullPath {
   '/invite/$code': typeof InviteCodeRoute
   '/api/public/geocode-search': typeof ApiPublicGeocodeSearchRoute
   '/api/public/has-login-pin': typeof ApiPublicHasLoginPinRoute
+  '/api/public/places-search': typeof ApiPublicPlacesSearchRoute
   '/api/public/reverse-geocode': typeof ApiPublicReverseGeocodeRoute
   '/api/public/service-image': typeof ApiPublicServiceImageRoute
   '/api/public/admin-alert/process': typeof ApiPublicAdminAlertProcessRoute
@@ -84,6 +91,7 @@ export interface FileRoutesByTo {
   '/invite/$code': typeof InviteCodeRoute
   '/api/public/geocode-search': typeof ApiPublicGeocodeSearchRoute
   '/api/public/has-login-pin': typeof ApiPublicHasLoginPinRoute
+  '/api/public/places-search': typeof ApiPublicPlacesSearchRoute
   '/api/public/reverse-geocode': typeof ApiPublicReverseGeocodeRoute
   '/api/public/service-image': typeof ApiPublicServiceImageRoute
   '/api/public/admin-alert/process': typeof ApiPublicAdminAlertProcessRoute
@@ -96,6 +104,7 @@ export interface FileRoutesById {
   '/invite/$code': typeof InviteCodeRoute
   '/api/public/geocode-search': typeof ApiPublicGeocodeSearchRoute
   '/api/public/has-login-pin': typeof ApiPublicHasLoginPinRoute
+  '/api/public/places-search': typeof ApiPublicPlacesSearchRoute
   '/api/public/reverse-geocode': typeof ApiPublicReverseGeocodeRoute
   '/api/public/service-image': typeof ApiPublicServiceImageRoute
   '/api/public/admin-alert/process': typeof ApiPublicAdminAlertProcessRoute
@@ -109,6 +118,7 @@ export interface FileRouteTypes {
     | '/invite/$code'
     | '/api/public/geocode-search'
     | '/api/public/has-login-pin'
+    | '/api/public/places-search'
     | '/api/public/reverse-geocode'
     | '/api/public/service-image'
     | '/api/public/admin-alert/process'
@@ -120,6 +130,7 @@ export interface FileRouteTypes {
     | '/invite/$code'
     | '/api/public/geocode-search'
     | '/api/public/has-login-pin'
+    | '/api/public/places-search'
     | '/api/public/reverse-geocode'
     | '/api/public/service-image'
     | '/api/public/admin-alert/process'
@@ -131,6 +142,7 @@ export interface FileRouteTypes {
     | '/invite/$code'
     | '/api/public/geocode-search'
     | '/api/public/has-login-pin'
+    | '/api/public/places-search'
     | '/api/public/reverse-geocode'
     | '/api/public/service-image'
     | '/api/public/admin-alert/process'
@@ -143,6 +155,7 @@ export interface RootRouteChildren {
   InviteCodeRoute: typeof InviteCodeRoute
   ApiPublicGeocodeSearchRoute: typeof ApiPublicGeocodeSearchRoute
   ApiPublicHasLoginPinRoute: typeof ApiPublicHasLoginPinRoute
+  ApiPublicPlacesSearchRoute: typeof ApiPublicPlacesSearchRoute
   ApiPublicReverseGeocodeRoute: typeof ApiPublicReverseGeocodeRoute
   ApiPublicServiceImageRoute: typeof ApiPublicServiceImageRoute
   ApiPublicAdminAlertProcessRoute: typeof ApiPublicAdminAlertProcessRoute
@@ -178,6 +191,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/reverse-geocode'
       fullPath: '/api/public/reverse-geocode'
       preLoaderRoute: typeof ApiPublicReverseGeocodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/places-search': {
+      id: '/api/public/places-search'
+      path: '/api/public/places-search'
+      fullPath: '/api/public/places-search'
+      preLoaderRoute: typeof ApiPublicPlacesSearchRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/has-login-pin': {
@@ -223,6 +243,7 @@ const rootRouteChildren: RootRouteChildren = {
   InviteCodeRoute: InviteCodeRoute,
   ApiPublicGeocodeSearchRoute: ApiPublicGeocodeSearchRoute,
   ApiPublicHasLoginPinRoute: ApiPublicHasLoginPinRoute,
+  ApiPublicPlacesSearchRoute: ApiPublicPlacesSearchRoute,
   ApiPublicReverseGeocodeRoute: ApiPublicReverseGeocodeRoute,
   ApiPublicServiceImageRoute: ApiPublicServiceImageRoute,
   ApiPublicAdminAlertProcessRoute: ApiPublicAdminAlertProcessRoute,

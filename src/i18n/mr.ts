@@ -139,6 +139,14 @@ export const mr: Partial<Record<keyof typeof en, string>> = {
   "address.notServiceableHint": "या पत्त्यावर अजून सेवा उपलब्ध नाही.",
   "address.addNewPlus": "+ नवीन पत्ता जोडा",
   "address.fallbackLabel": "पत्ता",
+  "search.placeholder": "दुकान, हॉस्पिटल, परिसर शोधा…",
+  "search.hint": "शोधण्यासाठी किमान ३ अक्षरे टाका",
+  "search.searching": "शोधत आहोत…",
+  "search.results": "शोध निकाल",
+  "search.noResults": "अशी जागा सापडली नाही. दुसरे नाव टाका किंवा पिन हलवा.",
+  "search.failed": "सध्या शोध चालत नाही. कृपया पिन हलवून जागा निवडा.",
+  "search.detailFailed": "ही जागा उघडता आली नाही. दुसरी जागा निवडा.",
+  "search.away": "अंतरावर",
 
   // ── Booking summary ──────────────────────────────────────
   "summary.title": "बुकिंग सारांश",

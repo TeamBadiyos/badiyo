@@ -137,6 +137,14 @@ export const en = {
   "address.notServiceableHint": "We don't serve this address yet.",
   "address.addNewPlus": "+ Add New Address",
   "address.fallbackLabel": "Address",
+  "search.placeholder": "Search shop, hospital, area…",
+  "search.hint": "Type at least 3 letters to search",
+  "search.searching": "Searching…",
+  "search.results": "Search results",
+  "search.noResults": "No matching place found. Try another name or move the pin.",
+  "search.failed": "Search isn't working right now. Please move the pin instead.",
+  "search.detailFailed": "Couldn't open this place. Please pick another one.",
+  "search.away": "away",
 
   // ── Booking summary ──────────────────────────────────────
   "summary.title": "Booking Summary",
