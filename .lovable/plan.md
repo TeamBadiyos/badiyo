@@ -15,8 +15,8 @@ App 24x7 khula. Availability ek hi jagah se: pehle **status**, phir **hours + ho
 - `status_updated_at`, `status_updated_by`
 
 **Backfill + sync rule** (kyunki purana app version sirf `is_active` padhta hai):
-- Migration me: `status = 'live' where is_active`, `'hidden' where not is_active`. (Note: live DB me abhi teeno rows `is_active=true` dikh rahi hain — courier aur store aapke hisaab se abhi inactive hone chahiye; backfill current values se hoga, aur courier ko migration me `status='hidden'` set karenge agar wo live na ho. Dono flags ek saath rahenge.)
-- Sync trigger: `status` badalne par `is_active` auto-update (`live`/`temporarily_stopped`/`coming_soon` → dikhai dene ka flag alag rakha jayega; `hidden` → `is_active=false`), aur seedha `is_active` update hone par bhi `status` sync — taaki purana app aur naya system kabhi takrayein nahi. Sync direction: `status` master hai, `is_active` derived.
+- Migration me explicit: `clean` → `status='live'`; **`courier` aur `store` → `status='hidden'`** (is_active ki current value chahe jo bhi ho). Baaki koi future service row: `is_active` se backfill (true → live, false → hidden). Migration ke baad `service_flags` ki poori table (service_key, is_active, status) report me dikhayenge.
+- Sync trigger: `status` master hai, `is_active` derived — `status` badalne par `is_active` auto-update (`hidden` → false, baaki teeno → true). Purana app bas `is_active` padhta reh jayega, kabhi takraav nahi.
 
 Child tables:
 - `public.service_hours` — `service_flag_id, weekday (0=Sun..6), open_time, close_time, is_closed`. Seed: clean Mon–Sun 09:00–19:00 (baaki jab live hon tab).
