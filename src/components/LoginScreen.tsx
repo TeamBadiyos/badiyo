@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { BadiyoLogo } from "./BadiyoLogo";
-import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/lib/invokeFunction";
 import { captureReferralCode } from "@/lib/referrals";
 import { getErrorMessage } from "@/lib/errorMessage";
 import { hapticImpact } from "@/lib/haptics";
@@ -55,10 +55,7 @@ export function LoginScreen({
 
 
 
-      const { data, error: fnErr } = await supabase.functions.invoke("send-otp", {
-        body: { phone },
-      });
-      if (fnErr) throw fnErr;
+      const data = await invokeFunction<{ error?: string }>("send-otp", { phone });
       if (data?.error) throw new Error(data.error);
       onOtpSent?.(phone);
     } catch (err) {

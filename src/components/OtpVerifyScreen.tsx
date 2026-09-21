@@ -42,15 +42,15 @@ export function OtpVerifyScreen({
     setLoading(true);
     setError(null);
     try {
-      const { data, error: fnErr } = await supabase.functions.invoke("verify-otp", {
-        body: { phone, code: fullCode },
-      });
+      const data = await invokeFunction<{
+        access_token?: string;
+        refresh_token?: string;
+        error?: string;
+      }>("verify-otp", { phone, code: fullCode });
       console.info("[otp] verify-otp response", {
-        hasError: !!fnErr,
         keys: data ? Object.keys(data) : null,
         error: data?.error ?? null,
       });
-      if (fnErr) throw fnErr;
       if (!data?.access_token || !data?.refresh_token) {
         throw new Error(data?.error || "Invalid code");
       }
