@@ -86,12 +86,20 @@ export function LocationPickerSheet({
     }
   }, [open]);
 
-  // Native back closes the map layer first, then the sheet itself.
+  // Native back: the map layer registers its own handler, so skip it here.
+  // Otherwise back clears an active search first, then closes the sheet.
+  const searchActive = query.trim().length > 0;
   useEffect(() => {
-    if (!open) return;
-    if (showMap) return pushBackHandler(() => setShowMap(false));
+    if (!open || showMap) return;
+    if (searchActive)
+      return pushBackHandler(() => {
+        setQuery("");
+        setResults([]);
+        setSearchError(null);
+        (document.activeElement as HTMLElement | null)?.blur?.();
+      });
     return pushBackHandler(() => onClose());
-  }, [open, showMap, onClose]);
+  }, [open, showMap, searchActive, onClose]);
 
   // Live place search (Geocoding API) alongside the saved-address filter.
   useEffect(() => {

@@ -20,6 +20,7 @@ import {
   type AddressSuggestion,
 } from "@/lib/addressSearch";
 import { PlaceSuggestionList } from "./PlaceSuggestionList";
+import { pushBackHandler } from "@/lib/backHandler";
 import { useT } from "@/i18n";
 import { resolveAddress } from "@/lib/reverseGeocode";
 import {
@@ -347,6 +348,33 @@ export function AddAddressMapScreen({
     query.trim().length >= 3 &&
     (suggestions.length > 0 || searching || searchError != null);
 
+  // Back (screen arrow or the phone's back gesture) first dismisses the
+  // search overlay so the map, pin and form come back cleanly; only a second
+  // back leaves the screen.
+  const closeSearch = () => {
+    setQuery("");
+    setSuggestions([]);
+    setSearchError(null);
+    setSearching(false);
+    (document.activeElement as HTMLElement | null)?.blur?.();
+  };
+  const searchActive = searchResultsOpen || query.trim().length > 0;
+  const handleBack = () => {
+    if (searchActive) {
+      closeSearch();
+      return;
+    }
+    onBack();
+  };
+  const handleBackRef = useRef(handleBack);
+  handleBackRef.current = handleBack;
+  // The native stack pops the handler once it runs, so re-register whenever
+  // the search state changes (closing search must not close the screen).
+  useEffect(
+    () => pushBackHandler(() => handleBackRef.current()),
+    [searchActive],
+  );
+
   const handleSave = () => {
     if (!canSave) return;
     const full = `${addressDetails.trim()}, ${autoAddress.trim()}`;
@@ -396,10 +424,10 @@ export function AddAddressMapScreen({
         )}
 
         {/* Top search overlay */}
-        <div className="pointer-events-none absolute inset-x-0 top-[var(--app-safe-top)] z-30 p-4">
+        <div className="pointer-events-none absolute inset-x-0 top-[calc(var(--app-safe-top)+var(--app-top-gap))] z-30 px-4 pb-4">
           <div className="mx-auto flex w-full max-w-md items-center gap-2">
             <button
-              onClick={onBack}
+              onClick={handleBack}
               aria-label="Back"
               className="pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card shadow-sm"
             >
