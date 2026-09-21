@@ -136,16 +136,18 @@ export const cancelBooking = createServerFn({ method: "POST" })
     );
     if (rpcError) throw new Error(rpcError.message);
 
-    // Bookkeeping for the retry worker (service role: these columns are ops-only).
-    await supabaseAdmin
-      .from("bookings")
-      .update({
-        refund_attempts: refundAmount > 0 ? 1 : 0,
-        refund_error: refundError,
-        refund_next_attempt_at:
-          refundStatus === "pending" ? new Date(Date.now() + 60_000).toISOString() : null,
-      })
-      .eq("id", booking.id);
+    // Bookkeeping for the retry worker (server-only: booking rows are guarded).
+    await supabaseAdmin.rpc("system_set_booking_refund_state" as never, {
+      _booking_id: booking.id,
+      _refund_status: refundStatus,
+      _refund_amount: refundAmount,
+      _refund_id: refundId,
+      _refund_attempts: refundAmount > 0 ? 1 : 0,
+      _refund_next_attempt_at:
+        refundStatus === "pending" ? new Date(Date.now() + 60_000).toISOString() : null,
+      _refund_error: refundError,
+    } as never);
+
 
     return {
       ok: true,

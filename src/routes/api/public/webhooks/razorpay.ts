@@ -72,16 +72,16 @@ export const Route = createFileRoute("/api/public/webhooks/razorpay")({
                 ? "failed"
                 : "processing";
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-          await supabaseAdmin
-            .from("bookings")
-            .update({
-              refund_status: status,
-              refund_id: refund.id ?? null,
-              ...(status === "failed"
-                ? { refund_error: `Razorpay refund ${refund.id ?? ""} failed` }
-                : { refund_error: null }),
-            })
-            .eq("id", bookingId);
+          await supabaseAdmin.rpc("system_set_booking_refund_state" as never, {
+            _booking_id: bookingId,
+            _refund_status: status,
+            _refund_amount: null,
+            _refund_id: refund.id ?? null,
+            _refund_attempts: null,
+            _refund_next_attempt_at: null,
+            _refund_error:
+              status === "failed" ? `Razorpay refund ${refund.id ?? ""} failed` : null,
+          } as never);
           return new Response("ok-refund");
         }
 
