@@ -4,7 +4,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Loader2, LocateFixed, MapPin, Plus, Search, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AddAddressMapScreen, type PickedAddress } from "./AddAddressMapScreen";
-import { searchAddresses, type AddressSearchResult } from "@/lib/addressSearch";
+import {
+  endSearchSession,
+  resolveSuggestion,
+  searchPlaceSuggestions,
+  type AddressSuggestion,
+} from "@/lib/addressSearch";
+import { PlaceSuggestionList } from "./PlaceSuggestionList";
+import { useT } from "@/i18n";
 import {
   getCurrentCoords,
   openAppSettings,
@@ -53,10 +60,12 @@ export function LocationPickerSheet({
   const [mapPoint, setMapPoint] = useState<{ lat: number; lng: number } | null>(
     null,
   );
+  const t = useT();
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<AddressSearchResult[]>([]);
+  const [results, setResults] = useState<AddressSuggestion[]>([]);
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [resolvingId, setResolvingId] = useState<string | null>(null);
   const [locLoading, setLocLoading] = useState(false);
   const [locError, setLocError] = useState<string | null>(null);
 
@@ -91,31 +100,43 @@ export function LocationPickerSheet({
       setResults([]);
       setSearching(false);
       setSearchError(null);
+      endSearchSession();
       return;
     }
     let cancelled = false;
     setSearching(true);
     setSearchError(null);
-    const t = setTimeout(() => {
-      searchAddresses(q)
+    const timer = setTimeout(() => {
+      searchPlaceSuggestions(q)
         .then((r) => {
           if (cancelled) return;
           setResults(r);
-          setSearchError(r.length === 0 ? "No matching places found." : null);
+          setSearchError(r.length === 0 ? t("search.noResults") : null);
         })
         .catch((e) => {
           if (cancelled) return;
           console.error("[address] search failed:", e);
           setResults([]);
-          setSearchError("Search isn't working right now. Please try again.");
+          setSearchError(t("search.failed"));
         })
         .finally(() => !cancelled && setSearching(false));
-    }, 350);
+    }, 300);
     return () => {
       cancelled = true;
-      clearTimeout(t);
+      clearTimeout(timer);
     };
-  }, [query, open]);
+  }, [query, open, t]);
+
+  const handlePickSuggestion = (s: AddressSuggestion) => {
+    setResolvingId(s.id);
+    resolveSuggestion(s)
+      .then((p) => openMapAt({ lat: p.lat, lng: p.lng }))
+      .catch((e) => {
+        console.error("[address] place details failed:", e);
+        toast.error(t("search.detailFailed"));
+      })
+      .finally(() => setResolvingId(null));
+  };
 
   const addMutation = useMutation({
     mutationFn: async (input: PickedAddress) => {
