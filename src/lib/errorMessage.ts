@@ -3,6 +3,8 @@
 // "Edge Function returned a non-2xx status code"). Always returns a string
 // that starts with a capital letter.
 
+import { isNetworkError, NETWORK_ERROR_MESSAGE } from "@/lib/networkError";
+
 const capitalize = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
 
 async function readFunctionsErrorBody(err: unknown): Promise<string | null> {
