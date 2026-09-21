@@ -17,6 +17,7 @@ import { Route as ApiPublicPlacesSearchRouteImport } from './routes/api/public/p
 import { Route as ApiPublicHasLoginPinRouteImport } from './routes/api/public/has-login-pin'
 import { Route as ApiPublicGeocodeSearchRouteImport } from './routes/api/public/geocode-search'
 import { Route as ApiPublicWebhooksRazorpayRouteImport } from './routes/api/public/webhooks/razorpay'
+import { Route as ApiPublicPushSendRouteImport } from './routes/api/public/push/send'
 import { Route as ApiPublicCourierProcessRefundsRouteImport } from './routes/api/public/courier/process-refunds'
 import { Route as ApiPublicBookingsProcessRefundsRouteImport } from './routes/api/public/bookings/process-refunds'
 import { Route as ApiPublicAdminAlertProcessRouteImport } from './routes/api/public/admin-alert/process'
@@ -62,6 +63,11 @@ const ApiPublicWebhooksRazorpayRoute =
     path: '/api/public/webhooks/razorpay',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicPushSendRoute = ApiPublicPushSendRouteImport.update({
+  id: '/api/public/push/send',
+  path: '/api/public/push/send',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicCourierProcessRefundsRoute =
   ApiPublicCourierProcessRefundsRouteImport.update({
     id: '/api/public/courier/process-refunds',
@@ -92,6 +98,7 @@ export interface FileRoutesByFullPath {
   '/api/public/admin-alert/process': typeof ApiPublicAdminAlertProcessRoute
   '/api/public/bookings/process-refunds': typeof ApiPublicBookingsProcessRefundsRoute
   '/api/public/courier/process-refunds': typeof ApiPublicCourierProcessRefundsRoute
+  '/api/public/push/send': typeof ApiPublicPushSendRoute
   '/api/public/webhooks/razorpay': typeof ApiPublicWebhooksRazorpayRoute
 }
 export interface FileRoutesByTo {
@@ -105,6 +112,7 @@ export interface FileRoutesByTo {
   '/api/public/admin-alert/process': typeof ApiPublicAdminAlertProcessRoute
   '/api/public/bookings/process-refunds': typeof ApiPublicBookingsProcessRefundsRoute
   '/api/public/courier/process-refunds': typeof ApiPublicCourierProcessRefundsRoute
+  '/api/public/push/send': typeof ApiPublicPushSendRoute
   '/api/public/webhooks/razorpay': typeof ApiPublicWebhooksRazorpayRoute
 }
 export interface FileRoutesById {
@@ -119,6 +127,7 @@ export interface FileRoutesById {
   '/api/public/admin-alert/process': typeof ApiPublicAdminAlertProcessRoute
   '/api/public/bookings/process-refunds': typeof ApiPublicBookingsProcessRefundsRoute
   '/api/public/courier/process-refunds': typeof ApiPublicCourierProcessRefundsRoute
+  '/api/public/push/send': typeof ApiPublicPushSendRoute
   '/api/public/webhooks/razorpay': typeof ApiPublicWebhooksRazorpayRoute
 }
 export interface FileRouteTypes {
@@ -134,6 +143,7 @@ export interface FileRouteTypes {
     | '/api/public/admin-alert/process'
     | '/api/public/bookings/process-refunds'
     | '/api/public/courier/process-refunds'
+    | '/api/public/push/send'
     | '/api/public/webhooks/razorpay'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -147,6 +157,7 @@ export interface FileRouteTypes {
     | '/api/public/admin-alert/process'
     | '/api/public/bookings/process-refunds'
     | '/api/public/courier/process-refunds'
+    | '/api/public/push/send'
     | '/api/public/webhooks/razorpay'
   id:
     | '__root__'
@@ -160,6 +171,7 @@ export interface FileRouteTypes {
     | '/api/public/admin-alert/process'
     | '/api/public/bookings/process-refunds'
     | '/api/public/courier/process-refunds'
+    | '/api/public/push/send'
     | '/api/public/webhooks/razorpay'
   fileRoutesById: FileRoutesById
 }
@@ -174,6 +186,7 @@ export interface RootRouteChildren {
   ApiPublicAdminAlertProcessRoute: typeof ApiPublicAdminAlertProcessRoute
   ApiPublicBookingsProcessRefundsRoute: typeof ApiPublicBookingsProcessRefundsRoute
   ApiPublicCourierProcessRefundsRoute: typeof ApiPublicCourierProcessRefundsRoute
+  ApiPublicPushSendRoute: typeof ApiPublicPushSendRoute
   ApiPublicWebhooksRazorpayRoute: typeof ApiPublicWebhooksRazorpayRoute
 }
 
@@ -235,6 +248,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicWebhooksRazorpayRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/push/send': {
+      id: '/api/public/push/send'
+      path: '/api/public/push/send'
+      fullPath: '/api/public/push/send'
+      preLoaderRoute: typeof ApiPublicPushSendRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/courier/process-refunds': {
       id: '/api/public/courier/process-refunds'
       path: '/api/public/courier/process-refunds'
@@ -270,6 +290,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicAdminAlertProcessRoute: ApiPublicAdminAlertProcessRoute,
   ApiPublicBookingsProcessRefundsRoute: ApiPublicBookingsProcessRefundsRoute,
   ApiPublicCourierProcessRefundsRoute: ApiPublicCourierProcessRefundsRoute,
+  ApiPublicPushSendRoute: ApiPublicPushSendRoute,
   ApiPublicWebhooksRazorpayRoute: ApiPublicWebhooksRazorpayRoute,
 }
 export const routeTree = rootRouteImport
