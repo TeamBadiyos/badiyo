@@ -14,9 +14,13 @@ import { PlaceSuggestionList } from "./PlaceSuggestionList";
 import { useT } from "@/i18n";
 import {
   getCurrentCoords,
-  openAppSettings,
+  LocationDisabledError,
   LocationPermissionError,
 } from "@/lib/nativeGeolocation";
+import {
+  LocationHelpDialog,
+  type LocationHelpKind,
+} from "./LocationHelpDialog";
 import { toast } from "sonner";
 import { pushBackHandler } from "@/lib/backHandler";
 
