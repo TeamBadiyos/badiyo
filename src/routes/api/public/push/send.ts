@@ -128,9 +128,15 @@ export const Route = createFileRoute("/api/public/push/send")({
           console.error("[push] FIREBASE_SERVICE_ACCOUNT_JSON not configured");
           return new Response("Not configured", { status: 500 });
         }
+        // Pasted values sometimes arrive CSV/Excel-quoted: wrapped in quotes
+        // with every inner quote doubled. Normalise before parsing.
+        let normalised = raw.trim();
+        if (normalised.startsWith('"') && normalised.endsWith('"') && normalised.includes('""')) {
+          normalised = normalised.slice(1, -1).replace(/""/g, '"');
+        }
         let sa: ServiceAccount;
         try {
-          sa = JSON.parse(raw) as ServiceAccount;
+          sa = JSON.parse(normalised) as ServiceAccount;
         } catch {
           console.error("[push] service account JSON is not valid JSON");
           return new Response("Not configured", { status: 500 });
