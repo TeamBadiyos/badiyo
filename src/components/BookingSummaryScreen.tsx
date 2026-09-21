@@ -58,10 +58,15 @@ export function BookingSummaryScreen({
   const t = useT();
   const slotInfo = formatSlot(slot, t);
   const gstPercent = useGstPercent();
-  const tax = gstAmount(Number(service.price), gstPercent);
-  const grossTotal = totalWithGst(Number(service.price), gstPercent);
-  const discount = Math.min(coupon?.discount ?? 0, grossTotal);
-  const total = Math.max(grossTotal - discount, 0);
+  const bill = billBreakdown(
+    Number(service.price),
+    gstPercent,
+    coupon?.discount ?? 0,
+  );
+  const tax = bill.gst;
+  const discount = bill.discount;
+  const total = bill.total;
+
 
   const [codeInput, setCodeInput] = useState("");
   const [couponError, setCouponError] = useState<string | null>(null);
