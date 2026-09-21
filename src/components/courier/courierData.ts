@@ -1,6 +1,7 @@
 // Shared reads for the courier (parcel delivery) flow.
 // Everything here is read-only config; fares and dispatch stay server-side.
 import { supabase } from "@/integrations/supabase/client";
+import { getAuthUser } from "@/lib/authUser";
 
 export type CourierVehicle = {
   id: string;
