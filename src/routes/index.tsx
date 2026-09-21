@@ -818,6 +818,7 @@ function Index() {
             onBack={() => setPhase("home")}
             onBooked={(id) => {
               setCourierOrderId(id);
+              setCourierTrackFrom("orders");
               setPhase("courier-track");
             }}
           />
@@ -827,7 +828,7 @@ function Index() {
         <div className="animate-fade-slide-in">
           <CourierTrackingScreen
             orderId={courierOrderId}
-            onBack={() => setPhase("home")}
+            onBack={() => setPhase(courierTrackFrom)}
           />
         </div>
       )}
