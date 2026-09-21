@@ -141,6 +141,19 @@ export const en = {
   "search.detailFailed": "Couldn't open this place. Please pick another one.",
   "search.away": "away",
 
+  // ── Location permission / GPS ────────────────────────────
+  "loc.offTitle": "Turn on your phone's location",
+  "loc.offBody":
+    "Your phone's location (GPS) is off. Turn it on so we can detect your exact address.",
+  "loc.turnOn": "Turn on location",
+  "loc.deniedTitle": "Location permission needed",
+  "loc.deniedBody":
+    "badiyos needs location permission to detect your address correctly. Allow it from settings.",
+  "loc.openSettings": "Open settings",
+  "loc.searchManually": "Search manually",
+  "loc.settingsUnavailable":
+    "Please enable location for badiyos from your phone's settings.",
+
   // ── Booking summary ──────────────────────────────────────
   "summary.title": "Booking Summary",
   "summary.priceDetails": "Price details",
