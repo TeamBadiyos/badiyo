@@ -71,7 +71,7 @@ export function BookingSummaryScreen({
   const total = bill.total;
   const { data: availableCoupons } = useQuery({
     queryKey: ["my_coupons"],
-    queryFn: fetchMyCoupons,
+    queryFn: () => fetchMyCoupons(),
     staleTime: 60_000,
   });
 

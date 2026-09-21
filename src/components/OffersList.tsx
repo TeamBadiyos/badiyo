@@ -77,7 +77,7 @@ function CouponCard({ c }: { c: MyCoupon }) {
 export function OffersList() {
   const { data: coupons, isLoading } = useQuery({
     queryKey: ["my_coupons"],
-    queryFn: fetchMyCoupons,
+    queryFn: () => fetchMyCoupons(),
     staleTime: 60_000,
   });
   const { data: campaigns } = useQuery({
