@@ -165,6 +165,7 @@ import { ensureUserRow } from "@/lib/ensureUserRow";
 import { registerPushForCurrentUser, setPushNavigator } from "@/lib/push";
 import { APP_VERSION, fetchMinSupportedVersion, isBelow } from "@/lib/version";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/lib/invokeFunction";
 
 /** Full-screen brand placeholder shown while a lazy screen chunk loads. */
 function ScreenFallback() {
@@ -698,7 +699,7 @@ function Index() {
             onFallbackOtp={async () => {
               setPhase("otp-verify");
               try {
-                await supabase.functions.invoke("send-otp", { body: { phone: pendingPhone } });
+                await invokeFunction("send-otp", { phone: pendingPhone });
               } catch (e) {
                 console.error("otp fallback send-otp failed", e);
                 toast.error("Couldn't send OTP. Please tap Resend OTP.");
@@ -708,7 +709,7 @@ function Index() {
               setForceResetPin(true);
               setPhase("otp-verify");
               try {
-                await supabase.functions.invoke("send-otp", { body: { phone: pendingPhone } });
+                await invokeFunction("send-otp", { phone: pendingPhone });
               } catch (e) {
                 console.error("forgot-pin send-otp failed", e);
                 toast.error("Couldn't send OTP. Please tap Resend OTP.");
