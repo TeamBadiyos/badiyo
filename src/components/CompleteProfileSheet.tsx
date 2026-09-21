@@ -196,7 +196,7 @@ export function CompleteProfileSheet({ enabled }: { enabled: boolean }) {
       <div
         role="dialog"
         aria-label="Complete your profile"
-        className="w-full max-w-md rounded-t-[24px] bg-card px-5 pb-[calc(env(safe-area-inset-bottom,0px)+20px)] pt-5 animate-fade-slide-in"
+        className="w-full max-w-md rounded-t-[24px] bg-card px-5 pb-[calc(var(--app-safe-bottom)+20px)] pt-5 animate-fade-slide-in"
       >
         <div className="flex items-start justify-between">
           <div>
