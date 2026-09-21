@@ -25,6 +25,7 @@
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
   --color-warning: var(--warning);
+  --color-info: var(--info);
 
 
   --font-sans: "Nunito Sans", ui-sans-serif, system-ui, sans-serif;
@@ -59,6 +60,7 @@
   --input: oklch(0.9 0.008 240);
   --ring: oklch(0.6934 0.1566 160.1);
   --warning: oklch(0.72 0.17 55);
+  --info: oklch(0.59 0.15 242);
 }
 
 @layer base {
@@ -102,6 +104,150 @@
 
 @utility animate-fade-out {
   animation: badiyo-fade-out 500ms ease forwards;
+}
+
+/* ---- Badiyos in-app notifications ---- */
+.badiyos-toaster {
+  --width: min(340px, calc(100vw - 32px));
+}
+
+.badiyos-toast {
+  --toast-status: var(--primary);
+  position: relative;
+  display: flex;
+  width: var(--width);
+  min-height: 54px;
+  align-items: center;
+  gap: 11px;
+  overflow: hidden;
+  border: 1px solid color-mix(in oklab, var(--toast-status) 22%, var(--border));
+  border-radius: 999px;
+  padding: 9px 42px 9px 10px;
+  color: var(--foreground);
+  background: color-mix(in oklab, var(--card) 88%, transparent);
+  box-shadow:
+    0 10px 28px color-mix(in oklab, var(--foreground) 12%, transparent),
+    0 3px 12px color-mix(in oklab, var(--toast-status) 12%, transparent),
+    inset 0 1px 0 color-mix(in oklab, var(--card) 80%, transparent);
+  backdrop-filter: blur(16px) saturate(1.15);
+  -webkit-backdrop-filter: blur(16px) saturate(1.15);
+}
+
+.badiyos-toast::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: var(--toast-status);
+}
+
+.badiyos-toast-success { --toast-status: var(--primary); }
+.badiyos-toast-error { --toast-status: var(--destructive); }
+.badiyos-toast-warning { --toast-status: var(--warning); }
+.badiyos-toast-info { --toast-status: var(--info); }
+.badiyos-toast-loading { --toast-status: var(--primary); }
+
+.badiyos-toast-icon {
+  display: flex;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  color: var(--toast-status);
+  background: color-mix(in oklab, var(--toast-status) 12%, var(--card));
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--toast-status) 12%, transparent);
+}
+
+.badiyos-toast-icon:empty::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--toast-status);
+  box-shadow: 0 0 0 5px color-mix(in oklab, var(--toast-status) 12%, transparent);
+}
+
+.badiyos-toast-icon svg {
+  width: 17px;
+  height: 17px;
+  stroke-width: 2.5;
+}
+
+.badiyos-toast-content {
+  min-width: 0;
+  flex: 1;
+}
+
+.badiyos-toast-title {
+  overflow-wrap: anywhere;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.3;
+  letter-spacing: 0;
+}
+
+.badiyos-toast-description {
+  margin-top: 2px;
+  color: var(--muted-foreground);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: 0;
+}
+
+.badiyos-toast-close {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  display: flex;
+  width: 26px;
+  height: 26px;
+  transform: translateY(-50%);
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 999px;
+  color: var(--muted-foreground);
+  background: color-mix(in oklab, var(--muted) 72%, transparent);
+}
+
+.badiyos-toast-close svg {
+  width: 14px;
+  height: 14px;
+}
+
+.badiyos-toast-action,
+.badiyos-toast-cancel {
+  flex: none;
+  border: 0;
+  border-radius: 999px;
+  padding: 7px 10px;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.badiyos-toast-action {
+  color: var(--primary-foreground);
+  background: var(--toast-status);
+}
+
+.badiyos-toast-cancel {
+  color: var(--foreground);
+  background: var(--muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .badiyos-toast,
+  .badiyos-toast * {
+    animation-duration: 1ms !important;
+    transition-duration: 1ms !important;
+  }
 }
 
 @keyframes badiyo-slide-up {
