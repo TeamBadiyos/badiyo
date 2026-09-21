@@ -347,6 +347,28 @@ export function AddAddressMapScreen({
     query.trim().length >= 3 &&
     (suggestions.length > 0 || searching || searchError != null);
 
+  // Back (screen arrow or the phone's back gesture) first dismisses the
+  // search overlay so the map, pin and form come back cleanly; only a second
+  // back leaves the screen.
+  const closeSearch = () => {
+    setQuery("");
+    setSuggestions([]);
+    setSearchError(null);
+    setSearching(false);
+    (document.activeElement as HTMLElement | null)?.blur?.();
+  };
+  const searchActive = searchResultsOpen || query.trim().length > 0;
+  const handleBack = () => {
+    if (searchActive) {
+      closeSearch();
+      return;
+    }
+    onBack();
+  };
+  const handleBackRef = useRef(handleBack);
+  handleBackRef.current = handleBack;
+  useEffect(() => pushBackHandler(() => handleBackRef.current()), []);
+
   const handleSave = () => {
     if (!canSave) return;
     const full = `${addressDetails.trim()}, ${autoAddress.trim()}`;
