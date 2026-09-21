@@ -13,7 +13,14 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
-import { searchAddresses, type AddressSearchResult } from "@/lib/addressSearch";
+import {
+  endSearchSession,
+  resolveSuggestion,
+  searchPlaceSuggestions,
+  type AddressSuggestion,
+} from "@/lib/addressSearch";
+import { PlaceSuggestionList } from "./PlaceSuggestionList";
+import { useT } from "@/i18n";
 import { resolveAddress } from "@/lib/reverseGeocode";
 import {
   getCurrentCoords,
@@ -113,55 +120,66 @@ export function AddAddressMapScreen({
   const centerRef = useRef(center);
   centerRef.current = center;
   const [query, setQuery] = useState("");
-  const [suggestions, setSuggestions] = useState<AddressSearchResult[]>([]);
+  const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [resolvingId, setResolvingId] = useState<string | null>(null);
   const skipGeocodeRef = useRef(false);
   const [geocodeNonce, setGeocodeNonce] = useState(0);
 
-
-  // Debounced address search (Geocoding API — Places is blocked on this key)
+  // Debounced place search: Google Places first (shop / hospital names with
+  // distance), Geocoding as the fallback. Minimum 3 characters, 300ms idle.
   useEffect(() => {
     const q = query.trim();
     if (q.length < 3) {
       setSuggestions([]);
       setSearching(false);
       setSearchError(null);
+      endSearchSession();
       return;
     }
     let cancelled = false;
     setSearching(true);
     setSearchError(null);
-    const t = setTimeout(() => {
-      searchAddresses(q, centerRef.current)
+    const timer = setTimeout(() => {
+      searchPlaceSuggestions(q, centerRef.current)
         .then((r) => {
           if (cancelled) return;
           setSuggestions(r);
-          setSearchError(r.length === 0 ? "No matching places found." : null);
+          setSearchError(r.length === 0 ? t("search.noResults") : null);
         })
         .catch((e) => {
           if (cancelled) return;
           console.error("[address] search failed:", e);
           setSuggestions([]);
-          setSearchError("Search isn't working right now. Please move the pin instead.");
+          setSearchError(t("search.failed"));
         })
         .finally(() => !cancelled && setSearching(false));
-    }, 350);
+    }, 300);
     return () => {
       cancelled = true;
-      clearTimeout(t);
+      clearTimeout(timer);
       setSearching(false);
     };
-  }, [query]);
+  }, [query, t]);
 
-  const handleSelectSuggestion = (s: AddressSearchResult) => {
-    setSuggestions([]);
-    setSearchError(null);
-    setQuery(s.title);
-    const next = { lat: s.lat, lng: s.lng };
-    if (mapRef.current) mapRef.current.panTo(next);
-    setCenter(next);
-    setGeocodeFailed(false);
+  const handleSelectSuggestion = (s: AddressSuggestion) => {
+    setResolvingId(s.id);
+    resolveSuggestion(s)
+      .then((p) => {
+        setSuggestions([]);
+        setSearchError(null);
+        setQuery(s.title);
+        const next = { lat: p.lat, lng: p.lng };
+        if (mapRef.current) mapRef.current.panTo(next);
+        setCenter(next);
+        setGeocodeFailed(false);
+      })
+      .catch((e) => {
+        console.error("[address] place details failed:", e);
+        toast.error(t("search.detailFailed"));
+      })
+      .finally(() => setResolvingId(null));
   };
 
 
