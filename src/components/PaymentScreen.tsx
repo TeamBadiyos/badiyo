@@ -286,11 +286,13 @@ export function PaymentScreen({
 
       rzpOrderId = data.order_id as string;
 
-      // Fully discounted bill (₹0): skip the payment gateway entirely.
+      // Fully discounted bill (₹0): skip the payment gateway entirely, but
+      // still record a payment reference so the order counts as paid
+      // (dispatch, Command Center board, tracking).
       if (data.free === true || Number(data.amount) === 0) {
-        paymentRef.current = { paymentId: "", orderId: rzpOrderId };
+        paymentRef.current = { paymentId: rzpOrderId, orderId: rzpOrderId };
         setStatus("success");
-        void createBooking(null, rzpOrderId);
+        void createBooking(rzpOrderId, rzpOrderId);
         return;
       }
 
