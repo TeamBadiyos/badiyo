@@ -349,9 +349,13 @@ export const en = {
   "serviceState.notifyMe": "Notify me",
   "serviceState.notifyDone": "You're on the list! We'll tell you when it's live.",
   "serviceState.tempStopped": "Temporarily unavailable",
+  "serviceState.tempStoppedUntil": "Temporarily unavailable — resumes {time}",
   "serviceState.slotUnavailable": "This slot is outside service hours",
   "serviceState.nextAvailable": "Next available: {time}",
   "serviceState.closedTitle": "We're closed right now",
+  "serviceState.ordersClosed": "Orders are closed right now",
+  "serviceState.orderingClosed": "Ordering is closed right now",
+  "serviceState.gotIt": "Got it",
 } as const;
 
 export type TranslationKey = keyof typeof en;

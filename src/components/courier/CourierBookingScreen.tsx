@@ -19,11 +19,23 @@ import {
   UserRound,
 } from "lucide-react";
 import { useLanguage } from "@/i18n";
-import { formatNextOpen, useServiceState } from "@/lib/serviceHours";
+import {
+  fetchServiceState,
+  formatNextOpen,
+  type ServiceState,
+  useServiceState,
+} from "@/lib/serviceHours";
 import { toast } from "sonner";
 import courierBike from "@/assets/courier-bike.png";
 import { AddressSelectionScreen } from "@/components/AddressSelectionScreen";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthUser } from "@/lib/authUser";
@@ -113,6 +125,7 @@ export function CourierBookingScreen({
   const [quoting, setQuoting] = useState(false);
   const [paying, setPaying] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [closedDialogState, setClosedDialogState] = useState<ServiceState | null>(null);
 
   const { data: addresses = [] } = useQuery({ queryKey: ["addresses"], queryFn: fetchAddresses });
   const { data: profile } = useQuery({ queryKey: ["courier_profile"], queryFn: fetchCourierProfile });
@@ -199,6 +212,24 @@ export function CourierBookingScreen({
   );
   const parcelReady = Boolean(vehicleId && typeId && !weightError);
 
+  const serviceMessage = (state: ServiceState): string => {
+    const custom =
+      lang === "mr"
+        ? state.message_mr ?? state.message_en
+        : state.message_en ?? state.message_mr;
+    const next = formatNextOpen(state.next_open_at ?? state.resume_at);
+    if (custom) return custom;
+    if (state.status === "coming_soon") return t("serviceState.comingSoon");
+    if (state.status === "temporarily_stopped") {
+      return next
+        ? t("serviceState.tempStoppedUntil", { time: next })
+        : t("serviceState.tempStopped");
+    }
+    return next
+      ? t("serviceState.closedBanner", { time: next })
+      : t("serviceState.closedNow");
+  };
+
   const payload = useMemo(
     () => ({
       city,
@@ -233,6 +264,13 @@ export function CourierBookingScreen({
     setErr(null);
     setPaying(true);
     try {
+      // Always check again at the final tap. The screen status is intentionally
+      // cached for browsing, but a stale value must never open payment.
+      const latestState = await fetchServiceState("courier");
+      if (latestState && !latestState.can_order) {
+        setClosedDialogState(latestState);
+        return;
+      }
       const order = await courierCreateOrder({
         data: {
           ...payload,
@@ -272,6 +310,22 @@ export function CourierBookingScreen({
       });
       onBooked(order.order_id);
     } catch (error) {
+      const raw = error instanceof Error ? error.message : String(error ?? "");
+      if (/SERVICE_CLOSED/i.test(raw)) {
+        const latestState = await fetchServiceState("courier");
+        setClosedDialogState(
+          latestState ?? {
+            status: "live",
+            visible: true,
+            can_order: false,
+            open: false,
+            reason_code: "closed",
+            message_en: null,
+            message_mr: null,
+          },
+        );
+        return;
+      }
       const paymentError = toPaymentError(error);
       console.error("[courier] payment error", error);
       if (paymentError.category === "cancelled") toast(t("payment.cancelledToast"));
@@ -282,32 +336,6 @@ export function CourierBookingScreen({
       setPaying(false);
     }
   };
-
-  // Service closed (status / hours / holiday / last-order buffer) — block the whole flow.
-  if (courierState && !courierState.can_order) {
-    const custom = lang === "mr" ? courierState.message_mr ?? courierState.message_en : courierState.message_en ?? courierState.message_mr;
-    const next = formatNextOpen(courierState.next_open_at ?? courierState.resume_at);
-    const msg =
-      custom ??
-      (next ? t("serviceState.closedBanner", { time: next }) : t("serviceState.closedNow"));
-    return (
-      <main className="min-h-screen w-full bg-background">
-        <div className="mx-auto flex min-h-screen w-full max-w-md flex-col items-center justify-center px-8 text-center">
-          <Clock className="h-10 w-10 text-[#E5A50A]" />
-          <h1 className="mt-4 text-lg font-bold text-foreground">
-            {t("serviceState.closedTitle")}
-          </h1>
-          <p className="mt-2 text-sm text-muted-foreground">{msg}</p>
-          <button
-            onClick={onBack}
-            className="mt-6 rounded-[14px] bg-primary px-6 py-3 text-sm font-bold text-primary-foreground"
-          >
-            {t("common.back")}
-          </button>
-        </div>
-      </main>
-    );
-  }
 
   if (addressTarget) {
     return (
@@ -358,6 +386,21 @@ export function CourierBookingScreen({
       </header>
 
       <div className="mx-auto w-full max-w-md px-4 py-5">
+        {courierState && !courierState.can_order && (
+          <div className="mb-5 flex items-start gap-3 rounded-lg border border-warning/30 bg-warning/10 p-3.5" role="status">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-warning/15 text-warning">
+              <Clock className="h-5 w-5" />
+            </span>
+            <div className="min-w-0 pt-0.5">
+              <p className="text-sm font-extrabold text-foreground">
+                {t("serviceState.ordersClosed")}
+              </p>
+              <p className="mt-0.5 text-xs font-semibold leading-5 text-muted-foreground">
+                {serviceMessage(courierState)}
+              </p>
+            </div>
+          </div>
+        )}
         {step === 1 && (
           <section className="animate-fade-slide-in space-y-5">
             <div>
@@ -606,6 +649,34 @@ export function CourierBookingScreen({
           </div>
         </div>
       )}
+
+      <Dialog
+        open={closedDialogState !== null}
+        onOpenChange={(open) => {
+          if (!open) setClosedDialogState(null);
+        }}
+      >
+        <DialogContent className="w-[calc(100%-32px)] max-w-sm rounded-lg border-border p-5">
+          <DialogHeader className="items-center text-center">
+            <span className="grid h-12 w-12 place-items-center rounded-full bg-warning/15 text-warning">
+              <Clock className="h-6 w-6" />
+            </span>
+            <DialogTitle className="pt-2 text-xl font-extrabold text-foreground">
+              {t("serviceState.orderingClosed")}
+            </DialogTitle>
+            <DialogDescription className="text-sm font-medium leading-6">
+              {closedDialogState ? serviceMessage(closedDialogState) : ""}
+            </DialogDescription>
+          </DialogHeader>
+          <Button
+            type="button"
+            className="mt-2 h-12 w-full text-base font-bold"
+            onClick={() => setClosedDialogState(null)}
+          >
+            {t("serviceState.gotIt")}
+          </Button>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }

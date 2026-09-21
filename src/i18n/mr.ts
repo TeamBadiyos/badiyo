@@ -347,7 +347,11 @@ export const mr: Partial<Record<keyof typeof en, string>> = {
   "serviceState.notifyMe": "मला कळवा",
   "serviceState.notifyDone": "तुमची नोंद झाली! सेवा सुरू होताच कळवू.",
   "serviceState.tempStopped": "तात्पुरते बंद",
+  "serviceState.tempStoppedUntil": "तात्पुरते बंद — {time} पासून पुन्हा सुरू",
   "serviceState.slotUnavailable": "हा स्लॉट सेवा वेळेबाहेर आहे",
   "serviceState.nextAvailable": "पुढील उपलब्ध: {time}",
   "serviceState.closedTitle": "आम्ही सध्या बंद आहोत",
+  "serviceState.ordersClosed": "ऑर्डर सध्या बंद आहेत",
+  "serviceState.orderingClosed": "सध्या ऑर्डर करता येणार नाही",
+  "serviceState.gotIt": "ठीक आहे",
 };
