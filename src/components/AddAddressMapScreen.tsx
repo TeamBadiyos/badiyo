@@ -409,36 +409,16 @@ export function AddAddressMapScreen({
                   </button>
                 )}
               </div>
-              {suggestions.length > 0 ? (
-                <ul className="absolute inset-x-0 top-full z-20 mt-2 max-h-64 overflow-y-auto rounded-[14px] border border-border bg-card shadow-lg">
-                  {suggestions.map((s, i) => (
-                    <li key={`${s.lat},${s.lng},${i}`}>
-                      <button
-                        type="button"
-                        onClick={() => handleSelectSuggestion(s)}
-                        className="flex w-full items-start gap-2 border-b border-border/60 px-3 py-2.5 text-left last:border-b-0 active:bg-muted"
-                      >
-                        <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                        <span className="min-w-0">
-                          <span className="block truncate text-sm font-semibold text-foreground">
-                            {s.title}
-                          </span>
-                          <span className="block truncate text-xs text-muted-foreground">
-                            {s.address}
-                          </span>
-                        </span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                searchError &&
-                query.trim().length >= 3 &&
-                !searching && (
-                  <div className="absolute inset-x-0 top-full z-20 mt-2 rounded-[14px] border border-border bg-card px-3 py-2.5 text-xs text-muted-foreground shadow-lg">
-                    {searchError}
-                  </div>
-                )
+              {query.trim().length >= 3 && (suggestions.length > 0 || searching || searchError) && (
+                <div className="absolute inset-x-0 top-full z-20 mt-2 max-h-72 overflow-y-auto rounded-[14px] border border-border bg-card shadow-lg">
+                  <PlaceSuggestionList
+                    suggestions={suggestions}
+                    searching={searching}
+                    message={searchError}
+                    busyId={resolvingId}
+                    onPick={handleSelectSuggestion}
+                  />
+                </div>
               )}
             </div>
           </div>
