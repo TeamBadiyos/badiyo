@@ -656,7 +656,7 @@ export function CourierBookingScreen({
           if (!open) setClosedDialogState(null);
         }}
       >
-        <DialogContent className="w-[calc(100%-32px)] max-w-sm rounded-lg border-border p-5">
+        <DialogContent className="w-[calc(100%_-_32px)] max-w-sm rounded-lg border-border p-5">
           <DialogHeader className="items-center text-center">
             <span className="grid h-12 w-12 place-items-center rounded-full bg-warning/15 text-warning">
               <Clock className="h-6 w-6" />
