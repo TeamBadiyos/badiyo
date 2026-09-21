@@ -343,6 +343,9 @@ export function AddAddressMapScreen({
     !geocoding &&
     (!blockOutsideZone || zoneState !== "out") &&
     !isSaving;
+  const searchResultsOpen =
+    query.trim().length >= 3 &&
+    (suggestions.length > 0 || searching || searchError != null);
 
   const handleSave = () => {
     if (!canSave) return;
@@ -382,7 +385,7 @@ export function AddAddressMapScreen({
   }, [photoPreview]);
 
   return (
-    <div className="fixed inset-0 z-30 flex flex-col bg-background">
+    <div className="fixed inset-0 z-30 flex flex-col bg-background pb-[var(--app-safe-bottom)]">
       {/* Map area */}
       <div className="relative flex-1 min-h-0">
         <div ref={mapDivRef} className="absolute inset-0 bg-muted" />
@@ -393,7 +396,7 @@ export function AddAddressMapScreen({
         )}
 
         {/* Top search overlay */}
-        <div className="pointer-events-none absolute inset-x-0 top-0 z-10 p-4">
+        <div className="pointer-events-none absolute inset-x-0 top-[var(--app-safe-top)] z-30 p-4">
           <div className="mx-auto flex w-full max-w-md items-center gap-2">
             <button
               onClick={onBack}
@@ -428,8 +431,8 @@ export function AddAddressMapScreen({
                   </button>
                 )}
               </div>
-              {query.trim().length >= 3 && (suggestions.length > 0 || searching || searchError) && (
-                <div className="absolute inset-x-0 top-full z-20 mt-2 max-h-72 overflow-y-auto rounded-[14px] border border-border bg-card shadow-lg">
+              {searchResultsOpen && (
+                <div className="absolute inset-x-0 top-full z-40 mt-2 max-h-[min(18rem,42dvh)] overflow-y-auto rounded-[14px] border border-border bg-card shadow-lg">
                   <PlaceSuggestionList
                     suggestions={suggestions}
                     searching={searching}
@@ -445,14 +448,21 @@ export function AddAddressMapScreen({
         </div>
 
         {/* Center pin */}
-        <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-full">
+        <div
+          aria-hidden={searchResultsOpen}
+          className={`pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-full transition-opacity ${
+            searchResultsOpen ? "opacity-0" : "opacity-100"
+          }`}
+        >
           <MapPin className="h-10 w-10 text-primary drop-shadow" strokeWidth={2.5} fill="currentColor" />
         </div>
 
         {/* Use current location */}
         <button
           onClick={useCurrentLocation}
-          className="absolute bottom-4 right-4 z-10 flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2.5 text-xs font-bold text-primary shadow-md active:scale-[0.98]"
+          className={`absolute bottom-4 right-4 z-10 flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2.5 text-xs font-bold text-primary shadow-md transition-opacity active:scale-[0.98] ${
+            searchResultsOpen ? "pointer-events-none opacity-0" : "opacity-100"
+          }`}
         >
           <Crosshair className="h-4 w-4" />
           {locating ? "Locating…" : "Use current location"}
@@ -460,7 +470,7 @@ export function AddAddressMapScreen({
       </div>
 
       {/* Bottom sheet */}
-      <div className="rounded-t-[24px] border-t border-border bg-card p-5 pb-6 shadow-2xl">
+      <div className="max-h-[64dvh] overflow-y-auto rounded-t-[24px] border-t border-border bg-card p-5 pb-[calc(var(--app-safe-bottom)+24px)] shadow-2xl">
         <div className="mx-auto w-full max-w-md space-y-4">
           <div>
             <div className="mb-1 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">

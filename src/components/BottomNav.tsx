@@ -52,8 +52,8 @@ export function BottomNav({
     <nav
       className="fixed inset-x-0 bottom-0 z-10 border-t border-border bg-card"
       style={{
-        paddingBottom: "max(2px, env(safe-area-inset-bottom))",
-        height: "calc(72px + env(safe-area-inset-bottom, 0px))",
+        paddingBottom: "max(2px, var(--app-safe-bottom))",
+        height: "calc(72px + var(--app-safe-bottom))",
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
       }}
