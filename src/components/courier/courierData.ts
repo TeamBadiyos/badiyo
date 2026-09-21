@@ -157,3 +157,63 @@ export function courierStepIndex(status: string) {
   if (status === "COMPLETED") return COURIER_STEPS.length - 1;
   return i;
 }
+
+/** Compact 5-stage tracker shown at the top of the tracking screen. */
+export const COURIER_STAGES: Array<{ key: string; label: string; statuses: string[] }> = [
+  { key: "placed", label: "Placed", statuses: ["REQUESTED"] },
+  { key: "rider", label: "Rider", statuses: ["SEARCHING", "DRIVER_ASSIGNED"] },
+  { key: "pickup", label: "Pickup", statuses: ["ARRIVED_PICKUP"] },
+  { key: "transit", label: "On the way", statuses: ["PICKED_UP", "IN_TRANSIT"] },
+  { key: "delivered", label: "Delivered", statuses: ["DELIVERED", "COMPLETED"] },
+];
+
+export function courierStageIndex(status: string) {
+  const i = COURIER_STAGES.findIndex((s) => s.statuses.includes(status));
+  return i < 0 ? 0 : i;
+}
+
+export type RiderLocation = {
+  available: boolean;
+  lat?: number;
+  lng?: number;
+  location_updated_at?: string;
+  stale?: boolean;
+  reason?: string;
+};
+
+export async function fetchRiderLocation(orderId: string): Promise<RiderLocation | null> {
+  const { data, error } = await supabase.rpc("courier_get_rider_location", {
+    _order_id: orderId,
+  });
+  if (error) return null;
+  return (data as unknown as RiderLocation) ?? null;
+}
+
+export type RiderInfo = {
+  available: boolean;
+  name?: string | null;
+  phone?: string | null;
+  photo_url?: string | null;
+};
+
+export async function fetchRiderInfo(orderId: string): Promise<RiderInfo | null> {
+  const { data, error } = await supabase.rpc("courier_get_rider_info", {
+    _order_id: orderId,
+  });
+  if (error) return null;
+  return (data as unknown as RiderInfo) ?? null;
+}
+
+/** Reads the live OTP for the current stage straight into the app. */
+export async function fetchCourierOtp(
+  orderId: string,
+  purpose: "pickup" | "delivery",
+): Promise<string | null> {
+  const { data, error } = await supabase.rpc("courier_get_otp", {
+    _order_id: orderId,
+    _purpose: purpose,
+  });
+  if (error) return null;
+  const payload = data as unknown as { otp?: string | null } | null;
+  return payload?.otp ?? null;
+}
