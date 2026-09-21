@@ -255,7 +255,7 @@ export function AddressSelectionScreen({
 
   return (
     <main className={`min-h-screen w-full bg-background ${manage ? "pb-10" : "pb-28"}`}>
-      <div className="mx-auto w-full max-w-md px-5 pt-6">
+      <div className="mx-auto w-full max-w-md px-5 pt-4">
         {/* Header */}
         <div className="flex items-center gap-3">
           <button
