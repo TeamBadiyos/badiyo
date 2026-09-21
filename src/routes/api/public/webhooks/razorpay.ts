@@ -12,6 +12,14 @@ type RazorpayPaymentEntity = {
   notes?: Record<string, string> | null;
 };
 
+type RazorpayRefundEntity = {
+  id?: string;
+  payment_id?: string;
+  status?: string;
+  notes?: Record<string, string> | null;
+};
+
+
 function safeEqual(a: string, b: string): boolean {
   const bufA = Buffer.from(a);
   const bufB = Buffer.from(b);
@@ -38,7 +46,10 @@ export const Route = createFileRoute("/api/public/webhooks/razorpay")({
 
         let payload: {
           event?: string;
-          payload?: { payment?: { entity?: RazorpayPaymentEntity } };
+          payload?: {
+            payment?: { entity?: RazorpayPaymentEntity };
+            refund?: { entity?: RazorpayRefundEntity };
+          };
         };
         try {
           payload = JSON.parse(raw);
@@ -47,9 +58,37 @@ export const Route = createFileRoute("/api/public/webhooks/razorpay")({
         }
 
         const event = payload.event ?? "";
+
+        // Refund lifecycle: keep the booking's refund state in sync with what
+        // Razorpay actually did, so the app never shows a refund that failed.
+        if (event.startsWith("refund.")) {
+          const refund = payload.payload?.refund?.entity ?? {};
+          const bookingId = refund.notes?.booking_id;
+          if (!bookingId) return new Response("ignored-refund");
+          const status =
+            event === "refund.processed"
+              ? "refunded"
+              : event === "refund.failed"
+                ? "failed"
+                : "processing";
+          const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+          await supabaseAdmin
+            .from("bookings")
+            .update({
+              refund_status: status,
+              refund_id: refund.id ?? null,
+              ...(status === "failed"
+                ? { refund_error: `Razorpay refund ${refund.id ?? ""} failed` }
+                : { refund_error: null }),
+            })
+            .eq("id", bookingId);
+          return new Response("ok-refund");
+        }
+
         if (event !== "payment.captured" && event !== "order.paid") {
           return new Response("ignored");
         }
+
 
         const entity = payload.payload?.payment?.entity ?? {};
         const paymentId = entity.id ?? null;
