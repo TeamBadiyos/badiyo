@@ -4,6 +4,8 @@ import { usePullToRefresh, PullToRefreshIndicator } from "@/lib/usePullToRefresh
 import { ArrowLeft, CalendarCheck, MapPin } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useBookingsLive } from "@/lib/useBookingsLive";
+
 
 export type BookingRow = {
   id: string;
@@ -104,7 +106,14 @@ export function MyBookingsScreen({
   const { data: bookings = [], isLoading, error } = useQuery({
     queryKey: ["my-bookings"],
     queryFn: fetchBookings,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+    refetchOnMount: "always",
+    refetchInterval: 15_000,
+    refetchIntervalInBackground: false,
   });
+  useBookingsLive();
+
 
   const queryClient = useQueryClient();
   const { pull, refreshing } = usePullToRefresh(async () => {
