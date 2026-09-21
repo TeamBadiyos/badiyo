@@ -28,6 +28,13 @@ async function readFunctionsErrorBody(err: unknown): Promise<string | null> {
 export async function getErrorMessage(err: unknown): Promise<string> {
   const bodyMsg = await readFunctionsErrorBody(err);
   if (bodyMsg) return capitalize(bodyMsg);
+  // Connection never reached the server: show something a customer can act on
+  // instead of the raw "Failed to send a request to the Edge Function".
+  if (isNetworkError(err)) {
+    return typeof navigator !== "undefined" && navigator.onLine === false
+      ? "You're offline. Turn on mobile data or Wi-Fi and try again."
+      : NETWORK_ERROR_MESSAGE;
+  }
   if (err instanceof Error && err.message) return capitalize(err.message);
   if (typeof err === "string" && err) return capitalize(err);
   const anyMsg = (err as { message?: unknown })?.message;
