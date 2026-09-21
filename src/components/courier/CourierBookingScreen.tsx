@@ -241,6 +241,11 @@ export function CourierBookingScreen({
           prohibited_items_confirmed: true as const,
         },
       });
+      // Fully discounted parcel: nothing to pay, order is already confirmed.
+      if (order.free || order.amount <= 0) {
+        onBooked(order.order_id);
+        return;
+      }
       const prefill = await getPaymentPrefill(pickupPhone);
       const result = await payWithRazorpay({
         key: order.key_id,
