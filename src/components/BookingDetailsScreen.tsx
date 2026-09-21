@@ -242,6 +242,26 @@ export function BookingDetailsScreen({
           </div>
         </section>
 
+        {/* Refund (cancelled bookings) */}
+        {(() => {
+          const refund = refundLine(booking);
+          if (!refund) return null;
+          return (
+            <section className="mt-3 rounded-[18px] border border-border bg-card p-4 shadow-sm">
+              <h3 className="text-sm font-bold text-foreground">Refund</h3>
+              {Number(booking.cancellation_fee ?? 0) > 0 && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Cancellation fee: Rs {Number(booking.cancellation_fee)}
+                </p>
+              )}
+              <p className="mt-1 text-sm font-semibold text-foreground">{refund.label}</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">{refund.note}</p>
+            </section>
+          );
+        })()}
+
+
+
         {/* Rating (if any) */}
         {booking.rating ? (
           <section className="mt-3 rounded-[18px] border border-border bg-card p-4 shadow-sm">
