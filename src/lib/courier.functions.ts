@@ -245,6 +245,7 @@ export const courierCreateOrder = createServerFn({ method: "POST" })
       razorpay_order_id: rzOrder.id,
       amount: amountPaise,
       key_id: keyId,
+      free: false as const,
     };
   });
 
