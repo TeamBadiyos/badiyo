@@ -2380,6 +2380,7 @@ export type Database = {
           show_in_offers: boolean
           starts_at: string
           status: string
+          target_user_ids: string[] | null
           title: string
           updated_at: string
         }
@@ -2399,6 +2400,7 @@ export type Database = {
           show_in_offers?: boolean
           starts_at?: string
           status?: string
+          target_user_ids?: string[] | null
           title: string
           updated_at?: string
         }
@@ -2418,6 +2420,7 @@ export type Database = {
           show_in_offers?: boolean
           starts_at?: string
           status?: string
+          target_user_ids?: string[] | null
           title?: string
           updated_at?: string
         }
@@ -5595,10 +5598,12 @@ export type Database = {
         Args: { _expert_id: string; _service_category_id: string }
         Returns: string
       }
-      staff_campaign_audience_preview: {
-        Args: { _audience: string }
-        Returns: Json
-      }
+      staff_campaign_audience_preview:
+        | { Args: { _audience: string }; Returns: Json }
+        | {
+            Args: { _audience: string; _target_user_ids?: string[] }
+            Returns: Json
+          }
       staff_cancel_booking: {
         Args: { _booking_id: string; _reason: string }
         Returns: undefined
@@ -6036,6 +6041,7 @@ export type Database = {
           _id: string
           _image_url: string
           _show_in_offers: boolean
+          _target_user_ids?: string[]
           _title: string
         }
         Returns: string
