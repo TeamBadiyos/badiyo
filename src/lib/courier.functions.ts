@@ -197,6 +197,26 @@ export const courierCreateOrder = createServerFn({ method: "POST" })
     const result = created as { order_id: string; quote: { total_amount: number } };
     const amountPaise = Math.round(Number(result.quote.total_amount) * 100);
 
+    // Fully discounted parcel: nothing to charge. Razorpay rejects a zero
+    // amount, so confirm and dispatch the order straight away.
+    if (amountPaise <= 0) {
+      const freeOrderId = `free_courier_${result.order_id}`.slice(0, 40);
+      await supabaseAdmin
+        .from("courier_orders")
+        .update({ razorpay_order_id: freeOrderId })
+        .eq("id", result.order_id);
+      await markCourierPaid(result.order_id, freeOrderId);
+      return {
+        order_id: result.order_id,
+        quote: result.quote,
+        razorpay_order_id: freeOrderId,
+        amount: 0,
+        key_id: keyId,
+        free: true as const,
+      };
+    }
+
+
     const auth = Buffer.from(`${keyId}:${keySecret}`).toString("base64");
     const rzRes = await fetch("https://api.razorpay.com/v1/orders", {
       method: "POST",

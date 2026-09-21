@@ -520,7 +520,7 @@ function Index() {
     });
 
     return () => setPushNavigator(null);
-  }, [setPhase]);
+  }, [setPhase, setCourierTrackFrom]);
 
 
 
