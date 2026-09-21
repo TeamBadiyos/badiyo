@@ -4,9 +4,7 @@ import {
   CircleAlert,
   Info,
   LoaderCircle,
-  Sparkles,
   TriangleAlert,
-  X,
 } from "lucide-react";
 
 type ToasterProps = React.ComponentProps<typeof Sonner>;
