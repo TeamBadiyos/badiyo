@@ -9,7 +9,7 @@ import { getErrorMessage } from "@/lib/errorMessage";
 import { getCurrentCoords } from "@/lib/nativeGeolocation";
 import { useT } from "@/i18n";
 import { hapticImpact } from "@/lib/haptics";
-import { totalWithGst, useGstPercent } from "@/lib/gst";
+import { billBreakdown, useGstPercent } from "@/lib/gst";
 import type { AppliedCoupon } from "@/lib/coupons";
 
 import { payWithRazorpay, toPaymentError } from "@/lib/razorpayCheckout";
@@ -73,7 +73,7 @@ export function PaymentScreen({
 
   
 
-  async function createBooking(paymentId: string, orderId: string) {
+  async function createBooking(paymentId: string | null, orderId: string) {
     setSaveFailed(false);
     try {
       const { data: userData } = await getAuthUser();
@@ -145,7 +145,7 @@ export function PaymentScreen({
           scheduled_time_slot,
           status: "confirmed",
           razorpay_order_id: orderId,
-          razorpay_payment_id: paymentId,
+          razorpay_payment_id: paymentId || null,
           booking_lat,
           booking_lng,
         })
@@ -209,12 +209,15 @@ export function PaymentScreen({
 
   /** Find a booking already created for this payment (client insert race or webhook). */
   async function findBookingForPayment(orderId: string, paymentId: string) {
+    const filter = paymentId
+      ? `razorpay_order_id.eq.${orderId},razorpay_payment_id.eq.${paymentId}`
+      : `razorpay_order_id.eq.${orderId}`;
     const { data, error } = await supabase
       .from("bookings")
       .select(
         "id, service_label, service_duration_minutes, price, slot_type, scheduled_date, scheduled_time_slot, razorpay_payment_id",
       )
-      .or(`razorpay_order_id.eq.${orderId},razorpay_payment_id.eq.${paymentId}`)
+      .or(filter)
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -277,11 +280,19 @@ export function PaymentScreen({
         },
       );
       if (error) throw new Error(error.message);
-      if (!data?.order_id || !data?.key_id) {
+      if (!data?.order_id || (!data?.key_id && data?.free !== true)) {
         throw new Error("Invalid order response");
       }
 
       rzpOrderId = data.order_id as string;
+
+      // Fully discounted bill (₹0): skip the payment gateway entirely.
+      if (data.free === true || Number(data.amount) === 0) {
+        paymentRef.current = { paymentId: "", orderId: rzpOrderId };
+        setStatus("success");
+        void createBooking(null, rzpOrderId);
+        return;
+      }
 
       const prefill = await getPaymentPrefill();
 
@@ -401,7 +412,11 @@ export function PaymentScreen({
   const displayPrice =
     booking?.total_amount && Number(booking.total_amount) > 0
       ? Number(booking.total_amount)
-      : totalWithGst(Number(booking?.price ?? service.price), gstPercent);
+      : billBreakdown(
+          Number(booking?.price ?? service.price),
+          gstPercent,
+          coupon?.discount ?? 0,
+        ).total;
   const displayWhen = booking
     ? booking.slot_type === "now"
       ? t("payment.nowArriving")
