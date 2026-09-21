@@ -26,10 +26,14 @@ export type CourierOrder = {
   status: string;
   city: string | null;
   pickup_address: string;
+  pickup_lat: number | null;
+  pickup_lng: number | null;
   pickup_contact_name: string | null;
   pickup_contact_phone: string | null;
   pickup_contact_edit_count: number | null;
   drop_address: string;
+  drop_lat: number | null;
+  drop_lng: number | null;
   drop_contact_name: string | null;
   drop_contact_phone: string | null;
   drop_contact_edit_count: number | null;
@@ -37,8 +41,14 @@ export type CourierOrder = {
   total_amount: number | null;
   payment_status: string | null;
   package_description: string | null;
+  assigned_expert_id: string | null;
+  cancel_reason_code: string | null;
+  delivered_at: string | null;
   created_at: string;
 };
+
+const COURIER_ORDER_COLUMNS =
+  "id, order_code, status, city, pickup_address, pickup_lat, pickup_lng, pickup_contact_name, pickup_contact_phone, pickup_contact_edit_count, drop_address, drop_lat, drop_lng, drop_contact_name, drop_contact_phone, drop_contact_edit_count, distance_km, total_amount, payment_status, package_description, assigned_expert_id, cancel_reason_code, delivered_at, created_at";
 
 /** Is courier live, and for which city? */
 export async function fetchCourierService(
