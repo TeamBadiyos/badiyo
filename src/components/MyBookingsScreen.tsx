@@ -4,6 +4,8 @@ import { usePullToRefresh, PullToRefreshIndicator } from "@/lib/usePullToRefresh
 import { ArrowLeft, CalendarCheck, MapPin } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useBookingsLive } from "@/lib/useBookingsLive";
+
 
 export type BookingRow = {
   id: string;
