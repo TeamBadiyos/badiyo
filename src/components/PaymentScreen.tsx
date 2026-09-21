@@ -194,7 +194,7 @@ export function PaymentScreen({
       // The server-side webhook safety net may already have created the
       // booking for this payment (which also makes our insert fail on the
       // unique order id). Look it up before showing an error.
-      const recovered = await findBookingForPayment(orderId, paymentId);
+      const recovered = await findBookingForPayment(orderId, paymentId ?? "");
       if (recovered) {
         setBookingId(recovered.id);
         setBooking(recovered);
