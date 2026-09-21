@@ -5111,6 +5111,10 @@ export type Database = {
         }
         Returns: Json
       }
+      credit_booking_completion: {
+        Args: { _booking_id: string }
+        Returns: number
+      }
       credit_referral_for_booking: {
         Args: { _booking_id: string }
         Returns: undefined
