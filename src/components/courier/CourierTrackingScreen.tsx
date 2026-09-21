@@ -1,20 +1,48 @@
-// Live parcel tracking for the customer: status steps, pickup/delivery OTP
-// cards (WhatsApp resend, refresh, contact change) and cancel.
-import { useState } from "react";
+// Live parcel tracking for the customer: stage tracker, live rider map,
+// prominent in-app OTP, rider card, route + fare summary and cancel.
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Loader2, RefreshCw, Send, Pencil } from "lucide-react";
+import {
+  ArrowLeft,
+  Check,
+  CheckCircle2,
+  Loader2,
+  Package,
+  Phone,
+  ShieldCheck,
+  UserRound,
+  XCircle,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
+import { refreshCourierOtp } from "@/lib/courierOtp.functions";
+import { CourierLiveMap } from "./CourierLiveMap";
 import {
-  resendCourierOtp,
-  refreshCourierOtp,
-  updateCourierContact,
-} from "@/lib/courierOtp.functions";
-import { fetchCourierOrder, COURIER_STEPS, courierStepIndex } from "./courierData";
+  fetchCourierOrder,
+  fetchCourierOtp,
+  fetchRiderInfo,
+  COURIER_STAGES,
+  courierStageIndex,
+} from "./courierData";
 
 type Purpose = "pickup" | "delivery";
+
+function OtpDigits({ code }: { code: string | null }) {
+  const digits = (code ?? "••••").split("");
+  return (
+    <div className="mt-4 flex justify-center gap-3">
+      {digits.map((d, i) => (
+        <div
+          key={i}
+          className="flex h-14 w-12 items-center justify-center rounded-2xl border-2 border-primary/30 bg-primary/5 text-2xl font-extrabold text-primary"
+        >
+          {d}
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export function CourierTrackingScreen({
   orderId,
@@ -27,13 +55,83 @@ export function CourierTrackingScreen({
   const { data: order, isLoading } = useQuery({
     queryKey: ["courier_order", orderId],
     queryFn: () => fetchCourierOrder(orderId),
-    refetchInterval: 15_000,
+    refetchInterval: 8000,
+    refetchIntervalInBackground: false,
+    staleTime: 0,
   });
 
-  const [codes, setCodes] = useState<Partial<Record<Purpose, string>>>({});
-  const [busy, setBusy] = useState<string | null>(null);
-  const [editing, setEditing] = useState<Purpose | null>(null);
-  const [newPhone, setNewPhone] = useState("");
+  const status = order?.status ?? "REQUESTED";
+
+  // Realtime: react instantly when the rider moves the order forward.
+  useEffect(() => {
+    const channel = supabase
+      .channel(`courier-track-${orderId}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "courier_orders", filter: `id=eq.${orderId}` },
+        () => {
+          void qc.invalidateQueries({ queryKey: ["courier_order", orderId] });
+          void qc.invalidateQueries({ queryKey: ["my-courier-orders"] });
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [orderId, qc]);
+
+  const { data: rider } = useQuery({
+    queryKey: ["courier-rider-info", orderId, order?.assigned_expert_id],
+    queryFn: () => fetchRiderInfo(orderId),
+    enabled: !!order?.assigned_expert_id,
+    staleTime: 60_000,
+  });
+
+  const otpPurpose: Purpose | null =
+    status === "ARRIVED_PICKUP" ? "pickup" : status === "IN_TRANSIT" ? "delivery" : null;
+
+  // The code is pulled straight into the app — no WhatsApp step needed.
+  const { data: otp } = useQuery({
+    queryKey: ["courier-otp", orderId, otpPurpose],
+    queryFn: async () => {
+      if (!otpPurpose) return null;
+      const existing = await fetchCourierOtp(orderId, otpPurpose);
+      if (existing) return existing;
+      const issued = await refreshCourierOtp({
+        data: { order_id: orderId, purpose: otpPurpose },
+      });
+      return issued?.otp ?? null;
+    },
+    enabled: !!otpPurpose,
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  });
+
+  const [cancelling, setCancelling] = useState(false);
+
+  const stageIdx = useMemo(() => courierStageIndex(status), [status]);
+  const cancelled = status === "CANCELLED" || status === "EXPIRED" || status === "FAILED";
+  const done = status === "DELIVERED" || status === "COMPLETED";
+  const searching = status === "REQUESTED" || status === "SEARCHING";
+  const canCancel = ["REQUESTED", "SEARCHING", "DRIVER_ASSIGNED", "ARRIVED_PICKUP"].includes(status);
+
+  const cancelOrder = async () => {
+    setCancelling(true);
+    try {
+      const { error } = await supabase.rpc("courier_cancel_order", {
+        _order_id: orderId,
+        _reason: "customer_cancelled",
+      });
+      if (error) throw new Error(error.message);
+      await qc.invalidateQueries({ queryKey: ["courier_order", orderId] });
+      await qc.invalidateQueries({ queryKey: ["my-courier-orders"] });
+      toast("Order cancelled");
+    } catch (e) {
+      toast.error((e as Error).message || "Something went wrong. Please try again.");
+    } finally {
+      setCancelling(false);
+    }
+  };
 
   if (isLoading || !order) {
     return (
@@ -43,204 +141,214 @@ export function CourierTrackingScreen({
     );
   }
 
-  const stepIdx = courierStepIndex(order.status);
-  const cancelled = order.status === "CANCELLED";
-  const otpStage: Record<Purpose, boolean> = {
-    pickup: order.status === "ARRIVED_PICKUP",
-    delivery: order.status === "IN_TRANSIT",
-  };
-
-  const run = async (key: string, fn: () => Promise<void>) => {
-    setBusy(key);
-    try {
-      await fn();
-    } catch (e) {
-      toast.error((e as Error).message || "Something went wrong. Please try again.");
-    } finally {
-      setBusy(null);
-    }
-  };
-
-  const doResend = (purpose: Purpose) =>
-    run(`resend-${purpose}`, async () => {
-      const res = await resendCourierOtp({ data: { order_id: orderId, purpose } });
-      setCodes((c) => ({ ...c, [purpose]: res.otp }));
-      toast(
-        res.sent
-          ? `Code sent on WhatsApp (${res.sends_used}/${res.max_sends})`
-          : "WhatsApp send nahi ho paya — code niche dikha diya hai",
-      );
-    });
-
-  const doRefresh = (purpose: Purpose) =>
-    run(`refresh-${purpose}`, async () => {
-      const res = await refreshCourierOtp({ data: { order_id: orderId, purpose } });
-      setCodes((c) => ({ ...c, [purpose]: res.otp }));
-      toast("New code ready");
-    });
-
-  const doUpdateContact = (purpose: Purpose) =>
-    run(`contact-${purpose}`, async () => {
-      await updateCourierContact({
-        data: { order_id: orderId, purpose, new_phone: newPhone },
-      });
-      setEditing(null);
-      setNewPhone("");
-      setCodes((c) => ({ ...c, [purpose]: undefined }));
-      await qc.invalidateQueries({ queryKey: ["courier_order", orderId] });
-      toast("Contact number updated");
-    });
-
-  const cancelOrder = () =>
-    run("cancel", async () => {
-      const { error } = await supabase.rpc("courier_cancel_order", {
-        _order_id: orderId,
-        _reason: "customer_cancelled",
-      });
-      if (error) throw new Error(error.message);
-      await qc.invalidateQueries({ queryKey: ["courier_order", orderId] });
-      toast("Order cancelled");
-    });
-
-  const canCancel = ["REQUESTED", "SEARCHING", "DRIVER_ASSIGNED", "ARRIVED_PICKUP"].includes(
-    order.status,
-  );
-
-  const OtpCard = ({ purpose }: { purpose: Purpose }) => {
-    const phone =
-      purpose === "pickup" ? order.pickup_contact_phone : order.drop_contact_phone;
-    const edits =
-      (purpose === "pickup" ? order.pickup_contact_edit_count : order.drop_contact_edit_count) ?? 0;
-    return (
-      <div className="rounded-2xl border border-border bg-card p-4">
-        <p className="text-sm font-semibold">
-          {purpose === "pickup" ? "Pickup code" : "Delivery code"}
-        </p>
-        <p className="text-xs text-muted-foreground">
-          {purpose === "pickup"
-            ? "Rider ko ye code batayein taki parcel uthaya ja sake."
-            : "Parcel milne par ye code rider ko batayein."}
-        </p>
-        <p className="mt-3 text-2xl font-bold tracking-[0.3em]">{codes[purpose] ?? "••••"}</p>
-        <p className="mt-1 text-xs text-muted-foreground">
-          {phone ? `Contact: ${phone}` : "No contact number"}
-          {edits ? ` · ${edits} change used` : ""}
-        </p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          <Button
-            size="sm"
-            disabled={busy === `resend-${purpose}`}
-            onClick={() => doResend(purpose)}
-          >
-            {busy === `resend-${purpose}` ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Send className="h-4 w-4" />
-            )}
-            Send on WhatsApp
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={busy === `refresh-${purpose}`}
-            onClick={() => doRefresh(purpose)}
-          >
-            <RefreshCw className="h-4 w-4" />
-            New code
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => {
-              setEditing(editing === purpose ? null : purpose);
-              setNewPhone("");
-            }}
-          >
-            <Pencil className="h-4 w-4" />
-            Change number
-          </Button>
-        </div>
-        {editing === purpose && (
-          <div className="mt-3 flex gap-2">
-            <Input
-              placeholder="New 10-digit mobile"
-              inputMode="numeric"
-              value={newPhone}
-              onChange={(e) => setNewPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
-            />
-            <Button
-              size="sm"
-              disabled={newPhone.length !== 10 || busy === `contact-${purpose}`}
-              onClick={() => doUpdateContact(purpose)}
-            >
-              Save
-            </Button>
-          </div>
-        )}
-      </div>
-    );
-  };
-
   return (
-    <div className="min-h-dvh bg-background pb-24">
+    <div className="min-h-dvh bg-background pb-28">
       <div className="bleed-safe-top sticky top-0 z-10 flex items-center gap-3 border-b border-border bg-background px-4 pb-3 [--bleed-top-extra:12px]">
         <button type="button" onClick={onBack} aria-label="Back">
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <h1 className="text-base font-semibold">
-          Parcel {order.order_code ? `#${order.order_code}` : ""}
-        </h1>
+        <div className="min-w-0">
+          <h1 className="truncate text-base font-semibold">
+            Parcel {order.order_code ? `#${order.order_code}` : ""}
+          </h1>
+          <p className="text-[11px] text-muted-foreground">
+            {cancelled
+              ? "Cancelled"
+              : done
+                ? "Delivered"
+                : COURIER_STAGES[stageIdx]?.label ?? "In progress"}
+          </p>
+        </div>
       </div>
 
       <div className="space-y-4 px-4 py-4">
-        <div className="rounded-2xl border border-border bg-card p-4">
-          {cancelled ? (
-            <p className="text-sm font-semibold text-destructive">This order was cancelled.</p>
-          ) : (
-            <ol className="space-y-2">
-              {COURIER_STEPS.map((s, i) => (
-                <li key={s.key} className="flex items-center gap-3 text-sm">
-                  <span
-                    className={`h-2.5 w-2.5 rounded-full ${
-                      i <= stepIdx ? "bg-primary" : "bg-muted"
-                    }`}
-                  />
-                  <span className={i <= stepIdx ? "font-medium" : "text-muted-foreground"}>
-                    {s.label}
-                  </span>
-                </li>
-              ))}
-            </ol>
-          )}
-        </div>
+        {/* Stage tracker */}
+        {!cancelled && (
+          <div className="rounded-[20px] border border-border bg-card p-4">
+            <div className="flex items-center justify-between">
+              {COURIER_STAGES.map((s, i) => {
+                const complete = i < stageIdx || (done && i === COURIER_STAGES.length - 1);
+                const active = i === stageIdx;
+                return (
+                  <div key={s.key} className="flex flex-1 flex-col items-center">
+                    <div className="flex w-full items-center">
+                      <div
+                        className={`h-[2px] flex-1 ${
+                          i === 0 ? "bg-transparent" : complete || active ? "bg-primary" : "bg-border"
+                        }`}
+                      />
+                      <div
+                        className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 text-[10px] font-bold ${
+                          complete
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : active
+                              ? "border-primary bg-primary/10 text-primary"
+                              : "border-border bg-card text-muted-foreground"
+                        }`}
+                      >
+                        {complete ? <Check className="h-3 w-3" /> : i + 1}
+                      </div>
+                      <div
+                        className={`h-[2px] flex-1 ${
+                          i === COURIER_STAGES.length - 1
+                            ? "bg-transparent"
+                            : complete
+                              ? "bg-primary"
+                              : "bg-border"
+                        }`}
+                      />
+                    </div>
+                    <div
+                      className={`mt-1.5 text-center text-[10px] font-medium ${
+                        active ? "text-primary" : complete ? "text-foreground" : "text-muted-foreground"
+                      }`}
+                    >
+                      {s.label}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
-        <div className="rounded-2xl border border-border bg-card p-4 text-sm">
-          <p className="font-medium">Pickup</p>
-          <p className="text-muted-foreground">{order.pickup_address}</p>
-          <p className="mt-2 font-medium">Drop</p>
-          <p className="text-muted-foreground">{order.drop_address}</p>
-          <p className="mt-2 text-muted-foreground">
-            {order.distance_km ? `${order.distance_km} km · ` : ""}
-            ₹{Number(order.total_amount ?? 0).toFixed(2)}
-          </p>
-        </div>
+        {cancelled && (
+          <div className="flex items-start gap-3 rounded-[20px] border border-destructive/30 bg-destructive/5 p-4">
+            <XCircle className="mt-0.5 h-5 w-5 text-destructive" />
+            <div>
+              <p className="text-sm font-semibold text-destructive">This order was cancelled.</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                Any amount paid is refunded to your original payment method.
+              </p>
+            </div>
+          </div>
+        )}
 
-        {otpStage.pickup && <OtpCard purpose="pickup" />}
-        {otpStage.delivery && <OtpCard purpose="delivery" />}
+        {done && (
+          <div className="flex items-start gap-3 rounded-[20px] border border-primary/30 bg-primary/5 p-4">
+            <CheckCircle2 className="mt-0.5 h-5 w-5 text-primary" />
+            <div>
+              <p className="text-sm font-semibold text-primary">Parcel delivered</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                {order.delivered_at
+                  ? new Date(order.delivered_at).toLocaleString()
+                  : "Thanks for using Badiyos."}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Searching animation */}
+        {searching && (
+          <div className="flex flex-col items-center rounded-[20px] border border-border bg-card p-6 text-center">
+            <div className="relative flex h-20 w-20 items-center justify-center">
+              <span className="absolute inline-flex h-20 w-20 animate-ping rounded-full bg-primary/20" />
+              <span className="absolute inline-flex h-14 w-14 rounded-full bg-primary/10" />
+              <Package className="relative h-7 w-7 text-primary" />
+            </div>
+            <p className="mt-4 text-sm font-semibold">Finding a delivery partner nearby…</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              This usually takes a couple of minutes.
+            </p>
+          </div>
+        )}
+
+        {/* Live map */}
+        {!cancelled && !searching && (
+          <CourierLiveMap
+            orderId={orderId}
+            status={status}
+            pickup={{
+              lat: order.pickup_lat,
+              lng: order.pickup_lng,
+              label: order.pickup_address,
+            }}
+            drop={{ lat: order.drop_lat, lng: order.drop_lng, label: order.drop_address }}
+          />
+        )}
+
+        {/* Big in-app OTP */}
+        {otpPurpose && (
+          <div className="rounded-[20px] border-2 border-primary/30 bg-card p-5 text-center">
+            <div className="flex items-center justify-center gap-2 text-primary">
+              <ShieldCheck className="h-5 w-5" />
+              <p className="text-sm font-bold">
+                {otpPurpose === "pickup" ? "Pickup code" : "Delivery code"}
+              </p>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {otpPurpose === "pickup"
+                ? "Share this code with the rider to hand over your parcel."
+                : "Share this code when the parcel is delivered."}
+            </p>
+            <OtpDigits code={otp ?? null} />
+            <p className="mt-3 text-[11px] text-muted-foreground">
+              Never share this code before the parcel is handed over.
+            </p>
+          </div>
+        )}
+
+        {/* Rider card */}
+        {rider?.available && !cancelled && (
+          <div className="flex items-center gap-3 rounded-[20px] border border-border bg-card p-4">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10">
+              {rider.photo_url ? (
+                <img src={rider.photo_url} alt={rider.name ?? "Rider"} className="h-full w-full object-cover" />
+              ) : (
+                <UserRound className="h-6 w-6 text-primary" />
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold">{rider.name ?? "Delivery partner"}</p>
+              <p className="text-xs text-muted-foreground">Your delivery partner</p>
+            </div>
+            {rider.phone && (
+              <a
+                href={`tel:${rider.phone}`}
+                className="flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground"
+              >
+                <Phone className="h-4 w-4" />
+                Call
+              </a>
+            )}
+          </div>
+        )}
+
+        {/* Route + fare */}
+        <div className="rounded-[20px] border border-border bg-card p-4 text-sm">
+          <div className="flex gap-3">
+            <div className="flex flex-col items-center pt-1.5">
+              <span className="h-2.5 w-2.5 rounded-full bg-primary" />
+              <span className="my-1 w-px flex-1 bg-border" />
+              <span className="h-2.5 w-2.5 rounded-sm bg-foreground" />
+            </div>
+            <div className="min-w-0 flex-1 space-y-4">
+              <div>
+                <p className="text-xs font-semibold text-muted-foreground">Pickup</p>
+                <p className="text-sm">{order.pickup_address}</p>
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-muted-foreground">Drop</p>
+                <p className="text-sm">{order.drop_address}</p>
+              </div>
+            </div>
+          </div>
+          <div className="mt-4 flex items-center justify-between border-t border-border pt-3 text-sm">
+            <span className="text-muted-foreground">
+              {order.distance_km ? `${order.distance_km} km` : "Total"}
+            </span>
+            <span className="font-bold">₹{Number(order.total_amount ?? 0).toFixed(2)}</span>
+          </div>
+        </div>
 
         {canCancel && (
-          <Button
-            variant="outline"
-            className="w-full"
-            disabled={busy === "cancel"}
-            onClick={cancelOrder}
-          >
-            Cancel order
+          <Button variant="outline" className="w-full" disabled={cancelling} onClick={cancelOrder}>
+            {cancelling ? <Loader2 className="h-4 w-4 animate-spin" /> : "Cancel order"}
           </Button>
         )}
-        {order.status === "PICKED_UP" && (
+        {(status === "PICKED_UP" || status === "IN_TRANSIT") && (
           <p className="text-center text-xs text-muted-foreground">
-            Parcel uth chuka hai, ab order cancel nahi ho sakta.
+            The parcel has been picked up, so this order can no longer be cancelled.
           </p>
         )}
       </div>
