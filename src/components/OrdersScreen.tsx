@@ -1,10 +1,15 @@
 import { getAuthUser } from "@/lib/authUser";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { usePullToRefresh, PullToRefreshIndicator } from "@/lib/usePullToRefresh";
-import { CalendarCheck, MapPin, Clock } from "lucide-react";
+import { CalendarCheck, MapPin, Clock, Package } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { BottomNav } from "./BottomNav";
-import { fetchCourierEnabled } from "./courier/courierData";
+import {
+  fetchCourierEnabled,
+  fetchMyCourierOrders,
+  COURIER_ACTIVE_STATUSES,
+  type CourierOrder,
+} from "./courier/courierData";
 import { useBookingsLive } from "@/lib/useBookingsLive";
 
 import {
@@ -20,7 +25,7 @@ async function fetchBookings(): Promise<BookingRow[]> {
   const { data, error } = await supabase
     .from("bookings")
     .select(
-      "id, service_label, service_duration_minutes, price, status, slot_type, scheduled_date, scheduled_time_slot, created_at, rating, review_text, address_id, razorpay_payment_id, addresses(label, full_address, area, city, latitude, longitude, is_default)",
+      "id, service_label, service_duration_minutes, price, total_amount, status, slot_type, scheduled_date, scheduled_time_slot, created_at, rating, review_text, address_id, razorpay_payment_id, addresses(label, full_address, area, city, latitude, longitude, is_default)",
     )
     .eq("user_id", uid)
     .is("deleted_at", null)
@@ -30,13 +35,19 @@ async function fetchBookings(): Promise<BookingRow[]> {
 }
 
 function statusPill(status: string): string {
-  if (status === "completed") return "bg-primary/15 text-primary";
-  if (status === "cancelled" || status === "rejected") return "bg-muted text-muted-foreground";
+  const s = status.toLowerCase();
+  if (s === "completed" || s === "delivered") return "bg-primary/15 text-primary";
+  if (s === "cancelled" || s === "rejected" || s === "expired" || s === "failed")
+    return "bg-muted text-muted-foreground";
   return "bg-blue-100 text-blue-700";
 }
 
 function statusLabel(status: string): string {
-  return status.split("_").map((w) => w[0].toUpperCase() + w.slice(1)).join(" ");
+  return status
+    .toLowerCase()
+    .split("_")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
 }
 
 function formatDate(b: BookingRow): string {
@@ -55,16 +66,32 @@ function formatDate(b: BookingRow): string {
   return "—";
 }
 
+function formatStamp(iso: string | null): string {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleDateString("en-US", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+/** One row in the Orders list — either a home service or a parcel. */
+type OrderItem =
+  | { kind: "booking"; id: string; createdAt: string | null; booking: BookingRow }
+  | { kind: "parcel"; id: string; createdAt: string | null; parcel: CourierOrder };
+
 export function OrdersScreen({
   onOpenHome,
   onOpenRewards,
   onOpenBooking,
   onOpenCourier,
+  onOpenCourierOrder,
 }: {
   onOpenHome: () => void;
   onOpenRewards: () => void;
   onOpenBooking: (b: BookingRow) => void;
   onOpenCourier?: () => void;
+  onOpenCourierOrder?: (orderId: string) => void;
 }) {
   const { data: courierEnabled = false } = useQuery({
     queryKey: ["courier_enabled"],
@@ -80,16 +107,53 @@ export function OrdersScreen({
     refetchInterval: 15_000,
     refetchIntervalInBackground: false,
   });
+  const { data: parcels = [], isLoading: parcelsLoading } = useQuery({
+    queryKey: ["my-courier-orders"],
+    queryFn: fetchMyCourierOrders,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+    refetchOnMount: "always",
+    refetchInterval: 15_000,
+    refetchIntervalInBackground: false,
+  });
   useBookingsLive();
 
 
   const queryClient = useQueryClient();
   const { pull, refreshing } = usePullToRefresh(async () => {
-    await queryClient.refetchQueries({ queryKey: ["my-bookings"] });
+    await Promise.all([
+      queryClient.refetchQueries({ queryKey: ["my-bookings"] }),
+      queryClient.refetchQueries({ queryKey: ["my-courier-orders"] }),
+    ]);
   });
 
-  const active = bookings.filter((b) => ACTIVE_TRACKING_STATUSES.includes(b.status));
-  const past = bookings.filter((b) => PAST_STATUSES.includes(b.status));
+  const byNewest = (a: OrderItem, b: OrderItem) =>
+    new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime();
+
+  // Parcels that were never paid for are abandoned drafts — hide them.
+  const visibleParcels = parcels.filter(
+    (p) => p.payment_status === "paid" || p.status !== "REQUESTED",
+  );
+
+  const active: OrderItem[] = [
+    ...bookings
+      .filter((b) => ACTIVE_TRACKING_STATUSES.includes(b.status))
+      .map((b) => ({ kind: "booking" as const, id: b.id, createdAt: b.created_at, booking: b })),
+    ...visibleParcels
+      .filter((p) => COURIER_ACTIVE_STATUSES.includes(p.status))
+      .map((p) => ({ kind: "parcel" as const, id: p.id, createdAt: p.created_at, parcel: p })),
+  ].sort(byNewest);
+
+  const past: OrderItem[] = [
+    ...bookings
+      .filter((b) => PAST_STATUSES.includes(b.status))
+      .map((b) => ({ kind: "booking" as const, id: b.id, createdAt: b.created_at, booking: b })),
+    ...visibleParcels
+      .filter((p) => !COURIER_ACTIVE_STATUSES.includes(p.status))
+      .map((p) => ({ kind: "parcel" as const, id: p.id, createdAt: p.created_at, parcel: p })),
+  ].sort(byNewest);
+
+  const openParcel = (p: CourierOrder) => onOpenCourierOrder?.(p.id);
 
   return (
     <main className="min-h-screen w-full bg-background pb-28 momentum-scroll">
