@@ -2,26 +2,29 @@
 
 Scope: sirf service-level (clean, store, courier) — category-level hours **nahi**. Ye hi hours ki ek hi jagah hai; Customer App, Expert App aur Command Center teeno iske hi RPC padhenge.
 
-App 24x7 khula. Har service ki availability ek hi jagah se: pehle **status**, uske baad **hours + holiday**. Sab IST me. Config na ho to service khuli (fail-open).
+App 24x7 khula. Availability ek hi jagah se: pehle **status**, phir **hours + holiday**. Sab IST me. Config na ho to service khuli (fail-open).
 
-## 1. Data model
+## 1. Data model + is_active sync rule
 
-Sab kuch existing `public.service_flags` par. Naye columns:
+`public.service_flags` naye columns:
 - `status text NOT NULL DEFAULT 'live' CHECK (status in ('live','coming_soon','temporarily_stopped','hidden'))`
-- `status_message_en text`, `status_message_mr text` — khaali ho to built-in default
-- `resume_at timestamptz` — iske baad effective status `live`
-- `hours_enabled boolean default false`, `closed_today_date date`, `closed_today_reason text`,
-  `closed_until timestamptz` — "aaj band" me option: kisi time tak **ya** poore din
+- `status_message_en/mr text` — khaali ho to built-in default
+- `resume_at timestamptz`
+- `hours_enabled boolean default false`, `closed_today_date date`, `closed_today_reason text`, `closed_until timestamptz` ("kisi time tak" ya "poore din" — dono option)
 - `last_order_buffer_minutes int default 0` (Parcel = 30)
 - `status_updated_at`, `status_updated_by`
 
-Child tables:
-- `public.service_hours` — `service_flag_id, weekday (0=Sun..6), open_time, close_time, is_closed`. Seed: teeno services Mon–Sun 09:00–19:00.
-- `public.service_holidays` — `service_flag_id (null = sab), start_date, end_date (date range), reason, reason_mr`.
-- `public.service_hours_bypass_users(user_id)` — test + reviewer (`+919999900000` seed).
-- Undo ke liye `public.service_focus_snapshots` — `undo_token uuid, created_by, before jsonb, after jsonb, expires_at, used_at`.
+**Backfill + sync rule** (kyunki purana app version sirf `is_active` padhta hai):
+- Migration me: `status = 'live' where is_active`, `'hidden' where not is_active`. (Note: live DB me abhi teeno rows `is_active=true` dikh rahi hain — courier aur store aapke hisaab se abhi inactive hone chahiye; backfill current values se hoga, aur courier ko migration me `status='hidden'` set karenge agar wo live na ho. Dono flags ek saath rahenge.)
+- Sync trigger: `status` badalne par `is_active` auto-update (`live`/`temporarily_stopped`/`coming_soon` → dikhai dene ka flag alag rakha jayega; `hidden` → `is_active=false`), aur seedha `is_active` update hone par bhi `status` sync — taaki purana app aur naya system kabhi takrayein nahi. Sync direction: `status` master hai, `is_active` derived.
 
-RLS on; SELECT public (config hai), writes sirf service_role/RPC ke through.
+Child tables:
+- `public.service_hours` — `service_flag_id, weekday (0=Sun..6), open_time, close_time, is_closed`. Seed: clean Mon–Sun 09:00–19:00 (baaki jab live hon tab).
+- `public.service_holidays` — `service_flag_id (null = sab), start_date, end_date (range), reason, reason_mr`.
+- `public.service_hours_bypass_users(user_id)` — seed **phone lookup se** (`+919999900000` ka user dhoondh kar user_id daalega; row na mile to **no-op**, error nahi).
+- `public.service_focus_snapshots` — `undo_token, created_by, before jsonb, after jsonb, expires_at, used_at`.
+
+RLS on; SELECT public, writes sirf RPC ke through.
 
 ## 2. Status ke 4 states
 
@@ -32,98 +35,83 @@ RLS on; SELECT public (config hai), writes sirf service_role/RPC ke through.
 | Temporarily Stopped | haan, custom message + resume time | nahi | chalte rahenge |
 | Hidden | nahi | nahi | chalte rahenge |
 
-`resume_at` beet chuki ho to effective status `live` (read-time evaluation). **Note:** agar `resume_at` aaj 7 PM ke baad ka hai, to `next_open_at` kal 9 AM dikhayega (status live, par hours band) — test #4 me covered. Ek roz ka halka cron `status='live'` likh dega data tidy rakhne ke liye.
+`resume_at` beet chuki ho to effective `live`. `resume_at` aaj 7 PM ke baad ho to `next_open_at` = kal 9 AM (test #4). **Hourly** cron data tidy karta hai (`status='live'` likhna) — read-time evaluation se koi cron ki dependency nahi.
 
 ## 3. Ek shared function — pehle status, phir hours
 
-`public.service_effective_state(_service_key text, _city text default null, _at timestamptz default now())` → jsonb:
+`public.service_effective_state(_service_key text, _city text default null, _at timestamptz default now())` → jsonb (`_city` null ho to default **'Latur'**):
 ```
-{ status, visible, can_order, open,
-  reason_code: 'live'|'coming_soon'|'temporarily_stopped'|'hidden'
-             |'before_open'|'after_close'|'last_order_passed'
-             |'holiday'|'closed_today'|'closed_until'|'weekly_off',
-  message_en, message_mr,
+{ status, visible, can_order, open, reason_code, message_en, message_mr,
   open_time, close_time, last_order_at, next_open_at, resume_at, now_ist }
 ```
-Order: `hidden` → `coming_soon` → `temporarily_stopped`(+resume_at) → holiday (date range) → closed_today/closed_until → weekly off → open/close → last-order buffer → live.
+Order: hidden → coming_soon → temporarily_stopped(+resume_at) → holiday (range) → closed_today/closed_until → weekly off → open/close → last-order buffer → live.
 Fail-open: row missing, `hours_enabled=false`, ya hours rows na mile → `can_order:true`.
 
-Wrappers (duplicate logic kahin nahi):
-- `public.service_can_order(_key, _at)` boolean
-- `public.service_window(_key, _city)` — hours/next-open UI ke liye
+Wrappers: `service_can_order(_key, _at)` boolean; `service_window(_key, _city)`.
 
-Slot parsing (shared, sab jagah ek hi):
-- `public.slot_start_ist(_date date, _slot text)` → timestamptz (IST). "10:00 AM - 12:00 PM" jaise format ka start nikalta hai, slot **end** = start + duration.
-- `bookings_before_insert` isi ko use karega; frontend sirf display ke liye.
+Slot parsing: `public.slot_start_ist(_date date, _slot text)` → timestamptz; **slot duration `service_price_options.duration_minutes` se** aayega (hardcode nahi). `slot_end = start + duration`.
 
-Bypass: `public.service_hours_bypass()` — bypass table ka user ho ya DB me `app.booking_bypass` set ho (sirf SECURITY DEFINER server code hi set karta hai; **customer client ye setting set nahi kar sakta** — migration me confirm test karenge ki anon/authenticated role par `set_config('app.booking_bypass',...)` koi trigger-check bypass na kar sake, kyunki trigger me bypass sirf tab maana jayega jab caller service_role ho — client transaction me ye guard enforce karenge).
+Bypass: `service_hours_bypass()` — bypass table user ya `app.booking_bypass` (sirf SECURITY DEFINER server code set karta hai). Customer client par `set_config` se bypass na ho, iska migration-time test: bypass sirf tab maana jayega jab `session_user`/`current_setting('role')` service_role ho — anon/authenticated transaction me bypass ignore.
 
-## 4. Enforcement (server, IST)
+## 4. Enforcement — sirf NAYE order par
 
-- `bookings_before_insert`: **purana logic bilkul untouched**; sirf shuru me ek block jude — status live nahi, ya slot (start+end) window ke bahar → `RAISE EXCEPTION 'SERVICE_CLOSED:<reason_code>:<next_open_at>'`. Bypass users exempt. **Rollback file me is function ka poora purana CREATE OR REPLACE snapshot rahega.** Migration ke baad ek normal booking test: create → payment → assign.
-- Payment order create (`create-razorpay-order` + booking server fn) par wahi check → purana app version / deep link / notification tap sab block.
-- `courier_create_order` + quote ke shuru me `service_can_order('courier', now())` (close se 30 min pehle naye order band).
-- Chal rahe orders par koi check nahi — dispatch/OTP/complete/refund/cancel as-is.
+- `bookings_before_insert`: purana logic untouched; shuru me ek block — naya booking ka slot (start + duration) window ke bahar ya status non-live → `RAISE EXCEPTION 'SERVICE_CLOSED:<reason_code>:<next_open_at>'`.
+- `create-razorpay-order`: **purpose ke hisaab se** check — sirf `purpose='booking'` (naya booking) aur `purpose='courier'` (naya parcel) par. `extension`, `tip` aur chal rahe order ke kisi bhi payment par **koi check nahi**.
+- `courier_create_order` + quote: `service_can_order('courier', now())` (close se 30 min pehle naye order band).
+- **Webhook rescue insert (service_role) bypass** — razorpay webhook ka paid-order recovery kabhi block nahi hoga.
+- **Paid-but-blocked rule:** agar payment ho gayi ho par order create blocked tha (race), to booking **honor** hogi (rescue insert) — customer ne paise diye hain, order banega; sirf naye requests rokenge. Auto-refund sirf tab jab rescue insert bhi fail ho (existing refund path se).
+- Chal rahe orders (dispatch, OTP, complete, refund, cancel, extension, tip): koi check nahi.
 
 ## 5. Bulk switch + undo
 
-`public.staff_set_service_focus(_live_service_key, _message_en, _message_mr, _others_status text default 'coming_soon')`
-- Sirf **super_admin**; **atomic** single transaction (aadha lag ke nahi rukega).
-- Return: `{ before, after, active_orders: {clean, store, courier}, undo_token, undo_expires_at }` — **active orders ki ginti badalne se pehle** li jayegi.
-- `audit_logs` me before/after + actor.
+`staff_set_service_focus(_live_service_key, _message_en, _message_mr, _others_status default 'coming_soon')`
+- Sirf **super_admin**, single transaction (atomic).
+- **Pehle** active orders ki ginti → return `{ before, after, active_orders, undo_token, undo_expires_at }` + `audit_logs` row.
 
-`public.staff_undo_service_focus(_undo_token uuid)`
-- Token sirf **usi staff** ka, **10 minute** me expire, **ek hi baar** (`used_at` mark).
-- Beech me kisi aur ne kisi service ka status badla ho to current state snapshot se compare karke **reject** ("state changed since then").
+`staff_undo_service_focus(_undo_token)`
+- Sirf usi staff ka, **10 minute** expiry, **ek baar**; beech me kisi aur ne status badla ho to reject.
 
-Saare `staff_set_*` functions ke roles:
-| Function | Kaun chala sakta |
-|---|---|
-| `staff_set_service_focus`, `staff_undo_service_focus`, `staff_set_service_status`, `staff_set_service_hours`, `staff_set_service_holiday`, `staff_remove_service_holiday`, `staff_close_service_today`, `staff_reopen_service_today`, `staff_set_service_hours_enabled`, `staff_set_last_order_buffer` | sirf super_admin (service_role ke through) |
-| `service_effective_state`, `service_window`, `service_can_order` | public read (anon + authenticated) — sirf read |
-
-Sab par: `EXECUTE revoke from public, anon, authenticated` (staff fns), `set search_path = public` fixed, role check function ke andar bhi.
+Roles: saare `staff_set_*` — sirf super_admin via service_role; `revoke EXECUTE from public, anon, authenticated`; fixed `search_path = public`. `service_effective_state/window/can_order` — public read-only.
 
 ## 6. Coming Soon — Notify me
 
-- Tile par "Notify me" button → existing `waitlist_requests` me row (user + service). Unique constraint se **duplicate nahi** banega; dobara tap par "Aap already list me hain".
-- Service live hone par: `staff_set_service_status` → `live` hone par trigger waitlist ke users ko push notification queue karega (existing `notify_push_event` rasta), phir rows notify-mark.
+- Tile par "Notify me" → `waitlist_requests` (user + service); **login zaroori**, unique constraint se duplicate nahi; dobara tap → "Aap already list me hain".
+- Service `live` hone par trigger waitlist users ko `notify_push_event` se **batch me** push queue karega — ek user ko **ek hi baar** (`notified_at` mark), phir list clear/expire.
 
 ## 7. App UI (English + Marathi)
 
-- Home: hidden service list me nahi; Coming Soon → badge + Notify me; Temporarily Stopped → custom message + resume time; Live but closed → "Abhi band hai — Kal subah 9 baje se shuru" (holiday par next open date + reason).
-- Tap par bottom sheet, app kahin nahi rukta.
-- Slot screen: bahar ke slots greyed, "Next available: Kal 9:00 AM" banner, pehla available slot highlight.
+- Home: hidden list me nahi; Coming Soon → badge + Notify me; Temporarily Stopped → message + resume time; Live but closed → "Abhi band hai — Kal subah 9 baje se shuru" / holiday par next open date.
+- Slot screen: bahar ke slots greyed, "Next available" banner, pehla available highlight. Slot availability me duration `duration_minutes` se (7 PM slot tabhi dikhe jab end 7 PM tak fit ho).
 - Parcel: buffer ke baad "Aaj ke parcel orders band" + kal ka open time.
-- i18n keys `serviceState.*` en + mr; DB message ho to wahi jeetta hai.
+- i18n `serviceState.*` en + mr; DB message pradhan.
 
 ## 8. Cache
 
-- Query key `["service-state", key]`, staleTime 60s, refetchInterval 60s, focus + resume par refresh.
-- `queryPersistence.ts` ki `PERSISTED_KEYS` me `service-state` **nahi** jayega (wo list allow-list hai, isliye exclude automatic — build me ek test/assert se confirm karenge). Client check sirf UX; asli rok server par.
+`["service-state", key]`, staleTime 60s, refetchInterval 60s, focus + resume refresh. `queryPersistence.ts` allow-list me `service-state` nahi jayega (automatic exclude — build me assert se confirm).
 
 ## 9. Cron safety
 
-Chal rahe jobs (dispatch, reminders, sweeper, refunds, rewards) me koi status/hours check **nahi** jodega — wo existing orders par kaam karte hain, check jodne se galat cancel/fail hota. Sirf ek naya daily job: `resume_at` beet chuki services ko `live` likhna.
+Chal rahe jobs (dispatch, reminders, sweeper, refunds, rewards) me koi check nahi jodega. Ek naya **hourly** job: `resume_at` beet chuki services ko `live` likhna.
 
 ## 10. Rollback SQL
 
-`supabase/service_hours_rollback.sql`: cron unschedule, saare naye functions drop, 4 naye tables drop, `service_flags` ke saare naye columns drop, aur `bookings_before_insert` + `courier_create_order` ke **purane version ka poora CREATE OR REPLACE** snapshot.
+`supabase/service_hours_rollback.sql`: hourly cron unschedule, saare naye functions + 4 tables drop, `service_flags` naye columns drop, sync trigger drop, aur `bookings_before_insert` + `courier_create_order` ke **purane version ka poora CREATE OR REPLACE** snapshot.
 
-## 11. Tests (build ke baad chalenge)
+## 11. Tests (build ke baad)
 
-1. Non-live status par API se seedha booking → reject.
-2. Hours ke andar slot → allow; 9 AM slot allow, **7 PM slot reject** (end 8 PM > close), "10:00 AM - 12:00 PM" format parse, **12 AM / 12 PM edge** parse sahi.
-3. Holiday (single date + date range) par reject.
+1. Non-live par API se seedha booking → reject.
+2. Slot parsing: 9 AM allow; **7 PM slot reject** (end > close); "10:00 AM - 12:00 PM" parse; **12 AM/12 PM edge** sahi.
+3. **Duration-aware:** 2-hour booking 5 PM start → allow (end 7 PM); 6 PM start → reject; 1-hour booking 6 PM start → allow.
 4. `resume_at` aaj 7 PM ke baad → `next_open_at` = kal 9 AM.
-5. Reviewer allowlist (`+919999900000`) par saare checks skip.
-6. Bulk preset atomic (beech me failure par kuch na badle) + undo (expiry, one-time, state-changed reject).
-7. Notify me duplicate → doosri row nahi.
-8. Chal raha order close time ke baad bhi normally complete ho.
-9. Fail-open: config row delete kar do to service khuli rahe.
-10. Migration ke baad normal booking end-to-end (create → payment → assign).
+5. Holiday (single + range) reject; reviewer bypass skip.
+6. Bulk preset atomic + undo (expiry/one-time/state-changed reject).
+7. Notify me duplicate nahi; push ek user ek baar.
+8. Chal raha order close ke baad bhi complete; extension/tip payment unblock.
+9. Webhook rescue insert bypass; paid-but-blocked → booking honor.
+10. Fail-open: config row delete → service khuli.
+11. **Migration ke baad report:** ek normal booking end-to-end test (create → payment → assign) ka result + `service_flags` ki current values (service_key, is_active, status).
 
 ## Rollout order
-1. Migration (columns + tables + functions), `status='live'`, `hours_enabled=false` — kuch nahi badalta.
-2. Server enforcement + app UI ship.
+1. Migration (backfill: is_active → status; courier/store inactive agar DB me inactive hain) — `hours_enabled=false`, kuch nahi badalta.
+2. Server enforcement (sirf naye orders) + app UI ship.
 3. Command Center se hours on: 9 AM – 7 PM, parcel buffer 30 min.
