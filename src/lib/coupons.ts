@@ -83,10 +83,11 @@ export async function previewCoupon(
   return { ok: false, message: reasonMessage(String(res.reason ?? ""), res) };
 }
 
-export async function fetchMyCoupons(): Promise<MyCoupon[]> {
+export async function fetchMyCoupons(options?: { throwOnError?: boolean }): Promise<MyCoupon[]> {
   const { data, error } = await supabase.rpc("my_coupons");
   if (error) {
     console.error("my_coupons failed:", error);
+    if (options?.throwOnError) throw error;
     return [];
   }
   return (data ?? []) as MyCoupon[];

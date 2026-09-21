@@ -19,7 +19,7 @@ type EvaluatedCoupon = {
 };
 
 async function evaluateCoupons(service: SelectedService): Promise<EvaluatedCoupon[]> {
-  const coupons = await fetchMyCoupons();
+  const coupons = await fetchMyCoupons({ throwOnError: true });
   return Promise.all(
     coupons.map(async (coupon) => ({
       coupon,
