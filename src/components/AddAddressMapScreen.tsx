@@ -493,14 +493,27 @@ export function AddAddressMapScreen({
               </span>
             </div>
             {!geocoding && geocodeFailed && (
-              <button
-                type="button"
-                onClick={() => setGeocodeNonce((n) => n + 1)}
-                className="mt-2 flex items-center gap-1.5 rounded-[12px] border border-border bg-card px-3 py-2 text-xs font-bold text-primary active:scale-[0.98]"
-              >
-                <RotateCw className="h-3.5 w-3.5" />
-                Tap to retry
-              </button>
+              <div className="mt-2 space-y-2">
+                <button
+                  type="button"
+                  onClick={() => setGeocodeNonce((n) => n + 1)}
+                  className="flex items-center gap-1.5 rounded-[12px] border border-border bg-card px-3 py-2 text-xs font-bold text-primary active:scale-[0.98]"
+                >
+                  <RotateCw className="h-3.5 w-3.5" />
+                  Tap to retry
+                </button>
+                <textarea
+                  value={autoAddress}
+                  onChange={(e) => setAutoAddress(e.target.value)}
+                  rows={2}
+                  placeholder="Type your area, road and city"
+                  className="w-full rounded-[14px] border border-border bg-background px-4 py-3 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                />
+                <p className="text-[11px] leading-snug text-muted-foreground">
+                  We couldn't detect the address here — type it yourself. The
+                  map pin stays where you placed it.
+                </p>
+              </div>
             )}
             {!geocodeFailed && (
               <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
