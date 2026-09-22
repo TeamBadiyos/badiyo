@@ -195,9 +195,11 @@ export function HomeScreen({
     return next ? t("serviceState.opensAt", { time: next }) : t("serviceState.closedNow");
   })();
 
-  // Closed-service message (custom DB message first, then a default with next-open time).
+  // Blocked only when the service itself isn't live (coming soon / stopped / hidden).
+  // Merely being outside today's hours must NOT block browsing: the slot screen
+  // still allows scheduling for a later day.
   const blockedMessage = (): string | null => {
-    if (!cleanState || cleanState.can_order) return null;
+    if (!cleanState || cleanState.status === "live") return null;
     const custom = lang === "mr" ? cleanState.message_mr ?? cleanState.message_en : cleanState.message_en ?? cleanState.message_mr;
     if (custom) return custom;
     if (cleanState.status === "coming_soon") return t("serviceState.comingSoon");
