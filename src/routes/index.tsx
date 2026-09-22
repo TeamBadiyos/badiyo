@@ -686,7 +686,10 @@ function Index() {
         />
       )}
       <Suspense fallback={null}>
-        {forceUpdate && <ForceUpdateScreen />}
+        {forceUpdate && <ForceUpdateScreen playStoreUrl={storeUrl} />}
+        {!forceUpdate && softUpdate && (
+          <SoftUpdateDialog playStoreUrl={storeUrl} onClose={() => setSoftUpdate(false)} />
+        )}
         {!online && <NoInternetScreen onRetry={() => setOnline(navigator.onLine)} />}
       </Suspense>
 
