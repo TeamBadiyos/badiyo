@@ -123,17 +123,19 @@ export const Route = createFileRoute("/api/public/courier/process-refunds")({
 
             if (res.ok) {
               const refund = (await res.json()) as { id?: string };
-              await supabaseAdmin
-                .from("courier_orders")
-                .update({
-                  refund_status: "done",
-                  payment_status: "refunded",
-                  refund_id: refund.id ?? null,
-                })
-                .eq("id", row.id);
+              await markRefunded(refund.id ?? null);
               done++;
             } else {
               const text = await res.text();
+              // Razorpay says the money is already back: this is success, not failure.
+              const alreadyRefunded =
+                /fully refunded|greater than the refund|already been refunded/i.test(text);
+              if (alreadyRefunded) {
+                console.warn("[courier-refunds] already refunded at gateway", row.id);
+                await markRefunded(null);
+                done++;
+                continue;
+              }
               console.error("[courier-refunds] razorpay refused", row.id, res.status, text);
               const giveUp = attempts >= 5;
               await supabaseAdmin
