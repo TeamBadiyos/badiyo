@@ -214,21 +214,27 @@ export type Database = {
         Row: {
           current_version: string
           id: number
+          latest_version_code: number
           min_supported_version: string
+          min_supported_version_code: number
           play_store_url: string | null
           updated_at: string
         }
         Insert: {
           current_version?: string
           id?: number
+          latest_version_code?: number
           min_supported_version?: string
+          min_supported_version_code?: number
           play_store_url?: string | null
           updated_at?: string
         }
         Update: {
           current_version?: string
           id?: number
+          latest_version_code?: number
           min_supported_version?: string
+          min_supported_version_code?: number
           play_store_url?: string | null
           updated_at?: string
         }
@@ -6172,6 +6178,16 @@ export type Database = {
       staff_send_support_message: {
         Args: { _body: string; _ticket_id: string }
         Returns: string
+      }
+      staff_set_app_versions: {
+        Args: {
+          _current_version?: string
+          _latest_version_code?: number
+          _min_supported_version?: string
+          _min_supported_version_code?: number
+          _play_store_url?: string
+        }
+        Returns: Json
       }
       staff_set_availability_override: {
         Args: {
