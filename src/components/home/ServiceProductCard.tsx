@@ -1,4 +1,5 @@
 import { memo, useState } from "react";
+import { Clock } from "lucide-react";
 import { toast } from "sonner";
 import { anchorPrice } from "@/lib/price";
 import { sizedImageUrl } from "@/lib/serviceImage";
