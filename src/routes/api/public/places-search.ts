@@ -9,6 +9,7 @@
 // The Google key stays on the server.
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
+import { resolveSupabaseUrl } from "@/lib/supabaseEndpoint";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -54,7 +55,7 @@ export const Route = createFileRoute("/api/public/places-search")({
         const token = (request.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
         if (!token) return json({ error: "Unauthorized" }, 401);
 
-        const SUPABASE_URL = process.env['SUPABASE_URL'];
+        const SUPABASE_URL = resolveSupabaseUrl(process.env['SUPABASE_URL']);
         const SUPABASE_PUBLISHABLE_KEY = process.env['SUPABASE_PUBLISHABLE_KEY'];
         if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
           return json({ error: "Server not configured" }, 500);
