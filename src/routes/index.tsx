@@ -780,7 +780,21 @@ function Index() {
               try {
                 await withTimeout(ensureUserRow(`+91${pendingPhone}`), 8000, "ensureUserRow");
                 console.info("[otp] ensureUserRow ok");
-                import("@/lib/referrals").then((m) => m.linkReferralIfAny()).catch(() => {});
+                // Attach the invite BEFORE the home screen / profile popup
+                // renders: otherwise the popup reads referred_by=null and asks
+                // the friend to type a code that we already have.
+                try {
+                  const referrer = await import("@/lib/installReferrer");
+                  await withTimeout(referrer.captureInstallReferrer(), 4000, "installReferrer");
+                } catch (refErr) {
+                  console.warn("[otp] install referrer capture skipped", refErr);
+                }
+                try {
+                  const referrals = await import("@/lib/referrals");
+                  await withTimeout(referrals.linkReferralIfAny(), 6000, "linkReferralIfAny");
+                } catch (linkErr) {
+                  console.warn("[otp] linkReferralIfAny failed", linkErr);
+                }
                 let hasPin = false;
                 try {
                   const res = await withTimeout(

@@ -19,6 +19,10 @@ import { isNativeShell } from "@/lib/nativeServerFn";
 import { getStoredReferralCode, storeReferralCode } from "@/lib/referrals";
 
 const DONE_KEY = "badiyo.installReferrerRead";
+const ATTEMPTS_KEY = "badiyo.installReferrerAttempts";
+/** Play Services can answer empty on the very first launch — retry before giving up. */
+const MAX_ATTEMPTS = 3;
+const RETRY_DELAY_MS = 1500;
 
 type InstallReferrerPlugin = {
   getReferrer(options?: Record<string, unknown>): Promise<{
@@ -67,9 +71,32 @@ function markRead() {
   }
 }
 
+function attemptsSoFar(): number {
+  try {
+    return Number(window.localStorage.getItem(ATTEMPTS_KEY) ?? "0") || 0;
+  } catch {
+    return 0;
+  }
+}
+
+function bumpAttempts(): number {
+  const next = attemptsSoFar() + 1;
+  try {
+    window.localStorage.setItem(ATTEMPTS_KEY, String(next));
+  } catch {
+    /* ignore */
+  }
+  return next;
+}
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 /**
- * Reads the Play install referrer once per install and stores the referral
- * code if we don't already have one. Safe to call on every app start.
+ * Reads the Play install referrer and stores the referral code if we don't
+ * already have one. Safe to call on every app start (splash + login screen):
+ * an empty answer is NOT treated as final — Play Services often needs a second
+ * or two after first launch, so we retry (up to MAX_ATTEMPTS across launches)
+ * before marking the install as read.
  */
 export async function captureInstallReferrer(): Promise<string | null> {
   if (typeof window === "undefined") return null;
@@ -91,18 +118,29 @@ export async function captureInstallReferrer(): Promise<string | null> {
     return null;
   }
 
-  try {
-    const result = await InstallReferrer.getReferrer();
-    // Mark read even when empty: the value never changes for an install.
-    markRead();
-    const raw = result?.referrer ?? result?.installReferrer ?? null;
-    const code = parseReferralCodeFromReferrer(typeof raw === "string" ? raw : null);
-    if (!code) return null;
-    if (getStoredReferralCode()) return null; // an explicit invite link wins
-    storeReferralCode(code);
-    return code;
-  } catch (e) {
-    console.warn("[installReferrer] getReferrer failed:", e);
-    return null;
+  for (let i = 0; ; i++) {
+    const attempt = bumpAttempts();
+    try {
+      const result = await InstallReferrer.getReferrer();
+      const raw = result?.referrer ?? result?.installReferrer ?? null;
+      const code = parseReferralCodeFromReferrer(typeof raw === "string" ? raw : null);
+      if (code) {
+        markRead();
+        if (getStoredReferralCode()) return null; // an explicit invite link wins
+        storeReferralCode(code);
+        return code;
+      }
+    } catch (e) {
+      console.warn("[installReferrer] getReferrer failed:", e);
+    }
+
+    if (attempt >= MAX_ATTEMPTS) {
+      // Genuinely nothing to attribute for this install — stop asking.
+      markRead();
+      return null;
+    }
+    // Retry inside this launch too, so a single cold start can still catch it.
+    if (i >= 1) return null;
+    await sleep(RETRY_DELAY_MS);
   }
 }
