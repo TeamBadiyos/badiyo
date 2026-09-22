@@ -92,10 +92,12 @@ export function ServiceLocationMap({
     ? new Date(expert.location_updated_at).getTime()
     : null;
   const isStale = updatedAt == null || Date.now() - updatedAt > STALE_MS;
+  // Keep the last known position on the map even when it goes stale.
   const liveExpert =
-    expert && expert.latitude != null && expert.longitude != null && !isStale
+    expert && expert.latitude != null && expert.longitude != null
       ? { lat: Number(expert.latitude), lng: Number(expert.longitude) }
       : null;
+  const expertFresh = !!liveExpert && !isStale;
   const destination = hasCoords
     ? { lat: Number(address.latitude), lng: Number(address.longitude) }
     : null;
@@ -155,26 +157,23 @@ export function ServiceLocationMap({
       return;
     }
 
+    const icon = {
+      url: expert?.category_slug === "home-cleaning" ? womanMarkerImage : riderMarkerImage,
+      scaledSize: new window.google.maps.Size(54, 54),
+      anchor: new window.google.maps.Point(27, 52),
+    };
     if (!expertMarkerRef.current) {
-      const workerImage =
-        expert?.category_slug === "home-cleaning" ? womanMarkerImage : riderMarkerImage;
       expertMarkerRef.current = new window.google.maps.Marker({
         position: liveExpert,
         map,
         title: expert?.name ?? "Expert",
-        icon: {
-          url: workerImage,
-          scaledSize: new window.google.maps.Size(54, 54),
-          anchor: new window.google.maps.Point(27, 52),
-        },
+        opacity: expertFresh ? 1 : 0.55,
+        icon,
       });
     } else {
       expertMarkerRef.current.setPosition(liveExpert);
-      expertMarkerRef.current.setIcon({
-        url: expert?.category_slug === "home-cleaning" ? womanMarkerImage : riderMarkerImage,
-        scaledSize: new window.google.maps.Size(54, 54),
-        anchor: new window.google.maps.Point(27, 52),
-      });
+      expertMarkerRef.current.setOpacity(expertFresh ? 1 : 0.55);
+      expertMarkerRef.current.setIcon(icon);
     }
 
     const bounds = new window.google.maps.LatLngBounds();
@@ -188,29 +187,50 @@ export function ServiceLocationMap({
     if (!ready || !map || !window.google?.maps) return;
     routeLineRef.current?.setMap(null);
     routeLineRef.current = null;
-    if (!roadRoute?.encodedPolyline) return;
-    const path = decodeGooglePolyline(roadRoute.encodedPolyline);
-    if (path.length < 2) return;
+    if (!liveExpert || !destination) return;
+
+    const decoded = roadRoute?.encodedPolyline
+      ? decodeGooglePolyline(roadRoute.encodedPolyline)
+      : [];
+    const usingRoad = decoded.length >= 2;
+    const path = usingRoad ? decoded : [liveExpert, destination];
     routeLineRef.current = new window.google.maps.Polyline({
       path,
       map,
       strokeColor: "#00B97A",
-      strokeOpacity: 0.86,
+      strokeOpacity: usingRoad ? 0.86 : 0,
       strokeWeight: 5,
+      ...(usingRoad
+        ? {}
+        : {
+            icons: [
+              {
+                icon: {
+                  path: "M 0,-1 0,1",
+                  strokeOpacity: 0.8,
+                  strokeColor: "#00B97A",
+                  scale: 3.5,
+                },
+                offset: "0",
+                repeat: "12px",
+              },
+            ],
+          }),
     });
-  }, [ready, roadRoute?.encodedPolyline]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, roadRoute?.encodedPolyline, liveExpert?.lat, liveExpert?.lng, destination?.lat, destination?.lng]);
 
   const showMap = hasCoords && !failed;
 
   let trackingNote: string;
   if (!bookingId) {
     trackingNote = "Live expert tracking starts once an expert is assigned.";
-  } else if (liveExpert && expert?.location_updated_at) {
+  } else if (expertFresh && expert?.location_updated_at) {
     trackingNote = `Expert location updated ${agoLabel(expert.location_updated_at)}.`;
   } else if (expert && expert.location_updated_at) {
     trackingNote = `Expert location paused — last seen ${agoLabel(expert.location_updated_at)}.`;
   } else if (expert) {
-    trackingNote = "Waiting for the expert's location…";
+    trackingNote = "Expert assigned — waiting for live location.";
   } else {
     trackingNote = "Live expert tracking starts once an expert is assigned.";
   }

@@ -34,6 +34,7 @@ export function CourierLiveMap({
   const mapRef = useRef<any>(null);
   const riderMarkerRef = useRef<any>(null);
   const routeLineRef = useRef<any>(null);
+  const baseLineRef = useRef<any>(null);
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
   const readyRef = useRef(false);
@@ -56,18 +57,41 @@ export function CourierLiveMap({
     staleTime: 0,
   });
 
+  // Keep showing the last known rider position even when it goes stale —
+  // an empty map reads as "tracking is broken".
   const riderPos =
-    rider?.available && rider.lat != null && rider.lng != null && !rider.stale
+    rider?.available && rider.lat != null && rider.lng != null
       ? { lat: Number(rider.lat), lng: Number(rider.lng) }
       : null;
+  const riderStale = !!rider?.stale;
+  const pickupPoint = hasPickup
+    ? { lat: Number(pickup.lat), lng: Number(pickup.lng) }
+    : null;
+  const dropPoint = hasDrop ? { lat: Number(drop.lat), lng: Number(drop.lng) } : null;
   const target =
-    status === "PICKED_UP" || status === "IN_TRANSIT"
-      ? hasDrop
-        ? { lat: Number(drop.lat), lng: Number(drop.lng) }
-        : null
-      : hasPickup
-        ? { lat: Number(pickup.lat), lng: Number(pickup.lng) }
-        : null;
+    status === "PICKED_UP" || status === "IN_TRANSIT" ? dropPoint : pickupPoint;
+
+  // Base route (pickup -> drop) is always drawn, with or without a rider.
+  const { data: baseRoute } = useQuery({
+    queryKey: [
+      "courier-base-route",
+      orderId,
+      routePointKey(pickupPoint),
+      routePointKey(dropPoint),
+    ],
+    queryFn: () =>
+      fetchTrackingRoadRoute({
+        data: {
+          origin: pickupPoint as { lat: number; lng: number },
+          destination: dropPoint as { lat: number; lng: number },
+          mode: "TWO_WHEELER",
+        },
+      }),
+    enabled: !!pickupPoint && !!dropPoint,
+    staleTime: 30 * 60_000,
+    retry: false,
+  });
+
   const routeOriginKey = routePointKey(riderPos);
   const routeTargetKey = routePointKey(target);
   const { data: roadRoute } = useQuery({
@@ -146,6 +170,7 @@ export function CourierLiveMap({
       mapRef.current = null;
       riderMarkerRef.current = null;
       routeLineRef.current = null;
+      baseLineRef.current = null;
       readyRef.current = false;
       setReady(false);
     };
@@ -163,20 +188,23 @@ export function CourierLiveMap({
       return;
     }
 
+    const icon = {
+      url: riderMarkerImage,
+      scaledSize: new window.google.maps.Size(58, 58),
+      anchor: new window.google.maps.Point(29, 55),
+    };
     if (!riderMarkerRef.current) {
       riderMarkerRef.current = new window.google.maps.Marker({
         position: riderPos,
         map,
         title: "Rider",
         zIndex: 10,
-        icon: {
-          url: riderMarkerImage,
-          scaledSize: new window.google.maps.Size(58, 58),
-          anchor: new window.google.maps.Point(29, 55),
-        },
+        opacity: riderStale ? 0.55 : 1,
+        icon,
       });
     } else {
       riderMarkerRef.current.setPosition(riderPos);
+      riderMarkerRef.current.setOpacity(riderStale ? 0.55 : 1);
     }
 
     if (target && Number.isFinite(target.lat) && Number.isFinite(target.lng)) {
@@ -186,36 +214,102 @@ export function CourierLiveMap({
       map.fitBounds(bounds, 70);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready, riderPos?.lat, riderPos?.lng, status]);
+  }, [ready, riderPos?.lat, riderPos?.lng, riderStale, status]);
 
+  // Faint pickup -> drop route, always visible.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!ready || !map || !window.google?.maps) return;
+    baseLineRef.current?.setMap(null);
+    baseLineRef.current = null;
+    if (!pickupPoint || !dropPoint) return;
+
+    const decoded = baseRoute?.encodedPolyline
+      ? decodeGooglePolyline(baseRoute.encodedPolyline)
+      : [];
+    const usingRoad = decoded.length >= 2;
+    const path = usingRoad ? decoded : [pickupPoint, dropPoint];
+    baseLineRef.current = new window.google.maps.Polyline({
+      path,
+      map,
+      strokeColor: "#00B97A",
+      strokeOpacity: usingRoad ? 0.45 : 0,
+      strokeWeight: 4,
+      zIndex: 1,
+      ...(usingRoad
+        ? {}
+        : {
+            icons: [
+              {
+                icon: {
+                  path: "M 0,-1 0,1",
+                  strokeOpacity: 0.55,
+                  strokeColor: "#00B97A",
+                  scale: 3,
+                },
+                offset: "0",
+                repeat: "14px",
+              },
+            ],
+          }),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, baseRoute?.encodedPolyline, pickupPoint?.lat, pickupPoint?.lng, dropPoint?.lat, dropPoint?.lng]);
+
+  // Active rider -> next stop route on top of the base route.
   useEffect(() => {
     const map = mapRef.current;
     if (!ready || !map || !window.google?.maps) return;
     routeLineRef.current?.setMap(null);
     routeLineRef.current = null;
-    if (!roadRoute?.encodedPolyline) return;
-    const path = decodeGooglePolyline(roadRoute.encodedPolyline);
-    if (path.length < 2) return;
+    if (!riderPos || !target) return;
+
+    const decoded = roadRoute?.encodedPolyline
+      ? decodeGooglePolyline(roadRoute.encodedPolyline)
+      : [];
+    const usingRoad = decoded.length >= 2;
+    const path = usingRoad ? decoded : [riderPos, target];
     routeLineRef.current = new window.google.maps.Polyline({
       path,
       map,
       strokeColor: "#00B97A",
-      strokeOpacity: 0.86,
+      strokeOpacity: usingRoad ? 0.86 : 0,
       strokeWeight: 5,
+      zIndex: 5,
+      ...(usingRoad
+        ? {}
+        : {
+            icons: [
+              {
+                icon: {
+                  path: "M 0,-1 0,1",
+                  strokeOpacity: 0.9,
+                  strokeColor: "#00B97A",
+                  scale: 3.5,
+                },
+                offset: "0",
+                repeat: "12px",
+              },
+            ],
+          }),
     });
-  }, [ready, roadRoute?.encodedPolyline]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, roadRoute?.encodedPolyline, riderPos?.lat, riderPos?.lng, target?.lat, target?.lng]);
 
   let note: string;
   if (!live) {
     note = "Live tracking starts once a rider accepts your parcel.";
-  } else if (riderPos && rider?.location_updated_at) {
+  } else if (riderPos && !riderStale && rider?.location_updated_at) {
     note = `Rider location updated ${agoLabel(rider.location_updated_at)}.`;
   } else if (rider?.location_updated_at) {
     note = `Rider location paused — last seen ${agoLabel(rider.location_updated_at)}.`;
+  } else if (rider?.available) {
+    note = "Rider assigned — waiting for live location.";
   } else {
-    note = "Waiting for the rider's location…";
+    note = "Finding a rider for your parcel…";
   }
 
+  const liveFresh = !!riderPos && !riderStale;
   const showMap = hasAny && !failed;
 
   return (
@@ -233,10 +327,16 @@ export function CourierLiveMap({
               <div className="pointer-events-none absolute left-3 top-3 flex items-center gap-2 rounded-full bg-background/95 px-3 py-1.5 text-[11px] font-semibold shadow">
                 <span
                   className={`inline-block h-2 w-2 rounded-full ${
-                    riderPos ? "animate-pulse bg-primary" : "bg-muted-foreground"
+                    liveFresh ? "animate-pulse bg-primary" : "bg-muted-foreground"
                   }`}
                 />
-                {riderPos ? "Live" : "Connecting…"}
+                {liveFresh
+                  ? "Live"
+                  : riderPos
+                    ? "Last known location"
+                    : rider?.available
+                      ? "Waiting for rider location"
+                      : "Finding a rider"}
               </div>
             )}
           </>
