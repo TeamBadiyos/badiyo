@@ -79,10 +79,34 @@ Deno.serve(async (req) => {
     // Fail-open: if the check itself errors, payment proceeds.
     if (purpose === "booking" || purpose === "courier") {
       const serviceKey = purpose === "courier" ? "courier" : "clean";
-      const { data: canOrder, error: stateErr } = await supabase.rpc("service_can_order", {
-        _service_key: serviceKey,
-      });
-      if (!stateErr && canOrder === false) {
+      const draftForSlot = body?.booking_draft;
+      const isScheduled =
+        purpose === "booking" &&
+        draftForSlot?.slot_type === "scheduled" &&
+        typeof draftForSlot?.scheduled_date === "string" &&
+        typeof draftForSlot?.scheduled_time_slot === "string";
+
+      let blocked = false;
+      let stateErr: unknown = null;
+      if (isScheduled) {
+        // Advance bookings are judged against the chosen slot, not "right now".
+        const { data: slotOk, error: slotErr } = await supabase.rpc("service_slot_allowed", {
+          _service_key: serviceKey,
+          _date: draftForSlot.scheduled_date,
+          _slot: draftForSlot.scheduled_time_slot,
+          _duration_minutes: Number.isInteger(durationMinutes) ? durationMinutes : 60,
+        });
+        stateErr = slotErr;
+        blocked = !slotErr && slotOk?.ok === false;
+      } else {
+        const { data: canOrder, error: err } = await supabase.rpc("service_can_order", {
+          _service_key: serviceKey,
+        });
+        stateErr = err;
+        blocked = !err && canOrder === false;
+      }
+
+      if (blocked) {
         const { data: st } = await supabase.rpc("service_effective_state", {
           _service_key: serviceKey,
         });
