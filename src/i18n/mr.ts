@@ -354,4 +354,12 @@ export const mr: Partial<Record<keyof typeof en, string>> = {
   "serviceState.ordersClosed": "ऑर्डर सध्या बंद आहेत",
   "serviceState.orderingClosed": "सध्या ऑर्डर करता येणार नाही",
   "serviceState.gotIt": "ठीक आहे",
+
+  // ── App update ───────────────────────────────────────────
+  "update.softTitle": "नवीन अपडेट उपलब्ध आहे",
+  "update.softBody": "नवीन सुविधा आणि सुधारणांसाठी badiyos अपडेट करा.",
+  "update.updateNow": "आत्ता अपडेट करा",
+  "update.later": "नंतर",
+  "update.hardTitle": "अपडेट आवश्यक आहे",
+  "update.hardBody": "badiyos ची नवीन आवृत्ती उपलब्ध आहे. पुढे जाण्यासाठी अपडेट करा.",
 };

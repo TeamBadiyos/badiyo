@@ -356,6 +356,14 @@ export const en = {
   "serviceState.ordersClosed": "Orders are closed right now",
   "serviceState.orderingClosed": "Ordering is closed right now",
   "serviceState.gotIt": "Got it",
+
+  // ── App update ───────────────────────────────────────────
+  "update.softTitle": "A new update is available",
+  "update.softBody": "Get the latest badiyos with new features and fixes.",
+  "update.updateNow": "Update Now",
+  "update.later": "Later",
+  "update.hardTitle": "Update required",
+  "update.hardBody": "A newer version of badiyos is available. Please update to continue.",
 } as const;
 
 export type TranslationKey = keyof typeof en;

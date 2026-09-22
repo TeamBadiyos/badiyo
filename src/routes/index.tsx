@@ -153,6 +153,10 @@ const ForceUpdateScreen = lazyNamed(
   () => import("@/components/utility/ForceUpdateScreen"),
   "ForceUpdateScreen",
 );
+const SoftUpdateDialog = lazyNamed(
+  () => import("@/components/utility/SoftUpdateDialog"),
+  "SoftUpdateDialog",
+);
 
 import type { SelectedService, SelectedSlot } from "@/components/SlotSelectionScreen";
 import type { SelectedAddress } from "@/components/BookingSummaryScreen";
@@ -163,7 +167,7 @@ import { ACTIVE_TRACKING_STATUSES } from "@/lib/bookingStatus";
 import { registerThisDevice, type DeviceSession } from "@/lib/devices";
 import { ensureUserRow } from "@/lib/ensureUserRow";
 import { registerPushForCurrentUser, setPushNavigator } from "@/lib/push";
-import { APP_VERSION, fetchMinSupportedVersion, isBelow } from "@/lib/version";
+import { checkForUpdate, isSoftUpdateSnoozed, PLAY_STORE_WEB_URL } from "@/lib/version";
 import { supabase } from "@/integrations/supabase/client";
 import { invokeFunction } from "@/lib/invokeFunction";
 
@@ -295,6 +299,8 @@ function Index() {
   }, []);
 
   const [forceUpdate, setForceUpdate] = useState(false);
+  const [softUpdate, setSoftUpdate] = useState(false);
+  const [storeUrl, setStoreUrl] = useState(PLAY_STORE_WEB_URL);
   const [limitDevices, setLimitDevices] = useState<DeviceSession[]>([]);
   const queryClient = useQueryClient();
 
@@ -579,8 +585,13 @@ function Index() {
     // paints from cache the moment the user finishes logging in.
     void prefetchHomeData(queryClient);
 
-    fetchMinSupportedVersion().then((min) => {
-      if (!cancelled && min && isBelow(APP_VERSION, min)) setForceUpdate(true);
+    // Update prompt: hard block below the minimum supported build, a
+    // dismissible nudge (snoozed 24h) when a newer build is on the Play Store.
+    void checkForUpdate().then((verdict) => {
+      if (cancelled) return;
+      setStoreUrl(verdict.playStoreUrl);
+      if (verdict.kind === "hard_update") setForceUpdate(true);
+      else if (verdict.kind === "soft_update" && !isSoftUpdateSnoozed()) setSoftUpdate(true);
     });
 
     // The splash is a brand moment, not a loading wait: it stays on screen only
@@ -675,7 +686,10 @@ function Index() {
         />
       )}
       <Suspense fallback={null}>
-        {forceUpdate && <ForceUpdateScreen />}
+        {forceUpdate && <ForceUpdateScreen playStoreUrl={storeUrl} />}
+        {!forceUpdate && softUpdate && (
+          <SoftUpdateDialog playStoreUrl={storeUrl} onClose={() => setSoftUpdate(false)} />
+        )}
         {!online && <NoInternetScreen onRetry={() => setOnline(navigator.onLine)} />}
       </Suspense>
 
