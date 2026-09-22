@@ -363,6 +363,7 @@ export function HomeScreen({
           onAdd={(s) => addToBooking(s, activeSegment)}
           onOpenTask={bookTileService}
           availability={availability}
+          statusBadge={statusBadge}
         />
         ) : (
           <div className="mt-2">
@@ -392,6 +393,7 @@ export function HomeScreen({
                       onViewDetail={(s) => guardedBookService(toPayload(s, segment))}
                       onAdd={(s) => addToBooking(s, segment)}
                       availability={availability}
+                      statusBadge={statusBadge}
                     />
                   ))}
                 </section>
