@@ -24,7 +24,7 @@ import { BrandWatermark } from "./BrandWatermark";
 import { anchorPrice } from "@/lib/price";
 import { useLanguage, useT } from "@/i18n";
 import { toast } from "sonner";
-import { formatNextOpen, notifyMeForService, useServiceState } from "@/lib/serviceHours";
+import { formatNextOpen, useServiceState } from "@/lib/serviceHours";
 import type { TranslationKey } from "@/i18n/en";
 
 import expertHouse from "@/assets/expert-house-cleaning.jpg";
@@ -186,7 +186,14 @@ export function HomeScreen({
   const t = useT();
   const { lang } = useLanguage();
   const { data: cleanState } = useServiceState("clean");
-  const [notifySent, setNotifySent] = useState(false);
+
+  /** Short ribbon copy shown in each tile corner when the service isn't orderable. */
+  const statusBadge = ((): string | null => {
+    if (!cleanState || cleanState.can_order) return null;
+    if (cleanState.status === "coming_soon") return t("serviceState.comingSoon");
+    const next = formatNextOpen(cleanState.next_open_at ?? cleanState.resume_at);
+    return next ? t("serviceState.opensAt", { time: next }) : t("serviceState.closedNow");
+  })();
 
   // Closed-service message (custom DB message first, then a default with next-open time).
   const blockedMessage = (): string | null => {
