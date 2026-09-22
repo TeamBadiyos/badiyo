@@ -21,13 +21,14 @@ type ExpertLocation = {
 
 /** Location older than this is considered stale — we stop showing the marker. */
 const STALE_MS = 5 * 60 * 1000;
+const HOME_CARE_CATEGORY_ID = "508641a3-59fd-457c-be6a-74879be354cc";
 
 async function fetchExpertLocation(bookingId: string): Promise<ExpertLocation | null> {
   const [{ data, error }, { data: booking }] = await Promise.all([
     supabase.rpc("get_assigned_expert_location", { _booking_id: bookingId }),
     supabase
       .from("bookings")
-      .select("service_categories!bookings_service_category_id_fkey(slug)")
+      .select("service_category_id, service_categories!bookings_service_category_id_fkey(slug)")
       .eq("id", bookingId)
       .maybeSingle(),
   ]);
@@ -37,11 +38,15 @@ async function fetchExpertLocation(bookingId: string): Promise<ExpertLocation | 
   }
   const row = Array.isArray(data) ? data[0] : data;
   if (!row) return null;
-  const relation = (booking as unknown as { service_categories?: { slug?: string } | null } | null)
-    ?.service_categories;
+  const bookingCategory = booking as unknown as {
+    service_category_id?: string | null;
+    service_categories?: { slug?: string } | null;
+  } | null;
   return {
     ...(row as Omit<ExpertLocation, "category_slug">),
-    category_slug: relation?.slug ?? null,
+    category_slug:
+      bookingCategory?.service_categories?.slug ??
+      (bookingCategory?.service_category_id === HOME_CARE_CATEGORY_ID ? "home-cleaning" : null),
   };
 }
 
@@ -165,13 +170,18 @@ export function ServiceLocationMap({
       });
     } else {
       expertMarkerRef.current.setPosition(liveExpert);
+      expertMarkerRef.current.setIcon({
+        url: expert?.category_slug === "home-cleaning" ? womanMarkerImage : riderMarkerImage,
+        scaledSize: new window.google.maps.Size(54, 54),
+        anchor: new window.google.maps.Point(27, 52),
+      });
     }
 
     const bounds = new window.google.maps.LatLngBounds();
     bounds.extend({ lat: address.latitude!, lng: address.longitude! });
     bounds.extend(liveExpert);
     map.fitBounds(bounds, 60);
-  }, [ready, liveExpert?.lat, liveExpert?.lng, expert?.name, address.latitude, address.longitude]);
+  }, [ready, liveExpert?.lat, liveExpert?.lng, expert?.name, expert?.category_slug, address.latitude, address.longitude]);
 
   useEffect(() => {
     const map = mapRef.current;

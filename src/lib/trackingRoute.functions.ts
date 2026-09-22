@@ -3,8 +3,8 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const pointSchema = z.object({
-  lat: z.number().min(8).max(37),
-  lng: z.number().min(68).max(98),
+  lat: z.number().min(17.5).max(19.5),
+  lng: z.number().min(75.5).max(77.5),
 });
 
 const routeSchema = z.object({
