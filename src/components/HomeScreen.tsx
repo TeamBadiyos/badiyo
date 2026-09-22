@@ -463,6 +463,7 @@ function SegmentView({
   onAdd,
   onOpenTask,
   availability,
+  statusBadge,
 }: {
   segment: Segment;
   categories: ServiceCategory[];
@@ -471,6 +472,7 @@ function SegmentView({
   onAdd: (s: SegmentService) => void;
   onOpenTask: () => void;
   availability?: AvailabilityMap;
+  statusBadge?: string | null;
 }) {
   const t = useT();
   if (segment.display_template !== "CATEGORY_FIRST") {
@@ -501,6 +503,7 @@ function SegmentView({
             onViewDetail={(s) => onBookService?.(toPayload(s, segment))}
             onAdd={(s) => onAdd(s)}
             availability={availability}
+            statusBadge={statusBadge}
           />
         );
       })}
@@ -530,12 +533,14 @@ function CategoryRow({
   onViewDetail,
   onAdd,
   availability,
+  statusBadge,
 }: {
   category: ServiceCategory;
   services: SegmentService[];
   onViewDetail: (s: SegmentService) => void;
   onAdd: (s: SegmentService) => void;
   availability?: AvailabilityMap;
+  statusBadge?: string | null;
 }) {
   const t = useT();
   const categoryBlocked = isUnavailable(availability, "category", category.id);
@@ -567,6 +572,7 @@ function CategoryRow({
             unavailableLabel={
               categoryReason || unavailableReason(availability, "item", s.id) || null
             }
+            statusBadge={statusBadge}
             onViewDetail={() => onViewDetail(s)}
             onAdd={() => onAdd(s)}
           />
