@@ -285,6 +285,7 @@ export function CompleteProfileSheet({ enabled }: { enabled: boolean }) {
         <ReferralCodeInput
           className="mt-4"
           alreadyReferred={alreadyReferred}
+          appliedCode={appliedReferralCode}
           onCodeChange={setReferralCode}
           onApplied={() => setReferralApplied(true)}
         />
