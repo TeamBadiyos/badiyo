@@ -7,7 +7,11 @@ import { signAddressPhotoUrl } from "@/lib/storageUrl";
 import { uploadAvatar } from "@/lib/profileMedia";
 import { getErrorMessage } from "@/lib/errorMessage";
 import { ReferralCodeInput } from "@/components/ReferralCodeInput";
-import { applyReferralCode, referralResultMessage } from "@/lib/referrals";
+import {
+  applyReferralCode,
+  getStoredReferralCode,
+  referralResultMessage,
+} from "@/lib/referrals";
 import { toast } from "sonner";
 
 function isSynthetic(email: string | null | undefined) {
@@ -31,6 +35,7 @@ export function CompleteProfileSheet({ enabled }: { enabled: boolean }) {
   const [alreadyReferred, setAlreadyReferred] = useState(false);
   const [referralCode, setReferralCode] = useState("");
   const [referralApplied, setReferralApplied] = useState(false);
+  const [appliedReferralCode, setAppliedReferralCode] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
