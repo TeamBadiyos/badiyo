@@ -60,12 +60,51 @@ export const Route = createFileRoute("/api/public/courier/process-refunds")({
             continue;
           }
 
-          await supabaseAdmin
+          // Atomically claim the row so a second worker can't refund it again.
+          const { data: claimed } = await supabaseAdmin
             .from("courier_orders")
             .update({ refund_status: "processing", refund_attempts: attempts })
-            .eq("id", row.id);
+            .eq("id", row.id)
+            .eq("refund_status", "refund_pending")
+            .select("id");
+          if (!claimed || claimed.length === 0) continue;
+
+          const markRefunded = async (refundId: string | null) => {
+            await supabaseAdmin
+              .from("courier_orders")
+              .update({
+                refund_status: "done",
+                payment_status: "refunded",
+                needs_ops_attention: false,
+                ...(refundId ? { refund_id: refundId } : {}),
+              })
+              .eq("id", row.id);
+          };
 
           try {
+            // Reconcile first: the money may already be back with the customer
+            // (earlier attempt succeeded but the status write didn't land).
+            try {
+              const existing = await fetch(
+                `https://api.razorpay.com/v1/payments/${encodeURIComponent(row.razorpay_payment_id)}/refunds`,
+                { headers: { Authorization: `Basic ${auth}` } },
+              );
+              if (existing.ok) {
+                const list = (await existing.json()) as {
+                  items?: Array<{ id?: string; amount?: number; status?: string }>;
+                };
+                const items = (list.items ?? []).filter((r) => r.status !== "failed");
+                const refundedPaise = items.reduce((sum, r) => sum + Number(r.amount ?? 0), 0);
+                if (refundedPaise >= Math.round(Number(row.refund_amount) * 100)) {
+                  await markRefunded(items[items.length - 1]?.id ?? null);
+                  done++;
+                  continue;
+                }
+              }
+            } catch (listErr) {
+              console.error("[courier-refunds] refund lookup failed", row.id, listErr);
+            }
+
             const res = await fetch(
               `https://api.razorpay.com/v1/payments/${encodeURIComponent(row.razorpay_payment_id)}/refund`,
               {
@@ -73,8 +112,6 @@ export const Route = createFileRoute("/api/public/courier/process-refunds")({
                 headers: {
                   "Content-Type": "application/json",
                   Authorization: `Basic ${auth}`,
-                  // Stable key: repeated calls return the same refund.
-                  "X-Payment-Idempotency": `courier_${row.id}_${row.refund_reason ?? "refund"}`,
                 },
                 body: JSON.stringify({
                   amount: Math.round(Number(row.refund_amount) * 100),
@@ -86,17 +123,19 @@ export const Route = createFileRoute("/api/public/courier/process-refunds")({
 
             if (res.ok) {
               const refund = (await res.json()) as { id?: string };
-              await supabaseAdmin
-                .from("courier_orders")
-                .update({
-                  refund_status: "done",
-                  payment_status: "refunded",
-                  refund_id: refund.id ?? null,
-                })
-                .eq("id", row.id);
+              await markRefunded(refund.id ?? null);
               done++;
             } else {
               const text = await res.text();
+              // Razorpay says the money is already back: this is success, not failure.
+              const alreadyRefunded =
+                /fully refunded|greater than the refund|already been refunded/i.test(text);
+              if (alreadyRefunded) {
+                console.warn("[courier-refunds] already refunded at gateway", row.id);
+                await markRefunded(null);
+                done++;
+                continue;
+              }
               console.error("[courier-refunds] razorpay refused", row.id, res.status, text);
               const giveUp = attempts >= 5;
               await supabaseAdmin
