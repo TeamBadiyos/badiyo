@@ -19,6 +19,10 @@ import { isNativeShell } from "@/lib/nativeServerFn";
 import { getStoredReferralCode, storeReferralCode } from "@/lib/referrals";
 
 const DONE_KEY = "badiyo.installReferrerRead";
+const ATTEMPTS_KEY = "badiyo.installReferrerAttempts";
+/** Play Services can answer empty on the very first launch — retry before giving up. */
+const MAX_ATTEMPTS = 3;
+const RETRY_DELAY_MS = 1500;
 
 type InstallReferrerPlugin = {
   getReferrer(options?: Record<string, unknown>): Promise<{
