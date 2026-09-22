@@ -92,10 +92,12 @@ export function ServiceLocationMap({
     ? new Date(expert.location_updated_at).getTime()
     : null;
   const isStale = updatedAt == null || Date.now() - updatedAt > STALE_MS;
+  // Keep the last known position on the map even when it goes stale.
   const liveExpert =
-    expert && expert.latitude != null && expert.longitude != null && !isStale
+    expert && expert.latitude != null && expert.longitude != null
       ? { lat: Number(expert.latitude), lng: Number(expert.longitude) }
       : null;
+  const expertFresh = !!liveExpert && !isStale;
   const destination = hasCoords
     ? { lat: Number(address.latitude), lng: Number(address.longitude) }
     : null;
