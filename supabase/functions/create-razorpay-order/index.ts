@@ -87,7 +87,6 @@ Deno.serve(async (req) => {
         typeof draftForSlot?.scheduled_time_slot === "string";
 
       let blocked = false;
-      let stateErr: unknown = null;
       if (isScheduled) {
         // Advance bookings are judged against the chosen slot, not "right now".
         const { data: slotOk, error: slotErr } = await supabase.rpc("service_slot_allowed", {
@@ -96,13 +95,11 @@ Deno.serve(async (req) => {
           _slot: draftForSlot.scheduled_time_slot,
           _duration_minutes: Number.isInteger(durationMinutes) ? durationMinutes : 60,
         });
-        stateErr = slotErr;
         blocked = !slotErr && slotOk?.ok === false;
       } else {
         const { data: canOrder, error: err } = await supabase.rpc("service_can_order", {
           _service_key: serviceKey,
         });
-        stateErr = err;
         blocked = !err && canOrder === false;
       }
 
