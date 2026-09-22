@@ -24,7 +24,7 @@ import { BrandWatermark } from "./BrandWatermark";
 import { anchorPrice } from "@/lib/price";
 import { useLanguage, useT } from "@/i18n";
 import { toast } from "sonner";
-import { formatNextOpen, notifyMeForService, useServiceState } from "@/lib/serviceHours";
+import { formatNextOpen, useServiceState } from "@/lib/serviceHours";
 import type { TranslationKey } from "@/i18n/en";
 
 import expertHouse from "@/assets/expert-house-cleaning.jpg";
@@ -186,7 +186,14 @@ export function HomeScreen({
   const t = useT();
   const { lang } = useLanguage();
   const { data: cleanState } = useServiceState("clean");
-  const [notifySent, setNotifySent] = useState(false);
+
+  /** Short ribbon copy shown in each tile corner when the service isn't orderable. */
+  const statusBadge = ((): string | null => {
+    if (!cleanState || cleanState.can_order) return null;
+    if (cleanState.status === "coming_soon") return t("serviceState.comingSoon");
+    const next = formatNextOpen(cleanState.next_open_at ?? cleanState.resume_at);
+    return next ? t("serviceState.opensAt", { time: next }) : t("serviceState.closedNow");
+  })();
 
   // Closed-service message (custom DB message first, then a default with next-open time).
   const blockedMessage = (): string | null => {
@@ -338,30 +345,6 @@ export function HomeScreen({
           </button>
         </form>
 
-        {/* Service status banner — closed / coming soon / temporarily stopped */}
-        {blockedMessage() ? (
-          <div className="mt-3 flex items-center gap-3 rounded-[16px] border border-border bg-card px-4 py-3 shadow-sm">
-            <Clock className="h-5 w-5 shrink-0 text-[#E5A50A]" />
-            <p className="flex-1 text-sm font-semibold text-foreground leading-snug">
-              {blockedMessage()}
-            </p>
-            {cleanState?.status === "coming_soon" && !notifySent ? (
-              <button
-                type="button"
-                onClick={async () => {
-                  const r = await notifyMeForService("clean");
-                  if (r === "added" || r === "duplicate") {
-                    setNotifySent(true);
-                    toast(t("serviceState.notifyDone"));
-                  }
-                }}
-                className="shrink-0 rounded-full bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground"
-              >
-                {t("serviceState.notifyMe")}
-              </button>
-            ) : null}
-          </div>
-        ) : null}
 
 
         {/* Services bar (segment tabs) */}
@@ -380,6 +363,7 @@ export function HomeScreen({
           onAdd={(s) => addToBooking(s, activeSegment)}
           onOpenTask={bookTileService}
           availability={availability}
+          statusBadge={statusBadge}
         />
         ) : (
           <div className="mt-2">
@@ -409,6 +393,7 @@ export function HomeScreen({
                       onViewDetail={(s) => guardedBookService(toPayload(s, segment))}
                       onAdd={(s) => addToBooking(s, segment)}
                       availability={availability}
+                      statusBadge={statusBadge}
                     />
                   ))}
                 </section>
@@ -478,6 +463,7 @@ function SegmentView({
   onAdd,
   onOpenTask,
   availability,
+  statusBadge,
 }: {
   segment: Segment;
   categories: ServiceCategory[];
@@ -486,6 +472,7 @@ function SegmentView({
   onAdd: (s: SegmentService) => void;
   onOpenTask: () => void;
   availability?: AvailabilityMap;
+  statusBadge?: string | null;
 }) {
   const t = useT();
   if (segment.display_template !== "CATEGORY_FIRST") {
@@ -516,6 +503,7 @@ function SegmentView({
             onViewDetail={(s) => onBookService?.(toPayload(s, segment))}
             onAdd={(s) => onAdd(s)}
             availability={availability}
+            statusBadge={statusBadge}
           />
         );
       })}
@@ -545,12 +533,14 @@ function CategoryRow({
   onViewDetail,
   onAdd,
   availability,
+  statusBadge,
 }: {
   category: ServiceCategory;
   services: SegmentService[];
   onViewDetail: (s: SegmentService) => void;
   onAdd: (s: SegmentService) => void;
   availability?: AvailabilityMap;
+  statusBadge?: string | null;
 }) {
   const t = useT();
   const categoryBlocked = isUnavailable(availability, "category", category.id);
@@ -582,6 +572,7 @@ function CategoryRow({
             unavailableLabel={
               categoryReason || unavailableReason(availability, "item", s.id) || null
             }
+            statusBadge={statusBadge}
             onViewDetail={() => onViewDetail(s)}
             onAdd={() => onAdd(s)}
           />
