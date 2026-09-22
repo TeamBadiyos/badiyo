@@ -9,6 +9,8 @@ import {
 type Props = {
   /** Hide the field entirely and show a confirmation when a referrer already exists. */
   alreadyReferred?: boolean;
+  /** Shown inside the confirmation pill, e.g. "Invite applied (RAHUL42)". */
+  appliedCode?: string | null;
   onApplied?: () => void;
   /** Lets a parent form read the typed code so it can apply it on its own save. */
   onCodeChange?: (code: string) => void;
@@ -18,6 +20,7 @@ type Props = {
 /** Small "Have an invite code?" box used on the profile popup and Refer & Earn. */
 export function ReferralCodeInput({
   alreadyReferred,
+  appliedCode,
   onApplied,
   onCodeChange,
   className,
@@ -47,7 +50,7 @@ export function ReferralCodeInput({
         className={`flex items-center gap-2 rounded-[14px] bg-primary/10 px-4 py-3 text-sm font-semibold text-primary ${className ?? ""}`}
       >
         <Check className="h-4 w-4" />
-        Invite applied
+        {appliedCode ? `Invite applied (${appliedCode})` : "Invite applied"}
       </div>
     );
   }
