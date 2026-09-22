@@ -299,6 +299,8 @@ function Index() {
   }, []);
 
   const [forceUpdate, setForceUpdate] = useState(false);
+  const [softUpdate, setSoftUpdate] = useState(false);
+  const [storeUrl, setStoreUrl] = useState(PLAY_STORE_WEB_URL);
   const [limitDevices, setLimitDevices] = useState<DeviceSession[]>([]);
   const queryClient = useQueryClient();
 
@@ -583,8 +585,13 @@ function Index() {
     // paints from cache the moment the user finishes logging in.
     void prefetchHomeData(queryClient);
 
-    fetchMinSupportedVersion().then((min) => {
-      if (!cancelled && min && isBelow(APP_VERSION, min)) setForceUpdate(true);
+    // Update prompt: hard block below the minimum supported build, a
+    // dismissible nudge (snoozed 24h) when a newer build is on the Play Store.
+    void checkForUpdate().then((verdict) => {
+      if (cancelled) return;
+      setStoreUrl(verdict.playStoreUrl);
+      if (verdict.kind === "hard_update") setForceUpdate(true);
+      else if (verdict.kind === "soft_update" && !isSoftUpdateSnoozed()) setSoftUpdate(true);
     });
 
     // The splash is a brand moment, not a loading wait: it stays on screen only
