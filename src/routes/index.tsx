@@ -153,6 +153,10 @@ const ForceUpdateScreen = lazyNamed(
   () => import("@/components/utility/ForceUpdateScreen"),
   "ForceUpdateScreen",
 );
+const SoftUpdateDialog = lazyNamed(
+  () => import("@/components/utility/SoftUpdateDialog"),
+  "SoftUpdateDialog",
+);
 
 import type { SelectedService, SelectedSlot } from "@/components/SlotSelectionScreen";
 import type { SelectedAddress } from "@/components/BookingSummaryScreen";
@@ -163,7 +167,7 @@ import { ACTIVE_TRACKING_STATUSES } from "@/lib/bookingStatus";
 import { registerThisDevice, type DeviceSession } from "@/lib/devices";
 import { ensureUserRow } from "@/lib/ensureUserRow";
 import { registerPushForCurrentUser, setPushNavigator } from "@/lib/push";
-import { APP_VERSION, fetchMinSupportedVersion, isBelow } from "@/lib/version";
+import { checkForUpdate, isSoftUpdateSnoozed, PLAY_STORE_WEB_URL } from "@/lib/version";
 import { supabase } from "@/integrations/supabase/client";
 import { invokeFunction } from "@/lib/invokeFunction";
 
