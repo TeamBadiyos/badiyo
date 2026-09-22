@@ -26,6 +26,7 @@ function ServiceProductCardBase({
   onViewDetail,
   unavailable = false,
   unavailableLabel,
+  statusBadge,
 }: {
   service: ProductCardService;
   onAdd: () => void;
@@ -34,6 +35,8 @@ function ServiceProductCardBase({
   unavailable?: boolean;
   /** Optional custom badge copy (e.g. the reason from Command Center). */
   unavailableLabel?: string | null;
+  /** Service-level status ribbon (e.g. "Coming soon") shown in the image corner. */
+  statusBadge?: string | null;
 }) {
   const t = useT();
   const price = Number(service.price);

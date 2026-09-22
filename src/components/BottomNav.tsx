@@ -34,7 +34,7 @@ export function BottomNav({
   };
   const tabs: Tab[] = [
     { key: "home", label: t("nav.home"), Icon: Home, onClick: withHaptic(onHome) },
-    { key: "orders", label: t("nav.orders"), Icon: ClipboardList, onClick: withHaptic(onOrders), primary: true },
+    { key: "orders", label: t("nav.orders"), Icon: ClipboardList, onClick: withHaptic(onOrders) },
     ...(showParcel && onParcel
       ? [
           {
@@ -42,6 +42,7 @@ export function BottomNav({
             label: t("nav.parcel"),
             Icon: Package,
             onClick: withHaptic(onParcel),
+            primary: true,
           },
         ]
       : []),
