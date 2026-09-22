@@ -157,26 +157,23 @@ export function ServiceLocationMap({
       return;
     }
 
+    const icon = {
+      url: expert?.category_slug === "home-cleaning" ? womanMarkerImage : riderMarkerImage,
+      scaledSize: new window.google.maps.Size(54, 54),
+      anchor: new window.google.maps.Point(27, 52),
+    };
     if (!expertMarkerRef.current) {
-      const workerImage =
-        expert?.category_slug === "home-cleaning" ? womanMarkerImage : riderMarkerImage;
       expertMarkerRef.current = new window.google.maps.Marker({
         position: liveExpert,
         map,
         title: expert?.name ?? "Expert",
-        icon: {
-          url: workerImage,
-          scaledSize: new window.google.maps.Size(54, 54),
-          anchor: new window.google.maps.Point(27, 52),
-        },
+        opacity: expertFresh ? 1 : 0.55,
+        icon,
       });
     } else {
       expertMarkerRef.current.setPosition(liveExpert);
-      expertMarkerRef.current.setIcon({
-        url: expert?.category_slug === "home-cleaning" ? womanMarkerImage : riderMarkerImage,
-        scaledSize: new window.google.maps.Size(54, 54),
-        anchor: new window.google.maps.Point(27, 52),
-      });
+      expertMarkerRef.current.setOpacity(expertFresh ? 1 : 0.55);
+      expertMarkerRef.current.setIcon(icon);
     }
 
     const bounds = new window.google.maps.LatLngBounds();
