@@ -124,8 +124,24 @@ export function CompleteProfileSheet({ enabled }: { enabled: boolean }) {
         setAvatarUrl(await signAddressPhotoUrl(data.avatar_url ?? null));
         setAlreadyReferred(!!data.referred_by);
         setReferralApplied(false);
+        setAppliedReferralCode(null);
         setError(null);
         setOpen(true);
+
+        // The friend arrived through an invite link / Play Store referrer but
+        // the link-up hasn't landed yet: apply it silently instead of asking
+        // them to type a code we already know.
+        if (!data.referred_by) {
+          const stored = getStoredReferralCode();
+          if (stored) {
+            const result = await applyReferralCode(stored);
+            if (result === "applied" || result === "already_referred") {
+              setAlreadyReferred(true);
+              setReferralApplied(true);
+              setAppliedReferralCode(stored.toUpperCase());
+            }
+          }
+        }
       } finally {
         checkingRef.current = false;
       }
