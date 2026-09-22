@@ -112,8 +112,6 @@ export const Route = createFileRoute("/api/public/courier/process-refunds")({
                 headers: {
                   "Content-Type": "application/json",
                   Authorization: `Basic ${auth}`,
-                  // Stable key: repeated calls return the same refund.
-                  "X-Payment-Idempotency": `courier_${row.id}_${row.refund_reason ?? "refund"}`,
                 },
                 body: JSON.stringify({
                   amount: Math.round(Number(row.refund_amount) * 100),
