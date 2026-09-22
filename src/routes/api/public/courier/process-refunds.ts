@@ -60,12 +60,51 @@ export const Route = createFileRoute("/api/public/courier/process-refunds")({
             continue;
           }
 
-          await supabaseAdmin
+          // Atomically claim the row so a second worker can't refund it again.
+          const { data: claimed } = await supabaseAdmin
             .from("courier_orders")
             .update({ refund_status: "processing", refund_attempts: attempts })
-            .eq("id", row.id);
+            .eq("id", row.id)
+            .eq("refund_status", "refund_pending")
+            .select("id");
+          if (!claimed || claimed.length === 0) continue;
+
+          const markRefunded = async (refundId: string | null) => {
+            await supabaseAdmin
+              .from("courier_orders")
+              .update({
+                refund_status: "done",
+                payment_status: "refunded",
+                needs_ops_attention: false,
+                ...(refundId ? { refund_id: refundId } : {}),
+              })
+              .eq("id", row.id);
+          };
 
           try {
+            // Reconcile first: the money may already be back with the customer
+            // (earlier attempt succeeded but the status write didn't land).
+            try {
+              const existing = await fetch(
+                `https://api.razorpay.com/v1/payments/${encodeURIComponent(row.razorpay_payment_id)}/refunds`,
+                { headers: { Authorization: `Basic ${auth}` } },
+              );
+              if (existing.ok) {
+                const list = (await existing.json()) as {
+                  items?: Array<{ id?: string; amount?: number; status?: string }>;
+                };
+                const items = (list.items ?? []).filter((r) => r.status !== "failed");
+                const refundedPaise = items.reduce((sum, r) => sum + Number(r.amount ?? 0), 0);
+                if (refundedPaise >= Math.round(Number(row.refund_amount) * 100)) {
+                  await markRefunded(items[items.length - 1]?.id ?? null);
+                  done++;
+                  continue;
+                }
+              }
+            } catch (listErr) {
+              console.error("[courier-refunds] refund lookup failed", row.id, listErr);
+            }
+
             const res = await fetch(
               `https://api.razorpay.com/v1/payments/${encodeURIComponent(row.razorpay_payment_id)}/refund`,
               {
