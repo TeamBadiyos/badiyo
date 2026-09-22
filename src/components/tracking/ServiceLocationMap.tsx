@@ -262,7 +262,7 @@ export function ServiceLocationMap({
           {address.full_address}
         </div>
         <div className="mt-1 flex items-center gap-1.5 text-[11px] text-muted-foreground">
-          {liveExpert && (
+          {expertFresh && (
             <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-primary" />
           )}
           {trackingNote}
