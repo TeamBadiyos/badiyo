@@ -71,6 +71,18 @@ function ServiceProductCardBase({
             }`}
           />
         </div>
+        {statusBadge && !unavailable ? (
+          <>
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-x-0 top-0 h-1/2 rounded-t-[14px] bg-gradient-to-b from-foreground/35 to-transparent"
+            />
+            <span className="absolute left-1 top-1 flex max-w-[92%] items-center gap-1 rounded-full border border-[#E5A50A]/40 bg-card/85 px-1.5 py-0.5 text-[9px] font-extrabold leading-tight text-[#B8830A] shadow-sm backdrop-blur-[2px]">
+              <Clock className="h-2.5 w-2.5 shrink-0" />
+              <span className="truncate">{statusBadge}</span>
+            </span>
+          </>
+        ) : null}
         {unavailable ? (
           <span className="absolute left-1 top-1 rounded-[8px] bg-foreground/75 px-1.5 py-0.5 text-[9px] font-bold leading-tight text-background">
             {unavailableLabel || t("home.unavailableBadge")}
