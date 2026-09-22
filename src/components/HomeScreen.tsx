@@ -338,30 +338,6 @@ export function HomeScreen({
           </button>
         </form>
 
-        {/* Service status banner — closed / coming soon / temporarily stopped */}
-        {blockedMessage() ? (
-          <div className="mt-3 flex items-center gap-3 rounded-[16px] border border-border bg-card px-4 py-3 shadow-sm">
-            <Clock className="h-5 w-5 shrink-0 text-[#E5A50A]" />
-            <p className="flex-1 text-sm font-semibold text-foreground leading-snug">
-              {blockedMessage()}
-            </p>
-            {cleanState?.status === "coming_soon" && !notifySent ? (
-              <button
-                type="button"
-                onClick={async () => {
-                  const r = await notifyMeForService("clean");
-                  if (r === "added" || r === "duplicate") {
-                    setNotifySent(true);
-                    toast(t("serviceState.notifyDone"));
-                  }
-                }}
-                className="shrink-0 rounded-full bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground"
-              >
-                {t("serviceState.notifyMe")}
-              </button>
-            ) : null}
-          </div>
-        ) : null}
 
 
         {/* Services bar (segment tabs) */}
