@@ -100,8 +100,8 @@ export const fetchTrackingRoadRoute = createServerFn({ method: "POST" })
 
     const value: RoadRoute = {
       encodedPolyline,
-      distanceMeters: route.distanceMeters ?? null,
-      durationSeconds: route.duration ? Number.parseFloat(route.duration) : null,
+      distanceMeters: route?.distanceMeters ?? null,
+      durationSeconds: route?.duration ? Number.parseFloat(route.duration) : null,
     };
     routeCache.set(cacheKey, { expiresAt: Date.now() + 2 * 60_000, value });
     if (routeCache.size > 200) {
