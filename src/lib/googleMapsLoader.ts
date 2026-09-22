@@ -56,7 +56,11 @@ export function loadMapsScript(): Promise<void> {
     const s = document.createElement("script");
     // Always an absolute Google URL — never proxied through the connector
     // gateway — so it resolves identically on web and inside the WebView.
-    s.src = `https://maps.googleapis.com/maps/api/js?key=${key}&loading=async&callback=__badiyoInitMap`;
+    const channel = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_TRACKING_ID as
+      | string
+      | undefined;
+    const channelParam = channel ? `&channel=${encodeURIComponent(channel)}` : "";
+    s.src = `https://maps.googleapis.com/maps/api/js?key=${key}&loading=async&callback=__badiyoInitMap${channelParam}`;
     s.async = true;
     s.defer = true;
     s.dataset.badiyoGmaps = "1";

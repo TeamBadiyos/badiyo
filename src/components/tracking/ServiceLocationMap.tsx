@@ -3,7 +3,11 @@ import { MapPin } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { SelectedAddress } from "../BookingSummaryScreen";
 import { loadMapsScript } from "@/lib/googleMapsLoader";
+import { decodeGooglePolyline, routePointKey } from "@/lib/mapRoute";
+import { fetchTrackingRoadRoute } from "@/lib/trackingRoute.functions";
 import { supabase } from "@/integrations/supabase/client";
+import riderMarkerImage from "@/assets/map-rider-worker.png";
+import womanMarkerImage from "@/assets/map-woman-worker.png";
 
 type ExpertLocation = {
   expert_id: string;
@@ -12,21 +16,38 @@ type ExpertLocation = {
   longitude: number | null;
   location_updated_at: string | null;
   is_online: boolean | null;
+  category_slug: string | null;
 };
 
 /** Location older than this is considered stale — we stop showing the marker. */
 const STALE_MS = 5 * 60 * 1000;
+const HOME_CARE_CATEGORY_ID = "508641a3-59fd-457c-be6a-74879be354cc";
 
 async function fetchExpertLocation(bookingId: string): Promise<ExpertLocation | null> {
-  const { data, error } = await supabase.rpc("get_assigned_expert_location", {
-    _booking_id: bookingId,
-  });
+  const [{ data, error }, { data: booking }] = await Promise.all([
+    supabase.rpc("get_assigned_expert_location", { _booking_id: bookingId }),
+    supabase
+      .from("bookings")
+      .select("service_category_id, service_categories!bookings_service_category_id_fkey(slug)")
+      .eq("id", bookingId)
+      .maybeSingle(),
+  ]);
   if (error) {
     console.error("get_assigned_expert_location failed:", error);
     return null;
   }
   const row = Array.isArray(data) ? data[0] : data;
-  return (row as ExpertLocation | undefined) ?? null;
+  if (!row) return null;
+  const bookingCategory = booking as unknown as {
+    service_category_id?: string | null;
+    service_categories?: { slug?: string } | null;
+  } | null;
+  return {
+    ...(row as Omit<ExpertLocation, "category_slug">),
+    category_slug:
+      bookingCategory?.service_categories?.slug ??
+      (bookingCategory?.service_category_id === HOME_CARE_CATEGORY_ID ? "home-cleaning" : null),
+  };
 }
 
 function agoLabel(iso: string) {
@@ -52,6 +73,7 @@ export function ServiceLocationMap({
   // The Maps JS API is loaded dynamically and typed loosely by the loader.
   const mapRef = useRef<any>(null);
   const expertMarkerRef = useRef<any>(null);
+  const routeLineRef = useRef<any>(null);
   const [failed, setFailed] = useState(false);
   const [ready, setReady] = useState(false);
 
@@ -74,6 +96,21 @@ export function ServiceLocationMap({
     expert && expert.latitude != null && expert.longitude != null && !isStale
       ? { lat: Number(expert.latitude), lng: Number(expert.longitude) }
       : null;
+  const destination = hasCoords
+    ? { lat: Number(address.latitude), lng: Number(address.longitude) }
+    : null;
+  const routeOriginKey = routePointKey(liveExpert);
+  const routeTargetKey = routePointKey(destination);
+  const { data: roadRoute } = useQuery({
+    queryKey: ["expert-road-route", bookingId, routeOriginKey, routeTargetKey],
+    queryFn: () =>
+      fetchTrackingRoadRoute({
+        data: { origin: liveExpert as { lat: number; lng: number }, destination: destination as { lat: number; lng: number }, mode: "DRIVE" },
+      }),
+    enabled: !!bookingId && !!liveExpert && !!destination,
+    staleTime: 2 * 60_000,
+    retry: false,
+  });
 
   useEffect(() => {
     if (!hasCoords) return;
@@ -103,6 +140,7 @@ export function ServiceLocationMap({
       cancelled = true;
       mapRef.current = null;
       expertMarkerRef.current = null;
+      routeLineRef.current = null;
     };
   }, [hasCoords, address.latitude, address.longitude]);
 
@@ -118,28 +156,49 @@ export function ServiceLocationMap({
     }
 
     if (!expertMarkerRef.current) {
+      const workerImage =
+        expert?.category_slug === "home-cleaning" ? womanMarkerImage : riderMarkerImage;
       expertMarkerRef.current = new window.google.maps.Marker({
         position: liveExpert,
         map,
         title: expert?.name ?? "Expert",
         icon: {
-          path: window.google.maps.SymbolPath.CIRCLE,
-          scale: 8,
-          fillColor: "#00B97A",
-          fillOpacity: 1,
-          strokeColor: "#ffffff",
-          strokeWeight: 3,
+          url: workerImage,
+          scaledSize: new window.google.maps.Size(54, 54),
+          anchor: new window.google.maps.Point(27, 52),
         },
       });
     } else {
       expertMarkerRef.current.setPosition(liveExpert);
+      expertMarkerRef.current.setIcon({
+        url: expert?.category_slug === "home-cleaning" ? womanMarkerImage : riderMarkerImage,
+        scaledSize: new window.google.maps.Size(54, 54),
+        anchor: new window.google.maps.Point(27, 52),
+      });
     }
 
     const bounds = new window.google.maps.LatLngBounds();
     bounds.extend({ lat: address.latitude!, lng: address.longitude! });
     bounds.extend(liveExpert);
     map.fitBounds(bounds, 60);
-  }, [ready, liveExpert?.lat, liveExpert?.lng, expert?.name, address.latitude, address.longitude]);
+  }, [ready, liveExpert?.lat, liveExpert?.lng, expert?.name, expert?.category_slug, address.latitude, address.longitude]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!ready || !map || !window.google?.maps) return;
+    routeLineRef.current?.setMap(null);
+    routeLineRef.current = null;
+    if (!roadRoute?.encodedPolyline) return;
+    const path = decodeGooglePolyline(roadRoute.encodedPolyline);
+    if (path.length < 2) return;
+    routeLineRef.current = new window.google.maps.Polyline({
+      path,
+      map,
+      strokeColor: "#00B97A",
+      strokeOpacity: 0.86,
+      strokeWeight: 5,
+    });
+  }, [ready, roadRoute?.encodedPolyline]);
 
   const showMap = hasCoords && !failed;
 

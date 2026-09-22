@@ -5,6 +5,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { MapPin, Navigation } from "lucide-react";
 import { loadMapsScript } from "@/lib/googleMapsLoader";
+import { decodeGooglePolyline, routePointKey } from "@/lib/mapRoute";
+import { fetchTrackingRoadRoute } from "@/lib/trackingRoute.functions";
+import riderMarkerImage from "@/assets/map-rider-worker.png";
 import { fetchRiderLocation } from "./courierData";
 
 const LIVE_STATUSES = ["DRIVER_ASSIGNED", "ARRIVED_PICKUP", "PICKED_UP", "IN_TRANSIT"];
@@ -30,6 +33,7 @@ export function CourierLiveMap({
   const mapDivRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
   const riderMarkerRef = useRef<any>(null);
+  const routeLineRef = useRef<any>(null);
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
   const readyRef = useRef(false);
@@ -56,6 +60,26 @@ export function CourierLiveMap({
     rider?.available && rider.lat != null && rider.lng != null && !rider.stale
       ? { lat: Number(rider.lat), lng: Number(rider.lng) }
       : null;
+  const target =
+    status === "PICKED_UP" || status === "IN_TRANSIT"
+      ? hasDrop
+        ? { lat: Number(drop.lat), lng: Number(drop.lng) }
+        : null
+      : hasPickup
+        ? { lat: Number(pickup.lat), lng: Number(pickup.lng) }
+        : null;
+  const routeOriginKey = routePointKey(riderPos);
+  const routeTargetKey = routePointKey(target);
+  const { data: roadRoute } = useQuery({
+    queryKey: ["courier-road-route", orderId, routeOriginKey, routeTargetKey, status],
+    queryFn: () =>
+      fetchTrackingRoadRoute({
+        data: { origin: riderPos as { lat: number; lng: number }, destination: target as { lat: number; lng: number }, mode: "TWO_WHEELER" },
+      }),
+    enabled: live && !!riderPos && !!target,
+    staleTime: 2 * 60_000,
+    retry: false,
+  });
 
   // Create the map once we have at least one coordinate.
   useEffect(() => {
@@ -106,16 +130,6 @@ export function CourierLiveMap({
           });
         }
         if (hasPickup && hasDrop) {
-          new window.google.maps.Polyline({
-            path: [
-              { lat: Number(pickup.lat), lng: Number(pickup.lng) },
-              { lat: Number(drop.lat), lng: Number(drop.lng) },
-            ],
-            map,
-            strokeColor: "#00B97A",
-            strokeOpacity: 0.5,
-            strokeWeight: 3,
-          });
           const b = new window.google.maps.LatLngBounds();
           b.extend({ lat: Number(pickup.lat), lng: Number(pickup.lng) });
           b.extend({ lat: Number(drop.lat), lng: Number(drop.lng) });
@@ -131,6 +145,7 @@ export function CourierLiveMap({
       cancelled = true;
       mapRef.current = null;
       riderMarkerRef.current = null;
+      routeLineRef.current = null;
       readyRef.current = false;
       setReady(false);
     };
@@ -155,23 +170,16 @@ export function CourierLiveMap({
         title: "Rider",
         zIndex: 10,
         icon: {
-          path: window.google.maps.SymbolPath.CIRCLE,
-          scale: 9,
-          fillColor: "#0B7CFF",
-          fillOpacity: 1,
-          strokeColor: "#ffffff",
-          strokeWeight: 4,
+          url: riderMarkerImage,
+          scaledSize: new window.google.maps.Size(58, 58),
+          anchor: new window.google.maps.Point(29, 55),
         },
       });
     } else {
       riderMarkerRef.current.setPosition(riderPos);
     }
 
-    const target =
-      status === "PICKED_UP" || status === "IN_TRANSIT"
-        ? { lat: Number(drop.lat), lng: Number(drop.lng) }
-        : { lat: Number(pickup.lat), lng: Number(pickup.lng) };
-    if (Number.isFinite(target.lat) && Number.isFinite(target.lng)) {
+    if (target && Number.isFinite(target.lat) && Number.isFinite(target.lng)) {
       const bounds = new window.google.maps.LatLngBounds();
       bounds.extend(target);
       bounds.extend(riderPos);
@@ -179,6 +187,23 @@ export function CourierLiveMap({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, riderPos?.lat, riderPos?.lng, status]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!ready || !map || !window.google?.maps) return;
+    routeLineRef.current?.setMap(null);
+    routeLineRef.current = null;
+    if (!roadRoute?.encodedPolyline) return;
+    const path = decodeGooglePolyline(roadRoute.encodedPolyline);
+    if (path.length < 2) return;
+    routeLineRef.current = new window.google.maps.Polyline({
+      path,
+      map,
+      strokeColor: "#00B97A",
+      strokeOpacity: 0.86,
+      strokeWeight: 5,
+    });
+  }, [ready, roadRoute?.encodedPolyline]);
 
   let note: string;
   if (!live) {

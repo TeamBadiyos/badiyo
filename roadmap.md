@@ -36,3 +36,9 @@ drop table if exists public.courier_vehicle_courier_types, public.courier_vehicl
 - Courier WhatsApp OTP: AISENSY_COURIER_OTP_CAMPAIGN (falls back to login campaign; OTP also visible in app)
 - Set real courier rates in Command Center and flip `is_placeholder` off before going live
 - Review notification-sounds public download finding
+
+## Live tracking maps — DONE
+
+- [x] Replace parcel straight line with a throttled Google road route to the current stage destination
+- [x] Add road route from the assigned expert to the home-service address
+- [x] Replace generic live dots with dedicated 3D courier/Auto Care and woman Home Care markers
