@@ -16,10 +16,12 @@ import { LanguageProvider } from "@/i18n";
 import { OfflineGate } from "@/components/OfflineScreen";
 import { buildEarlyBootScript } from "@/lib/earlyData";
 import { startQueryPersistence } from "@/lib/queryPersistence";
+import { resolveSupabaseUrl } from "@/lib/supabaseEndpoint";
 
 
-const SUPABASE_URL =
-  (import.meta.env.VITE_SUPABASE_URL as string | undefined) ?? process.env.SUPABASE_URL ?? "";
+const SUPABASE_URL = resolveSupabaseUrl(
+  (import.meta.env.VITE_SUPABASE_URL as string | undefined) ?? process.env.SUPABASE_URL ?? "",
+);
 const SUPABASE_KEY =
   (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined) ??
   process.env.SUPABASE_PUBLISHABLE_KEY ??
