@@ -132,12 +132,23 @@ export function AddAddressMapScreen({
   const [searchError, setSearchError] = useState<string | null>(null);
   const [resolvingId, setResolvingId] = useState<string | null>(null);
   const skipGeocodeRef = useRef(false);
+  // True right after a suggestion is tapped: keeps the dropdown closed until
+  // the customer types again (filling the box must not re-open the list).
+  const justPickedRef = useRef(false);
+  const [picked, setPicked] = useState(false);
   const [geocodeNonce, setGeocodeNonce] = useState(0);
 
   // Debounced place search: Google Places first (shop / hospital names with
   // distance), Geocoding as the fallback. Minimum 3 characters, 300ms idle.
   useEffect(() => {
     const q = query.trim();
+    if (justPickedRef.current) {
+      justPickedRef.current = false;
+      setSuggestions([]);
+      setSearching(false);
+      setSearchError(null);
+      return;
+    }
     if (q.length < 3) {
       setSuggestions([]);
       setSearching(false);
@@ -172,10 +183,17 @@ export function AddAddressMapScreen({
 
   const handleSelectSuggestion = (s: AddressSuggestion) => {
     setResolvingId(s.id);
+    justPickedRef.current = true;
+    setPicked(true);
+    setSuggestions([]);
+    setSearchError(null);
+    setSearching(false);
+    (document.activeElement as HTMLElement | null)?.blur?.();
     resolveSuggestion(s)
       .then((p) => {
         setSuggestions([]);
         setSearchError(null);
+        justPickedRef.current = true;
         setQuery(s.title);
         const next = { lat: p.lat, lng: p.lng };
         if (mapRef.current) mapRef.current.panTo(next);
@@ -338,6 +356,7 @@ export function AddAddressMapScreen({
     (!blockOutsideZone || zoneState !== "out") &&
     !isSaving;
   const searchResultsOpen =
+    !picked &&
     query.trim().length >= 3 &&
     (suggestions.length > 0 || searching || searchError != null);
 
@@ -345,6 +364,8 @@ export function AddAddressMapScreen({
   // search overlay so the map, pin and form come back cleanly; only a second
   // back leaves the screen.
   const closeSearch = () => {
+    justPickedRef.current = false;
+    setPicked(false);
     setQuery("");
     setSuggestions([]);
     setSearchError(null);
@@ -438,7 +459,10 @@ export function AddAddressMapScreen({
                 )}
                 <input
                   value={query}
-                  onChange={(e) => setQuery(e.target.value)}
+                  onChange={(e) => {
+                    setPicked(false);
+                    setQuery(e.target.value);
+                  }}
                   placeholder={t("search.placeholder")}
                   className="flex-1 bg-transparent text-sm text-foreground outline-none"
                 />
@@ -447,6 +471,7 @@ export function AddAddressMapScreen({
                     type="button"
                     aria-label="Clear search"
                     onClick={() => {
+                      setPicked(false);
                       setQuery("");
                       setSuggestions([]);
                     }}

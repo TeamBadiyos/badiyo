@@ -143,7 +143,14 @@ export function LocationPickerSheet({
   const handlePickSuggestion = (s: AddressSuggestion) => {
     setResolvingId(s.id);
     resolveSuggestion(s)
-      .then((p) => openMapAt({ lat: p.lat, lng: p.lng }))
+      .then((p) => {
+        // Close the suggestion list as soon as a place is chosen.
+        setQuery("");
+        setResults([]);
+        setSearchError(null);
+        (document.activeElement as HTMLElement | null)?.blur?.();
+        openMapAt({ lat: p.lat, lng: p.lng });
+      })
       .catch((e) => {
         console.error("[address] place details failed:", e);
         toast.error(t("search.detailFailed"));
