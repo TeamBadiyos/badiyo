@@ -138,7 +138,11 @@ export function CourierTrackingScreen({
   });
 
   const otpPurpose: Purpose | null =
-    status === "ARRIVED_PICKUP" ? "pickup" : status === "IN_TRANSIT" ? "delivery" : null;
+    status === "ARRIVED_PICKUP"
+      ? "pickup"
+      : status === "PICKED_UP" || status === "IN_TRANSIT"
+        ? "delivery"
+        : null;
 
   // The code is pulled straight into the app — no WhatsApp step needed.
   const { data: otp } = useQuery({
