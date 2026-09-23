@@ -34,7 +34,9 @@ function lazyNamed<M, K extends keyof M>(loader: () => Promise<M>, key: K) {
 }
 
 
-const HomeScreen = lazyNamed(() => import("@/components/HomeScreen"), "HomeScreen");
+// Home is the screen almost every launch lands on — bundling it with the first
+// load avoids a second network round-trip (and a blank spinner) after login.
+import { HomeScreen } from "@/components/HomeScreen";
 const OtpVerifyScreen = lazyNamed(() => import("@/components/OtpVerifyScreen"), "OtpVerifyScreen");
 const PinLoginScreen = lazyNamed(() => import("@/components/PinLoginScreen"), "PinLoginScreen");
 const PinSetScreen = lazyNamed(() => import("@/components/PinSetScreen"), "PinSetScreen");
@@ -598,8 +600,8 @@ function Index() {
     // while the session check runs, with a short minimum so it doesn't flash,
     // and a hard cap so a slow network can never freeze the app on it.
     const bootStartedAt = Date.now();
-    const SPLASH_MIN_MS = 450;
-    const SPLASH_MAX_MS = 2500;
+    const SPLASH_MIN_MS = 120;
+    const SPLASH_MAX_MS = 900;
     let settled = false;
 
     const goToLogin = () => {

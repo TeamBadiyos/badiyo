@@ -409,7 +409,9 @@ export function AddAddressMapScreen({
     <div className="fixed inset-0 z-30 flex flex-col bg-background pb-[var(--app-safe-bottom)]">
       <LocationHelpDialog kind={locHelp} onClose={() => setLocHelp(null)} />
       {/* Map area */}
-      <div className="relative flex-1 min-h-0">
+      {/* Map takes the top 70% of the screen so the pin is easy to see and move. */}
+      <div className="relative h-[70dvh] shrink-0">
+
         <div ref={mapDivRef} className="absolute inset-0 bg-muted" />
         {!mapReady && (
           <div className="absolute inset-0 flex items-center justify-center text-sm text-muted-foreground">
@@ -492,7 +494,7 @@ export function AddAddressMapScreen({
       </div>
 
       {/* Bottom sheet */}
-      <div className="max-h-[64dvh] overflow-y-auto rounded-t-[24px] border-t border-border bg-card p-5 pb-[calc(var(--app-safe-bottom)+24px)] shadow-2xl">
+      <div className="relative z-20 -mt-4 flex-1 min-h-0 overflow-y-auto rounded-t-[24px] border-t border-border bg-card p-5 pb-[calc(var(--app-safe-bottom)+24px)] shadow-2xl">
         <div className="mx-auto w-full max-w-md space-y-4">
           <div>
             <div className="mb-1 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">

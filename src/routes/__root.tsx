@@ -123,14 +123,23 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         : []),
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+      // The web font is loaded asynchronously by the boot script below. As a
+      // plain <link rel="stylesheet"> it blocked the very first paint for
+      // seconds on slow mobile networks.
       {
-        rel: "stylesheet",
+        rel: "preload",
+        as: "style",
         href: "https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800&display=swap",
       },
     ],
     scripts: [
       // Kicks off Home's public config requests before the app bundle is parsed.
       { children: buildEarlyBootScript(SUPABASE_URL, SUPABASE_KEY) },
+      // Attach the font stylesheet without blocking the first paint.
+      {
+        children:
+          '(function(){try{var l=document.createElement("link");l.rel="stylesheet";l.media="print";l.href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800&display=swap";l.onload=function(){l.media="all"};document.head.appendChild(l);}catch(e){}})();',
+      },
     ],
   }),
 
