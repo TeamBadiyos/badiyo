@@ -132,6 +132,10 @@ export function AddAddressMapScreen({
   const [searchError, setSearchError] = useState<string | null>(null);
   const [resolvingId, setResolvingId] = useState<string | null>(null);
   const skipGeocodeRef = useRef(false);
+  // True right after a suggestion is tapped: keeps the dropdown closed until
+  // the customer types again (filling the box must not re-open the list).
+  const justPickedRef = useRef(false);
+  const [picked, setPicked] = useState(false);
   const [geocodeNonce, setGeocodeNonce] = useState(0);
 
   // Debounced place search: Google Places first (shop / hospital names with
