@@ -329,6 +329,28 @@ export function CourierTrackingScreen({
                 : "Share this code when the parcel is delivered."}
             </p>
             <OtpDigits code={otp ?? null} />
+            {otp && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (otpPurpose === "pickup") {
+                    openWhatsapp(
+                      waNumber(order.pickup_contact_phone),
+                      pickupWhatsappText(order.pickup_contact_name, otp),
+                    );
+                  } else {
+                    openWhatsapp(
+                      waNumber(order.drop_contact_phone),
+                      deliveryWhatsappText(order.pickup_contact_name, otp),
+                    );
+                  }
+                }}
+                className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#25D366] px-5 py-3 text-sm font-semibold text-white"
+              >
+                <MessageCircle className="h-4 w-4" />
+                {otpPurpose === "pickup" ? "Share on WhatsApp" : "Send code on WhatsApp"}
+              </button>
+            )}
             <p className="mt-3 text-[11px] text-muted-foreground">
               Never share this code before the parcel is handed over.
             </p>
