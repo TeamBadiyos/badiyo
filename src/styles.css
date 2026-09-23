@@ -111,11 +111,11 @@
   --width: min(340px, calc(100vw - 40px));
 }
 
-/* Centre the notification card in the middle of the screen */
+/* Position the notification card 20% from the top of the screen */
 .badiyos-toaster[data-sonner-toaster][data-y-position="top"] {
-  top: 50% !important;
+  top: 20% !important;
   bottom: auto !important;
-  translate: 0 -50%;
+  translate: 0 0;
 }
 
 .badiyos-toast {
