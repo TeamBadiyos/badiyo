@@ -174,10 +174,9 @@ export const Route = createFileRoute("/api/public/places-search")({
             };
           }>;
         };
-        const suggestions = (data.suggestions ?? [])
+        const mapped = (data.suggestions ?? [])
           .map((s) => s.placePrediction)
           .filter((p): p is NonNullable<typeof p> => Boolean(p?.placeId))
-          .slice(0, 6)
           .map((p) => ({
             placeId: p.placeId!,
             title: p.structuredFormat?.mainText?.text ?? "",
@@ -185,6 +184,19 @@ export const Route = createFileRoute("/api/public/places-search")({
             distanceMeters: typeof p.distanceMeters === "number" ? p.distanceMeters : null,
           }))
           .filter((s) => s.title.length > 0);
+
+        // Nearest first: places inside the serviceable city radius come before
+        // far-away same-name matches from other cities.
+        const NEAR_METERS = 30_000;
+        const rank = (d: number | null) => (d != null && d <= NEAR_METERS ? 0 : 1);
+        const suggestions = mapped
+          .sort((a, b) => {
+            const r = rank(a.distanceMeters) - rank(b.distanceMeters);
+            if (r !== 0) return r;
+            return (a.distanceMeters ?? Number.MAX_SAFE_INTEGER) -
+              (b.distanceMeters ?? Number.MAX_SAFE_INTEGER);
+          })
+          .slice(0, 6);
 
         return json({ suggestions });
       },
