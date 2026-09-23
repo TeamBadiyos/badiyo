@@ -83,7 +83,6 @@ function deliveryWhatsappText(senderName: string | null | undefined, code: strin
     "कृपया यह कोड राइडर को केवल पार्सल मिलने के बाद ही बताएं।",
     "",
     "*Badiyos*",
-    "",
     "हर घर का अपना साथी",
   ].join("\n");
 }
