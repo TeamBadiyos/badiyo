@@ -356,6 +356,7 @@ export function AddAddressMapScreen({
     (!blockOutsideZone || zoneState !== "out") &&
     !isSaving;
   const searchResultsOpen =
+    !picked &&
     query.trim().length >= 3 &&
     (suggestions.length > 0 || searching || searchError != null);
 
@@ -363,6 +364,8 @@ export function AddAddressMapScreen({
   // search overlay so the map, pin and form come back cleanly; only a second
   // back leaves the screen.
   const closeSearch = () => {
+    justPickedRef.current = false;
+    setPicked(false);
     setQuery("");
     setSuggestions([]);
     setSearchError(null);
