@@ -67,7 +67,6 @@ function pickupWhatsappText(name: string | null | undefined, code: string) {
     "कृपया यह कोड राइडर को केवल पार्सल सौंपते समय ही बताएं।",
     "",
     "*Badiyos*",
-    "",
     "हर घर का अपना साथी",
   ].join("\n");
 }
@@ -84,7 +83,6 @@ function deliveryWhatsappText(senderName: string | null | undefined, code: strin
     "कृपया यह कोड राइडर को केवल पार्सल मिलने के बाद ही बताएं।",
     "",
     "*Badiyos*",
-    "",
     "हर घर का अपना साथी",
   ].join("\n");
 }
