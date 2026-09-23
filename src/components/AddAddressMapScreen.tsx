@@ -459,7 +459,10 @@ export function AddAddressMapScreen({
                 )}
                 <input
                   value={query}
-                  onChange={(e) => setQuery(e.target.value)}
+                  onChange={(e) => {
+                    setPicked(false);
+                    setQuery(e.target.value);
+                  }}
                   placeholder={t("search.placeholder")}
                   className="flex-1 bg-transparent text-sm text-foreground outline-none"
                 />
@@ -468,6 +471,7 @@ export function AddAddressMapScreen({
                     type="button"
                     aria-label="Clear search"
                     onClick={() => {
+                      setPicked(false);
                       setQuery("");
                       setSuggestions([]);
                     }}
