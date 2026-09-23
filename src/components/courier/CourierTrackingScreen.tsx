@@ -44,6 +44,53 @@ function OtpDigits({ code }: { code: string | null }) {
   );
 }
 
+/** Turn any stored phone into a WhatsApp-ready number (91XXXXXXXXXX). */
+function waNumber(raw?: string | null): string | null {
+  const digits = (raw ?? "").replace(/\D/g, "");
+  if (!digits) return null;
+  if (digits.length === 10) return `91${digits}`;
+  if (digits.length === 12 && digits.startsWith("91")) return digits;
+  if (digits.length === 11 && digits.startsWith("0")) return `91${digits.slice(1)}`;
+  return digits;
+}
+
+function pickupWhatsappText(name: string | null | undefined, code: string) {
+  const who = (name ?? "").trim();
+  return [
+    `नमस्ते${who ? ` ${who}` : ""},`,
+    "",
+    "आपका Badiyos पार्सल पिकअप कन्फर्म हो गया है और राइडर आपकी ओर आ रहा है।",
+    "",
+    `पिकअप वेरिफिकेशन कोड: ${code}`,
+    "",
+    "कृपया यह कोड राइडर को केवल पार्सल सौंपते समय ही बताएं।",
+    "",
+    "Badiyos - हर घर का अपना साथी",
+  ].join("\n");
+}
+
+function deliveryWhatsappText(senderName: string | null | undefined, code: string) {
+  const who = (senderName ?? "").trim() || "आपके परिचित";
+  return [
+    "नमस्ते,",
+    "",
+    `${who} द्वारा भेजा गया एक पार्सल Badiyos के माध्यम से आपके पास आ रहा है।`,
+    "",
+    `डिलीवरी वेरिफिकेशन कोड: ${code}`,
+    "",
+    "कृपया यह कोड राइडर को केवल पार्सल मिलने के बाद ही बताएं।",
+    "",
+    "Badiyos - हर घर का अपना साथी",
+  ].join("\n");
+}
+
+function openWhatsapp(phone: string | null, text: string) {
+  const url = phone
+    ? `https://wa.me/${phone}?text=${encodeURIComponent(text)}`
+    : `https://wa.me/?text=${encodeURIComponent(text)}`;
+  window.open(url, "_blank", "noopener,noreferrer");
+}
+
 export function CourierTrackingScreen({
   orderId,
   onBack,
