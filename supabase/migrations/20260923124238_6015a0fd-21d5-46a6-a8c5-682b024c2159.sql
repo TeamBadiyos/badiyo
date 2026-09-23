@@ -1,0 +1,1 @@
+UPDATE public.ops_settings SET value = '300', updated_at = now() WHERE key = 'courier_location_stale_seconds';
