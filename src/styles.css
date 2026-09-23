@@ -115,7 +115,7 @@
 .badiyos-toaster[data-sonner-toaster][data-y-position="top"] {
   top: 50% !important;
   bottom: auto !important;
-  transform: translate(-50%, -50%);
+  translate: 0 -50%;
 }
 
 .badiyos-toast {
