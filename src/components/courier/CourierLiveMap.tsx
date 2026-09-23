@@ -339,9 +339,11 @@ export function CourierLiveMap({
                 {liveFresh
                   ? "Live"
                   : riderPos
-                    ? "Last known location"
+                    ? carrying
+                      ? "On the way"
+                      : "Heading to pickup"
                     : rider?.available
-                      ? "Waiting for rider location"
+                      ? "Rider assigned"
                       : "Finding a rider"}
               </div>
             )}
