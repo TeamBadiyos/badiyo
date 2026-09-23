@@ -296,15 +296,21 @@ export function CourierLiveMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, roadRoute?.encodedPolyline, riderPos?.lat, riderPos?.lng, target?.lat, target?.lng]);
 
+  const carrying = status === "PICKED_UP" || status === "IN_TRANSIT";
+
   let note: string;
   if (!live) {
     note = "Live tracking starts once a rider accepts your parcel.";
   } else if (riderPos && !riderStale && rider?.location_updated_at) {
     note = `Rider location updated ${agoLabel(rider.location_updated_at)}.`;
   } else if (rider?.location_updated_at) {
-    note = `Rider location paused — last seen ${agoLabel(rider.location_updated_at)}.`;
+    note = carrying
+      ? `Rider is on the way with your parcel. Updating live as the rider moves (last seen ${agoLabel(rider.location_updated_at)}).`
+      : `Rider is arriving at the pickup location (last seen ${agoLabel(rider.location_updated_at)}).`;
   } else if (rider?.available) {
-    note = "Rider assigned — waiting for live location.";
+    note = carrying
+      ? "Rider is on the way with your parcel. Live location will appear shortly."
+      : "Rider assigned — heading to the pickup location.";
   } else {
     note = "Finding a rider for your parcel…";
   }
