@@ -142,6 +142,13 @@ export function AddAddressMapScreen({
   // distance), Geocoding as the fallback. Minimum 3 characters, 300ms idle.
   useEffect(() => {
     const q = query.trim();
+    if (justPickedRef.current) {
+      justPickedRef.current = false;
+      setSuggestions([]);
+      setSearching(false);
+      setSearchError(null);
+      return;
+    }
     if (q.length < 3) {
       setSuggestions([]);
       setSearching(false);
@@ -176,10 +183,17 @@ export function AddAddressMapScreen({
 
   const handleSelectSuggestion = (s: AddressSuggestion) => {
     setResolvingId(s.id);
+    justPickedRef.current = true;
+    setPicked(true);
+    setSuggestions([]);
+    setSearchError(null);
+    setSearching(false);
+    (document.activeElement as HTMLElement | null)?.blur?.();
     resolveSuggestion(s)
       .then((p) => {
         setSuggestions([]);
         setSearchError(null);
+        justPickedRef.current = true;
         setQuery(s.title);
         const next = { lat: p.lat, lng: p.lng };
         if (mapRef.current) mapRef.current.panTo(next);
