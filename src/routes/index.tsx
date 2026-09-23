@@ -36,7 +36,7 @@ function lazyNamed<M, K extends keyof M>(loader: () => Promise<M>, key: K) {
 
 // Home is the screen almost every launch lands on — bundling it with the first
 // load avoids a second network round-trip (and a blank spinner) after login.
-export { HomeScreen } from "@/components/HomeScreen";
+import { HomeScreen } from "@/components/HomeScreen";
 const OtpVerifyScreen = lazyNamed(() => import("@/components/OtpVerifyScreen"), "OtpVerifyScreen");
 const PinLoginScreen = lazyNamed(() => import("@/components/PinLoginScreen"), "PinLoginScreen");
 const PinSetScreen = lazyNamed(() => import("@/components/PinSetScreen"), "PinSetScreen");
