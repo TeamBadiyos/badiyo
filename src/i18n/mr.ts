@@ -399,6 +399,7 @@ export const mr: Partial<Record<keyof typeof en, string>> = {
   "store.payOnline": "ऑनलाइन पेमेंट",
   "store.payCod": "डिलिव्हरीच्या वेळी रोख",
   "store.onlineOnlyNote": "UPI, कार्ड किंवा नेटबँकिंग. badiyos Expert डिलिव्हरी करेल.",
+  "store.errOrderExpired": "पेमेंटची वेळ संपली. कृपया पुन्हा पे करा.",
   "store.awaitingShop": "ऑर्डर #{number}: पेमेंट निश्चित होताच दुकानाला पाठवली जाईल.",
   "store.errDelivery": "या पत्त्यावर सध्या डिलिव्हरी उपलब्ध नाही.",
   "store.errDeliveryFar": "हा पत्ता दुकानापासून डिलिव्हरीसाठी खूप दूर आहे.",

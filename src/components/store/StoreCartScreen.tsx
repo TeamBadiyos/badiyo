@@ -58,6 +58,7 @@ const ERROR_KEYS: Record<string, TranslationKey> = {
   delivery_unavailable: "store.errDelivery",
   delivery_too_far: "store.errDeliveryFar",
   online_only: "store.onlineOnlyNote",
+  order_expired: "store.errOrderExpired",
 };
 
 export function StoreCartScreen({
