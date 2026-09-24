@@ -554,6 +554,8 @@ function SegmentView({
   storeCoords,
   onOpenStore,
   onOpenCategory,
+  onOpenCart,
+  storeOrdering,
 }: {
   segment: Segment;
   categories: ServiceCategory[];
