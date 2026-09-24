@@ -3,6 +3,7 @@ import { ArrowLeft, Loader2 } from "lucide-react";
 import { useT } from "@/i18n";
 import { StoreImage } from "./StoreImage";
 import { StoreRating } from "./StoreRating";
+import { ProductCard } from "./ProductCard";
 import { isStoreOpen, useStoreProducts, type PublicProduct, type PublicStore } from "@/lib/store";
 
 /** Read-only shop page: products grouped by their category, no cart, no checkout. */
