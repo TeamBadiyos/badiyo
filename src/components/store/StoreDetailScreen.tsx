@@ -2,7 +2,8 @@ import { useMemo } from "react";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { useT } from "@/i18n";
 import { StoreImage } from "./StoreImage";
-import { useStoreProducts, type PublicProduct, type PublicStore } from "@/lib/store";
+import { StoreRating } from "./StoreRating";
+import { isStoreOpen, useStoreProducts, type PublicProduct, type PublicStore } from "@/lib/store";
 
 /** Read-only shop page: products grouped by their category, no cart, no checkout. */
 export function StoreDetailScreen({
@@ -14,7 +15,7 @@ export function StoreDetailScreen({
 }) {
   const t = useT();
   const { data: products = [], isLoading } = useStoreProducts(store.id);
-  const closed = !store.is_accepting_orders;
+  const closed = !isStoreOpen(store);
 
   const groups = useMemo(() => {
     const map = new Map<string, PublicProduct[]>();

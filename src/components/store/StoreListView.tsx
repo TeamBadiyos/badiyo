@@ -108,7 +108,7 @@ export function StoreListView({
       ) : (
         <ul className="mt-3 space-y-3">
           {rows.map(({ store, km }) => {
-            const closed = !store.is_accepting_orders;
+            const closed = !isStoreOpen(store);
             return (
               <li key={store.id}>
                 <button
@@ -148,6 +148,7 @@ export function StoreListView({
                           {formatDistance(km)}
                         </span>
                       )}
+                      <StoreRating rating={store.rating} />
                     </div>
                   </div>
                   <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
