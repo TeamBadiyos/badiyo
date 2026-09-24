@@ -307,6 +307,7 @@ export function OrdersScreen({
     refetchIntervalInBackground: false,
   });
   useBookingsLive();
+  const [bill, setBill] = useState<Bill | null>(null);
 
 
   const queryClient = useQueryClient();
