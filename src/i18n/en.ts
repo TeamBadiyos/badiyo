@@ -401,6 +401,7 @@ export const en = {
  "store.payOnline": "Pay online",
  "store.payCod": "Cash on delivery",
   "store.onlineOnlyNote": "UPI, card or netbanking. Delivered by a badiyos Expert.",
+  "store.errOrderExpired": "Payment time ran out. Please tap pay again.",
   "store.awaitingShop": "Order #{number}: sent to the shop as soon as your payment is confirmed.",
   "store.errDelivery": "Delivery is not available to this address right now.",
   "store.errDeliveryFar": "This address is too far from the shop for delivery.",

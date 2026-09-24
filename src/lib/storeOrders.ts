@@ -130,7 +130,8 @@ export async function createStoreOrder(params: {
 }
 
 export async function attachStorePayment(orderId: string, razorpayOrderId: string) {
-  await rpc("store_attach_payment", { _order_id: orderId, _rzp_order_id: razorpayOrderId });
+  const data = await rpc("store_attach_payment", { _order_id: orderId, _rzp_order_id: razorpayOrderId });
+  if (data.ok !== true) throw new StoreOrderError(String(data.code ?? "order_failed"));
 }
 
 export async function confirmStorePayment(
