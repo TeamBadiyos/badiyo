@@ -45,6 +45,7 @@ export const en = {
   "courier.sourcesHint": "Choose where each drop's parcel comes from. Every pickup must go to at least one drop.",
   "courier.tooManyStops": "This vehicle allows fewer stops. Please remove a stop.",
   "courier.routeOrder": "Route order",
+  "courier.routeCount": "{p} pickup · {d} drop",
   "courier.extraStopsFee": "Extra stops fee",
   "courier.title": "Send a Parcel",
   "courier.subtitle": "Fast local delivery across Latur",

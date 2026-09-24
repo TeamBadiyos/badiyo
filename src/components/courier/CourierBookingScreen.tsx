@@ -10,13 +10,9 @@ import {
   X,
   ChevronRight,
   Loader2,
-  MapPinned,
   Package,
   Pencil,
   Phone,
-  Plus,
-  Route as RouteIcon,
-  UserRound,
 } from "lucide-react";
 import { useLanguage } from "@/i18n";
 import {
@@ -40,7 +36,8 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthUser } from "@/lib/authUser";
 import { courierQuote, courierCreateOrder, courierConfirmPayment, courierGetRateLimits, courierPlanStops } from "@/lib/courier.functions";
-import { MultiStopSection, PlannedRoute, SourceChips, type DropSource, type ExtraStop } from "./MultiStopEditor";
+import { PlannedRoute, type DropSource, type ExtraStop } from "./MultiStopEditor";
+import { RouteTimeline, type TimelineStop } from "./RouteTimeline";
 import { payWithRazorpay, toPaymentError } from "@/lib/razorpayCheckout";
 import { getPaymentPrefill } from "@/lib/paymentPrefill";
 import { paymentErrorKey } from "@/lib/paymentError";
@@ -287,6 +284,26 @@ export function CourierBookingScreen({
     return list;
   }, [pickup, drop, pickupName, pickupPhone, dropName, dropPhone, extraPickups, extraDrops]);
 
+  // One card per stop for the unified route timeline, numbered per type.
+  const timelineStops = useMemo<TimelineStop[]>(() => {
+    let p = 0;
+    let d = 0;
+    return allStops.map((st) => {
+      const index = st.type === "pickup" ? ++p : ++d;
+      return {
+        key: st.key,
+        type: st.type,
+        index,
+        addr: st.addr,
+        name: st.name,
+        phone: st.phone,
+        removable: st.key !== "P1" && st.key !== "D1",
+        source: st.type === "drop" ? dropSources[st.key] : undefined,
+      };
+    });
+  }, [allStops, dropSources]);
+
+
   const nextKey = (prefix: "P" | "D", list: ExtraStop[]) => {
     let n = 2;
     while (list.some((st) => st.key === `${prefix}${n}`)) n++;
@@ -508,16 +525,55 @@ export function CourierBookingScreen({
         )}
         {step === 1 && (
           <section className="animate-fade-slide-in space-y-5">
-            <div>
-              <h2 className="text-xl font-extrabold text-foreground">{t("courier.routeTitle")}</h2>
-              <p className="mt-1 text-sm text-muted-foreground">{t("courier.routeSub")}</p>
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h2 className="text-xl font-extrabold text-foreground">{t("courier.routeTitle")}</h2>
+                <p className="mt-1 text-sm text-muted-foreground">{t("courier.routeSub")}</p>
+              </div>
+              {(maxPickups > 1 || maxDrops > 1 || isMulti) && (
+                <span className="shrink-0 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-extrabold text-primary">
+                  {t("courier.routeCount", { p: pickupCount, d: dropCount })}
+                </span>
+              )}
             </div>
-            <div className="relative overflow-hidden rounded-lg border border-border bg-card shadow-card-m">
-              <div className="absolute bottom-14 left-[31px] top-14 border-l-2 border-dashed border-border" />
-              <AddressStop kind="pickup" address={pickup} onClick={() => setAddressTarget("pickup")} />
-              <div className="mx-5 border-t border-border" />
-              <AddressStop kind="drop" address={drop} onClick={() => setAddressTarget("drop")} />
-            </div>
+
+            <RouteTimeline
+              stops={timelineStops}
+              canAddPickup={maxPickups > 1 && pickupCount < Math.min(maxPickups, 2)}
+              canAddDrop={maxDrops > 1 && dropCount < maxDrops}
+              pickupFee={limits?.extra_pickup_fee ?? 0}
+              dropFee={limits?.extra_drop_fee ?? 0}
+              showSources={pickupCount > 1}
+              onAddPickup={() => setExtraPickups((l) => [...l, { key: nextKey("P", l), addr: null, name: "", phone: "" }])}
+              onAddDrop={() => setExtraDrops((l) => [...l, { key: nextKey("D", l), addr: null, name: "", phone: "" }])}
+              onRemove={(key) => {
+                if (key.startsWith("P")) {
+                  setExtraPickups((l) => l.filter((st) => st.key !== key));
+                  setDropSources({});
+                } else {
+                  setExtraDrops((l) => l.filter((st) => st.key !== key));
+                }
+                setQuote(null);
+              }}
+              onPickAddress={(key) =>
+                setAddressTarget(key === "P1" ? "pickup" : key === "D1" ? "drop" : key)
+              }
+              onChange={(key, patch) => {
+                if (key === "P1") {
+                  if (patch.name !== undefined) setPickupName(patch.name);
+                  if (patch.phone !== undefined) setPickupPhone(patch.phone);
+                } else if (key === "D1") {
+                  if (patch.name !== undefined) setDropName(patch.name);
+                  if (patch.phone !== undefined) setDropPhone(patch.phone);
+                } else if (key.startsWith("P")) {
+                  setExtraPickups((l) => l.map((st) => (st.key === key ? { ...st, ...patch } : st)));
+                } else {
+                  setExtraDrops((l) => l.map((st) => (st.key === key ? { ...st, ...patch } : st)));
+                }
+              }}
+              onSource={(key, v) => setDropSources((m) => ({ ...m, [key]: v }))}
+            />
+
             {zonesChecking && (
               <p className="text-xs font-semibold text-muted-foreground">{t("courier.checkingArea")}</p>
             )}
@@ -530,57 +586,6 @@ export function CourierBookingScreen({
               <p className="rounded-lg bg-destructive/10 p-3 text-sm font-semibold text-destructive">
                 {t("courier.dropOutside")}
               </p>
-            )}
-
-
-            <ContactFields
-              title={t("courier.pickupContact")}
-              name={pickupName}
-              phone={pickupPhone}
-              onName={setPickupName}
-              onPhone={setPickupPhone}
-            />
-            {(maxPickups > 1 || extraPickups.length > 0) && (
-              <MultiStopSection
-                kind="pickup"
-                stops={extraPickups}
-                canAdd={pickupCount < Math.min(maxPickups, 2)}
-                fee={limits?.extra_pickup_fee ?? 0}
-                onAdd={() => setExtraPickups((l) => [...l, { key: nextKey("P", l), addr: null, name: "", phone: "" }])}
-                onRemove={(key) => {
-                  setExtraPickups((l) => l.filter((st) => st.key !== key));
-                  setDropSources({});
-                }}
-                onPickAddress={(key) => setAddressTarget(key)}
-                onChange={(key, patch) => setExtraPickups((l) => l.map((st) => (st.key === key ? { ...st, ...patch } : st)))}
-              />
-            )}
-            <ContactFields
-              title={t("courier.dropContact")}
-              name={dropName}
-              phone={dropPhone}
-              onName={setDropName}
-              onPhone={setDropPhone}
-            />
-            {pickupCount > 1 && (
-              <div className="-mt-2">
-                <SourceChipsInline value={dropSources["D1"]} onChange={(v) => setDropSources((m) => ({ ...m, D1: v }))} />
-              </div>
-            )}
-            {(maxDrops > 1 || extraDrops.length > 0) && (
-              <MultiStopSection
-                kind="drop"
-                stops={extraDrops}
-                canAdd={dropCount < maxDrops}
-                fee={limits?.extra_drop_fee ?? 0}
-                onAdd={() => setExtraDrops((l) => [...l, { key: nextKey("D", l), addr: null, name: "", phone: "" }])}
-                onRemove={(key) => setExtraDrops((l) => l.filter((st) => st.key !== key))}
-                onPickAddress={(key) => setAddressTarget(key)}
-                onChange={(key, patch) => setExtraDrops((l) => l.map((st) => (st.key === key ? { ...st, ...patch } : st)))}
-                showSources={pickupCount > 1}
-                sources={dropSources}
-                onSource={(key, v) => setDropSources((m) => ({ ...m, [key]: v }))}
-              />
             )}
             {isMulti && extrasReady && !sourcesReady && (
               <p className="rounded-lg bg-warning/10 p-3 text-xs font-semibold text-foreground">{t("courier.sourcesHint")}</p>
@@ -834,38 +839,6 @@ export function CourierBookingScreen({
   );
 }
 
-function AddressStop({ kind, address, onClick }: { kind: AddressTarget; address: Addr | null; onClick: () => void }) {
-  const t = useT();
-  const pickup = kind === "pickup";
-  return (
-    <Button type="button" variant="ghost" onClick={onClick} className="grid h-auto w-full grid-cols-[36px_minmax(0,1fr)_auto] items-center gap-3 whitespace-normal rounded-none px-4 py-4 text-left">
-      <span className={`grid h-9 w-9 place-items-center rounded-full ${pickup ? "bg-primary text-primary-foreground" : "bg-destructive text-destructive-foreground"}`}>
-        {pickup ? <RouteIcon className="h-4 w-4" /> : <MapPinned className="h-4 w-4" />}
-      </span>
-      <span className="min-w-0">
-        <span className="block text-xs font-bold text-muted-foreground">{pickup ? t("courier.pickupFrom") : t("courier.deliverTo")}</span>
-        <span className={`mt-0.5 block truncate text-sm font-extrabold ${address ? "text-foreground" : "text-primary"}`}>{address?.label || (pickup ? t("courier.choosePickup") : t("courier.chooseDrop"))}</span>
-        {address && <span className="mt-0.5 block line-clamp-1 text-xs font-normal text-muted-foreground">{address.full_address}</span>}
-      </span>
-      {address ? <Pencil className="h-4 w-4 text-primary" /> : <Plus className="h-5 w-5 text-primary" />}
-    </Button>
-  );
-}
-
-function ContactFields({ title, name, phone, onName, onPhone }: { title: string; name: string; phone: string; onName: (value: string) => void; onPhone: (value: string) => void }) {
-  const t = useT();
-  return (
-    <div>
-      <div className="mb-2">
-        <h3 className="text-sm font-extrabold text-foreground">{title}</h3>
-      </div>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div className="relative"><UserRound className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" /><Input value={name} onChange={(event) => onName(event.target.value)} placeholder={t("courier.contactName")} className="h-12 pl-10" /></div>
-        <div className="relative"><Phone className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" /><Input inputMode="numeric" value={phone} onChange={(event) => onPhone(event.target.value.replace(/\D/g, "").slice(0, 10))} placeholder={t("courier.mobileNumber")} className="h-12 pl-10" /></div>
-      </div>
-    </div>
-  );
-}
 
 function RouteSummary({ pickup, drop, onEdit, embedded = false }: { pickup: Addr | null; drop: Addr | null; onEdit: () => void; embedded?: boolean }) {
   const t = useT();
@@ -884,7 +857,4 @@ function RouteSummary({ pickup, drop, onEdit, embedded = false }: { pickup: Addr
 
 function FareRow({ label, value }: { label: string; value?: number }) {
   return <div className="flex items-center justify-between text-muted-foreground"><span>{label}</span><span>₹{Number(value ?? 0).toFixed(2)}</span></div>;
-}
-function SourceChipsInline({ value, onChange }: { value?: DropSource; onChange: (v: DropSource) => void }) {
-  return <SourceChips value={value} onChange={onChange} />;
 }
