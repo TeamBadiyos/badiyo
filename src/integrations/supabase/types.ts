@@ -6573,6 +6573,10 @@ export type Database = {
         Args: { _city: string; _is_active: boolean; _service_key: string }
         Returns: Json
       }
+      staff_courier_set_setting: {
+        Args: { _key: string; _value: number }
+        Returns: Json
+      }
       staff_courier_set_vehicle_courier_type: {
         Args: {
           _courier_type_id: string
@@ -6606,11 +6610,17 @@ export type Database = {
           _base_fare: number
           _city: string
           _commission_pct: number
+          _customer_segment?: string
+          _extra_drop_fee?: number
+          _extra_pickup_fee?: number
           _id: string
           _included_km: number
+          _max_drops?: number
+          _max_pickups?: number
           _min_fare: number
           _per_km: number
           _platform_fee: number
+          _return_per_km?: number
           _vehicle_type_id: string
         }
         Returns: string
@@ -6629,6 +6639,10 @@ export type Database = {
           _sort_order: number
         }
         Returns: string
+      }
+      staff_courier_verify_stop: {
+        Args: { _reason: string; _stop_id: string }
+        Returns: Json
       }
       staff_courier_waive_charge: {
         Args: { _charge_id: string; _reason: string }
