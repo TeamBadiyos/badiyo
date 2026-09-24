@@ -4,15 +4,20 @@ import { useT } from "@/i18n";
 import { StoreImage } from "./StoreImage";
 import { StoreRating } from "./StoreRating";
 import { ProductCard } from "./ProductCard";
+import { CartBar } from "./CartBar";
 import { isStoreOpen, useStoreProducts, type PublicProduct, type PublicStore } from "@/lib/store";
 
 /** Read-only shop page: products grouped by their category, no cart, no checkout. */
 export function StoreDetailScreen({
   store,
   onBack,
+  onOpenCart,
+  orderingEnabled = true,
 }: {
   store: PublicStore;
   onBack: () => void;
+  onOpenCart: () => void;
+  orderingEnabled?: boolean;
 }) {
   const t = useT();
   const { data: products = [], isLoading } = useStoreProducts(store.id);
@@ -84,7 +89,7 @@ export function StoreDetailScreen({
               <ul className="mt-2 grid grid-cols-2 gap-2.5">
                 {items.map((p) => (
                   <li key={p.id}>
-                    <ProductCard product={p} fluid />
+                    <ProductCard product={p} store={{ id: store.id, name: store.store_name ?? null }} closed={closed} fluid />
                   </li>
                 ))}
               </ul>
@@ -93,18 +98,7 @@ export function StoreDetailScreen({
         )}
       </div>
 
-      {/* Browsing only for now — ordering is not wired up yet. */}
-      <div className="fixed inset-x-0 bottom-0 z-40 bg-gradient-to-t from-background via-background to-transparent px-5 pb-[calc(env(safe-area-inset-bottom)+16px)] pt-4">
-        <div className="mx-auto w-full max-w-md">
-          <button
-            type="button"
-            disabled
-            className="w-full cursor-not-allowed rounded-[18px] bg-muted px-4 py-3.5 text-sm font-bold text-muted-foreground"
-          >
-            {t("store.orderingSoon")}
-          </button>
-        </div>
-      </div>
+      <CartBar onOpenCart={onOpenCart} disabled={!orderingEnabled} />
     </main>
   );
 }
