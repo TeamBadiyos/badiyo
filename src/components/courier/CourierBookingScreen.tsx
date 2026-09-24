@@ -1,6 +1,6 @@
 // Customer parcel booking: guided locations, vehicle, parcel and review flow.
 // Fare and payment remain server-authoritative.
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   AlertTriangle,
@@ -129,6 +129,7 @@ export function CourierBookingScreen({
   const [extraPickups, setExtraPickups] = useState<ExtraStop[]>([]);
   const [extraDrops, setExtraDrops] = useState<ExtraStop[]>([]);
   const [dropSources, setDropSources] = useState<Record<string, DropSource | undefined>>({});
+  const dropKeyCounter = useRef(2);
   const [planned, setPlanned] = useState<Array<{ key: string; type: "pickup" | "drop" }> | null>(null);
 
   const { data: addresses = [] } = useQuery({ queryKey: ["addresses"], queryFn: fetchAddresses });
@@ -304,11 +305,35 @@ export function CourierBookingScreen({
   }, [allStops, dropSources]);
 
 
+  // Pickups: only one extra (P2) is allowed, so reuse is safe (its choices are
+  // cleared on removal). Drops: a key is never reused in this session so a new
+  // drop can't inherit an old drop's "Parcel from" choice.
   const nextKey = (prefix: "P" | "D", list: ExtraStop[]) => {
+    if (prefix === "D") {
+      let n = Math.max(dropKeyCounter.current, 2);
+      while (list.some((st) => st.key === `D${n}`)) n++;
+      dropKeyCounter.current = n + 1;
+      return `D${n}`;
+    }
     let n = 2;
     while (list.some((st) => st.key === `${prefix}${n}`)) n++;
     return `${prefix}${n}`;
   };
+
+  const sourceSummary =
+    pickupCount > 1 ? (
+      <div className="space-y-1">
+        {allDropKeys.map((dk, i) => {
+          const src = sourcesOf(dk);
+          const list = src.map((p) => t("courier.pickupN", { n: p === "P1" ? 1 : 2 })).join(` ${t("courier.and")} `);
+          return (
+            <p key={dk} className="text-xs font-semibold text-foreground">
+              {t("courier.dropN", { n: i + 1 })}: {src.length ? t("courier.fromList", { list }) : "—"}
+            </p>
+          );
+        })}
+      </div>
+    ) : null;
 
   const getQuote = async () => {
     setErr(null);
@@ -549,9 +574,18 @@ export function CourierBookingScreen({
               onRemove={(key) => {
                 if (key.startsWith("P")) {
                   setExtraPickups((l) => l.filter((st) => st.key !== key));
-                  setDropSources({});
+                  setDropSources((m) => {
+                    const next: Record<string, DropSource | undefined> = {};
+                    for (const [k, v] of Object.entries(m)) next[k] = v === "P1" ? v : undefined;
+                    return next;
+                  });
                 } else {
                   setExtraDrops((l) => l.filter((st) => st.key !== key));
+                  setDropSources((m) => {
+                    const next = { ...m };
+                    delete next[key];
+                    return next;
+                  });
                 }
                 setQuote(null);
               }}
@@ -590,6 +624,7 @@ export function CourierBookingScreen({
             {isMulti && extrasReady && !sourcesReady && (
               <p className="rounded-lg bg-warning/10 p-3 text-xs font-semibold text-foreground">{t("courier.sourcesHint")}</p>
             )}
+            {sourceSummary && <div className="rounded-lg border border-border bg-card p-3">{sourceSummary}</div>}
             {overLimit && (
               <p className="rounded-lg bg-destructive/10 p-3 text-xs font-semibold text-destructive">{t("courier.tooManyStops")}</p>
             )}
@@ -767,6 +802,7 @@ export function CourierBookingScreen({
                   <PlannedRoute items={planned} />
                 </div>
               )}
+              {sourceSummary && <div className="border-t border-border p-4">{sourceSummary}</div>}
             </div>
             <div className="rounded-lg border border-border bg-card p-4">
               <div className="mb-3 flex items-center justify-between">

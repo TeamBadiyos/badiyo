@@ -45,6 +45,8 @@ export const mr: Partial<Record<keyof typeof en, string>> = {
   "courier.parcelFrom": "पार्सल कुठून:",
   "courier.bothPickups": "दोन्ही",
   "courier.sourcesHint": "प्रत्येक ड्रॉपचे पार्सल कुठून येते ते निवडा. प्रत्येक पिकअप किमान एका ड्रॉपला जायला हवा.",
+  "courier.and": "आणि",
+  "courier.fromList": "{list} कडून",
   "courier.tooManyStops": "या वाहनासाठी कमी स्टॉप चालतात. कृपया एक स्टॉप काढा.",
   "courier.routeOrder": "मार्गाचा क्रम",
   "courier.routeCount": "{p} पिकअप · {d} ड्रॉप",

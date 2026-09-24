@@ -43,6 +43,8 @@ export const en = {
   "courier.parcelFrom": "Parcel from:",
   "courier.bothPickups": "Both",
   "courier.sourcesHint": "Choose where each drop's parcel comes from. Every pickup must go to at least one drop.",
+  "courier.and": "and",
+  "courier.fromList": "from {list}",
   "courier.tooManyStops": "This vehicle allows fewer stops. Please remove a stop.",
   "courier.routeOrder": "Route order",
   "courier.routeCount": "{p} pickup · {d} drop",
