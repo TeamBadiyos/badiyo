@@ -12,6 +12,8 @@ import { getAuthUser } from "@/lib/authUser";
 import { hapticImpact } from "@/lib/haptics";
 import { useStoreCart } from "@/lib/storeCart";
 import { StoreImage } from "./StoreImage";
+import { AddressSelectionScreen } from "@/components/AddressSelectionScreen";
+import { ShieldCheck } from "lucide-react";
 import {
   attachStorePayment,
   confirmStorePayment,
@@ -73,6 +75,7 @@ export function StoreCartScreen({
   const [addressId, setAddressId] = useState<string | null>(null);
   const [note, setNote] = useState("");
   const [placing, setPlacing] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   const { data: addresses = [], isLoading: loadingAddresses } = useQuery({
     queryKey: ["my-addresses"],
