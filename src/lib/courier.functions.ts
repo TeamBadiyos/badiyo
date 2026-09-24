@@ -499,6 +499,7 @@ export const createReturnChargePayment = createServerFn({ method: "POST" })
   });
 
 // ---- OTP access for the order owner and for stop contacts (matched by phone) ----
+type Json = string | number | boolean | null | { [k: string]: Json } | Json[];
 const stopIdSchema = z.object({ stop_id: z.string().uuid() });
 
 export const courierGetOrderOtps = createServerFn({ method: "POST" })
@@ -509,7 +510,7 @@ export const courierGetOrderOtps = createServerFn({ method: "POST" })
       _order_id: data.order_id,
     } as never);
     if (error) rpcError(error.message);
-    return out as unknown as Array<Record<string, unknown>>;
+    return out as unknown as Array<Record<string, Json>>;
   });
 
 export const courierMyContactDeliveries = createServerFn({ method: "POST" })
@@ -517,7 +518,7 @@ export const courierMyContactDeliveries = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     const { data: out, error } = await context.supabase.rpc("courier_my_contact_deliveries" as never);
     if (error) rpcError(error.message);
-    return out as unknown as Array<Record<string, unknown>>;
+    return out as unknown as Array<Record<string, Json>>;
   });
 
 export const courierGetContactView = createServerFn({ method: "POST" })
@@ -528,7 +529,7 @@ export const courierGetContactView = createServerFn({ method: "POST" })
       _stop_id: data.stop_id,
     } as never);
     if (error) rpcError(error.message);
-    return out as unknown as Record<string, unknown>;
+    return out as unknown as Record<string, Json>;
   });
 
 export const courierGetRiderLocationForStop = createServerFn({ method: "POST" })
@@ -540,5 +541,5 @@ export const courierGetRiderLocationForStop = createServerFn({ method: "POST" })
       { _stop_id: data.stop_id } as never,
     );
     if (error) rpcError(error.message);
-    return out as unknown as Record<string, unknown>;
+    return out as unknown as Record<string, Json>;
   });
