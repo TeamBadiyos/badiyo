@@ -44,7 +44,7 @@ const LATUR = { latitude: 18.4088, longitude: 76.5604 };
 type Component = { longText: string; types: string[] };
 
 function pick(components: Component[], types: string[]): string | null {
-  return components.find((c) => types.some((t) => c.types.includes(t)))?.longText ?? null;
+  return (components ?? []).find((c) => types.some((t) => (Array.isArray(c.types) && c.types.includes(t))))?.longText ?? null;
 }
 
 export const Route = createFileRoute("/api/public/places-search")({
