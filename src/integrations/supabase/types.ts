@@ -3537,6 +3537,8 @@ export type Database = {
       }
       products: {
         Row: {
+          admin_hidden: boolean
+          admin_hidden_reason: string | null
           category_label: string | null
           created_at: string
           description: string | null
@@ -3553,6 +3555,8 @@ export type Database = {
           unit: string | null
         }
         Insert: {
+          admin_hidden?: boolean
+          admin_hidden_reason?: string | null
           category_label?: string | null
           created_at?: string
           description?: string | null
@@ -3569,6 +3573,8 @@ export type Database = {
           unit?: string | null
         }
         Update: {
+          admin_hidden?: boolean
+          admin_hidden_reason?: string | null
           category_label?: string | null
           created_at?: string
           description?: string | null
