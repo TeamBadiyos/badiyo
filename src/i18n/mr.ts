@@ -369,6 +369,7 @@ export const mr: Partial<Record<keyof typeof en, string>> = {
   "store.open": "सुरू",
   "store.closed": "बंद",
   "store.outOfStock": "स्टॉक संपला",
+  "store.add": "जोडा",
   "store.viewAll": "सर्व पहा",
   "store.seeAllIn": "सर्व {name} दुकाने पहा",
   "store.orderingSoon": "ऑर्डर लवकरच सुरू होईल",

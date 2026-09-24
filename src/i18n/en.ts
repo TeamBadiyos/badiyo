@@ -371,6 +371,7 @@ export const en = {
   "store.open": "Open",
   "store.closed": "Closed",
   "store.outOfStock": "Out of stock",
+  "store.add": "Add",
   "store.viewAll": "View all",
   "store.seeAllIn": "See all {name} stores",
   "store.orderingSoon": "Ordering starts soon",

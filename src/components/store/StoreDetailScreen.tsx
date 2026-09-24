@@ -80,10 +80,10 @@ export function StoreDetailScreen({
                   {label}
                 </h3>
               )}
-              <ul className="mt-2 space-y-2.5">
+              <ul className="mt-2 grid grid-cols-2 gap-2.5">
                 {items.map((p) => (
                   <li key={p.id}>
-                    <ProductRow product={p} />
+                    <ProductCard product={p} fluid />
                   </li>
                 ))}
               </ul>

@@ -181,7 +181,7 @@ export async function fetchStorePreviewProducts(
   for (const p of (data ?? []) as PublicProduct[]) {
     const e = (out[p.merchant_id] ??= { items: [], inStockCount: 0 });
     if (p.in_stock) e.inStockCount += 1;
-    if (e.items.length < 3) e.items.push(p);
+    e.items.push(p);
   }
   return out;
 }
