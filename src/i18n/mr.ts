@@ -139,6 +139,7 @@ export const mr: Partial<Record<keyof typeof en, string>> = {
   "courier.payAmount": "₹{amount} भरा",
   "courier.parcelsDelivered": "{total} पैकी {delivered} पार्सल पोहोचले",
   "courier.parcelsReturned": "{count} परत आले",
+  "courier.dropSummary": "{total} पैकी {delivered} ड्रॉप पोहोचले, {returned} परत आले",
   "courier.otpShare": "{address} येथील {kind} साठी badiyos पार्सल OTP: {otp}. हा OTP फक्त तेथील badiyos रायडरलाच सांगा.",
   "courier.locationFallback": "या ठिकाणी",
   "courier.contactDropRole": "तुमच्याकडे पार्सल येत आहे",
