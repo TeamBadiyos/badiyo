@@ -138,6 +138,16 @@ export function useStoreProducts(merchantId: string | null) {
   });
 }
 
+/**
+ * Whether the shop can take an order right now. The server already combines
+ * the manual switch with today's IST timings into `is_open_now`; the manual
+ * switch is only a fallback for rows fetched before that column existed.
+ */
+export function isStoreOpen(store: PublicStore): boolean {
+  if (store.is_open_now != null) return Boolean(store.is_open_now);
+  return Boolean(store.is_accepting_orders);
+}
+
 /** Straight-line distance from the customer to a store, in km. */
 export function storeDistanceKm(
   store: PublicStore,
