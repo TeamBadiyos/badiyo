@@ -61,12 +61,12 @@ Deno.serve(async (req) => {
     // "booking" orders must end up as a booking (webhook safety net applies).
     // "extension" orders top up an existing booking and must NOT be recovered.
     // "tip" orders pay the expert directly and must NOT be recovered either.
-    const purpose =
-      body?.purpose === "extension"
-        ? "extension"
-        : body?.purpose === "tip"
-          ? "tip"
-          : "booking";
+    // "store_order" pays for a shop order whose amount is already in the DB.
+    const KNOWN_PURPOSES = ["extension", "tip", "store_order", "courier"] as const;
+    const purpose = KNOWN_PURPOSES.includes(body?.purpose)
+      ? (body.purpose as string)
+      : "booking";
+
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
