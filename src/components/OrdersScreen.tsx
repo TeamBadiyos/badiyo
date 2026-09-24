@@ -201,7 +201,7 @@ function StoreOrderCard({ order, active, onOpen, onBill }: { order: StoreOrder; 
       )}
       {order.status === "picked_up" && <StoreDeliveryCode orderId={order.id} />}
       <div className="mt-3 flex items-center justify-between">
-        <span className="text-sm font-bold text-primary">Rs {Number(order.total_amount)}</span>
+        <AmountButton amount={Number(order.total_amount)} onOpen={onBill} />
         <span className="text-xs font-semibold text-muted-foreground">
           {order.payment_mode === "cod"
             ? "Cash on delivery"
