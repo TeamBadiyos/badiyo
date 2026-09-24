@@ -491,9 +491,12 @@ export function OrdersScreen({
               item.kind === "store" ? (
                 <StoreOrderCard key={item.id} order={item.order} active={false} onOpen={() => onOpenStoreOrder?.(item.order.id)} />
               ) : item.kind === "booking" ? (
-                <button
+                <div
                   key={item.id}
+                  role="button"
+                  tabIndex={0}
                   onClick={() => onOpenBooking(item.booking)}
+                  onKeyDown={(e) => { if (e.key === "Enter") onOpenBooking(item.booking); }}
                   className="w-full rounded-[18px] border border-border bg-card p-4 text-left shadow-sm transition active:scale-[0.99]"
                 >
                   <div className="flex items-start justify-between gap-3">
