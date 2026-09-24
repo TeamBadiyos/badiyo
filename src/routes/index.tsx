@@ -147,6 +147,10 @@ const CourierTrackingScreen = lazyNamed(
   () => import("@/components/courier/CourierTrackingScreen"),
   "CourierTrackingScreen",
 );
+const StoreOrderTrackingScreen = lazyNamed(
+  () => import("@/components/store/StoreOrderTrackingScreen"),
+  "StoreOrderTrackingScreen",
+);
 const NoInternetScreen = lazyNamed(
   () => import("@/components/utility/NoInternetScreen"),
   "NoInternetScreen",
@@ -239,6 +243,7 @@ type Phase =
   | "legal"
   | "courier"
   | "courier-track"
+  | "store-track"
   | "not-serviceable";
 
 
@@ -284,6 +289,7 @@ function Index() {
   const [selectedBooking, setSelectedBooking] = useState<BookingRow | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [courierOrderId, setCourierOrderId] = useState<string | null>(null);
+  const [storeOrderId, setStoreOrderId] = useState<string | null>(null);
   // Where the parcel tracking screen was opened from, so Back returns there.
   const [courierTrackFrom, _setCourierTrackFrom] = useState<Phase>("home");
   const courierTrackFromRef = useRef<Phase>("home");
@@ -860,6 +866,10 @@ function Index() {
             onOpenProfile={() => setPhase("profile")}
             onOpenRewards={() => setPhase("rewards")}
             onOpenOrders={() => setPhase("orders")}
+            onOpenStoreOrder={(id) => {
+              setStoreOrderId(id);
+              setPhase("store-track");
+            }}
             onSearch={(q) => {
               setSearchQuery(q);
               setPhase("search-results");
@@ -879,6 +889,11 @@ function Index() {
               setPhase("courier-track");
             }}
           />
+        </div>
+      )}
+      {phase === "store-track" && storeOrderId && (
+        <div className="animate-fade-slide-in">
+          <StoreOrderTrackingScreen orderId={storeOrderId} onBack={() => setPhase("orders")} />
         </div>
       )}
       {phase === "courier-track" && courierOrderId && (
@@ -1191,6 +1206,10 @@ function Index() {
             onOpenHome={() => setPhase("home")}
             onOpenRewards={() => setPhase("rewards")}
             onOpenCourier={() => setPhase("courier")}
+            onOpenStoreOrder={(id) => {
+              setStoreOrderId(id);
+              setPhase("store-track");
+            }}
             onOpenCourierOrder={(id) => {
               setCourierOrderId(id);
               setCourierTrackFrom("orders");
