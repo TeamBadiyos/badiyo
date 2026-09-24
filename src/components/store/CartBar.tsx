@@ -23,9 +23,10 @@ export function CartBar({
   if (disabled) return <StoreOrderingBar aboveNav={aboveNav} />;
   if (count === 0) return null;
 
+  // Above-nav cart must clear the raised centre "Send Parcel" button.
   const bottom = aboveNav
-    ? "bottom-[calc(env(safe-area-inset-bottom)+76px)]"
-    : "bottom-[calc(env(safe-area-inset-bottom)+16px)]";
+    ? "bottom-[calc(var(--app-safe-bottom,0px)+98px)]"
+    : "bottom-[calc(var(--app-safe-bottom,0px)+16px)]";
 
   return (
     <div className={`fixed inset-x-0 z-40 px-5 ${bottom}`}>
