@@ -61,11 +61,11 @@ const ERROR_KEYS: Record<string, TranslationKey> = {
 
 export function StoreCartScreen({
   onBack,
-  onAddAddress,
   onDone,
 }: {
   onBack: () => void;
-  onAddAddress: () => void;
+  /** Kept for callers; adding an address now happens inside the address screen. */
+  onAddAddress?: () => void;
   /** Called after a successful order so the app can show the Orders tab. */
   onDone: (orderId?: string) => void;
 }) {
