@@ -41,7 +41,7 @@ export function ProductCard({
       onClick={onOpen}
       onKeyDown={(e) => e.key === "Enter" && onOpen?.()}
       className={
-        "flex h-[236px] shrink-0 snap-start flex-col rounded-[18px] border border-border bg-card p-2 text-left " +
+        "flex min-h-[236px] shrink-0 snap-start flex-col rounded-[18px] border border-border bg-card p-2 text-left " +
         (fluid ? "w-full" : "w-[132px]") +
         (out ? " opacity-55" : "")
       }
