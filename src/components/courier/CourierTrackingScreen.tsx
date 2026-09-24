@@ -19,10 +19,20 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { refreshCourierOtp } from "@/lib/courierOtp.functions";
 import { CourierLiveMap } from "./CourierLiveMap";
+import { courierGetOrderOtps } from "@/lib/courier.functions";
+import {
+  StopsTimeline,
+  ReturnChargeCard,
+  currentStopId,
+  parcelSummary,
+} from "./StopsTimeline";
 import {
   fetchCourierOrder,
   fetchCourierOtp,
   fetchRiderInfo,
+  fetchCourierStops,
+  fetchCourierParcels,
+  fetchCourierCharges,
   COURIER_STAGES,
   courierStageIndex,
 } from "./courierData";
@@ -163,8 +173,44 @@ export function CourierTrackingScreen({
 
   const [cancelling, setCancelling] = useState(false);
 
+  // Multi-stop data (stops, parcels, return charges, per-stop OTPs).
+  const { data: stops = [] } = useQuery({
+    queryKey: ["courier-stops", orderId],
+    queryFn: () => fetchCourierStops(orderId),
+    refetchInterval: 8000,
+    refetchIntervalInBackground: false,
+  });
+  const isMultiOrder =
+    stops.length > 2 || stops.some((st) => st.stop_type === "return");
+  const { data: parcels = [] } = useQuery({
+    queryKey: ["courier-parcels", orderId, status],
+    queryFn: () => fetchCourierParcels(orderId),
+    enabled: isMultiOrder,
+  });
+  const { data: charges = [] } = useQuery({
+    queryKey: ["courier-charges", orderId],
+    queryFn: () => fetchCourierCharges(orderId),
+    refetchInterval: (q) =>
+      (q.state.data ?? []).some((c) => c.status === "pending") ? 10_000 : 30_000,
+  });
+  const { data: stopOtps = {} } = useQuery({
+    queryKey: ["courier-order-otps", orderId, status],
+    queryFn: async () => {
+      const rows = (await courierGetOrderOtps({ data: { order_id: orderId } })) as Array<{
+        stop_id: string;
+        otp: string | null;
+      }>;
+      return Object.fromEntries(rows.map((r) => [r.stop_id, r.otp])) as Record<string, string | null>;
+    },
+    enabled: isMultiOrder,
+    refetchInterval: 15_000,
+  });
+
   const stageIdx = useMemo(() => courierStageIndex(status), [status]);
-  const cancelled = status === "CANCELLED" || status === "EXPIRED" || status === "FAILED";
+  const failedDelivery = status === "FAILED_DELIVERY";
+  const cancelled =
+    status === "CANCELLED" || status === "EXPIRED" || status === "FAILED" || failedDelivery;
+  const allPickupsFailed = order?.cancel_reason_code === "ALL_PICKUPS_FAILED";
   const done = status === "DELIVERED" || status === "COMPLETED";
   const searching = status === "REQUESTED" || status === "SEARCHING";
   const canCancel = ["REQUESTED", "SEARCHING", "DRIVER_ASSIGNED", "ARRIVED_PICKUP"].includes(status);
@@ -186,6 +232,18 @@ export function CourierTrackingScreen({
       setCancelling(false);
     }
   };
+
+  const liveStatuses = ["DRIVER_ASSIGNED", "ARRIVED_PICKUP", "PICKED_UP", "IN_TRANSIT"];
+  const curStop = currentStopId(stops, !!order?.assigned_expert_id, liveStatuses.includes(status));
+  const chargeCards = charges
+    .filter((c) => c.status === "pending" || c.status === "paid")
+    .map((c) => {
+      const parcel = parcels.find((p) => p.id === c.parcel_id);
+      const drops = stops.filter((st) => st.stop_type === "drop");
+      const idx = drops.findIndex((d) => d.id === parcel?.drop_stop_id);
+      return { charge: c, label: idx >= 0 ? `Drop ${idx + 1}` : "the drop" };
+    });
+  const summary = isMultiOrder ? parcelSummary(parcels) : null;
 
   if (isLoading || !order) {
     return (
@@ -216,6 +274,10 @@ export function CourierTrackingScreen({
       </div>
 
       <div className="space-y-4 px-4 py-4">
+        {chargeCards.map(({ charge, label }) => (
+          <ReturnChargeCard key={charge.id} orderId={orderId} charge={charge} dropLabel={label} />
+        ))}
+
         {/* Stage tracker */}
         {!cancelled && (
           <div className="rounded-[20px] border border-border bg-card p-4">
@@ -270,10 +332,19 @@ export function CourierTrackingScreen({
           <div className="flex items-start gap-3 rounded-[20px] border border-destructive/30 bg-destructive/5 p-4">
             <XCircle className="mt-0.5 h-5 w-5 text-destructive" />
             <div>
-              <p className="text-sm font-semibold text-destructive">This order was cancelled.</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                Any amount paid is refunded to your original payment method.
+              <p className="text-sm font-semibold text-destructive">
+                {failedDelivery
+                  ? "Delivery could not be completed."
+                  : allPickupsFailed
+                    ? "Pickup could not be completed at the sender's location"
+                    : "This order was cancelled."}
               </p>
+              {!failedDelivery && !allPickupsFailed && (
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Any amount paid is refunded to your original payment method.
+                </p>
+              )}
+              {summary && <p className="mt-0.5 text-xs text-muted-foreground">{summary}</p>}
             </div>
           </div>
         )}
@@ -288,6 +359,7 @@ export function CourierTrackingScreen({
                   ? new Date(order.delivered_at).toLocaleString()
                   : "Thanks for using Badiyos."}
               </p>
+              {summary && <p className="mt-0.5 text-xs font-semibold text-foreground">{summary}</p>}
             </div>
           </div>
         )}
@@ -321,8 +393,18 @@ export function CourierTrackingScreen({
           />
         )}
 
+        {isMultiOrder && (
+          <StopsTimeline
+            orderId={orderId}
+            stops={stops}
+            otps={stopOtps}
+            currentId={curStop}
+            editable={!cancelled && !done}
+          />
+        )}
+
         {/* Big in-app OTP */}
-        {otpPurpose && (
+        {otpPurpose && !isMultiOrder && (
           <div className="rounded-[20px] border-2 border-primary/30 bg-card p-5 text-center">
             <div className="flex items-center justify-center gap-2 text-primary">
               <ShieldCheck className="h-5 w-5" />
@@ -392,7 +474,7 @@ export function CourierTrackingScreen({
 
         {/* Route + fare */}
         <div className="rounded-[20px] border border-border bg-card p-4 text-sm">
-          <div className="flex gap-3">
+          {!isMultiOrder && (<div className="flex gap-3">
             <div className="flex flex-col items-center pt-1.5">
               <span className="h-2.5 w-2.5 rounded-full bg-primary" />
               <span className="my-1 w-px flex-1 bg-border" />
@@ -408,8 +490,8 @@ export function CourierTrackingScreen({
                 <p className="text-sm">{order.drop_address}</p>
               </div>
             </div>
-          </div>
-          <div className="mt-4 flex items-center justify-between border-t border-border pt-3 text-sm">
+          </div>)}
+          <div className={isMultiOrder ? "flex items-center justify-between text-sm" : "mt-4 flex items-center justify-between border-t border-border pt-3 text-sm"}>
             <span className="text-muted-foreground">
               {order.distance_km ? `${order.distance_km} km` : "Total"}
             </span>

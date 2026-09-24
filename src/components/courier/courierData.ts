@@ -247,7 +247,7 @@ export type CourierCharge = {
   order_id: string;
   status: string;
   total_amount: number;
-  stop_id?: string | null;
+  parcel_id?: string | null;
 };
 
 export async function fetchCourierStops(orderId: string): Promise<CourierStop[]> {
