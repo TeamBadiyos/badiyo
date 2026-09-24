@@ -297,3 +297,30 @@ export async function fetchPendingReturnOrderIds(orderIds: string[]): Promise<st
     .eq("status", "pending");
   return Array.from(new Set(((data ?? []) as unknown as Array<{ order_id: string }>).map((r) => r.order_id)));
 }
+
+/** Fare breakup lines for a parcel order, in the order a bill reads. */
+export function courierBillLines(o: CourierOrder): Array<{ label: string; value: number; muted?: boolean; discount?: boolean }> {
+  const lines: Array<{ label: string; value: number; muted?: boolean; discount?: boolean }> = [];
+  const base = Number(o.base_amount ?? 0);
+  lines.push({
+    label: o.distance_km ? `Delivery fare (${Number(o.distance_km)} km)` : "Delivery fare",
+    value: base,
+  });
+  const stops = Number(o.stops_fee ?? 0);
+  if (stops > 0) lines.push({ label: "Extra stops", value: stops, muted: true });
+  const extra = Number(o.extra_fee ?? 0);
+  if (extra > 0) lines.push({ label: "Service type fee", value: extra, muted: true });
+  const platform = Number(o.platform_fee ?? 0);
+  if (platform > 0) lines.push({ label: "Platform fee", value: platform, muted: true });
+  const discount = Number(o.discount_amount ?? 0);
+  if (discount > 0)
+    lines.push({
+      label: o.coupon_code ? `Coupon ${o.coupon_code}` : "Discount",
+      value: discount,
+      discount: true,
+    });
+  const gst = Number(o.gst_amount ?? 0);
+  if (gst > 0)
+    lines.push({ label: `GST (${Number(o.gst_percent ?? 0)}%)`, value: gst, muted: true });
+  return lines;
+}
