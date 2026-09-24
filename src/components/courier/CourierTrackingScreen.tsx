@@ -227,7 +227,19 @@ export function CourierTrackingScreen({
       const idx = drops.findIndex((d) => d.id === parcel?.drop_stop_id);
       return { charge: c, label: idx >= 0 ? t("courier.dropN", { n: idx + 1 }) : t("courier.dropFallback") };
     });
-  const summary: string | null = null;
+  const summary = useMemo(() => {
+    if (!isMultiOrder || (!done && !failedDelivery)) return null;
+    const drops = stops.filter((st) => st.stop_type === "drop");
+    if (drops.length < 2) return null;
+    let deliveredDrops = 0;
+    let returnedDrops = 0;
+    for (const d of drops) {
+      const dParcels = parcels.filter((p) => p.drop_stop_id === d.id);
+      if (dParcels.some((p) => p.status === "returned") || d.status === "failed") returnedDrops += 1;
+      else if (d.status === "completed" || dParcels.every((p) => p.status === "delivered")) deliveredDrops += 1;
+    }
+    return t("courier.dropSummary", { delivered: deliveredDrops, total: drops.length, returned: returnedDrops });
+  }, [isMultiOrder, done, failedDelivery, stops, parcels, t]);
   const stageLabels = [
     t("courier.stagePlaced"),
     t("courier.stageRider"),

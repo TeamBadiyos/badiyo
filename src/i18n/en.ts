@@ -137,6 +137,7 @@ export const en = {
   "courier.payAmount": "Pay ₹{amount}",
   "courier.parcelsDelivered": "{delivered} of {total} parcels delivered",
   "courier.parcelsReturned": "{count} returned",
+  "courier.dropSummary": "{delivered} of {total} drops delivered, {returned} returned",
   "courier.otpShare": "badiyos parcel OTP for {kind} at {address}: {otp}. Share it only with the badiyos rider at the location.",
   "courier.locationFallback": "the location",
   "courier.contactDropRole": "Parcel coming to you",
