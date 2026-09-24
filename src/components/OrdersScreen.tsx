@@ -156,7 +156,7 @@ type OrderItem =
   | { kind: "store"; id: string; createdAt: string | null; order: StoreOrder };
 
 /** Card for one shop order — same shape as the booking/parcel cards. */
-function StoreOrderCard({ order, active, onOpen }: { order: StoreOrder; active: boolean; onOpen?: () => void }) {
+function StoreOrderCard({ order, active, onOpen, onBill }: { order: StoreOrder; active: boolean; onOpen?: () => void; onBill: () => void }) {
   const itemLine = order.items
     .map((i) => `${i.name} x${i.quantity}`)
     .join(", ");
