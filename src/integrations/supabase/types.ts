@@ -2316,6 +2316,24 @@ export type Database = {
         }
         Relationships: []
       }
+      internal_testers: {
+        Row: {
+          created_at: string
+          note: string | null
+          phone: string
+        }
+        Insert: {
+          created_at?: string
+          note?: string | null
+          phone: string
+        }
+        Update: {
+          created_at?: string
+          note?: string | null
+          phone?: string
+        }
+        Relationships: []
+      }
       item_task_types: {
         Row: {
           created_at: string
@@ -2497,6 +2515,13 @@ export type Database = {
             referencedRelation: "merchants"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "merchant_documents_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "public_stores"
+            referencedColumns: ["id"]
+          },
         ]
       }
       merchant_fee_tiers: {
@@ -2560,6 +2585,13 @@ export type Database = {
             referencedRelation: "products"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "merchant_order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "public_products"
+            referencedColumns: ["id"]
+          },
         ]
       }
       merchant_orders: {
@@ -2605,6 +2637,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "merchant_orders_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "public_stores"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "merchant_orders_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -2646,6 +2685,13 @@ export type Database = {
             referencedRelation: "merchants"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "merchant_roles_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "public_stores"
+            referencedColumns: ["id"]
+          },
         ]
       }
       merchant_schedule_overrides: {
@@ -2676,6 +2722,13 @@ export type Database = {
             columns: ["merchant_id"]
             isOneToOne: false
             referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "merchant_schedule_overrides_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "public_stores"
             referencedColumns: ["id"]
           },
         ]
@@ -2720,6 +2773,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "merchant_staff_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "public_stores"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "merchant_staff_role_id_fkey"
             columns: ["role_id"]
             isOneToOne: false
@@ -2759,6 +2819,13 @@ export type Database = {
             columns: ["merchant_id"]
             isOneToOne: false
             referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "merchant_store_hours_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "public_stores"
             referencedColumns: ["id"]
           },
         ]
@@ -2807,6 +2874,13 @@ export type Database = {
             columns: ["merchant_id"]
             isOneToOne: false
             referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "merchant_subscription_invoices_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "public_stores"
             referencedColumns: ["id"]
           },
         ]
@@ -3050,6 +3124,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "offline_sale_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "public_products"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "offline_sale_items_sale_id_fkey"
             columns: ["sale_id"]
             isOneToOne: false
@@ -3113,6 +3194,13 @@ export type Database = {
             columns: ["merchant_id"]
             isOneToOne: false
             referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "offline_sales_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "public_stores"
             referencedColumns: ["id"]
           },
           {
@@ -3502,6 +3590,13 @@ export type Database = {
             columns: ["merchant_id"]
             isOneToOne: false
             referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "public_stores"
             referencedColumns: ["id"]
           },
         ]
@@ -4993,7 +5088,68 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_products: {
+        Row: {
+          description: string | null
+          id: string | null
+          in_stock: boolean | null
+          merchant_id: string | null
+          mrp: number | null
+          name: string | null
+          photo_url: string | null
+          price: number | null
+          product_category: string | null
+          unit: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "public_stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      public_stores: {
+        Row: {
+          category_name: string | null
+          category_slug: string | null
+          id: string | null
+          is_accepting_orders: boolean | null
+          lat: number | null
+          lng: number | null
+          photo_url: string | null
+          rating: number | null
+          short_address: string | null
+          store_category_id: string | null
+          store_name: string | null
+          zone_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merchants_store_category_id_fkey"
+            columns: ["store_category_id"]
+            isOneToOne: false
+            referencedRelation: "store_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "merchants_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "zones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       admin_alert_claim_batch: {
@@ -5562,6 +5718,7 @@ export type Database = {
         Args: { _roles: string[]; _uid: string }
         Returns: boolean
       }
+      is_internal_tester: { Args: never; Returns: boolean }
       is_public_product_image: {
         Args: { _object_name: string }
         Returns: boolean
