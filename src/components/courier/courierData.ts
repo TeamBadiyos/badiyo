@@ -124,6 +124,8 @@ export async function fetchMyCourierOrders(): Promise<CourierOrder[]> {
       COURIER_ORDER_COLUMNS,
     )
     .eq("customer_id", uid)
+    // Store deliveries show under the shop order, not as a separate parcel.
+    .is("store_order_id", null)
     .order("created_at", { ascending: false })
     .limit(30);
   if (error) throw new Error(error.message);
