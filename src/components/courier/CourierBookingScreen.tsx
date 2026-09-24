@@ -36,7 +36,7 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthUser } from "@/lib/authUser";
 import { courierQuote, courierCreateOrder, courierConfirmPayment, courierGetRateLimits, courierPlanStops } from "@/lib/courier.functions";
-import { PlannedRoute, type DropSource, type ExtraStop } from "./MultiStopEditor";
+import { PlannedRoute, type ExtraStop } from "./MultiStopEditor";
 import { RouteTimeline, type TimelineStop } from "./RouteTimeline";
 import { payWithRazorpay, toPaymentError } from "@/lib/razorpayCheckout";
 import { getPaymentPrefill } from "@/lib/paymentPrefill";
@@ -172,8 +172,8 @@ export function CourierBookingScreen({
     enabled: Boolean(vehicleId && city),
     staleTime: 5 * 60_000,
   });
-  const maxPickups = limits?.max_pickups ?? 1;
-  const maxDrops = limits?.max_drops ?? 1;
+  const maxPickups = limits ? (limits.max_pickups ?? Infinity) : 1;
+  const maxDrops = limits ? (limits.max_drops ?? Infinity) : 1;
   const isMulti = extraPickups.length > 0 || extraDrops.length > 0;
   const pickupCount = 1 + extraPickups.length;
   const dropCount = 1 + extraDrops.length;
@@ -566,8 +566,8 @@ export function CourierBookingScreen({
 
             <RouteTimeline
               stops={timelineStops}
-              canAddPickup={mode === "multiPickup" && (limits?.max_pickups == null || pickupCount < maxPickups)}
-              canAddDrop={mode === "multiDrop" && (limits?.max_drops == null || dropCount < maxDrops)}
+              canAddPickup={mode === "multiPickup" && pickupCount < maxPickups}
+              canAddDrop={mode === "multiDrop" && dropCount < maxDrops}
               pickupFee={limits?.extra_pickup_fee ?? 0}
               dropFee={limits?.extra_drop_fee ?? 0}
               onAddPickup={() => setExtraPickups((l) => [...l, { key: `P${nextKey()}`, addr: null, name: "", phone: "" }])}

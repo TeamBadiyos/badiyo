@@ -27,7 +27,6 @@ import {
   StopsTimeline,
   ReturnChargeCard,
   currentStopId,
-  parcelSummary,
 } from "./StopsTimeline";
 import {
   fetchCourierOrder,
@@ -228,7 +227,7 @@ export function CourierTrackingScreen({
       const idx = drops.findIndex((d) => d.id === parcel?.drop_stop_id);
       return { charge: c, label: idx >= 0 ? t("courier.dropN", { n: idx + 1 }) : t("courier.dropFallback") };
     });
-  const summary = isMultiOrder ? parcelSummary(parcels, t) : null;
+  const summary: string | null = null;
   const stageLabels = [
     t("courier.stagePlaced"),
     t("courier.stageRider"),
