@@ -6,14 +6,17 @@ import {
   ArrowLeft,
   Check,
   CheckCircle2,
+  ChevronRight,
   Loader2,
   MessageCircle,
   Package,
   Phone,
+  ReceiptText,
   ShieldCheck,
   UserRound,
   XCircle,
 } from "lucide-react";
+import { BillSheet } from "@/components/BillSheet";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
