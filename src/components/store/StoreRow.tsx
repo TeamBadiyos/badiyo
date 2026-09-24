@@ -1,6 +1,7 @@
 import { ChevronRight } from "lucide-react";
 import { useT } from "@/i18n";
 import { StoreImage } from "./StoreImage";
+import { ProductCard } from "./ProductCard";
 import { StoreRating } from "./StoreRating";
 import { formatDistance, isStoreOpen, type PublicProduct, type PublicStore } from "@/lib/store";
 
@@ -25,48 +26,40 @@ export function StoreRow({
         "rounded-[18px] border border-border bg-card p-3 shadow-card-m " + (closed ? "opacity-60 grayscale" : "")
       }
     >
-      <button type="button" onClick={onOpen} className="flex w-full items-center gap-3 text-left">
-        <StoreImage path={store.photo_url} variant="store" alt={store.store_name ?? ""} className="h-10 w-10 shrink-0" />
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-bold text-foreground">{store.store_name ?? "—"}</p>
-          <div className="mt-0.5 flex items-center gap-2">
-            {dist && <span className="text-[11px] font-semibold text-muted-foreground">{dist}</span>}
-            <span
-              className={
-                "rounded-full px-2 py-0.5 text-[10px] font-bold " +
-                (closed ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary")
-              }
-            >
-              {closed ? t("store.closed") : t("store.open")}
-            </span>
-            <StoreRating rating={store.rating} />
+      <div className="flex w-full items-center gap-3">
+        <button type="button" onClick={onOpen} className="flex min-w-0 flex-1 items-center gap-3 text-left">
+          <StoreImage path={store.photo_url} variant="store" alt={store.store_name ?? ""} className="h-10 w-10 shrink-0" />
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-bold text-foreground">{store.store_name ?? "—"}</p>
+            <div className="mt-0.5 flex items-center gap-2">
+              {dist && <span className="text-[11px] font-semibold text-muted-foreground">{dist}</span>}
+              <span
+                className={
+                  "rounded-full px-2 py-0.5 text-[10px] font-bold " +
+                  (closed ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary")
+                }
+              >
+                {closed ? t("store.closed") : t("store.open")}
+              </span>
+              <StoreRating rating={store.rating} />
+            </div>
           </div>
-        </div>
-      </button>
+        </button>
+        <button
+          type="button"
+          onClick={onOpen}
+          className="flex shrink-0 items-center gap-0.5 self-start rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-bold text-primary"
+        >
+          {t("store.viewAll")}
+          <ChevronRight className="h-3.5 w-3.5" />
+        </button>
+      </div>
 
-      <div className="-mx-3 mt-3 overflow-x-auto px-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="-mx-3 mt-3 snap-x snap-mandatory overflow-x-auto scroll-px-3 px-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <div className="flex w-max gap-2.5">
           {products.map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              onClick={onOpen}
-              className={"w-[104px] shrink-0 text-left " + (p.in_stock ? "" : "opacity-50")}
-            >
-              <StoreImage path={p.photo_url} variant="product" alt={p.name} className="h-[104px] w-[104px]" />
-              <p className="mt-1.5 line-clamp-2 text-xs font-bold leading-tight text-foreground">{p.name}</p>
-              {p.unit && <p className="text-[11px] text-muted-foreground">{p.unit}</p>}
-              <p className="mt-0.5 text-sm font-extrabold text-foreground">₹{Number(p.price).toFixed(0)}</p>
-            </button>
+            <ProductCard key={p.id} product={p} onOpen={onOpen} />
           ))}
-          <button
-            type="button"
-            onClick={onOpen}
-            className="flex h-[104px] w-[88px] shrink-0 flex-col items-center justify-center gap-1 rounded-[18px] bg-primary/10 text-xs font-bold text-primary"
-          >
-            <ChevronRight className="h-5 w-5" />
-            {t("store.viewAll")}
-          </button>
         </div>
       </div>
     </div>
