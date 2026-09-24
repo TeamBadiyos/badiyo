@@ -24,8 +24,17 @@ export type StoreOrder = {
   created_at: string;
   store_name: string | null;
   store_photo_url: string | null;
+  courier_order_id: string | null;
+  reject_reason: string | null;
+  cancel_reason: string | null;
+  refund_status: string | null;
   items: StoreOrderItem[];
 };
+
+export async function fetchStoreOrder(id: string): Promise<StoreOrder | null> {
+  const all = await fetchMyStoreOrders();
+  return all.find((o) => o.id === id) ?? null;
+}
 
 export type DeliveryQuote = {
   delivery_fee: number;

@@ -90,12 +90,16 @@ type OrderItem =
   | { kind: "store"; id: string; createdAt: string | null; order: StoreOrder };
 
 /** Card for one shop order — same shape as the booking/parcel cards. */
-function StoreOrderCard({ order, active }: { order: StoreOrder; active: boolean }) {
+function StoreOrderCard({ order, active, onOpen }: { order: StoreOrder; active: boolean; onOpen?: () => void }) {
   const itemLine = order.items
     .map((i) => `${i.name} x${i.quantity}`)
     .join(", ");
   return (
     <div
+      role="button"
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={(e) => { if (e.key === "Enter") onOpen?.(); }}
       className={
         active
           ? "rounded-[20px] border-2 border-primary/40 bg-primary/5 p-5 shadow-sm"
@@ -107,6 +111,7 @@ function StoreOrderCard({ order, active }: { order: StoreOrder; active: boolean 
           <h3 className="flex items-center gap-1.5 truncate text-base font-bold text-foreground">
             <StoreIcon className="h-4 w-4 shrink-0 text-primary" />
             {order.store_name ?? "Store order"}
+            <span className="ml-1 shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary">Store</span>
           </h3>
           <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
             <Clock className="h-3.5 w-3.5" />
@@ -183,12 +188,14 @@ export function OrdersScreen({
   onOpenBooking,
   onOpenCourier,
   onOpenCourierOrder,
+  onOpenStoreOrder,
 }: {
   onOpenHome: () => void;
   onOpenRewards: () => void;
   onOpenBooking: (b: BookingRow) => void;
   onOpenCourier?: () => void;
   onOpenCourierOrder?: (orderId: string) => void;
+  onOpenStoreOrder?: (orderId: string) => void;
 }) {
   const { data: courierEnabled = false } = useQuery({
     queryKey: ["courier_enabled"],
@@ -285,7 +292,7 @@ export function OrdersScreen({
             </h2>
             {active.map((item) =>
               item.kind === "store" ? (
-                <StoreOrderCard key={item.id} order={item.order} active />
+                <StoreOrderCard key={item.id} order={item.order} active onOpen={() => onOpenStoreOrder?.(item.order.id)} />
               ) : item.kind === "booking" ? (
                 <div
                   key={item.id}
@@ -403,7 +410,7 @@ export function OrdersScreen({
           ) : (
             past.map((item) =>
               item.kind === "store" ? (
-                <StoreOrderCard key={item.id} order={item.order} active={false} />
+                <StoreOrderCard key={item.id} order={item.order} active={false} onOpen={() => onOpenStoreOrder?.(item.order.id)} />
               ) : item.kind === "booking" ? (
                 <button
                   key={item.id}

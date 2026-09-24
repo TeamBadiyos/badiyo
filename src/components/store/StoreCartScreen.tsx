@@ -65,7 +65,7 @@ export function StoreCartScreen({
   onBack: () => void;
   onAddAddress: () => void;
   /** Called after a successful order so the app can show the Orders tab. */
-  onDone: () => void;
+  onDone: (orderId?: string) => void;
 }) {
   const t = useT();
   const cart = useStoreCart();
@@ -158,7 +158,7 @@ export function StoreCartScreen({
       toast.success(t("store.orderPlaced"), {
         description: t("store.awaitingShop", { number: created.order_number }),
       });
-      onDone();
+      onDone(created.order_id);
     } catch (err) {
       if (err instanceof PaymentCancelledError) {
         // The order stays unpaid in "Your Orders" — nothing to shout about.

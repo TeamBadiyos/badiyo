@@ -152,6 +152,7 @@ export function HomeScreen({
   onOpenProfile,
   onOpenRewards,
   onOpenOrders,
+  onOpenStoreOrder,
   onSearch,
   onOpenCourier,
 }: {
@@ -160,6 +161,7 @@ export function HomeScreen({
   onOpenProfile?: () => void;
   onOpenRewards?: () => void;
   onOpenOrders?: () => void;
+  onOpenStoreOrder?: (orderId: string) => void;
   onSearch?: (query: string) => void;
   onOpenCourier?: () => void;
 }) {
@@ -336,11 +338,12 @@ export function HomeScreen({
           setCartOpen(false);
           setLocationSheetOpen(true);
         }}
-        onDone={() => {
+        onDone={(orderId) => {
           setCartOpen(false);
           setOpenStore(null);
           setOpenCategory(null);
-          onOpenOrders?.();
+          if (orderId && onOpenStoreOrder) onOpenStoreOrder(orderId);
+          else onOpenOrders?.();
         }}
       />
     );
