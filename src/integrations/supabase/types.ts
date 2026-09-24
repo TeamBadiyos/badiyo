@@ -5107,30 +5107,6 @@ export type Database = {
           product_category: string | null
           unit: string | null
         }
-        Insert: {
-          description?: string | null
-          id?: string | null
-          in_stock?: never
-          merchant_id?: string | null
-          mrp?: never
-          name?: string | null
-          photo_url?: string | null
-          price?: number | null
-          product_category?: string | null
-          unit?: string | null
-        }
-        Update: {
-          description?: string | null
-          id?: string | null
-          in_stock?: never
-          merchant_id?: string | null
-          mrp?: never
-          name?: string | null
-          photo_url?: string | null
-          price?: number | null
-          product_category?: string | null
-          unit?: string | null
-        }
         Relationships: [
           {
             foreignKeyName: "products_merchant_id_fkey"
