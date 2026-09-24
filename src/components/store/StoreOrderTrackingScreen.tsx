@@ -19,6 +19,8 @@ function stepIndex(status: string): number {
     case "accepted":
     case "needs_attention":
       return 1;
+    case "ready":
+      return -2; // resolved below from the delivery job
     case "expert_assigned":
       return 2;
     case "picked_up":
@@ -100,7 +102,8 @@ export function StoreOrderTrackingScreen({ orderId, onBack }: { orderId: string;
   const status = order.status;
   const cancelled = status === "rejected" || status === "cancelled";
   const awaitingPayment = status === "pending";
-  const idx = stepIndex(status);
+  const rawIdx = stepIndex(status);
+  const idx = rawIdx === -2 ? (job?.assigned_expert_id ? 2 : 1) : rawIdx;
   const riderVisible = !!job?.assigned_expert_id && idx >= 2 && idx < 4;
   const refundDone = order.refund_status === "done";
 
