@@ -120,6 +120,61 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Store orders: the amount is the one the database already computed for
+    // this order row. Nothing from the client is trusted.
+    if (purpose === "store_order") {
+      const storeOrderId =
+        typeof body?.store_order_id === "string" ? body.store_order_id.trim() : "";
+      if (!storeOrderId) return json({ error: "store_order_id is required" }, 400);
+
+      const storeToken = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
+      const { data: storeUserRes } = storeToken
+        ? await supabase.auth.getUser(storeToken)
+        : { data: null };
+      const storeUserId = storeUserRes?.user?.id ?? null;
+      if (!storeUserId) return json({ error: "Not signed in" }, 401);
+
+      const { data: order, error: orderErr } = await supabase
+        .from("merchant_orders")
+        .select("id, user_id, total_amount, payment_status, status, order_number")
+        .eq("id", storeOrderId)
+        .maybeSingle();
+      if (orderErr || !order || order.user_id !== storeUserId) {
+        return json({ error: "Order not found" }, 404);
+      }
+      if (order.payment_status === "paid") {
+        return json({ error: "Order is already paid" }, 409);
+      }
+      const storeAmount = Math.round(Number(order.total_amount) * 100);
+      if (!Number.isInteger(storeAmount) || storeAmount <= 0) {
+        return json({ error: "Invalid order amount" }, 400);
+      }
+
+      const storeAuth = btoa(`${keyId}:${keySecret}`);
+      const storeRes = await fetch("https://api.razorpay.com/v1/orders", {
+        method: "POST",
+        headers: { Authorization: `Basic ${storeAuth}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: storeAmount,
+          currency,
+          receipt: String(order.order_number ?? receipt).slice(0, 40),
+          notes: { purpose: "store_order", store_order_id: storeOrderId },
+        }),
+      });
+      const storeText = await storeRes.text();
+      if (!storeRes.ok) {
+        console.error("Razorpay store order failed", storeRes.status, storeText);
+        return json({ error: "Failed to create Razorpay order", details: storeText }, 502);
+      }
+      const storeOrder = JSON.parse(storeText);
+      return json({
+        order_id: storeOrder.id,
+        amount: storeOrder.amount,
+        currency: storeOrder.currency,
+        key_id: keyId,
+      });
+    }
+
     // Tips: fixed server-side whitelist, no GST, no catalogue lookup.
     if (purpose === "tip") {
       const ALLOWED_TIPS = [25, 50, 100];

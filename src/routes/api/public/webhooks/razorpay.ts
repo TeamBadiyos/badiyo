@@ -101,6 +101,17 @@ export const Route = createFileRoute("/api/public/webhooks/razorpay")({
         }
         // Courier parcels are their own flow: mark paid and start the rider
         // search, or auto-refund when the payment lands after cancellation.
+        // Store orders: safety net so a paid shop order is never left unpaid
+        // when the app is closed before it can confirm.
+        if (purpose === "store_order") {
+          if (!orderId) return new Response("ignored-store");
+          const { supabaseAdmin: admin } = await import("@/integrations/supabase/client.server");
+          const { data: marked } = await admin.rpc("system_store_mark_paid" as never, {
+            _rzp_order_id: orderId,
+            _payment_id: paymentId,
+          } as never);
+          return new Response(marked ? "ok-store" : "store-not-found");
+        }
         if (purpose === "courier") {
           const courierOrderId = entity.notes?.courier_order_id;
           if (!courierOrderId) return new Response("ignored-courier");
