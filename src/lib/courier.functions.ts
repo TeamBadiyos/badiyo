@@ -444,3 +444,56 @@ export const courierRiderAdvance = createServerFn({ method: "POST" })
     }
     return out;
   });
+
+// Return charge (failed drop): customer pays the per-km return fee.
+// The amount always comes from the database, never from the client.
+export const createReturnChargePayment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) => z.object({ charge_id: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    const keyId = process.env["RAZORPAY_KEY_ID"];
+    const keySecret = process.env["RAZORPAY_KEY_SECRET"];
+    if (!keyId || !keySecret) throw new Error("Payments are not configured");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: charge } = await supabaseAdmin
+      .from("courier_order_charges" as never)
+      .select("id, order_id, status, total_amount")
+      .eq("id", data.charge_id)
+      .maybeSingle();
+    const c = charge as { id: string; order_id: string; status: string; total_amount: number } | null;
+    if (!c) throw new Error("Charge not found");
+    const { data: order } = await supabaseAdmin
+      .from("courier_orders")
+      .select("id, customer_id")
+      .eq("id", c.order_id)
+      .maybeSingle();
+    if (!order || order.customer_id !== context.userId) throw new Error("Forbidden");
+    if (c.status !== "pending") throw new Error("This charge is not payable");
+
+    const amountPaise = Math.round(Number(c.total_amount) * 100);
+    if (amountPaise <= 0) throw new Error("This charge is not payable");
+
+    const auth = Buffer.from(`${keyId}:${keySecret}`).toString("base64");
+    const rzRes = await fetch("https://api.razorpay.com/v1/orders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Basic ${auth}` },
+      body: JSON.stringify({
+        amount: amountPaise,
+        currency: "INR",
+        receipt: `cret_${c.id}`.slice(0, 40),
+        notes: { purpose: "courier_return", courier_order_id: c.order_id, charge_id: c.id },
+      }),
+    });
+    if (!rzRes.ok) {
+      console.error("[courier] return charge razorpay order failed", await rzRes.text());
+      throw new Error("Could not start the payment. Please try again.");
+    }
+    const rzOrder = (await rzRes.json()) as { id: string };
+    await supabaseAdmin
+      .from("courier_order_charges" as never)
+      .update({ razorpay_order_id: rzOrder.id } as never)
+      .eq("id", c.id);
+
+    return { charge_id: c.id, razorpay_order_id: rzOrder.id, amount: amountPaise, key_id: keyId };
+  });

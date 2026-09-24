@@ -112,6 +112,15 @@ export const Route = createFileRoute("/api/public/webhooks/razorpay")({
           } as never);
           return new Response(marked ? "ok-store" : "store-not-found");
         }
+        // Parcel return charge: only when the order id matches a return charge.
+        if (purpose === "courier_return" && orderId) {
+          const { supabaseAdmin: admin } = await import("@/integrations/supabase/client.server");
+          const { data: marked } = await admin.rpc("courier_mark_charge_paid" as never, {
+            _razorpay_order_id: orderId,
+            _payment_id: paymentId,
+          } as never);
+          return new Response(marked ? "ok-return-charge" : "return-charge-not-found");
+        }
         if (purpose === "courier") {
           const courierOrderId = entity.notes?.courier_order_id;
           if (!courierOrderId) return new Response("ignored-courier");
