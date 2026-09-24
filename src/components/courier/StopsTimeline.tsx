@@ -16,25 +16,26 @@ import { courierUpdateStopContact, createReturnChargePayment } from "@/lib/couri
 import { payWithRazorpay, toPaymentError } from "@/lib/razorpayCheckout";
 import { getPaymentPrefill } from "@/lib/paymentPrefill";
 import { courierErrorMessage } from "@/lib/courierError";
+import { useT, type TFunction } from "@/i18n";
 import type { CourierCharge, CourierParcel, CourierStop } from "./courierData";
 
 const TERMINAL = ["completed", "failed", "cancelled"];
 
-export function shortAddress(a?: string | null) {
-  return (a ?? "").split(",").slice(0, 2).join(",").trim() || "the location";
+export function shortAddress(a: string | null | undefined, t: TFunction) {
+  return (a ?? "").split(",").slice(0, 2).join(",").trim() || t("courier.locationFallback");
 }
 
-function typeLabel(t: CourierStop["stop_type"]) {
-  return t === "pickup" ? "Pickup" : t === "drop" ? "Drop" : "Return";
+function typeLabel(type: CourierStop["stop_type"], t: TFunction) {
+  return type === "pickup" ? t("courier.stopPickup") : type === "drop" ? t("courier.stopDrop") : t("courier.stopReturn");
 }
 
-function statusLabel(s: string) {
+function statusLabel(s: string, t: TFunction) {
   switch (s) {
-    case "pending": return "Upcoming";
-    case "arrived": return "Rider here";
-    case "completed": return "Done";
-    case "failed": return "Not completed";
-    case "cancelled": return "Cancelled";
+    case "pending": return t("courier.stopUpcoming");
+    case "arrived": return t("courier.stopRiderHere");
+    case "completed": return t("courier.stopDone");
+    case "failed": return t("courier.stopFailed");
+    case "cancelled": return t("courier.stopCancelled");
     default: return s;
   }
 }
@@ -52,9 +53,8 @@ export async function shareOtp(text: string) {
   window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
 }
 
-export function otpShareText(type: CourierStop["stop_type"], address: string | null, otp: string) {
-  const kind = type === "pickup" ? "Pickup" : type === "drop" ? "Drop" : "Return";
-  return `badiyos parcel OTP for ${kind} at ${shortAddress(address)}: ${otp}. Share it only with the badiyos rider at the location.`;
+export function otpShareText(type: CourierStop["stop_type"], address: string | null, otp: string, t: TFunction) {
+  return t("courier.otpShare", { kind: typeLabel(type, t), address: shortAddress(address, t), otp });
 }
 
 export function currentStopId(stops: CourierStop[], riderAssigned: boolean, active: boolean) {
@@ -75,12 +75,13 @@ export function StopsTimeline({
   currentId: string | null;
   editable: boolean;
 }) {
+  const t = useT();
   const [editing, setEditing] = useState<CourierStop | null>(null);
   const anyOtp = Object.values(otps).some(Boolean);
   const counters: Record<string, number> = {};
   return (
     <div className="rounded-[20px] border border-border bg-card p-4">
-      <p className="mb-3 text-sm font-bold">Stops</p>
+      <p className="mb-3 text-sm font-bold">{t("courier.stops")}</p>
       <ol className="space-y-3">
         {stops.map((st) => {
           counters[st.stop_type] = (counters[st.stop_type] ?? 0) + 1;
@@ -100,7 +101,7 @@ export function StopsTimeline({
             >
               <div className="flex items-start gap-3">
                 <span className={`mt-0.5 rounded-full px-2 py-0.5 text-[10px] font-bold ${badge}`}>
-                  {typeLabel(st.stop_type)} {n}
+                  {typeLabel(st.stop_type, t)} {n}
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="line-clamp-2 text-sm font-semibold">{st.address}</p>
@@ -119,7 +120,7 @@ export function StopsTimeline({
                           : "bg-muted text-muted-foreground"
                   }`}
                 >
-                  {isCurrent && st.status === "pending" ? "Rider heading here" : statusLabel(st.status)}
+                  {isCurrent && st.status === "pending" ? t("courier.stopHeading") : statusLabel(st.status, t)}
                 </span>
               </div>
               {otp && (
@@ -131,9 +132,9 @@ export function StopsTimeline({
                   <Button
                     type="button"
                     size="sm"
-                    onClick={() => void shareOtp(otpShareText(st.stop_type, st.address, otp))}
+                    onClick={() => void shareOtp(otpShareText(st.stop_type, st.address, otp, t))}
                   >
-                    <Share2 className="h-4 w-4" /> Share
+                    <Share2 className="h-4 w-4" /> {t("courier.share")}
                   </Button>
                 </div>
               )}
@@ -143,7 +144,7 @@ export function StopsTimeline({
                   onClick={() => setEditing(st)}
                   className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-primary"
                 >
-                  <Pencil className="h-3 w-3" /> Edit contact
+                  <Pencil className="h-3 w-3" /> {t("courier.editContact")}
                 </button>
               )}
             </li>
@@ -152,7 +153,7 @@ export function StopsTimeline({
       </ol>
       {!anyOtp && (
         <p className="mt-3 text-center text-[11px] text-muted-foreground">
-          OTP appears here when the rider reaches the pickup / leaves for the drops.
+          {t("courier.otpWaitHint")}
         </p>
       )}
       {editing && (
@@ -163,6 +164,7 @@ export function StopsTimeline({
 }
 
 function EditContactDialog({ orderId, stop, onClose }: { orderId: string; stop: CourierStop; onClose: () => void }) {
+  const t = useT();
   const qc = useQueryClient();
   const [name, setName] = useState(stop.contact_name ?? "");
   const [phone, setPhone] = useState((stop.contact_phone ?? "").replace(/\D/g, "").slice(-10));
@@ -176,10 +178,10 @@ function EditContactDialog({ orderId, stop, onClose }: { orderId: string; stop: 
         qc.invalidateQueries({ queryKey: ["courier-stops", orderId] }),
         qc.invalidateQueries({ queryKey: ["courier-order-otps", orderId] }),
       ]);
-      toast("Contact updated");
+      toast(t("courier.contactUpdated"));
       onClose();
     } catch (e) {
-      toast.error(courierErrorMessage(e, "Could not update the contact. Please try again."));
+      toast.error(courierErrorMessage(e, t("courier.contactUpdateError")));
     } finally {
       setSaving(false);
     }
@@ -188,12 +190,12 @@ function EditContactDialog({ orderId, stop, onClose }: { orderId: string; stop: 
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="w-[calc(100%_-_32px)] max-w-sm rounded-lg p-5">
         <DialogHeader>
-          <DialogTitle>Edit contact</DialogTitle>
+          <DialogTitle>{t("courier.editContact")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
           <div className="relative">
             <UserRound className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Contact name" className="h-12 pl-10" />
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t("courier.contactNamePlaceholder")} className="h-12 pl-10" />
           </div>
           <div className="relative">
             <Phone className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
@@ -201,12 +203,12 @@ function EditContactDialog({ orderId, stop, onClose }: { orderId: string; stop: 
               inputMode="numeric"
               value={phone}
               onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
-              placeholder="Mobile number"
+              placeholder={t("courier.mobilePlaceholder")}
               className="h-12 pl-10"
             />
           </div>
           <Button className="h-11 w-full font-bold" disabled={!valid || saving} onClick={save}>
-            {saving ? <Loader2 className="animate-spin" /> : "Save"}
+            {saving ? <Loader2 className="animate-spin" /> : t("courier.save")}
           </Button>
         </div>
       </DialogContent>
@@ -223,6 +225,7 @@ export function ReturnChargeCard({
   charge: CourierCharge;
   dropLabel: string;
 }) {
+  const t = useT();
   const qc = useQueryClient();
   const [paying, setPaying] = useState(false);
   const amount = Number(charge.total_amount ?? 0);
@@ -230,7 +233,7 @@ export function ReturnChargeCard({
     return (
       <div className="flex items-center gap-3 rounded-[20px] border border-primary/30 bg-primary/5 p-4">
         <CheckCircle2 className="h-5 w-5 text-primary" />
-        <p className="text-sm font-semibold text-primary">Return charge paid</p>
+        <p className="text-sm font-semibold text-primary">{t("courier.returnPaid")}</p>
       </div>
     );
   }
@@ -245,17 +248,17 @@ export function ReturnChargeCard({
         currency: "INR",
         order_id: rz.razorpay_order_id,
         name: "Badiyos",
-        description: "Parcel return charge",
+        description: t("courier.returnDescription"),
         contact: prefill.contact,
         email: prefill.email,
         customerName: prefill.name,
       });
-      toast("Payment received. Confirming…");
+      toast(t("courier.paymentReceived"));
       await qc.invalidateQueries({ queryKey: ["courier-charges", orderId] });
     } catch (e) {
       const pe = toPaymentError(e);
-      if (pe.category === "cancelled") toast("Payment cancelled");
-      else toast.error(courierErrorMessage(e, "Payment could not be completed. Please try again."));
+      if (pe.category === "cancelled") toast(t("courier.paymentCancelled"));
+      else toast.error(courierErrorMessage(e, t("courier.paymentError")));
     } finally {
       setPaying(false);
     }
@@ -265,21 +268,21 @@ export function ReturnChargeCard({
       <div className="flex items-start gap-3">
         <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-warning" />
         <p className="text-sm font-semibold text-foreground">
-          Delivery could not be completed at {dropLabel}. Pay ₹{amount.toFixed(2)} return charge to get your parcel back.
+          {t("courier.returnChargeNote", { drop: dropLabel, amount: amount.toFixed(2) })}
         </p>
       </div>
       <Button className="mt-3 h-11 w-full font-bold" disabled={paying} onClick={pay}>
-        {paying ? <Loader2 className="animate-spin" /> : `Pay ₹${amount.toFixed(2)}`}
+        {paying ? <Loader2 className="animate-spin" /> : t("courier.payAmount", { amount: amount.toFixed(2) })}
       </Button>
     </div>
   );
 }
 
-export function parcelSummary(parcels: CourierParcel[]) {
+export function parcelSummary(parcels: CourierParcel[], t: TFunction) {
   const delivered = parcels.filter((p) => p.status === "delivered").length;
   const returned = parcels.filter((p) => p.status === "returned").length;
   if (parcels.length <= 1 || (delivered === parcels.length)) return null;
-  const parts = [`${delivered} of ${parcels.length} parcels delivered`];
-  if (returned) parts.push(`${returned} returned`);
+  const parts = [t("courier.parcelsDelivered", { delivered, total: parcels.length })];
+  if (returned) parts.push(t("courier.parcelsReturned", { count: returned }));
   return parts.join(", ");
 }

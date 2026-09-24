@@ -12,6 +12,7 @@ import {
 import { CourierLiveMap } from "./CourierLiveMap";
 import { otpShareText, shareOtp } from "./StopsTimeline";
 import type { RiderLocation } from "./courierData";
+import { useT, type TFunction } from "@/i18n";
 
 type ContactRow = {
   order_id: string;
@@ -43,22 +44,22 @@ type ContactView = {
   return_stop: { stop_id: string; status: string; otp: string | null } | null;
 };
 
-function roleLabel(r: ContactRow["role"]) {
-  return r === "drop" ? "Parcel coming to you" : r === "pickup" ? "Pickup from you" : "Return to you";
+function roleLabel(r: ContactRow["role"], t: TFunction) {
+  return r === "drop" ? t("courier.contactDropRole") : r === "pickup" ? t("courier.contactPickupRole") : t("courier.contactReturnRole");
 }
 
-function orderStatusLabel(s: string) {
+function orderStatusLabel(s: string, t: TFunction) {
   const map: Record<string, string> = {
-    REQUESTED: "Finding rider",
-    SEARCHING: "Finding rider",
-    DRIVER_ASSIGNED: "Rider assigned",
-    ARRIVED_PICKUP: "Rider at pickup",
-    PICKED_UP: "Picked up",
-    IN_TRANSIT: "On the way",
-    DELIVERED: "Delivered",
-    COMPLETED: "Delivered",
-    CANCELLED: "Cancelled",
-    FAILED_DELIVERY: "Not delivered",
+    REQUESTED: t("courier.statusFindingRider"),
+    SEARCHING: t("courier.statusFindingRider"),
+    DRIVER_ASSIGNED: t("courier.statusRiderAssigned"),
+    ARRIVED_PICKUP: t("courier.statusRiderAtPickup"),
+    PICKED_UP: t("courier.statusPickedUp"),
+    IN_TRANSIT: t("courier.statusOnWay"),
+    DELIVERED: t("courier.statusDelivered"),
+    COMPLETED: t("courier.statusDelivered"),
+    CANCELLED: t("courier.statusCancelled"),
+    FAILED_DELIVERY: t("courier.statusNotDelivered"),
   };
   return map[s] ?? s;
 }
@@ -74,12 +75,13 @@ export function useContactDeliveries() {
 }
 
 export function ContactParcelsCard({ onOpen }: { onOpen: (stopId?: string) => void }) {
+  const t = useT();
   const { data = [] } = useContactDeliveries();
   if (!data.length) return null;
   return (
     <div className="mt-4 rounded-[20px] border-2 border-primary/30 bg-primary/5 p-4">
       <p className="flex items-center gap-2 text-sm font-bold text-foreground">
-        <Package className="h-4 w-4 text-primary" /> Parcels for you
+        <Package className="h-4 w-4 text-primary" /> {t("courier.contactParcels")}
       </p>
       <div className="mt-2 space-y-2">
         {data.slice(0, 3).map((r) => (
@@ -90,10 +92,10 @@ export function ContactParcelsCard({ onOpen }: { onOpen: (stopId?: string) => vo
             className="flex w-full items-center gap-3 rounded-xl bg-card p-3 text-left"
           >
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold">{roleLabel(r.role)}</p>
+              <p className="text-sm font-semibold">{roleLabel(r.role, t)}</p>
               <p className="truncate text-xs text-muted-foreground">
                 {r.sender_label ? `${r.sender_label} · ` : ""}
-                {orderStatusLabel(r.order_status)}
+                {orderStatusLabel(r.order_status, t)}
               </p>
             </div>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
@@ -102,7 +104,7 @@ export function ContactParcelsCard({ onOpen }: { onOpen: (stopId?: string) => vo
       </div>
       {data.length > 3 && (
         <button type="button" onClick={() => onOpen()} className="mt-2 text-xs font-bold text-primary">
-          See all →
+          {t("courier.seeAll")}
         </button>
       )}
     </div>
@@ -116,6 +118,7 @@ export function ContactParcelsScreen({
   initialStopId?: string | null;
   onBack: () => void;
 }) {
+  const t = useT();
   const [stopId, setStopId] = useState<string | null>(initialStopId ?? null);
   const { data = [], isLoading } = useContactDeliveries();
 
@@ -123,12 +126,12 @@ export function ContactParcelsScreen({
 
   return (
     <div className="min-h-dvh bg-background pb-28">
-      <Header title="Parcels for you" onBack={onBack} />
+      <Header title={t("courier.contactParcels")} onBack={onBack} />
       <div className="space-y-3 px-4 py-4">
         {isLoading && <Loader2 className="mx-auto h-6 w-6 animate-spin text-primary" />}
         {!isLoading && !data.length && (
           <p className="rounded-2xl bg-muted p-4 text-center text-sm text-muted-foreground">
-            No parcels for you right now.
+            {t("courier.noContactParcels")}
           </p>
         )}
         {data.map((r) => (
@@ -140,10 +143,10 @@ export function ContactParcelsScreen({
           >
             <Package className="h-5 w-5 shrink-0 text-primary" />
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold">{roleLabel(r.role)}</p>
+              <p className="text-sm font-semibold">{roleLabel(r.role, t)}</p>
               <p className="truncate text-xs text-muted-foreground">
-                {r.sender_label ? `From ${r.sender_label} · ` : ""}
-                {orderStatusLabel(r.order_status)}
+                {r.sender_label ? t("courier.fromSender", { sender: r.sender_label }) : ""}
+                {orderStatusLabel(r.order_status, t)}
               </p>
             </div>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
@@ -166,6 +169,7 @@ function Header({ title, onBack }: { title: string; onBack: () => void }) {
 }
 
 function OtpBlock({ label, otp, type, address }: { label: string; otp: string; type: "pickup" | "drop" | "return"; address: string | null }) {
+  const t = useT();
   return (
     <div className="rounded-[20px] border-2 border-primary/30 bg-card p-5 text-center">
       <div className="flex items-center justify-center gap-2 text-primary">
@@ -173,17 +177,18 @@ function OtpBlock({ label, otp, type, address }: { label: string; otp: string; t
         <p className="text-sm font-bold">{label}</p>
       </div>
       <p className="mt-3 text-3xl font-extrabold tracking-[0.4em] text-primary">{otp}</p>
-      <Button className="mt-4 w-full" onClick={() => void shareOtp(otpShareText(type, address, otp))}>
-        <Share2 className="h-4 w-4" /> Share
+      <Button className="mt-4 w-full" onClick={() => void shareOtp(otpShareText(type, address, otp, t))}>
+        <Share2 className="h-4 w-4" /> {t("courier.share")}
       </Button>
       <p className="mt-3 text-[11px] text-muted-foreground">
-        Give this OTP to the rider only when you receive/hand over the parcel
+        {t("courier.otpContactHint")}
       </p>
     </div>
   );
 }
 
 function ContactParcelDetail({ stopId, onBack }: { stopId: string; onBack: () => void }) {
+  const t = useT();
   const { data, isLoading, error } = useQuery({
     queryKey: ["courier-contact-view", stopId],
     queryFn: async () => (await courierGetContactView({ data: { stop_id: stopId } })) as unknown as ContactView,
@@ -193,48 +198,48 @@ function ContactParcelDetail({ stopId, onBack }: { stopId: string; onBack: () =>
 
   return (
     <div className="min-h-dvh bg-background pb-28">
-      <Header title={data?.order_code ? `Parcel #${data.order_code}` : "Parcel"} onBack={onBack} />
+      <Header title={data?.order_code ? t("courier.parcelNumber", { code: data.order_code }) : t("courier.parcel")} onBack={onBack} />
       <div className="space-y-4 px-4 py-4">
         {isLoading && <Loader2 className="mx-auto h-6 w-6 animate-spin text-primary" />}
         {error && (
           <p className="rounded-2xl bg-destructive/10 p-4 text-sm text-destructive">
-            This parcel is not available.
+            {t("courier.parcelUnavailable")}
           </p>
         )}
         {data && (
           <>
             <div className="rounded-[20px] border border-border bg-card p-4">
               <p className="text-xs font-semibold text-muted-foreground">
-                {roleLabel(data.stop.stop_type)}
+                {roleLabel(data.stop.stop_type, t)}
               </p>
-              <p className="mt-1 text-lg font-extrabold">{orderStatusLabel(data.order_status)}</p>
+              <p className="mt-1 text-lg font-extrabold">{orderStatusLabel(data.order_status, t)}</p>
               <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{data.stop.address}</p>
             </div>
 
             {data.otp && (
               <OtpBlock
-                label={data.stop.stop_type === "pickup" ? "Pickup code" : data.stop.stop_type === "drop" ? "Delivery code" : "Return code"}
+                label={data.stop.stop_type === "pickup" ? t("courier.pickupCode") : data.stop.stop_type === "drop" ? t("courier.deliveryCode") : t("courier.returnCode")}
                 otp={data.otp}
                 type={data.stop.stop_type}
                 address={data.stop.address}
               />
             )}
             {data.return_stop?.otp && (
-              <OtpBlock label="Return code" otp={data.return_stop.otp} type="return" address={data.stop.address} />
+              <OtpBlock label={t("courier.returnCode")} otp={data.return_stop.otp} type="return" address={data.stop.address} />
             )}
 
             {data.rider?.available && (
               <div className="flex items-center gap-3 rounded-[20px] border border-border bg-card p-4">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10">
                   {data.rider.photo_url ? (
-                    <img src={data.rider.photo_url} alt={data.rider.name ?? "Rider"} className="h-full w-full object-cover" />
+                    <img src={data.rider.photo_url} alt={data.rider.name ?? t("courier.rider")} className="h-full w-full object-cover" />
                   ) : (
                     <UserRound className="h-6 w-6 text-primary" />
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold">{data.rider.name ?? "Delivery partner"}</p>
-                  <p className="text-xs text-muted-foreground">{data.rider.vehicle ?? "Badiyos rider"}</p>
+                  <p className="truncate text-sm font-semibold">{data.rider.name ?? t("courier.deliveryPartner")}</p>
+                  <p className="text-xs text-muted-foreground">{data.rider.vehicle ?? t("courier.badiyosRider")}</p>
                 </div>
               </div>
             )}
@@ -261,7 +266,7 @@ function ContactParcelDetail({ stopId, onBack }: { stopId: string; onBack: () =>
               ) : (
                 !["DELIVERED", "COMPLETED", "CANCELLED", "FAILED_DELIVERY"].includes(data.order_status) && (
                   <p className="rounded-2xl bg-muted p-4 text-center text-sm text-muted-foreground">
-                    The rider will reach you after the current stop
+                    {t("courier.afterCurrentStop")}
                   </p>
                 )
               ))}
