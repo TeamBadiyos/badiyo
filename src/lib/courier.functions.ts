@@ -497,3 +497,49 @@ export const createReturnChargePayment = createServerFn({ method: "POST" })
 
     return { charge_id: c.id, razorpay_order_id: rzOrder.id, amount: amountPaise, key_id: keyId };
   });
+
+// ---- OTP access for the order owner and for stop contacts (matched by phone) ----
+type Json = string | number | boolean | null | { [k: string]: Json } | Json[];
+const stopIdSchema = z.object({ stop_id: z.string().uuid() });
+
+export const courierGetOrderOtps = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) => z.object({ order_id: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    const { data: out, error } = await context.supabase.rpc("courier_get_order_otps" as never, {
+      _order_id: data.order_id,
+    } as never);
+    if (error) rpcError(error.message);
+    return out as unknown as Array<Record<string, Json>>;
+  });
+
+export const courierMyContactDeliveries = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: out, error } = await context.supabase.rpc("courier_my_contact_deliveries" as never);
+    if (error) rpcError(error.message);
+    return out as unknown as Array<Record<string, Json>>;
+  });
+
+export const courierGetContactView = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) => stopIdSchema.parse(data))
+  .handler(async ({ data, context }) => {
+    const { data: out, error } = await context.supabase.rpc("courier_get_contact_view" as never, {
+      _stop_id: data.stop_id,
+    } as never);
+    if (error) rpcError(error.message);
+    return out as unknown as Record<string, Json>;
+  });
+
+export const courierGetRiderLocationForStop = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) => stopIdSchema.parse(data))
+  .handler(async ({ data, context }) => {
+    const { data: out, error } = await context.supabase.rpc(
+      "courier_get_rider_location_for_stop" as never,
+      { _stop_id: data.stop_id } as never,
+    );
+    if (error) rpcError(error.message);
+    return out as unknown as Record<string, Json>;
+  });

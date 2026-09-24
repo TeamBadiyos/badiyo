@@ -5735,6 +5735,34 @@ export type Database = {
         Args: { _lat: number; _lng: number }
         Returns: Json
       }
+      courier_contact_stop_gate: {
+        Args: { _stop_id: string }
+        Returns: {
+          address: string
+          arrived_at: string | null
+          completed_at: string | null
+          contact_edit_count: number
+          contact_name: string
+          contact_phone: string
+          created_at: string
+          fail_reason_code: string | null
+          failed_at: string | null
+          id: string
+          lat: number
+          lng: number
+          order_id: string
+          sequence: number
+          status: string
+          stop_type: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "courier_order_stops"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       courier_create_order: {
         Args: { _customer_id: string; _payload: Json }
         Returns: Json
@@ -5752,13 +5780,20 @@ export type Database = {
           expert_id: string
         }[]
       }
+      courier_get_contact_view: { Args: { _stop_id: string }; Returns: Json }
+      courier_get_order_otps: { Args: { _order_id: string }; Returns: Json }
       courier_get_otp: {
         Args: { _order_id: string; _purpose: string }
         Returns: Json
       }
       courier_get_rider_info: { Args: { _order_id: string }; Returns: Json }
       courier_get_rider_location: { Args: { _order_id: string }; Returns: Json }
+      courier_get_rider_location_for_stop: {
+        Args: { _stop_id: string }
+        Returns: Json
+      }
       courier_hash_otp: { Args: { _otp: string }; Returns: string }
+      courier_is_next_stop: { Args: { _stop_id: string }; Returns: boolean }
       courier_is_ops_staff: { Args: never; Returns: boolean }
       courier_is_super_admin: { Args: never; Returns: boolean }
       courier_issue_otp: {
@@ -5784,6 +5819,12 @@ export type Database = {
         Returns: undefined
       }
       courier_min_route_km: { Args: { _stops: Json }; Returns: number }
+      courier_my_contact_deliveries: { Args: never; Returns: Json }
+      courier_my_phone10: { Args: never; Returns: string }
+      courier_notify_stop_contact: {
+        Args: { _stop_id: string }
+        Returns: undefined
+      }
       courier_offer_respond: {
         Args: { _accept: boolean; _offer_id: string }
         Returns: Json
@@ -5959,6 +6000,7 @@ export type Database = {
         Returns: undefined
       }
       courier_stop_purpose: { Args: { _stop_type: string }; Returns: string }
+      courier_stop_visible_otp: { Args: { _stop_id: string }; Returns: string }
       courier_store_info: { Args: { _order_id: string }; Returns: Json }
       courier_sweeper: { Args: never; Returns: undefined }
       courier_sweeper_tick: { Args: never; Returns: undefined }
