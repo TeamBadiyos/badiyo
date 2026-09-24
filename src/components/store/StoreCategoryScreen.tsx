@@ -2,7 +2,7 @@ import { ArrowLeft } from "lucide-react";
 import { useT } from "@/i18n";
 import type { PublicStore } from "@/lib/store";
 import { StoreRow } from "./StoreRow";
-import { StoreOrderingBar } from "./StoreOrderingBar";
+import { CartBar } from "./CartBar";
 import type { StoreCategoryGroup } from "./storeGroups";
 
 export type { StoreCategoryGroup } from "./storeGroups";
@@ -12,11 +12,15 @@ export function StoreCategoryScreen({
   group,
   onBack,
   onOpenStore,
+  onOpenCart,
+  orderingEnabled = true,
 }: {
   coords: { lat: number; lng: number } | null;
   group: StoreCategoryGroup;
   onBack: () => void;
   onOpenStore: (s: PublicStore) => void;
+  onOpenCart: () => void;
+  orderingEnabled?: boolean;
 }) {
   const t = useT();
   return (
@@ -44,7 +48,7 @@ export function StoreCategoryScreen({
           ))}
         </ul>
       </div>
-      <StoreOrderingBar />
+      <CartBar onOpenCart={onOpenCart} disabled={!orderingEnabled} />
     </main>
   );
 }

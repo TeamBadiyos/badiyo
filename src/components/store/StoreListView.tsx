@@ -11,7 +11,7 @@ import {
   type PublicStore,
 } from "@/lib/store";
 import { StoreRow } from "./StoreRow";
-import { StoreOrderingBar } from "./StoreOrderingBar";
+import { CartBar } from "./CartBar";
 import { buildStoreGroups, type StoreCategoryGroup } from "./storeGroups";
 
 type Coords = { lat: number; lng: number } | null;
@@ -21,10 +21,14 @@ export function StoreListView({
   coords,
   onOpenStore,
   onOpenCategory,
+  onOpenCart,
+  orderingEnabled = true,
 }: {
   coords: Coords;
   onOpenStore: (store: PublicStore) => void;
   onOpenCategory: (group: StoreCategoryGroup) => void;
+  onOpenCart: () => void;
+  orderingEnabled?: boolean;
 }) {
   const t = useT();
   const { data: categories = [] } = useStoreCategories();
@@ -74,7 +78,7 @@ export function StoreListView({
           </div>
         ))
       )}
-      <StoreOrderingBar aboveNav />
+      <CartBar aboveNav onOpenCart={onOpenCart} disabled={!orderingEnabled} />
     </section>
   );
 }

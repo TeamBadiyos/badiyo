@@ -11,6 +11,12 @@ import {
   type CourierOrder,
 } from "./courier/courierData";
 import { useBookingsLive } from "@/lib/useBookingsLive";
+import {
+  fetchMyStoreOrders,
+  isStoreOrderActive,
+  type StoreOrder,
+} from "@/lib/storeOrders";
+import { Store as StoreIcon } from "lucide-react";
 
 import {
   ACTIVE_TRACKING_STATUSES,
@@ -78,7 +84,57 @@ function formatStamp(iso: string | null): string {
 /** One row in the Orders list — either a home service or a parcel. */
 type OrderItem =
   | { kind: "booking"; id: string; createdAt: string | null; booking: BookingRow }
-  | { kind: "parcel"; id: string; createdAt: string | null; parcel: CourierOrder };
+  | { kind: "parcel"; id: string; createdAt: string | null; parcel: CourierOrder }
+  | { kind: "store"; id: string; createdAt: string | null; order: StoreOrder };
+
+/** Card for one shop order — same shape as the booking/parcel cards. */
+function StoreOrderCard({ order, active }: { order: StoreOrder; active: boolean }) {
+  const itemLine = order.items
+    .map((i) => `${i.name} x${i.quantity}`)
+    .join(", ");
+  return (
+    <div
+      className={
+        active
+          ? "rounded-[20px] border-2 border-primary/40 bg-primary/5 p-5 shadow-sm"
+          : "w-full rounded-[18px] border border-border bg-card p-4 text-left shadow-sm"
+      }
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h3 className="flex items-center gap-1.5 truncate text-base font-bold text-foreground">
+            <StoreIcon className="h-4 w-4 shrink-0 text-primary" />
+            {order.store_name ?? "Store order"}
+          </h3>
+          <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
+            <Clock className="h-3.5 w-3.5" />
+            {formatStamp(order.created_at)} · #{order.order_number}
+          </p>
+        </div>
+        <span
+          className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ${statusPill(order.status)}`}
+        >
+          {statusLabel(order.status)}
+        </span>
+      </div>
+      {itemLine && (
+        <p className="mt-3 line-clamp-2 text-xs text-muted-foreground">{itemLine}</p>
+      )}
+      {order.delivery_address && (
+        <div className="mt-2 flex items-start gap-1.5 text-xs text-muted-foreground">
+          <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+          <span className="line-clamp-1">{order.delivery_address}</span>
+        </div>
+      )}
+      <div className="mt-3 flex items-center justify-between">
+        <span className="text-sm font-bold text-primary">Rs {Number(order.total_amount)}</span>
+        <span className="text-xs font-semibold text-muted-foreground">
+          {order.payment_mode === "cod" ? "Cash on delivery" : "Paid online"}
+        </span>
+      </div>
+    </div>
+  );
+}
 
 export function OrdersScreen({
   onOpenHome,
@@ -116,6 +172,15 @@ export function OrdersScreen({
     refetchInterval: 15_000,
     refetchIntervalInBackground: false,
   });
+  const { data: storeOrders = [], isLoading: storeLoading } = useQuery({
+    queryKey: ["my-store-orders"],
+    queryFn: fetchMyStoreOrders,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+    refetchOnMount: "always",
+    refetchInterval: 20_000,
+    refetchIntervalInBackground: false,
+  });
   useBookingsLive();
 
 
@@ -124,6 +189,7 @@ export function OrdersScreen({
     await Promise.all([
       queryClient.refetchQueries({ queryKey: ["my-bookings"] }),
       queryClient.refetchQueries({ queryKey: ["my-courier-orders"] }),
+      queryClient.refetchQueries({ queryKey: ["my-store-orders"] }),
     ]);
   });
 
@@ -142,6 +208,9 @@ export function OrdersScreen({
     ...visibleParcels
       .filter((p) => COURIER_ACTIVE_STATUSES.includes(p.status))
       .map((p) => ({ kind: "parcel" as const, id: p.id, createdAt: p.created_at, parcel: p })),
+    ...storeOrders
+      .filter(isStoreOrderActive)
+      .map((o) => ({ kind: "store" as const, id: o.id, createdAt: o.created_at, order: o })),
   ].sort(byNewest);
 
   const past: OrderItem[] = [
@@ -151,6 +220,9 @@ export function OrdersScreen({
     ...visibleParcels
       .filter((p) => !COURIER_ACTIVE_STATUSES.includes(p.status))
       .map((p) => ({ kind: "parcel" as const, id: p.id, createdAt: p.created_at, parcel: p })),
+    ...storeOrders
+      .filter((o) => !isStoreOrderActive(o))
+      .map((o) => ({ kind: "store" as const, id: o.id, createdAt: o.created_at, order: o })),
   ].sort(byNewest);
 
   const openParcel = (p: CourierOrder) => onOpenCourierOrder?.(p.id);
@@ -171,7 +243,9 @@ export function OrdersScreen({
               Active
             </h2>
             {active.map((item) =>
-              item.kind === "booking" ? (
+              item.kind === "store" ? (
+                <StoreOrderCard key={item.id} order={item.order} active />
+              ) : item.kind === "booking" ? (
                 <div
                   key={item.id}
                   className="rounded-[20px] border-2 border-primary/40 bg-primary/5 p-5 shadow-sm"
@@ -259,7 +333,7 @@ export function OrdersScreen({
           <h2 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">
             Past Orders
           </h2>
-          {isLoading || parcelsLoading ? (
+          {isLoading || parcelsLoading || storeLoading ? (
             <p className="py-10 text-center text-sm text-muted-foreground">Loading…</p>
           ) : error ? (
             <p className="py-10 text-center text-sm text-destructive">
@@ -287,7 +361,9 @@ export function OrdersScreen({
             </p>
           ) : (
             past.map((item) =>
-              item.kind === "booking" ? (
+              item.kind === "store" ? (
+                <StoreOrderCard key={item.id} order={item.order} active={false} />
+              ) : item.kind === "booking" ? (
                 <button
                   key={item.id}
                   onClick={() => onOpenBooking(item.booking)}

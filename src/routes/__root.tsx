@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
 import { LanguageProvider } from "@/i18n";
+import { StoreCartProvider } from "@/lib/storeCart";
 import { OfflineGate } from "@/components/OfflineScreen";
 import { buildEarlyBootScript } from "@/lib/earlyData";
 import { startQueryPersistence } from "@/lib/queryPersistence";
@@ -178,9 +179,11 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <LanguageProvider>
-        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-        <Outlet />
-        <OfflineGate />
+        <StoreCartProvider>
+          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+          <Outlet />
+          <OfflineGate />
+        </StoreCartProvider>
       </LanguageProvider>
     </QueryClientProvider>
   );
