@@ -5,7 +5,7 @@ import { ProductCard } from "./ProductCard";
 import { StoreRating } from "./StoreRating";
 import { formatDistance, isStoreOpen, type PublicProduct, type PublicStore } from "@/lib/store";
 
-/** One shop: header line + 3 product cards + "View all" tile. */
+/** One shop: header line + its products, each addable to the cart. */
 export function StoreRow({
   store,
   km,
@@ -20,6 +20,7 @@ export function StoreRow({
   const t = useT();
   const closed = !isStoreOpen(store);
   const dist = formatDistance(km);
+  const storeRef = { id: store.id, name: store.store_name ?? null };
   return (
     <div
       className={
@@ -58,7 +59,7 @@ export function StoreRow({
       <div className="-mx-3 mt-3 snap-x snap-mandatory overflow-x-auto scroll-px-3 px-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <div className="flex w-max gap-2.5">
           {products.map((p) => (
-            <ProductCard key={p.id} product={p} onOpen={onOpen} />
+            <ProductCard key={p.id} product={p} store={closed ? undefined : storeRef} onOpen={onOpen} />
           ))}
         </div>
       </div>

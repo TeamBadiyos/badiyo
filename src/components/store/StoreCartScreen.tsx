@@ -100,7 +100,7 @@ export function StoreCartScreen({
 
   async function placeOrder() {
     if (placing) return;
-    if (!cart.cart.merchantId || cart.lines().length === 0) return;
+    if (!cart.cart.merchantId || cart.cart.lines.length === 0) return;
     if (!addressId) {
       toast.error(t("store.errAddress"));
       return;
