@@ -356,7 +356,7 @@ export function OrdersScreen({
                     <div className="min-w-0">
                       <h3 className="flex items-center gap-1.5 truncate text-base font-bold text-foreground">
                         <Package className="h-4 w-4 shrink-0 text-primary" />
-                        Send a parcel
+                        {t("nav.parcel")}
                       </h3>
                       <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
                         <Clock className="h-3.5 w-3.5" />
@@ -377,12 +377,12 @@ export function OrdersScreen({
                       {item.parcel.pickup_address} → {item.parcel.drop_address}
                     </span>
                   </div>
-                  <ParcelChips parcel={item.parcel} returnPending={pendingReturnIds.includes(item.parcel.id)} />
+                    <ParcelChips parcel={item.parcel} returnPending={pendingReturnIds.includes(item.parcel.id)} />
                   <button
                     onClick={() => openParcel(item.parcel)}
                     className="mt-4 w-full rounded-[14px] bg-primary py-3 text-sm font-bold text-primary-foreground shadow-sm transition active:scale-[0.99]"
                   >
-                    Track parcel
+                    {t("courier.trackParcel")}
                   </button>
                 </div>
               ),
@@ -479,7 +479,7 @@ export function OrdersScreen({
                     <div className="min-w-0">
                       <h3 className="flex items-center gap-1.5 truncate text-base font-bold text-foreground">
                         <Package className="h-4 w-4 shrink-0 text-primary" />
-                        Send a parcel
+                        {t("nav.parcel")}
                       </h3>
                       <p className="mt-0.5 text-xs text-muted-foreground">
                         {formatStamp(item.parcel.created_at)}
@@ -526,6 +526,7 @@ export function OrdersScreen({
 }
 
 function ParcelChips({ parcel, returnPending }: { parcel: CourierOrder; returnPending: boolean }) {
+  const t = useT();
   const p = Number(parcel.pickup_count ?? 1);
   const d = Number(parcel.drop_count ?? 1);
   const multi = p > 1 || d > 1;
@@ -534,12 +535,12 @@ function ParcelChips({ parcel, returnPending }: { parcel: CourierOrder; returnPe
     <div className="mt-2 flex flex-wrap gap-1.5">
       {multi && (
         <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold text-foreground">
-          {p} {p === 1 ? "pickup" : "pickups"} · {d} {d === 1 ? "drop" : "drops"}
+          {p === 1 ? t("courier.pickupCount", { count: p }) : t("courier.pickupsCount", { count: p })} · {d === 1 ? t("courier.dropCount", { count: d }) : t("courier.dropsCount", { count: d })}
         </span>
       )}
       {returnPending && (
         <span className="rounded-full bg-warning/15 px-2 py-0.5 text-[11px] font-bold text-warning">
-          Return payment pending
+          {t("courier.returnPaymentPending")}
         </span>
       )}
     </div>

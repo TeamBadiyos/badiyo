@@ -208,6 +208,8 @@ export const mr: Partial<Record<keyof typeof en, string>> = {
   "courier.timeNow": "आत्ताच",
   "courier.timeMinute": "1 मिनिटापूर्वी",
   "courier.timeMinutes": "{count} मिनिटांपूर्वी",
+  "courier.whatsappPickup": "नमस्कार{who},\n\nतुमचा Badiyos पार्सल पिकअप निश्चित झाला आहे आणि रायडर येत आहे.\n\nपिकअप पडताळणी कोड: {code}\n\nपार्सल रायडरला देतानाच हा कोड सांगा.\n\nBadiyos\nहर घर का अपना साथी",
+  "courier.whatsappDelivery": "नमस्कार,\n\n{sender} यांनी पाठवलेले पार्सल Badiyos द्वारे तुमच्याकडे येत आहे.\n\nडिलिव्हरी पडताळणी कोड: {code}\n\nपार्सल मिळाल्यानंतरच हा कोड रायडरला सांगा.\n\nBadiyos\nहर घर का अपना साथी",
 
   // ── Home ─────────────────────────────────────────────────
   "home.searchPlaceholder": "साफसफाईच्या सेवा शोधा…",

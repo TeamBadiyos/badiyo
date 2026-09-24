@@ -206,6 +206,8 @@ export const en = {
   "courier.timeNow": "just now",
   "courier.timeMinute": "1 min ago",
   "courier.timeMinutes": "{count} mins ago",
+  "courier.whatsappPickup": "Hello{who},\n\nYour Badiyos parcel pickup is confirmed and the rider is on the way.\n\nPickup verification code: {code}\n\nShare this code only when handing the parcel to the rider.\n\nBadiyos\nHar ghar ka apna saathi",
+  "courier.whatsappDelivery": "Hello,\n\nA parcel sent by {sender} is coming to you through Badiyos.\n\nDelivery verification code: {code}\n\nShare this code only after receiving the parcel.\n\nBadiyos\nHar ghar ka apna saathi",
 
   // ── Home ─────────────────────────────────────────────────
   "home.searchPlaceholder": "Search for cleaning services…",

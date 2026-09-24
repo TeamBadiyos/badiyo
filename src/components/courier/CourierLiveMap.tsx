@@ -9,14 +9,15 @@ import { decodeGooglePolyline, routePointKey } from "@/lib/mapRoute";
 import { fetchTrackingRoadRoute } from "@/lib/trackingRoute.functions";
 import riderMarkerImage from "@/assets/map-rider-worker.png";
 import { fetchRiderLocation } from "./courierData";
+import { useT, type TFunction } from "@/i18n";
 
 const LIVE_STATUSES = ["DRIVER_ASSIGNED", "ARRIVED_PICKUP", "PICKED_UP", "IN_TRANSIT"];
 
-function agoLabel(iso: string) {
+function agoLabel(iso: string, t: TFunction) {
   const mins = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
-  if (mins < 1) return "just now";
-  if (mins === 1) return "1 min ago";
-  return `${mins} mins ago`;
+  if (mins < 1) return t("courier.timeNow");
+  if (mins === 1) return t("courier.timeMinute");
+  return t("courier.timeMinutes", { count: mins });
 }
 
 export function CourierLiveMap({
@@ -33,6 +34,7 @@ export function CourierLiveMap({
   pickup: { lat: number | null; lng: number | null; label: string };
   drop: { lat: number | null; lng: number | null; label: string };
 }) {
+  const t = useT();
   const mapDivRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
   const riderMarkerRef = useRef<any>(null);
@@ -130,7 +132,7 @@ export function CourierLiveMap({
           new window.google.maps.Marker({
             position: { lat: Number(pickup.lat), lng: Number(pickup.lng) },
             map,
-            title: "Pickup",
+            title: t("courier.pickup"),
             icon: {
               path: window.google.maps.SymbolPath.CIRCLE,
               scale: 7,
@@ -145,7 +147,7 @@ export function CourierLiveMap({
           new window.google.maps.Marker({
             position: { lat: Number(drop.lat), lng: Number(drop.lng) },
             map,
-            title: "Drop",
+            title: t("courier.drop"),
             icon: {
               path: window.google.maps.SymbolPath.BACKWARD_CLOSED_ARROW,
               scale: 5,
@@ -200,7 +202,7 @@ export function CourierLiveMap({
       riderMarkerRef.current = new window.google.maps.Marker({
         position: riderPos,
         map,
-        title: "Rider",
+        title: t("courier.rider"),
         zIndex: 10,
         opacity: riderStale ? 0.55 : 1,
         icon,
@@ -303,19 +305,19 @@ export function CourierLiveMap({
 
   let note: string;
   if (!live) {
-    note = "Live tracking starts once a rider accepts your parcel.";
+    note = t("courier.mapTrackingAfterAccept");
   } else if (riderPos && !riderStale && rider?.location_updated_at) {
-    note = `Rider location updated ${agoLabel(rider.location_updated_at)}.`;
+    note = t("courier.mapUpdated", { time: agoLabel(rider.location_updated_at, t) });
   } else if (rider?.location_updated_at) {
     note = carrying
-      ? `Rider is on the way with your parcel. Updating live as the rider moves (last seen ${agoLabel(rider.location_updated_at)}).`
-      : `Rider is arriving at the pickup location (last seen ${agoLabel(rider.location_updated_at)}).`;
+      ? t("courier.mapCarryingStale", { time: agoLabel(rider.location_updated_at, t) })
+      : t("courier.mapPickupStale", { time: agoLabel(rider.location_updated_at, t) });
   } else if (rider?.available) {
     note = carrying
-      ? "Rider is on the way with your parcel. Live location will appear shortly."
-      : "Rider assigned — heading to the pickup location.";
+      ? t("courier.mapCarryingSoon")
+      : t("courier.mapHeadingPickup");
   } else {
-    note = "Finding a rider for your parcel…";
+    note = t("courier.mapFinding");
   }
 
   const liveFresh = !!riderPos && !riderStale;
@@ -340,14 +342,14 @@ export function CourierLiveMap({
                   }`}
                 />
                 {liveFresh
-                  ? "Live"
+                  ? t("courier.mapLive")
                   : riderPos
                     ? carrying
-                      ? "On the way"
-                      : "Heading to pickup"
+                      ? t("courier.mapOnWay")
+                      : t("courier.mapHeading")
                     : rider?.available
-                      ? "Rider assigned"
-                      : "Finding a rider"}
+                      ? t("courier.mapAssigned")
+                      : t("courier.mapFindingShort")}
               </div>
             )}
           </>
@@ -355,7 +357,7 @@ export function CourierLiveMap({
           <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5 text-center">
             <Navigation className="h-10 w-10 text-primary" />
             <div className="mt-2 text-xs font-medium text-muted-foreground">
-              Map preview unavailable
+              {t("courier.mapUnavailable")}
             </div>
           </div>
         )}

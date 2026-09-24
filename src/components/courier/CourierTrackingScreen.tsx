@@ -36,6 +36,7 @@ import {
   COURIER_STAGES,
   courierStageIndex,
 } from "./courierData";
+import { useT, type TFunction } from "@/i18n";
 
 type Purpose = "pickup" | "delivery";
 
@@ -65,36 +66,14 @@ function waNumber(raw?: string | null): string | null {
   return digits;
 }
 
-function pickupWhatsappText(name: string | null | undefined, code: string) {
+function pickupWhatsappText(name: string | null | undefined, code: string, t: TFunction) {
   const who = (name ?? "").trim();
-  return [
-    `नमस्ते${who ? ` ${who}` : ""},`,
-    "",
-    "आपका *Badiyos पार्सल पिकअप कन्फर्म* हो गया है और राइडर आपकी ओर आ रहा है।",
-    "",
-    `*पिकअप वेरिफिकेशन कोड: ${code}*`,
-    "",
-    "कृपया यह कोड राइडर को केवल पार्सल सौंपते समय ही बताएं।",
-    "",
-    "*Badiyos*",
-    "हर घर का अपना साथी",
-  ].join("\n");
+  return t("courier.whatsappPickup", { who: who ? ` ${who}` : "", code });
 }
 
-function deliveryWhatsappText(senderName: string | null | undefined, code: string) {
-  const who = (senderName ?? "").trim() || "आपके परिचित";
-  return [
-    "नमस्ते,",
-    "",
-    `${who} द्वारा भेजा गया एक पार्सल *Badiyos* के माध्यम से आपके पास आ रहा है।`,
-    "",
-    `*डिलीवरी वेरिफिकेशन कोड: ${code}*`,
-    "",
-    "कृपया यह कोड राइडर को केवल पार्सल मिलने के बाद ही बताएं।",
-    "",
-    "*Badiyos*",
-    "हर घर का अपना साथी",
-  ].join("\n");
+function deliveryWhatsappText(senderName: string | null | undefined, code: string, t: TFunction) {
+  const sender = (senderName ?? "").trim() || t("courier.contactPickupRole");
+  return t("courier.whatsappDelivery", { sender, code });
 }
 
 function openWhatsapp(phone: string | null, text: string) {
@@ -111,6 +90,7 @@ export function CourierTrackingScreen({
   orderId: string;
   onBack: () => void;
 }) {
+  const t = useT();
   const qc = useQueryClient();
   const { data: order, isLoading } = useQuery({
     queryKey: ["courier_order", orderId],
@@ -225,9 +205,9 @@ export function CourierTrackingScreen({
       if (error) throw new Error(error.message);
       await qc.invalidateQueries({ queryKey: ["courier_order", orderId] });
       await qc.invalidateQueries({ queryKey: ["my-courier-orders"] });
-      toast("Order cancelled");
+      toast(t("courier.cancelledToast"));
     } catch (e) {
-      toast.error((e as Error).message || "Something went wrong. Please try again.");
+      toast.error((e as Error).message || t("courier.genericError"));
     } finally {
       setCancelling(false);
     }
@@ -241,9 +221,16 @@ export function CourierTrackingScreen({
       const parcel = parcels.find((p) => p.id === c.parcel_id);
       const drops = stops.filter((st) => st.stop_type === "drop");
       const idx = drops.findIndex((d) => d.id === parcel?.drop_stop_id);
-      return { charge: c, label: idx >= 0 ? `Drop ${idx + 1}` : "the drop" };
+      return { charge: c, label: idx >= 0 ? t("courier.dropN", { n: idx + 1 }) : t("courier.dropFallback") };
     });
-  const summary = isMultiOrder ? parcelSummary(parcels) : null;
+  const summary = isMultiOrder ? parcelSummary(parcels, t) : null;
+  const stageLabels = [
+    t("courier.stagePlaced"),
+    t("courier.stageRider"),
+    t("courier.stagePickup"),
+    t("courier.stageOnWay"),
+    t("courier.stageDelivered"),
+  ];
 
   if (isLoading || !order) {
     return (
@@ -261,14 +248,14 @@ export function CourierTrackingScreen({
         </button>
         <div className="min-w-0">
           <h1 className="truncate text-base font-semibold">
-            Parcel {order.order_code ? `#${order.order_code}` : ""}
+            {order.order_code ? t("courier.parcelNumber", { code: order.order_code }) : t("courier.parcel")}
           </h1>
           <p className="text-[11px] text-muted-foreground">
             {cancelled
-              ? "Cancelled"
+              ? t("courier.statusCancelled")
               : done
-                ? "Delivered"
-                : COURIER_STAGES[stageIdx]?.label ?? "In progress"}
+                ? t("courier.statusDelivered")
+                : stageLabels[stageIdx] ?? t("courier.inProgress")}
           </p>
         </div>
       </div>
@@ -319,7 +306,7 @@ export function CourierTrackingScreen({
                         active ? "text-primary" : complete ? "text-foreground" : "text-muted-foreground"
                       }`}
                     >
-                      {s.label}
+                      {stageLabels[i]}
                     </div>
                   </div>
                 );
@@ -334,14 +321,14 @@ export function CourierTrackingScreen({
             <div>
               <p className="text-sm font-semibold text-destructive">
                 {failedDelivery
-                  ? "Delivery could not be completed."
+                  ? t("courier.failedDelivery")
                   : allPickupsFailed
-                    ? "Pickup could not be completed at the sender's location"
-                    : "This order was cancelled."}
+                    ? t("courier.failedPickup")
+                    : t("courier.orderCancelled")}
               </p>
               {!failedDelivery && !allPickupsFailed && (
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  Any amount paid is refunded to your original payment method.
+                  {t("courier.refundNote")}
                 </p>
               )}
               {summary && <p className="mt-0.5 text-xs text-muted-foreground">{summary}</p>}
@@ -353,11 +340,11 @@ export function CourierTrackingScreen({
           <div className="flex items-start gap-3 rounded-[20px] border border-primary/30 bg-primary/5 p-4">
             <CheckCircle2 className="mt-0.5 h-5 w-5 text-primary" />
             <div>
-              <p className="text-sm font-semibold text-primary">Parcel delivered</p>
+              <p className="text-sm font-semibold text-primary">{t("courier.deliveredTitle")}</p>
               <p className="mt-0.5 text-xs text-muted-foreground">
                 {order.delivered_at
                   ? new Date(order.delivered_at).toLocaleString()
-                  : "Thanks for using Badiyos."}
+                  : t("courier.thanks")}
               </p>
               {summary && <p className="mt-0.5 text-xs font-semibold text-foreground">{summary}</p>}
             </div>
@@ -372,9 +359,9 @@ export function CourierTrackingScreen({
               <span className="absolute inline-flex h-14 w-14 rounded-full bg-primary/10" />
               <Package className="relative h-7 w-7 text-primary" />
             </div>
-            <p className="mt-4 text-sm font-semibold">Finding a delivery partner nearby…</p>
+            <p className="mt-4 text-sm font-semibold">{t("courier.findingPartner")}</p>
             <p className="mt-1 text-xs text-muted-foreground">
-              This usually takes a couple of minutes.
+              {t("courier.findingPartnerHint")}
             </p>
           </div>
         )}
@@ -409,13 +396,13 @@ export function CourierTrackingScreen({
             <div className="flex items-center justify-center gap-2 text-primary">
               <ShieldCheck className="h-5 w-5" />
               <p className="text-sm font-bold">
-                {otpPurpose === "pickup" ? "Pickup code" : "Delivery code"}
+                {otpPurpose === "pickup" ? t("courier.pickupCode") : t("courier.deliveryCode")}
               </p>
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
               {otpPurpose === "pickup"
-                ? "Share this code with the rider to hand over your parcel."
-                : "Share this code when the parcel is delivered."}
+                ? t("courier.otpPickupHint")
+                : t("courier.otpDeliveryHint")}
             </p>
             <OtpDigits code={otp ?? null} />
             {otp && (
@@ -425,23 +412,23 @@ export function CourierTrackingScreen({
                   if (otpPurpose === "pickup") {
                     openWhatsapp(
                       waNumber(order.pickup_contact_phone),
-                      pickupWhatsappText(order.pickup_contact_name, otp),
+                      pickupWhatsappText(order.pickup_contact_name, otp, t),
                     );
                   } else {
                     openWhatsapp(
                       waNumber(order.drop_contact_phone),
-                      deliveryWhatsappText(order.pickup_contact_name, otp),
+                      deliveryWhatsappText(order.pickup_contact_name, otp, t),
                     );
                   }
                 }}
                 className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#25D366] px-5 py-3 text-sm font-semibold text-white"
               >
                 <MessageCircle className="h-4 w-4" />
-                {otpPurpose === "pickup" ? "Share on WhatsApp" : "Send code on WhatsApp"}
+                {otpPurpose === "pickup" ? t("courier.shareWhatsapp") : t("courier.sendCodeWhatsapp")}
               </button>
             )}
             <p className="mt-3 text-[11px] text-muted-foreground">
-              Never share this code before the parcel is handed over.
+              {t("courier.otpSafety")}
             </p>
           </div>
         )}
@@ -451,14 +438,14 @@ export function CourierTrackingScreen({
           <div className="flex items-center gap-3 rounded-[20px] border border-border bg-card p-4">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10">
               {rider.photo_url ? (
-                <img src={rider.photo_url} alt={rider.name ?? "Rider"} className="h-full w-full object-cover" />
+                <img src={rider.photo_url} alt={rider.name ?? t("courier.rider")} className="h-full w-full object-cover" />
               ) : (
                 <UserRound className="h-6 w-6 text-primary" />
               )}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold">{rider.name ?? "Delivery partner"}</p>
-              <p className="text-xs text-muted-foreground">Your delivery partner</p>
+              <p className="truncate text-sm font-semibold">{rider.name ?? t("courier.deliveryPartner")}</p>
+              <p className="text-xs text-muted-foreground">{t("courier.yourDeliveryPartner")}</p>
             </div>
             {rider.phone && (
               <a
@@ -466,7 +453,7 @@ export function CourierTrackingScreen({
                 className="flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground"
               >
                 <Phone className="h-4 w-4" />
-                Call
+                {t("courier.call")}
               </a>
             )}
           </div>
@@ -482,18 +469,18 @@ export function CourierTrackingScreen({
             </div>
             <div className="min-w-0 flex-1 space-y-4">
               <div>
-                <p className="text-xs font-semibold text-muted-foreground">Pickup</p>
+                <p className="text-xs font-semibold text-muted-foreground">{t("courier.pickup")}</p>
                 <p className="text-sm">{order.pickup_address}</p>
               </div>
               <div>
-                <p className="text-xs font-semibold text-muted-foreground">Drop</p>
+                <p className="text-xs font-semibold text-muted-foreground">{t("courier.drop")}</p>
                 <p className="text-sm">{order.drop_address}</p>
               </div>
             </div>
           </div>)}
           <div className={isMultiOrder ? "flex items-center justify-between text-sm" : "mt-4 flex items-center justify-between border-t border-border pt-3 text-sm"}>
             <span className="text-muted-foreground">
-              {order.distance_km ? `${order.distance_km} km` : "Total"}
+              {order.distance_km ? `${order.distance_km} km` : t("common.total")}
             </span>
             <span className="font-bold">₹{Number(order.total_amount ?? 0).toFixed(2)}</span>
           </div>
@@ -501,12 +488,12 @@ export function CourierTrackingScreen({
 
         {canCancel && (
           <Button variant="outline" className="w-full" disabled={cancelling} onClick={cancelOrder}>
-            {cancelling ? <Loader2 className="h-4 w-4 animate-spin" /> : "Cancel order"}
+            {cancelling ? <Loader2 className="h-4 w-4 animate-spin" /> : t("courier.cancelOrder")}
           </Button>
         )}
         {(status === "PICKED_UP" || status === "IN_TRANSIT") && (
           <p className="text-center text-xs text-muted-foreground">
-            The parcel has been picked up, so this order can no longer be cancelled.
+            {t("courier.cannotCancelPickedUp")}
           </p>
         )}
       </div>
