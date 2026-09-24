@@ -1,0 +1,1 @@
+DROP POLICY "Experts can view customer of assigned booking" ON public.users;
