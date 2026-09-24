@@ -10,13 +10,9 @@ import {
   X,
   ChevronRight,
   Loader2,
-  MapPinned,
   Package,
   Pencil,
   Phone,
-  Plus,
-  Route as RouteIcon,
-  UserRound,
 } from "lucide-react";
 import { useLanguage } from "@/i18n";
 import {
