@@ -555,38 +555,51 @@ export function CourierBookingScreen({
                 <h2 className="text-xl font-extrabold text-foreground">{t("courier.routeTitle")}</h2>
                 <p className="mt-1 text-sm text-muted-foreground">{t("courier.routeSub")}</p>
               </div>
-              {(maxPickups > 1 || maxDrops > 1 || isMulti) && (
+              {isMulti && (
                 <span className="shrink-0 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-extrabold text-primary">
                   {t("courier.routeCount", { p: pickupCount, d: dropCount })}
                 </span>
               )}
             </div>
 
+            {(maxPickups > 1 || maxDrops > 1) && (
+              <div role="radiogroup" aria-label={t("courier.modeLabel")} className="grid gap-2">
+                {(
+                  [
+                    { v: "single", label: t("courier.modeSingle"), show: true },
+                    { v: "multiDrop", label: t("courier.modeMultiDrop"), show: maxDrops > 1 },
+                    { v: "multiPickup", label: t("courier.modeMultiPickup"), show: maxPickups > 1 },
+                  ] as Array<{ v: StopMode; label: string; show: boolean }>
+                )
+                  .filter((o) => o.show)
+                  .map((o) => (
+                    <button
+                      key={o.v}
+                      type="button"
+                      role="radio"
+                      aria-checked={mode === o.v}
+                      onClick={() => switchMode(o.v)}
+                      className={`rounded-lg border px-4 py-3 text-left text-sm font-extrabold transition-colors ${
+                        mode === o.v ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-foreground"
+                      }`}
+                    >
+                      {o.label}
+                    </button>
+                  ))}
+              </div>
+            )}
+
             <RouteTimeline
               stops={timelineStops}
-              canAddPickup={maxPickups > 1 && pickupCount < Math.min(maxPickups, 2)}
-              canAddDrop={maxDrops > 1 && dropCount < maxDrops}
+              canAddPickup={mode === "multiPickup" && (limits?.max_pickups == null || pickupCount < maxPickups)}
+              canAddDrop={mode === "multiDrop" && (limits?.max_drops == null || dropCount < maxDrops)}
               pickupFee={limits?.extra_pickup_fee ?? 0}
               dropFee={limits?.extra_drop_fee ?? 0}
-              showSources={pickupCount > 1}
-              onAddPickup={() => setExtraPickups((l) => [...l, { key: nextKey("P", l), addr: null, name: "", phone: "" }])}
-              onAddDrop={() => setExtraDrops((l) => [...l, { key: nextKey("D", l), addr: null, name: "", phone: "" }])}
+              onAddPickup={() => setExtraPickups((l) => [...l, { key: nextKey(), addr: null, name: "", phone: "" }].map((s, i) => ({ ...s, key: s.key.startsWith("P") ? s.key : `P${s.key}` })))}
+              onAddDrop={() => setExtraDrops((l) => [...l, { key: `D${nextKey()}`, addr: null, name: "", phone: "" }])}
               onRemove={(key) => {
-                if (key.startsWith("P")) {
-                  setExtraPickups((l) => l.filter((st) => st.key !== key));
-                  setDropSources((m) => {
-                    const next: Record<string, DropSource | undefined> = {};
-                    for (const [k, v] of Object.entries(m)) next[k] = v === "P1" ? v : undefined;
-                    return next;
-                  });
-                } else {
-                  setExtraDrops((l) => l.filter((st) => st.key !== key));
-                  setDropSources((m) => {
-                    const next = { ...m };
-                    delete next[key];
-                    return next;
-                  });
-                }
+                if (key.startsWith("P")) setExtraPickups((l) => l.filter((st) => st.key !== key));
+                else setExtraDrops((l) => l.filter((st) => st.key !== key));
                 setQuote(null);
               }}
               onPickAddress={(key) =>
@@ -605,7 +618,6 @@ export function CourierBookingScreen({
                   setExtraDrops((l) => l.map((st) => (st.key === key ? { ...st, ...patch } : st)));
                 }
               }}
-              onSource={(key, v) => setDropSources((m) => ({ ...m, [key]: v }))}
             />
 
             {zonesChecking && (
@@ -621,10 +633,6 @@ export function CourierBookingScreen({
                 {t("courier.dropOutside")}
               </p>
             )}
-            {isMulti && extrasReady && !sourcesReady && (
-              <p className="rounded-lg bg-warning/10 p-3 text-xs font-semibold text-foreground">{t("courier.sourcesHint")}</p>
-            )}
-            {sourceSummary && <div className="rounded-lg border border-border bg-card p-3">{sourceSummary}</div>}
             {overLimit && (
               <p className="rounded-lg bg-destructive/10 p-3 text-xs font-semibold text-destructive">{t("courier.tooManyStops")}</p>
             )}
@@ -802,7 +810,6 @@ export function CourierBookingScreen({
                   <PlannedRoute items={planned} />
                 </div>
               )}
-              {sourceSummary && <div className="border-t border-border p-4">{sourceSummary}</div>}
             </div>
             <div className="rounded-lg border border-border bg-card p-4">
               <div className="mb-3 flex items-center justify-between">
