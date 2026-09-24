@@ -13,10 +13,12 @@ import {
 import { useBookingsLive } from "@/lib/useBookingsLive";
 import {
   fetchMyStoreOrders,
+  fetchStoreDeliveryOtp,
   isStoreOrderActive,
   type StoreOrder,
 } from "@/lib/storeOrders";
 import { Store as StoreIcon } from "lucide-react";
+import { useT } from "@/i18n";
 
 import {
   ACTIVE_TRACKING_STATUSES,
@@ -114,7 +116,7 @@ function StoreOrderCard({ order, active }: { order: StoreOrder; active: boolean 
         <span
           className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ${statusPill(order.status)}`}
         >
-          {statusLabel(order.status)}
+          {STORE_STATUS_LABELS[order.status] ?? statusLabel(order.status)}
         </span>
       </div>
       {itemLine && (
@@ -126,12 +128,51 @@ function StoreOrderCard({ order, active }: { order: StoreOrder; active: boolean 
           <span className="line-clamp-1">{order.delivery_address}</span>
         </div>
       )}
+      {order.status === "picked_up" && <StoreDeliveryCode orderId={order.id} />}
       <div className="mt-3 flex items-center justify-between">
         <span className="text-sm font-bold text-primary">Rs {Number(order.total_amount)}</span>
         <span className="text-xs font-semibold text-muted-foreground">
-          {order.payment_mode === "cod" ? "Cash on delivery" : "Paid online"}
+          {order.payment_mode === "cod"
+            ? "Cash on delivery"
+            : order.payment_status === "paid"
+              ? "Paid online"
+              : order.payment_status === "refund_pending" || order.payment_status === "refunded"
+                ? "Refund in progress"
+                : "Awaiting payment"}
         </span>
       </div>
+    </div>
+  );
+}
+
+const STORE_STATUS_LABELS: Record<string, string> = {
+  pending: "Awaiting payment",
+  paid: "Placed",
+  placed: "Waiting for shop",
+  accepted: "Finding Expert",
+  expert_assigned: "Expert assigned",
+  picked_up: "On the way",
+  delivered: "Delivered",
+  needs_attention: "Delayed",
+  rejected: "Rejected · refund",
+  cancelled: "Cancelled · refund",
+};
+
+function StoreDeliveryCode({ orderId }: { orderId: string }) {
+  const t = useT();
+  const { data: otp } = useQuery({
+    queryKey: ["store-delivery-otp", orderId],
+    queryFn: () => fetchStoreDeliveryOtp(orderId),
+    refetchInterval: 30_000,
+  });
+  if (!otp) return null;
+  return (
+    <div className="mt-3 rounded-[14px] border border-primary/30 bg-card p-3">
+      <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+        {t("store.deliveryCode")}
+      </p>
+      <p className="mt-1 text-2xl font-extrabold tracking-[0.3em] text-primary">{otp}</p>
+      <p className="mt-1 text-[11px] text-muted-foreground">{t("store.deliveryCodeHint")}</p>
     </div>
   );
 }

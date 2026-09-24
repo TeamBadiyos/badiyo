@@ -42,23 +42,39 @@ async function rpc(name: string, args: Record<string, unknown>): Promise<RpcResu
   return (data ?? {}) as RpcResult;
 }
 
-export async function fetchDeliveryQuote(itemsTotal: number): Promise<DeliveryQuote> {
-  const data = await rpc("store_delivery_quote", { _items_total: itemsTotal });
+export type CourierDeliveryQuote =
+  | { ok: true; delivery_fee: number; distance_km: number }
+  | { ok: false; code: string };
+
+/** Delivery fee = parcel (Expert) fare from the shop to this address, worked out by the server. */
+export async function fetchStoreDeliveryQuote(
+  merchantId: string,
+  addressId: string,
+): Promise<CourierDeliveryQuote> {
+  const data = await rpc("store_quote_delivery", { _merchant_id: merchantId, _address_id: addressId });
+  if (data.ok !== true) return { ok: false, code: String(data.code ?? "delivery_unavailable") };
   return {
+    ok: true,
     delivery_fee: Number(data.delivery_fee ?? 0),
-    free_delivery_above: Number(data.free_delivery_above ?? 0),
-    min_order_amount: Number(data.min_order_amount ?? 0),
-    total: Number(data.total ?? itemsTotal),
+    distance_km: Number(data.distance_km ?? 0),
   };
 }
 
-export function useDeliveryQuote(itemsTotal: number) {
+export function useStoreDeliveryQuote(merchantId: string | null, addressId: string | null) {
   return useQuery({
-    queryKey: ["store_delivery_quote", itemsTotal],
-    queryFn: () => fetchDeliveryQuote(itemsTotal),
-    enabled: itemsTotal > 0,
+    queryKey: ["store_quote_delivery", merchantId, addressId],
+    queryFn: () => fetchStoreDeliveryQuote(merchantId!, addressId!),
+    enabled: !!merchantId && !!addressId,
     staleTime: 5 * 60_000,
   });
+}
+
+/** Customer's delivery code for a store order (available once the Expert has picked it up). */
+export async function fetchStoreDeliveryOtp(orderId: string): Promise<string | null> {
+  const { data, error } = await supabase.rpc("store_get_delivery_otp" as never, { _order_id: orderId } as never);
+  if (error) return null;
+  const otp = (data as { otp?: string } | null)?.otp;
+  return otp ? String(otp) : null;
 }
 
 export type CreatedOrder = {
@@ -83,7 +99,7 @@ export async function createStoreOrder(params: {
   merchantId: string;
   lines: CartLine[];
   addressId: string;
-  paymentMode: "cod" | "online";
+  paymentMode: "online";
   note?: string | null;
 }): Promise<CreatedOrder> {
   const data = await rpc("store_create_order", {
@@ -141,7 +157,11 @@ export async function fetchMyStoreOrders(): Promise<StoreOrder[]> {
 export const STORE_ACTIVE_STATUSES = [
   "pending",
   "paid",
+  "placed",
   "accepted",
+  "expert_assigned",
+  "picked_up",
+  "needs_attention",
   "preparing",
   "ready",
   "out_for_delivery",
@@ -149,5 +169,10 @@ export const STORE_ACTIVE_STATUSES = [
 ];
 
 export function isStoreOrderActive(o: StoreOrder): boolean {
-  return STORE_ACTIVE_STATUSES.includes(String(o.status).toLowerCase());
+  const s = String(o.status).toLowerCase();
+  // An unpaid online order that was never paid is not "active" for the customer.
+  if (s === "pending" && o.payment_mode === "online" && o.payment_status !== "paid") {
+    return Date.now() - new Date(o.created_at).getTime() < 30 * 60_000;
+  }
+  return STORE_ACTIVE_STATUSES.includes(s);
 }

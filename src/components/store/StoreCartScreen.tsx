@@ -17,7 +17,7 @@ import {
   confirmStorePayment,
   createStoreOrder,
   StoreOrderError,
-  useDeliveryQuote,
+  useStoreDeliveryQuote,
 } from "@/lib/storeOrders";
 import { getPaymentPrefill } from "@/lib/paymentPrefill";
 import { payWithRazorpay, PaymentCancelledError } from "@/lib/razorpayCheckout";
@@ -53,6 +53,8 @@ const ERROR_KEYS: Record<string, TranslationKey> = {
   product_unavailable: "store.errProduct",
   below_min_order: "store.errMinOrder",
   bad_address: "store.errAddress",
+  delivery_unavailable: "store.errDelivery",
+  delivery_too_far: "store.errDeliveryFar",
 };
 
 export function StoreCartScreen({
@@ -69,7 +71,6 @@ export function StoreCartScreen({
   const cart = useStoreCart();
   const queryClient = useQueryClient();
   const [addressId, setAddressId] = useState<string | null>(null);
-  const [mode, setMode] = useState<"cod" | "online">("cod");
   const [note, setNote] = useState("");
   const [placing, setPlacing] = useState(false);
 
@@ -84,9 +85,14 @@ export function StoreCartScreen({
   }, [addresses, addressId]);
 
   const itemsTotal = cart.total;
-  const { data: quote } = useDeliveryQuote(itemsTotal);
-  const fee = quote?.delivery_fee ?? 0;
+  const { data: quote, isLoading: quoteLoading } = useStoreDeliveryQuote(
+    cart.cart.merchantId,
+    addressId,
+  );
+  const quoteOk = quote?.ok === true;
+  const fee = quote && quote.ok ? quote.delivery_fee : 0;
   const payable = itemsTotal + fee;
+  const quoteError = quote && !quote.ok ? quote.code : null;
 
   const address = useMemo(
     () => addresses.find((a) => a.id === addressId) ?? null,
@@ -112,11 +118,11 @@ export function StoreCartScreen({
         merchantId: cart.cart.merchantId,
         lines: cart.cart.lines,
         addressId,
-        paymentMode: mode,
+        paymentMode: "online",
         note: note.trim() || null,
       });
 
-      if (mode === "online") {
+      {
         const { data, error } = await supabase.functions.invoke("create-razorpay-order", {
           body: {
             purpose: "store_order",
@@ -150,7 +156,7 @@ export function StoreCartScreen({
       cart.clear();
       void queryClient.invalidateQueries({ queryKey: ["my-store-orders"] });
       toast.success(t("store.orderPlaced"), {
-        description: t("store.orderPlacedBody", { number: created.order_number }),
+        description: t("store.awaitingShop", { number: created.order_number }),
       });
       onDone();
     } catch (err) {
@@ -313,28 +319,10 @@ export function StoreCartScreen({
               />
             </section>
 
-            {/* Payment mode */}
-            <section className="mt-4">
-              <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
-                {t("store.payment")}
-              </p>
-              <div className="mt-2 grid grid-cols-2 gap-2">
-                {(["online", "cod"] as const).map((m) => (
-                  <button
-                    key={m}
-                    type="button"
-                    onClick={() => setMode(m)}
-                    className={
-                      "rounded-[14px] border px-3 py-3 text-[13px] font-bold " +
-                      (mode === m
-                        ? "border-primary bg-primary/5 text-primary"
-                        : "border-border bg-card text-foreground")
-                    }
-                  >
-                    {m === "online" ? t("store.payOnline") : t("store.payCod")}
-                  </button>
-                ))}
-              </div>
+            {/* Payment: online only */}
+            <section className="mt-4 rounded-[14px] border border-primary bg-primary/5 px-3 py-3">
+              <p className="text-[13px] font-bold text-primary">{t("store.payOnline")}</p>
+              <p className="mt-0.5 text-[11px] text-muted-foreground">{t("store.onlineOnlyNote")}</p>
             </section>
 
             {/* Bill */}
@@ -346,12 +334,18 @@ export function StoreCartScreen({
               <div className="mt-1.5 flex justify-between text-muted-foreground">
                 <span>{t("store.deliveryFee")}</span>
                 <span className="font-semibold text-foreground">
-                  {fee === 0 ? t("store.freeDelivery") : `₹${fee.toFixed(0)}`}
+                  {quoteLoading ? (
+                    <Loader2 className="inline h-3.5 w-3.5 animate-spin" />
+                  ) : quoteOk ? (
+                    `₹${fee.toFixed(0)}`
+                  ) : (
+                    "—"
+                  )}
                 </span>
               </div>
-              {quote && quote.free_delivery_above > 0 && fee > 0 && (
-                <p className="mt-1 text-[11px] text-primary">
-                  {t("store.freeAbove", { amount: String(quote.free_delivery_above) })}
+              {quoteError && (
+                <p className="mt-1 text-[11px] text-destructive">
+                  {t(ERROR_KEYS[quoteError] ?? "store.errDelivery")}
                 </p>
               )}
               <div className="mt-2.5 flex justify-between border-t border-border pt-2.5 text-base font-extrabold text-foreground">
@@ -368,7 +362,7 @@ export function StoreCartScreen({
           <button
             type="button"
             onClick={placeOrder}
-            disabled={placing || !addressId}
+            disabled={placing || !addressId || !quoteOk}
             className="mx-auto flex w-full max-w-md items-center justify-center gap-2 rounded-[18px] bg-primary px-4 py-3.5 text-sm font-extrabold text-primary-foreground shadow-lg transition active:scale-[0.99] disabled:opacity-60"
           >
             {placing && <Loader2 className="h-4 w-4 animate-spin" />}
