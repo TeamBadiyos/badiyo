@@ -15,6 +15,8 @@ const quoteSchema = z.object({
   drop: latLng,
   weight_kg: z.number().min(0).max(500).default(0),
   coupon_code: z.string().max(40).optional(),
+  pickup_count: z.number().int().min(1).max(20).optional(),
+  drop_count: z.number().int().min(1).max(20).optional(),
 });
 
 const createSchema = quoteSchema.extend({
@@ -26,7 +28,35 @@ const createSchema = quoteSchema.extend({
   drop_contact_phone: z.string().min(10).max(15),
   package_description: z.string().max(500).optional(),
   prohibited_items_confirmed: z.literal(true),
+  // Multi-stop (optional). Passed through unchanged; the database validates.
+  stops: z.array(z.record(z.string(), z.unknown())).max(40).optional(),
+  parcels: z.array(z.record(z.string(), z.unknown())).max(40).optional(),
 });
+
+const planStopsSchema = z.object({
+  stops: z
+    .array(
+      z.object({
+        key: z.string().min(1).max(40),
+        type: z.enum(["pickup", "drop"]),
+        lat: z.number(),
+        lng: z.number(),
+      }),
+    )
+    .min(1)
+    .max(40),
+});
+
+export const courierPlanStops = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) => planStopsSchema.parse(data))
+  .handler(async ({ data, context }) => {
+    const { data: planned, error } = await context.supabase.rpc("courier_plan_stops" as never, {
+      _stops: data.stops,
+    } as never);
+    if (error) throw new Error(error.message);
+    return planned as unknown as Array<{ key: string; type: "pickup" | "drop"; lat: number; lng: number }>;
+  });
 
 /** Road distance in km via Google Routes API; falls back to straight-line * 1.3. */
 async function routeDistanceKm(
@@ -149,6 +179,8 @@ export const courierQuote = createServerFn({ method: "POST" })
       _distance_km: km,
       _weight_kg: data.weight_kg,
       _coupon_code: data.coupon_code ?? null,
+      _pickup_count: data.pickup_count ?? 1,
+      _drop_count: data.drop_count ?? 1,
     } as never);
     if (error) rpcError(error.message);
     return { ...(quote as Record<string, unknown>), distance_source: source };
@@ -190,6 +222,8 @@ export const courierCreateOrder = createServerFn({ method: "POST" })
         drop_contact_phone: data.drop_contact_phone,
         package_description: data.package_description ?? null,
         prohibited_items_confirmed: true,
+        ...(data.stops ? { stops: data.stops } : {}),
+        ...(data.parcels ? { parcels: data.parcels } : {}),
       },
     } as never);
     if (error) rpcError(error.message);

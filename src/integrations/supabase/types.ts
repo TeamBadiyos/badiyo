@@ -5778,6 +5778,7 @@ export type Database = {
         Args: { _amount: number; _order_id: string; _reason: string }
         Returns: undefined
       }
+      courier_min_route_km: { Args: { _stops: Json }; Returns: number }
       courier_offer_respond: {
         Args: { _accept: boolean; _offer_id: string }
         Returns: Json
@@ -5869,6 +5870,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      courier_plan_stops: { Args: { _stops: Json }; Returns: Json }
       courier_quote_internal: {
         Args: {
           _city: string
@@ -5876,6 +5878,8 @@ export type Database = {
           _courier_type_id: string
           _customer_id: string
           _distance_km: number
+          _drop_count?: number
+          _pickup_count?: number
           _vehicle_type_id: string
           _weight_kg: number
         }
