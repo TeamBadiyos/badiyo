@@ -28,7 +28,8 @@ import { formatNextOpen, useServiceState } from "@/lib/serviceHours";
 import { useIsInternalTester, type PublicStore } from "@/lib/store";
 import { StoreListView } from "./store/StoreListView";
 import { StoreDetailScreen } from "./store/StoreDetailScreen";
-import { StoreCategoryScreen, type StoreCategoryGroup } from "./store/StoreCategoryScreen";
+import { StoreCategoryScreen } from "./store/StoreCategoryScreen";
+import type { StoreCategoryGroup } from "./store/storeGroups";
 import type { TranslationKey } from "@/i18n/en";
 
 import expertHouse from "@/assets/expert-house-cleaning.jpg";
