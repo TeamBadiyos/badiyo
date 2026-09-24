@@ -1,7 +1,9 @@
 import { getAuthUser } from "@/lib/authUser";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { usePullToRefresh, PullToRefreshIndicator } from "@/lib/usePullToRefresh";
-import { CalendarCheck, MapPin, Clock, Package } from "lucide-react";
+import { CalendarCheck, MapPin, Clock, Package, ReceiptText } from "lucide-react";
+import { BillSheet, type BillLine } from "@/components/BillSheet";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { BottomNav } from "./BottomNav";
 import {
@@ -9,6 +11,7 @@ import {
   fetchMyCourierOrders,
   fetchPendingReturnOrderIds,
   COURIER_ACTIVE_STATUSES,
+  courierBillLines,
   type CourierOrder,
 } from "./courier/courierData";
 import { ContactParcelsCard } from "./courier/ContactParcels";
@@ -35,7 +38,7 @@ async function fetchBookings(): Promise<BookingRow[]> {
   const { data, error } = await supabase
     .from("bookings")
     .select(
-      "id, service_label, service_duration_minutes, price, total_amount, status, slot_type, scheduled_date, scheduled_time_slot, created_at, rating, review_text, address_id, razorpay_payment_id, addresses(label, full_address, area, city, latitude, longitude, is_default)",
+      "id, service_label, service_duration_minutes, price, total_amount, gst_percent, gst_amount, cancellation_fee, refund_amount, refund_status, status, slot_type, scheduled_date, scheduled_time_slot, created_at, rating, review_text, address_id, razorpay_payment_id, addresses(label, full_address, area, city, latitude, longitude, is_default)",
     )
     .eq("user_id", uid)
     .is("deleted_at", null)
@@ -85,6 +88,67 @@ function formatStamp(iso: string | null): string {
   });
 }
 
+/** What the bill sheet shows when an amount is tapped. */
+type Bill = {
+  title: string;
+  subtitle?: string | null;
+  lines: BillLine[];
+  total: number;
+  note?: string | null;
+};
+
+function bookingBill(b: BookingRow): Bill {
+  const total =
+    b.total_amount && Number(b.total_amount) > 0 ? Number(b.total_amount) : Number(b.price);
+  const lines: BillLine[] = [{ label: b.service_label, value: Number(b.price) }];
+  const gst = Number(b.gst_amount ?? 0);
+  if (gst > 0) lines.push({ label: `GST (${Number(b.gst_percent ?? 0)}%)`, value: gst, muted: true });
+  return { title: "Bill details", subtitle: b.service_label, lines, total };
+}
+
+function parcelBill(p: CourierOrder): Bill {
+  return {
+    title: "Bill details",
+    subtitle: p.order_code ? `#${p.order_code}` : null,
+    lines: courierBillLines(p),
+    total: Number(p.total_amount ?? 0),
+    note: p.payment_status === "paid" ? "Paid online" : null,
+  };
+}
+
+function storeBill(o: StoreOrder): Bill {
+  const lines: BillLine[] = o.items.map((i) => ({
+    label: `${i.name} × ${i.quantity}`,
+    value: Number(i.price) * Number(i.quantity),
+  }));
+  lines.push({ label: "Delivery fee", value: Number(o.delivery_fee), muted: true });
+  return {
+    title: "Bill details",
+    subtitle: `#${o.order_number}`,
+    lines,
+    total: Number(o.total_amount),
+    note: o.payment_status === "paid" ? "Paid online" : null,
+  };
+}
+
+/** Tappable amount that opens the bill breakup. */
+function AmountButton({ amount, onOpen }: { amount: number; onOpen: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation();
+        onOpen();
+      }}
+      className="-ml-1 flex items-center gap-1 rounded-full px-1 py-0.5 text-sm font-bold text-primary transition active:scale-[0.97]"
+    >
+      <ReceiptText className="h-3.5 w-3.5" />
+      Rs {amount}
+      <span className="text-[11px] font-semibold text-muted-foreground underline">breakup</span>
+    </button>
+  );
+}
+
 /** One row in the Orders list — either a home service or a parcel. */
 type OrderItem =
   | { kind: "booking"; id: string; createdAt: string | null; booking: BookingRow }
@@ -92,7 +156,7 @@ type OrderItem =
   | { kind: "store"; id: string; createdAt: string | null; order: StoreOrder };
 
 /** Card for one shop order — same shape as the booking/parcel cards. */
-function StoreOrderCard({ order, active, onOpen }: { order: StoreOrder; active: boolean; onOpen?: () => void }) {
+function StoreOrderCard({ order, active, onOpen, onBill }: { order: StoreOrder; active: boolean; onOpen?: () => void; onBill: () => void }) {
   const itemLine = order.items
     .map((i) => `${i.name} x${i.quantity}`)
     .join(", ");
@@ -137,7 +201,7 @@ function StoreOrderCard({ order, active, onOpen }: { order: StoreOrder; active: 
       )}
       {order.status === "picked_up" && <StoreDeliveryCode orderId={order.id} />}
       <div className="mt-3 flex items-center justify-between">
-        <span className="text-sm font-bold text-primary">Rs {Number(order.total_amount)}</span>
+        <AmountButton amount={Number(order.total_amount)} onOpen={onBill} />
         <span className="text-xs font-semibold text-muted-foreground">
           {order.payment_mode === "cod"
             ? "Cash on delivery"
@@ -243,6 +307,7 @@ export function OrdersScreen({
     refetchIntervalInBackground: false,
   });
   useBookingsLive();
+  const [bill, setBill] = useState<Bill | null>(null);
 
 
   const queryClient = useQueryClient();
@@ -306,7 +371,7 @@ export function OrdersScreen({
             </h2>
             {active.map((item) =>
               item.kind === "store" ? (
-                <StoreOrderCard key={item.id} order={item.order} active onOpen={() => onOpenStoreOrder?.(item.order.id)} />
+                <StoreOrderCard key={item.id} order={item.order} active onOpen={() => onOpenStoreOrder?.(item.order.id)} onBill={() => setBill(storeBill(item.order))} />
               ) : item.kind === "booking" ? (
                 <div
                   key={item.id}
@@ -425,11 +490,14 @@ export function OrdersScreen({
           ) : (
             past.map((item) =>
               item.kind === "store" ? (
-                <StoreOrderCard key={item.id} order={item.order} active={false} onOpen={() => onOpenStoreOrder?.(item.order.id)} />
+                <StoreOrderCard key={item.id} order={item.order} active={false} onOpen={() => onOpenStoreOrder?.(item.order.id)} onBill={() => setBill(storeBill(item.order))} />
               ) : item.kind === "booking" ? (
-                <button
+                <div
                   key={item.id}
+                  role="button"
+                  tabIndex={0}
                   onClick={() => onOpenBooking(item.booking)}
+                  onKeyDown={(e) => { if (e.key === "Enter") onOpenBooking(item.booking); }}
                   className="w-full rounded-[18px] border border-border bg-card p-4 text-left shadow-sm transition active:scale-[0.99]"
                 >
                   <div className="flex items-start justify-between gap-3">
@@ -461,19 +529,24 @@ export function OrdersScreen({
                     </div>
                   )}
                   <div className="mt-3 flex items-center justify-between">
-                    <span className="text-sm font-bold text-primary">
-                      Rs{" "}
-                      {item.booking.total_amount && Number(item.booking.total_amount) > 0
-                        ? Number(item.booking.total_amount)
-                        : item.booking.price}
-                    </span>
+                    <AmountButton
+                      amount={
+                        item.booking.total_amount && Number(item.booking.total_amount) > 0
+                          ? Number(item.booking.total_amount)
+                          : Number(item.booking.price)
+                      }
+                      onOpen={() => setBill(bookingBill(item.booking))}
+                    />
                     <span className="text-xs font-semibold text-primary">View details →</span>
                   </div>
-                </button>
+                </div>
               ) : (
-                <button
+                <div
                   key={item.id}
+                  role="button"
+                  tabIndex={0}
                   onClick={() => openParcel(item.parcel)}
+                  onKeyDown={(e) => { if (e.key === "Enter") openParcel(item.parcel); }}
                   className="w-full rounded-[18px] border border-border bg-card p-4 text-left shadow-sm transition active:scale-[0.99]"
                 >
                   <div className="flex items-start justify-between gap-3">
@@ -502,17 +575,29 @@ export function OrdersScreen({
                   </div>
                   <ParcelChips parcel={item.parcel} returnPending={pendingReturnIds.includes(item.parcel.id)} />
                   <div className="mt-3 flex items-center justify-between">
-                    <span className="text-sm font-bold text-primary">
-                      Rs {Number(item.parcel.total_amount ?? 0)}
-                    </span>
+                    <AmountButton
+                      amount={Number(item.parcel.total_amount ?? 0)}
+                      onOpen={() => setBill(parcelBill(item.parcel))}
+                    />
                     <span className="text-xs font-semibold text-primary">View details →</span>
                   </div>
-                </button>
+                </div>
               ),
             )
           )}
         </section>
       </div>
+
+      <BillSheet
+        open={!!bill}
+        onOpenChange={(v) => { if (!v) setBill(null); }}
+        title={bill?.title ?? "Bill details"}
+        subtitle={bill?.subtitle ?? null}
+        lines={bill?.lines ?? []}
+        total={bill?.total ?? 0}
+        note={bill?.note ?? null}
+      />
+
 
       <BottomNav
         activeKey="orders"
