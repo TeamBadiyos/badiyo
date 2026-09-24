@@ -370,7 +370,7 @@ export function OrdersScreen({
             </h2>
             {active.map((item) =>
               item.kind === "store" ? (
-                <StoreOrderCard key={item.id} order={item.order} active onOpen={() => onOpenStoreOrder?.(item.order.id)} />
+                <StoreOrderCard key={item.id} order={item.order} active onOpen={() => onOpenStoreOrder?.(item.order.id)} onBill={() => setBill(storeBill(item.order))} />
               ) : item.kind === "booking" ? (
                 <div
                   key={item.id}
@@ -489,7 +489,7 @@ export function OrdersScreen({
           ) : (
             past.map((item) =>
               item.kind === "store" ? (
-                <StoreOrderCard key={item.id} order={item.order} active={false} onOpen={() => onOpenStoreOrder?.(item.order.id)} />
+                <StoreOrderCard key={item.id} order={item.order} active={false} onOpen={() => onOpenStoreOrder?.(item.order.id)} onBill={() => setBill(storeBill(item.order))} />
               ) : item.kind === "booking" ? (
                 <div
                   key={item.id}
