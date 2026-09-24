@@ -48,13 +48,25 @@ export const Route = createFileRoute("/api/public/store/process-refunds")({
             row.razorpay_payment_id.startsWith("free_") ||
             Math.round(Number(row.refund_amount ?? 0) * 100) <= 0
           ) {
+            // Never paid → nothing to refund; say so instead of "refunded".
+            const neverPaid = !row.razorpay_payment_id;
             await supabaseAdmin
               .from("merchant_orders")
-              .update({
-                refund_status: "done",
-                payment_status: "refunded",
-                refund_attempts: attempts,
-              })
+              .update(
+                neverPaid
+                  ? {
+                      refund_status: "none",
+                      refund_amount: 0,
+                      refund_reason: "not_required: no payment",
+                      payment_status: "unpaid",
+                      refund_attempts: attempts,
+                    }
+                  : {
+                      refund_status: "done",
+                      payment_status: "refunded",
+                      refund_attempts: attempts,
+                    },
+              )
               .eq("id", row.id);
             done++;
             continue;
