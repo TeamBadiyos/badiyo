@@ -321,6 +321,10 @@ export function HomeScreen({
     if (tileService) guardedBookService(toPayload(tileService, cleanSegment));
   };
 
+  if (openStore) {
+    return <StoreDetailScreen store={openStore} onBack={() => setOpenStore(null)} />;
+  }
+
   return (
     <main className="min-h-screen w-full bg-background pb-28 momentum-scroll">
       <PullToRefreshIndicator pull={pull} refreshing={refreshing} />
