@@ -21,8 +21,13 @@ export type PublicStore = {
   lat: number | null;
   lng: number | null;
   is_accepting_orders: boolean | null;
+  /** Manual switch ON *and* inside today's IST store timings. Computed server-side. */
+  is_open_now: boolean | null;
   rating: number | null;
 };
+
+/** Fallback used when ops_settings has no `store_max_radius_km` row. */
+export const DEFAULT_STORE_RADIUS_KM = 5;
 
 export type PublicProduct = {
   id: string;
@@ -48,10 +53,30 @@ export async function fetchPublicStores(): Promise<PublicStore[]> {
   const { data, error } = await supabase
     .from("public_stores")
     .select(
-      "id, store_name, store_category_id, category_name, category_slug, zone_id, photo_url, short_address, lat, lng, is_accepting_orders, rating",
+      "id, store_name, store_category_id, category_name, category_slug, zone_id, photo_url, short_address, lat, lng, is_accepting_orders, is_open_now, rating",
     );
   if (error) throw error;
   return (data ?? []) as PublicStore[];
+}
+
+/** How far from the customer a shop may be before it is hidden. */
+export async function fetchStoreRadiusKm(): Promise<number> {
+  const { data, error } = await supabase
+    .from("ops_settings")
+    .select("value")
+    .eq("key", "store_max_radius_km")
+    .maybeSingle();
+  if (error || data?.value == null) return DEFAULT_STORE_RADIUS_KM;
+  const km = Number(data.value);
+  return Number.isFinite(km) && km > 0 ? km : DEFAULT_STORE_RADIUS_KM;
+}
+
+export function useStoreRadiusKm() {
+  return useQuery({
+    queryKey: ["store_max_radius_km"],
+    queryFn: fetchStoreRadiusKm,
+    staleTime: 30 * 60_000,
+  });
 }
 
 export async function fetchStoreProducts(merchantId: string): Promise<PublicProduct[]> {
