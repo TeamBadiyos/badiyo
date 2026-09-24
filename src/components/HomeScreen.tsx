@@ -190,6 +190,34 @@ export function HomeScreen({
   const { lang } = useLanguage();
   const { data: cleanState } = useServiceState("clean");
 
+  // Store is behind a flag: live for everyone, or visible to internal testers.
+  const { data: storeState } = useServiceState("store");
+  const { data: isTester = false } = useIsInternalTester();
+  const storeUnlocked = storeState?.status === "live" || isTester;
+  const [openStore, setOpenStore] = useState<PublicStore | null>(null);
+
+  /** Customer coordinates used to sort shops nearest-first. */
+  const { data: homeCoords = null } = useQuery({
+    queryKey: ["home_default_coords"],
+    staleTime: 5 * 60_000,
+    queryFn: async (): Promise<{ lat: number; lng: number } | null> => {
+      const { data: userData } = await getAuthUser();
+      const uid = userData.user?.id;
+      if (!uid) return null;
+      const { data } = await supabase
+        .from("addresses")
+        .select("latitude, longitude")
+        .eq("user_id", uid)
+        .not("latitude", "is", null)
+        .order("is_default", { ascending: false })
+        .order("created_at", { ascending: false })
+        .limit(1);
+      const row = data?.[0];
+      if (!row?.latitude || !row?.longitude) return null;
+      return { lat: Number(row.latitude), lng: Number(row.longitude) };
+    },
+  });
+
   /** Short ribbon copy shown in each tile corner when the service isn't orderable. */
   const statusBadge = ((): string | null => {
     if (!cleanState || cleanState.can_order) return null;
