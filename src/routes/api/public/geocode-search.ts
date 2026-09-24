@@ -99,7 +99,7 @@ export const Route = createFileRoute("/api/public/geocode-search")({
           .slice(0, 6)
           .map((r) => {
             const pick = (types: string[]) =>
-              r.address_(components ?? []).find((c) => types.some((t) => (Array.isArray(c.types) && c.types.includes(t))))?.long_name ?? null;
+              (r.address_components ?? []).find((c) => types.some((t) => (Array.isArray(c.types) && c.types.includes(t))))?.long_name ?? null;
             const title =
               pick(["point_of_interest", "premise", "sublocality", "sublocality_level_1", "neighborhood", "route"]) ??
               pick(["locality"]) ??
