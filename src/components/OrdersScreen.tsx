@@ -88,6 +88,67 @@ function formatStamp(iso: string | null): string {
   });
 }
 
+/** What the bill sheet shows when an amount is tapped. */
+type Bill = {
+  title: string;
+  subtitle?: string | null;
+  lines: BillLine[];
+  total: number;
+  note?: string | null;
+};
+
+function bookingBill(b: BookingRow): Bill {
+  const total =
+    b.total_amount && Number(b.total_amount) > 0 ? Number(b.total_amount) : Number(b.price);
+  const lines: BillLine[] = [{ label: b.service_label, value: Number(b.price) }];
+  const gst = Number(b.gst_amount ?? 0);
+  if (gst > 0) lines.push({ label: `GST (${Number(b.gst_percent ?? 0)}%)`, value: gst, muted: true });
+  return { title: "Bill details", subtitle: b.service_label, lines, total };
+}
+
+function parcelBill(p: CourierOrder): Bill {
+  return {
+    title: "Bill details",
+    subtitle: p.order_code ? `#${p.order_code}` : null,
+    lines: courierBillLines(p),
+    total: Number(p.total_amount ?? 0),
+    note: p.payment_status === "paid" ? "Paid online" : null,
+  };
+}
+
+function storeBill(o: StoreOrder): Bill {
+  const lines: BillLine[] = o.items.map((i) => ({
+    label: `${i.name} × ${i.quantity}`,
+    value: Number(i.price) * Number(i.quantity),
+  }));
+  lines.push({ label: "Delivery fee", value: Number(o.delivery_fee), muted: true });
+  return {
+    title: "Bill details",
+    subtitle: `#${o.order_number}`,
+    lines,
+    total: Number(o.total_amount),
+    note: o.payment_status === "paid" ? "Paid online" : null,
+  };
+}
+
+/** Tappable amount that opens the bill breakup. */
+function AmountButton({ amount, onOpen }: { amount: number; onOpen: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation();
+        onOpen();
+      }}
+      className="-ml-1 flex items-center gap-1 rounded-full px-1 py-0.5 text-sm font-bold text-primary transition active:scale-[0.97]"
+    >
+      <ReceiptText className="h-3.5 w-3.5" />
+      Rs {amount}
+      <span className="text-[11px] font-semibold text-muted-foreground underline">breakup</span>
+    </button>
+  );
+}
+
 /** One row in the Orders list — either a home service or a parcel. */
 type OrderItem =
   | { kind: "booking"; id: string; createdAt: string | null; booking: BookingRow }
