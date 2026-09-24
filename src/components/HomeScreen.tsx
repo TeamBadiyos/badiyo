@@ -401,6 +401,9 @@ export function HomeScreen({
           onOpenTask={bookTileService}
           availability={availability}
           statusBadge={statusBadge}
+          storeUnlocked={storeUnlocked}
+          storeCoords={homeCoords}
+          onOpenStore={setOpenStore}
         />
         ) : (
           <div className="mt-2">
