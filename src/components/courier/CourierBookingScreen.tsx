@@ -292,7 +292,6 @@ export function CourierBookingScreen({
     while (list.some((st) => st.key === `${prefix}${n}`)) n++;
     return `${prefix}${n}`;
   };
-  );
 
   const getQuote = async () => {
     setErr(null);
