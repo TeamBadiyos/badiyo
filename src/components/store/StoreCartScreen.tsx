@@ -381,9 +381,27 @@ export function StoreCartScreen({
             disabled={placing || !addressId || !quoteOk}
             className="mx-auto flex w-full max-w-md items-center justify-center gap-2 rounded-[18px] bg-primary px-4 py-3.5 text-sm font-extrabold text-primary-foreground shadow-lg transition active:scale-[0.99] disabled:opacity-60"
           >
-            {placing && <Loader2 className="h-4 w-4 animate-spin" />}
-            {t("store.placeOrder")} · ₹{payable.toFixed(0)}
+            {placing ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <ShieldCheck className="h-4 w-4" />
+            )}
+            {t("store.proceedPay")} · ₹{payable.toFixed(0)}
           </button>
+        </div>
+      )}
+
+      {/* The app's own address screen: select, edit or add a new address */}
+      {pickerOpen && (
+        <div className="fixed inset-0 z-50 bg-background">
+          <AddressSelectionScreen
+            onBack={() => setPickerOpen(false)}
+            onContinue={(a) => {
+              setAddressId(a.id);
+              setPickerOpen(false);
+              void queryClient.invalidateQueries({ queryKey: ["my-addresses"] });
+            }}
+          />
         </div>
       )}
     </main>
