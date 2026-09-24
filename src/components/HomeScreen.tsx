@@ -29,6 +29,7 @@ import { useIsInternalTester, type PublicStore } from "@/lib/store";
 import { StoreListView } from "./store/StoreListView";
 import { StoreDetailScreen } from "./store/StoreDetailScreen";
 import { StoreCategoryScreen } from "./store/StoreCategoryScreen";
+import { StoreCartScreen } from "./store/StoreCartScreen";
 import type { StoreCategoryGroup } from "./store/storeGroups";
 import type { TranslationKey } from "@/i18n/en";
 
@@ -198,6 +199,9 @@ export function HomeScreen({
   const storeUnlocked = storeState?.status === "live" || isTester;
   const [openStore, setOpenStore] = useState<PublicStore | null>(null);
   const [openCategory, setOpenCategory] = useState<StoreCategoryGroup | null>(null);
+  const [cartOpen, setCartOpen] = useState(false);
+  // Ordering is on only when the store service itself is live.
+  const storeOrdering = storeState?.status === "live";
 
   /** Customer coordinates used to sort shops nearest-first. */
   const { data: homeCoords = null } = useQuery({
@@ -324,8 +328,32 @@ export function HomeScreen({
     if (tileService) guardedBookService(toPayload(tileService, cleanSegment));
   };
 
+  if (cartOpen) {
+    return (
+      <StoreCartScreen
+        onBack={() => setCartOpen(false)}
+        onAddAddress={() => {
+          setCartOpen(false);
+          setLocationSheetOpen(true);
+        }}
+        onDone={() => {
+          setCartOpen(false);
+          setOpenStore(null);
+          setOpenCategory(null);
+          onOpenOrders?.();
+        }}
+      />
+    );
+  }
   if (openStore) {
-    return <StoreDetailScreen store={openStore} onBack={() => setOpenStore(null)} />;
+    return (
+      <StoreDetailScreen
+        store={openStore}
+        onBack={() => setOpenStore(null)}
+        onOpenCart={() => setCartOpen(true)}
+        orderingEnabled={storeOrdering}
+      />
+    );
   }
   if (openCategory) {
     return (
@@ -334,6 +362,8 @@ export function HomeScreen({
         group={openCategory}
         onBack={() => setOpenCategory(null)}
         onOpenStore={setOpenStore}
+        onOpenCart={() => setCartOpen(true)}
+        orderingEnabled={storeOrdering}
       />
     );
   }
@@ -418,6 +448,8 @@ export function HomeScreen({
           storeCoords={homeCoords}
           onOpenStore={setOpenStore}
           onOpenCategory={setOpenCategory}
+          onOpenCart={() => setCartOpen(true)}
+          storeOrdering={storeOrdering}
         />
         ) : (
           <div className="mt-2">
@@ -535,13 +567,21 @@ function SegmentView({
   storeCoords?: { lat: number; lng: number } | null;
   onOpenStore?: (store: PublicStore) => void;
   onOpenCategory?: (group: StoreCategoryGroup) => void;
+  onOpenCart?: () => void;
+  storeOrdering?: boolean;
 }) {
   const t = useT();
 
   if (segment.display_template === "STORE_FIRST" && storeUnlocked) {
-    return <StoreListView coords={storeCoords ?? null} onOpenStore={(s) => onOpenStore?.(s)}
+    return (
+      <StoreListView
+        coords={storeCoords ?? null}
+        onOpenStore={(s) => onOpenStore?.(s)}
         onOpenCategory={(g) => onOpenCategory?.(g)}
-      />;
+        onOpenCart={() => onOpenCart?.()}
+        orderingEnabled={storeOrdering}
+      />
+    );
   }
 
   if (segment.display_template !== "CATEGORY_FIRST") {
