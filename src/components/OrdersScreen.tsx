@@ -528,19 +528,24 @@ export function OrdersScreen({
                     </div>
                   )}
                   <div className="mt-3 flex items-center justify-between">
-                    <span className="text-sm font-bold text-primary">
-                      Rs{" "}
-                      {item.booking.total_amount && Number(item.booking.total_amount) > 0
-                        ? Number(item.booking.total_amount)
-                        : item.booking.price}
-                    </span>
+                    <AmountButton
+                      amount={
+                        item.booking.total_amount && Number(item.booking.total_amount) > 0
+                          ? Number(item.booking.total_amount)
+                          : Number(item.booking.price)
+                      }
+                      onOpen={() => setBill(bookingBill(item.booking))}
+                    />
                     <span className="text-xs font-semibold text-primary">View details →</span>
                   </div>
-                </button>
+                </div>
               ) : (
-                <button
+                <div
                   key={item.id}
+                  role="button"
+                  tabIndex={0}
                   onClick={() => openParcel(item.parcel)}
+                  onKeyDown={(e) => { if (e.key === "Enter") openParcel(item.parcel); }}
                   className="w-full rounded-[18px] border border-border bg-card p-4 text-left shadow-sm transition active:scale-[0.99]"
                 >
                   <div className="flex items-start justify-between gap-3">
