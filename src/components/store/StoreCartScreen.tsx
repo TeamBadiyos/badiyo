@@ -118,11 +118,11 @@ export function StoreCartScreen({
         merchantId: cart.cart.merchantId,
         lines: cart.cart.lines,
         addressId,
-        paymentMode: mode,
+        paymentMode: "online",
         note: note.trim() || null,
       });
 
-      if (mode === "online") {
+      {
         const { data, error } = await supabase.functions.invoke("create-razorpay-order", {
           body: {
             purpose: "store_order",
@@ -156,7 +156,7 @@ export function StoreCartScreen({
       cart.clear();
       void queryClient.invalidateQueries({ queryKey: ["my-store-orders"] });
       toast.success(t("store.orderPlaced"), {
-        description: t("store.orderPlacedBody", { number: created.order_number }),
+        description: t("store.awaitingShop", { number: created.order_number }),
       });
       onDone();
     } catch (err) {
