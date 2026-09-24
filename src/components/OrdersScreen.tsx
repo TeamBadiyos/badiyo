@@ -202,6 +202,7 @@ export function OrdersScreen({
   onOpenContactParcels?: (stopId?: string) => void;
   onOpenStoreOrder?: (orderId: string) => void;
 }) {
+  const t = useT();
   const { data: courierEnabled = false } = useQuery({
     queryKey: ["courier_enabled"],
     queryFn: () => fetchCourierEnabled(),
