@@ -508,16 +508,55 @@ export function CourierBookingScreen({
         )}
         {step === 1 && (
           <section className="animate-fade-slide-in space-y-5">
-            <div>
-              <h2 className="text-xl font-extrabold text-foreground">{t("courier.routeTitle")}</h2>
-              <p className="mt-1 text-sm text-muted-foreground">{t("courier.routeSub")}</p>
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h2 className="text-xl font-extrabold text-foreground">{t("courier.routeTitle")}</h2>
+                <p className="mt-1 text-sm text-muted-foreground">{t("courier.routeSub")}</p>
+              </div>
+              {(maxPickups > 1 || maxDrops > 1 || isMulti) && (
+                <span className="shrink-0 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-extrabold text-primary">
+                  {t("courier.routeCount", { p: pickupCount, d: dropCount })}
+                </span>
+              )}
             </div>
-            <div className="relative overflow-hidden rounded-lg border border-border bg-card shadow-card-m">
-              <div className="absolute bottom-14 left-[31px] top-14 border-l-2 border-dashed border-border" />
-              <AddressStop kind="pickup" address={pickup} onClick={() => setAddressTarget("pickup")} />
-              <div className="mx-5 border-t border-border" />
-              <AddressStop kind="drop" address={drop} onClick={() => setAddressTarget("drop")} />
-            </div>
+
+            <RouteTimeline
+              stops={timelineStops}
+              canAddPickup={maxPickups > 1 && pickupCount < Math.min(maxPickups, 2)}
+              canAddDrop={maxDrops > 1 && dropCount < maxDrops}
+              pickupFee={limits?.extra_pickup_fee ?? 0}
+              dropFee={limits?.extra_drop_fee ?? 0}
+              showSources={pickupCount > 1}
+              onAddPickup={() => setExtraPickups((l) => [...l, { key: nextKey("P", l), addr: null, name: "", phone: "" }])}
+              onAddDrop={() => setExtraDrops((l) => [...l, { key: nextKey("D", l), addr: null, name: "", phone: "" }])}
+              onRemove={(key) => {
+                if (key.startsWith("P")) {
+                  setExtraPickups((l) => l.filter((st) => st.key !== key));
+                  setDropSources({});
+                } else {
+                  setExtraDrops((l) => l.filter((st) => st.key !== key));
+                }
+                setQuote(null);
+              }}
+              onPickAddress={(key) =>
+                setAddressTarget(key === "P1" ? "pickup" : key === "D1" ? "drop" : key)
+              }
+              onChange={(key, patch) => {
+                if (key === "P1") {
+                  if (patch.name !== undefined) setPickupName(patch.name);
+                  if (patch.phone !== undefined) setPickupPhone(patch.phone);
+                } else if (key === "D1") {
+                  if (patch.name !== undefined) setDropName(patch.name);
+                  if (patch.phone !== undefined) setDropPhone(patch.phone);
+                } else if (key.startsWith("P")) {
+                  setExtraPickups((l) => l.map((st) => (st.key === key ? { ...st, ...patch } : st)));
+                } else {
+                  setExtraDrops((l) => l.map((st) => (st.key === key ? { ...st, ...patch } : st)));
+                }
+              }}
+              onSource={(key, v) => setDropSources((m) => ({ ...m, [key]: v }))}
+            />
+
             {zonesChecking && (
               <p className="text-xs font-semibold text-muted-foreground">{t("courier.checkingArea")}</p>
             )}
@@ -530,57 +569,6 @@ export function CourierBookingScreen({
               <p className="rounded-lg bg-destructive/10 p-3 text-sm font-semibold text-destructive">
                 {t("courier.dropOutside")}
               </p>
-            )}
-
-
-            <ContactFields
-              title={t("courier.pickupContact")}
-              name={pickupName}
-              phone={pickupPhone}
-              onName={setPickupName}
-              onPhone={setPickupPhone}
-            />
-            {(maxPickups > 1 || extraPickups.length > 0) && (
-              <MultiStopSection
-                kind="pickup"
-                stops={extraPickups}
-                canAdd={pickupCount < Math.min(maxPickups, 2)}
-                fee={limits?.extra_pickup_fee ?? 0}
-                onAdd={() => setExtraPickups((l) => [...l, { key: nextKey("P", l), addr: null, name: "", phone: "" }])}
-                onRemove={(key) => {
-                  setExtraPickups((l) => l.filter((st) => st.key !== key));
-                  setDropSources({});
-                }}
-                onPickAddress={(key) => setAddressTarget(key)}
-                onChange={(key, patch) => setExtraPickups((l) => l.map((st) => (st.key === key ? { ...st, ...patch } : st)))}
-              />
-            )}
-            <ContactFields
-              title={t("courier.dropContact")}
-              name={dropName}
-              phone={dropPhone}
-              onName={setDropName}
-              onPhone={setDropPhone}
-            />
-            {pickupCount > 1 && (
-              <div className="-mt-2">
-                <SourceChipsInline value={dropSources["D1"]} onChange={(v) => setDropSources((m) => ({ ...m, D1: v }))} />
-              </div>
-            )}
-            {(maxDrops > 1 || extraDrops.length > 0) && (
-              <MultiStopSection
-                kind="drop"
-                stops={extraDrops}
-                canAdd={dropCount < maxDrops}
-                fee={limits?.extra_drop_fee ?? 0}
-                onAdd={() => setExtraDrops((l) => [...l, { key: nextKey("D", l), addr: null, name: "", phone: "" }])}
-                onRemove={(key) => setExtraDrops((l) => l.filter((st) => st.key !== key))}
-                onPickAddress={(key) => setAddressTarget(key)}
-                onChange={(key, patch) => setExtraDrops((l) => l.map((st) => (st.key === key ? { ...st, ...patch } : st)))}
-                showSources={pickupCount > 1}
-                sources={dropSources}
-                onSource={(key, v) => setDropSources((m) => ({ ...m, [key]: v }))}
-              />
             )}
             {isMulti && extrasReady && !sourcesReady && (
               <p className="rounded-lg bg-warning/10 p-3 text-xs font-semibold text-foreground">{t("courier.sourcesHint")}</p>
