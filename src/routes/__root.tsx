@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
 import { LanguageProvider } from "@/i18n";
+import { StoreCartProvider } from "@/lib/storeCart";
 import { OfflineGate } from "@/components/OfflineScreen";
 import { buildEarlyBootScript } from "@/lib/earlyData";
 import { startQueryPersistence } from "@/lib/queryPersistence";
