@@ -288,6 +288,26 @@ export function CourierBookingScreen({
     return list;
   }, [pickup, drop, pickupName, pickupPhone, dropName, dropPhone, extraPickups, extraDrops]);
 
+  // One card per stop for the unified route timeline, numbered per type.
+  const timelineStops = useMemo<TimelineStop[]>(() => {
+    let p = 0;
+    let d = 0;
+    return allStops.map((st) => {
+      const index = st.type === "pickup" ? ++p : ++d;
+      return {
+        key: st.key,
+        type: st.type,
+        index,
+        addr: st.addr,
+        name: st.name,
+        phone: st.phone,
+        removable: st.key !== "P1" && st.key !== "D1",
+        source: st.type === "drop" ? dropSources[st.key] : undefined,
+      };
+    });
+  }, [allStops, dropSources]);
+
+
   const nextKey = (prefix: "P" | "D", list: ExtraStop[]) => {
     let n = 2;
     while (list.some((st) => st.key === `${prefix}${n}`)) n++;
