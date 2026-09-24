@@ -5765,6 +5765,7 @@ export type Database = {
         Args: { _order_id: string; _purpose: string }
         Returns: string
       }
+      courier_issue_stop_otp: { Args: { _stop_id: string }; Returns: string }
       courier_log_otp_send: {
         Args: {
           _detail: string
@@ -5897,6 +5898,10 @@ export type Database = {
         Args: { _order_id: string; _purpose: string }
         Returns: Json
       }
+      courier_resolve_stop: {
+        Args: { _order_id: string; _purpose: string }
+        Returns: string
+      }
       courier_rider_advance: {
         Args: {
           _accuracy_m?: number
@@ -5905,6 +5910,16 @@ export type Database = {
           _lng?: number
           _order_id: string
           _to_status: string
+        }
+        Returns: Json
+      }
+      courier_rider_arrive_stop: {
+        Args: {
+          _accuracy_m?: number
+          _fix_at?: string
+          _lat?: number
+          _lng?: number
+          _stop_id: string
         }
         Returns: Json
       }
@@ -5922,11 +5937,16 @@ export type Database = {
         Args: { _order_id: string }
         Returns: undefined
       }
+      courier_stop_purpose: { Args: { _stop_type: string }; Returns: string }
       courier_store_info: { Args: { _order_id: string }; Returns: Json }
       courier_sweeper: { Args: never; Returns: undefined }
       courier_sweeper_tick: { Args: never; Returns: undefined }
       courier_update_contact: {
         Args: { _new_phone: string; _order_id: string; _purpose: string }
+        Returns: Json
+      }
+      courier_update_stop_contact: {
+        Args: { _name: string; _phone: string; _stop_id: string }
         Returns: Json
       }
       courier_validate_local_route: {
@@ -5947,6 +5967,10 @@ export type Database = {
           _proof_url?: string
           _purpose: string
         }
+        Returns: Json
+      }
+      courier_verify_stop_otp: {
+        Args: { _otp: string; _proof_url?: string; _stop_id: string }
         Returns: Json
       }
       credit_booking_completion: {
