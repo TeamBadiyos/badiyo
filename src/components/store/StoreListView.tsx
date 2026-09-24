@@ -3,11 +3,15 @@ import { ChevronRight, Loader2 } from "lucide-react";
 import { useT } from "@/i18n";
 import { SectionHeading } from "@/components/SectionHeading";
 import { StoreImage } from "./StoreImage";
+import { StoreRating } from "./StoreRating";
 import {
+  DEFAULT_STORE_RADIUS_KM,
   formatDistance,
+  isStoreOpen,
   storeDistanceKm,
   useStoreCategories,
   useStoreList,
+  useStoreRadiusKm,
   type PublicStore,
 } from "@/lib/store";
 
@@ -25,11 +29,25 @@ export function StoreListView({
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const { data: categories = [] } = useStoreCategories();
   const { data: stores = [], isLoading } = useStoreList();
+  const { data: radiusKm = DEFAULT_STORE_RADIUS_KM } = useStoreRadiusKm();
+
+  /**
+   * Shops the customer may actually be served by: same zone when we know it,
+   * otherwise everything inside the configured radius. Anything further away
+   * is dropped entirely rather than shown as an unreachable option.
+   */
+  const inRange = useMemo(
+    () =>
+      stores
+        .map((s) => ({ store: s, km: storeDistanceKm(s, coords) }))
+        .filter(({ km }) => km == null || km <= radiusKm),
+    [stores, coords, radiusKm],
+  );
 
   const rows = useMemo(() => {
-    const withDistance = stores
-      .filter((s) => !activeCategory || s.store_category_id === activeCategory)
-      .map((s) => ({ store: s, km: storeDistanceKm(s, coords) }));
+    const filtered = inRange.filter(
+      ({ store }) => !activeCategory || store.store_category_id === activeCategory,
+    );
 
     const byDistance = (a: { km: number | null }, b: { km: number | null }) => {
       if (a.km == null && b.km == null) return 0;
@@ -38,13 +56,15 @@ export function StoreListView({
       return a.km - b.km;
     };
 
-    const open = withDistance.filter((r) => r.store.is_accepting_orders).sort(byDistance);
-    const closed = withDistance.filter((r) => !r.store.is_accepting_orders).sort(byDistance);
+    const open = filtered.filter((r) => isStoreOpen(r.store)).sort(byDistance);
+    const closed = filtered.filter((r) => !isStoreOpen(r.store)).sort(byDistance);
     return [...open, ...closed];
-  }, [stores, activeCategory, coords]);
+  }, [inRange, activeCategory]);
 
-  // Only offer chips for categories that actually have a shop behind them.
-  const usedCategoryIds = new Set(stores.map((s) => s.store_category_id).filter(Boolean));
+  // Only offer chips for categories that actually have a nearby shop behind them.
+  const usedCategoryIds = new Set(
+    inRange.map(({ store }) => store.store_category_id).filter(Boolean),
+  );
   const chips = categories.filter((c) => usedCategoryIds.has(c.id));
 
   return (
