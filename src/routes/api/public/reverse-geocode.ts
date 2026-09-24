@@ -88,7 +88,7 @@ export const Route = createFileRoute("/api/public/reverse-geocode")({
         }
         const top = data.results[0];
         const pick = (types: string[]) =>
-          top.address_components.find((c) => types.some((t) => c.types.includes(t)))?.long_name ?? null;
+          (top.address_components ?? []).find((c) => types.some((t) => (Array.isArray(c.types) && c.types.includes(t))))?.long_name ?? null;
         return json({
           formatted_address: top.formatted_address,
           area: pick(["sublocality", "sublocality_level_1", "neighborhood"]) ?? pick(["locality"]),
