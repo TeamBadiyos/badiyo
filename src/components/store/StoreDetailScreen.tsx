@@ -51,14 +51,17 @@ export function StoreDetailScreen({
               {[store.category_name, store.short_address].filter(Boolean).join(" · ")}
             </p>
           </div>
-          <span
-            className={
-              "shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold " +
-              (closed ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary")
-            }
-          >
-            {closed ? t("store.closed") : t("store.open")}
-          </span>
+          <div className="flex shrink-0 items-center gap-2">
+            <StoreRating rating={store.rating} />
+            <span
+              className={
+                "shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold " +
+                (closed ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary")
+              }
+            >
+              {closed ? t("store.closed") : t("store.open")}
+            </span>
+          </div>
         </header>
 
         {isLoading ? (
