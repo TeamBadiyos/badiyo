@@ -364,6 +364,16 @@ export const en = {
   "update.later": "Later",
   "update.hardTitle": "Update required",
   "update.hardBody": "A newer version of badiyos is available. Please update to continue.",
+
+  // ── Store ────────────────────────────────────────────────
+  "store.allCategories": "All",
+  "store.nearbyTitle": "Shops near you",
+  "store.open": "Open",
+  "store.closed": "Closed",
+  "store.outOfStock": "Out of stock",
+  "store.orderingSoon": "Ordering starts soon",
+  "store.emptyStores": "No stores in your area yet",
+  "store.emptyItems": "This store has no items yet",
 } as const;
 
 export type TranslationKey = keyof typeof en;
