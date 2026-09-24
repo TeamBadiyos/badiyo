@@ -6123,6 +6123,13 @@ export type Database = {
           start_otp: string
         }[]
       }
+      expert_get_booking_customer: {
+        Args: { _booking_id: string }
+        Returns: {
+          full_name: string
+          phone: string
+        }[]
+      }
       expert_register_device: {
         Args: { _device_id: string; _device_label?: string }
         Returns: Json
