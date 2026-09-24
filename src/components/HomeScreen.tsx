@@ -28,6 +28,8 @@ import { formatNextOpen, useServiceState } from "@/lib/serviceHours";
 import { useIsInternalTester, type PublicStore } from "@/lib/store";
 import { StoreListView } from "./store/StoreListView";
 import { StoreDetailScreen } from "./store/StoreDetailScreen";
+import { StoreCategoryScreen } from "./store/StoreCategoryScreen";
+import type { StoreCategoryGroup } from "./store/storeGroups";
 import type { TranslationKey } from "@/i18n/en";
 
 import expertHouse from "@/assets/expert-house-cleaning.jpg";
@@ -195,6 +197,7 @@ export function HomeScreen({
   const { data: isTester = false } = useIsInternalTester();
   const storeUnlocked = storeState?.status === "live" || isTester;
   const [openStore, setOpenStore] = useState<PublicStore | null>(null);
+  const [openCategory, setOpenCategory] = useState<StoreCategoryGroup | null>(null);
 
   /** Customer coordinates used to sort shops nearest-first. */
   const { data: homeCoords = null } = useQuery({
@@ -324,6 +327,16 @@ export function HomeScreen({
   if (openStore) {
     return <StoreDetailScreen store={openStore} onBack={() => setOpenStore(null)} />;
   }
+  if (openCategory) {
+    return (
+      <StoreCategoryScreen
+        coords={homeCoords ?? null}
+        group={openCategory}
+        onBack={() => setOpenCategory(null)}
+        onOpenStore={setOpenStore}
+      />
+    );
+  }
 
   return (
     <main className="min-h-screen w-full bg-background pb-28 momentum-scroll">
@@ -404,6 +417,7 @@ export function HomeScreen({
           storeUnlocked={storeUnlocked}
           storeCoords={homeCoords}
           onOpenStore={setOpenStore}
+          onOpenCategory={setOpenCategory}
         />
         ) : (
           <div className="mt-2">
@@ -507,6 +521,7 @@ function SegmentView({
   storeUnlocked,
   storeCoords,
   onOpenStore,
+  onOpenCategory,
 }: {
   segment: Segment;
   categories: ServiceCategory[];
@@ -519,11 +534,14 @@ function SegmentView({
   storeUnlocked?: boolean;
   storeCoords?: { lat: number; lng: number } | null;
   onOpenStore?: (store: PublicStore) => void;
+  onOpenCategory?: (group: StoreCategoryGroup) => void;
 }) {
   const t = useT();
 
   if (segment.display_template === "STORE_FIRST" && storeUnlocked) {
-    return <StoreListView coords={storeCoords ?? null} onOpenStore={(s) => onOpenStore?.(s)} />;
+    return <StoreListView coords={storeCoords ?? null} onOpenStore={(s) => onOpenStore?.(s)}
+        onOpenCategory={(g) => onOpenCategory?.(g)}
+      />;
   }
 
   if (segment.display_template !== "CATEGORY_FIRST") {

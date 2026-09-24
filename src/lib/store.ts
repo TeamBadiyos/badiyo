@@ -162,3 +162,36 @@ export function formatDistance(km: number | null): string | null {
   if (km < 1) return `${Math.round(km * 1000)} m`;
   return `${km.toFixed(1)} km`;
 }
+
+export type StorePreview = { items: PublicProduct[]; inStockCount: number };
+
+/** One query for many shops: up to 3 preview items each (in-stock first) + in-stock count. */
+export async function fetchStorePreviewProducts(
+  merchantIds: string[],
+): Promise<Record<string, StorePreview>> {
+  if (merchantIds.length === 0) return {};
+  const { data, error } = await supabase
+    .from("public_products")
+    .select("id, merchant_id, name, description, photo_url, unit, price, mrp, in_stock, product_category")
+    .in("merchant_id", merchantIds)
+    .order("in_stock", { ascending: false })
+    .order("name", { ascending: true });
+  if (error) throw error;
+  const out: Record<string, StorePreview> = {};
+  for (const p of (data ?? []) as PublicProduct[]) {
+    const e = (out[p.merchant_id] ??= { items: [], inStockCount: 0 });
+    if (p.in_stock) e.inStockCount += 1;
+    if (e.items.length < 3) e.items.push(p);
+  }
+  return out;
+}
+
+export function useStorePreviewProducts(merchantIds: string[]) {
+  const key = [...merchantIds].sort();
+  return useQuery({
+    queryKey: ["public_products_preview", key],
+    queryFn: () => fetchStorePreviewProducts(key),
+    enabled: key.length > 0,
+    staleTime: 60_000,
+  });
+}
