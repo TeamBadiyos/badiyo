@@ -45,10 +45,12 @@ export type CourierOrder = {
   cancel_reason_code: string | null;
   delivered_at: string | null;
   created_at: string;
+  pickup_count?: number | null;
+  drop_count?: number | null;
 };
 
 const COURIER_ORDER_COLUMNS =
-  "id, order_code, status, city, pickup_address, pickup_lat, pickup_lng, pickup_contact_name, pickup_contact_phone, pickup_contact_edit_count, drop_address, drop_lat, drop_lng, drop_contact_name, drop_contact_phone, drop_contact_edit_count, distance_km, total_amount, payment_status, package_description, assigned_expert_id, cancel_reason_code, delivered_at, created_at";
+  "id, order_code, status, city, pickup_address, pickup_lat, pickup_lng, pickup_contact_name, pickup_contact_phone, pickup_contact_edit_count, drop_address, drop_lat, drop_lng, drop_contact_name, drop_contact_phone, drop_contact_edit_count, distance_km, total_amount, payment_status, package_description, assigned_expert_id, cancel_reason_code, delivered_at, created_at, pickup_count, drop_count";
 
 /** Is courier live, and for which city? */
 export async function fetchCourierService(
@@ -218,4 +220,72 @@ export async function fetchCourierOtp(
   if (error) return null;
   const payload = data as unknown as { otp?: string | null } | null;
   return payload?.otp ?? null;
+}
+
+// ---- Multi-stop reads (RLS: same readers as the parcel order) ----
+export type CourierStop = {
+  id: string;
+  stop_type: "pickup" | "drop" | "return";
+  sequence: number;
+  address: string | null;
+  contact_name: string | null;
+  contact_phone: string | null;
+  contact_edit_count: number | null;
+  status: string;
+  lat: number | null;
+  lng: number | null;
+};
+export type CourierParcel = {
+  id: string;
+  pickup_stop_id: string | null;
+  drop_stop_id: string | null;
+  return_stop_id: string | null;
+  status: string;
+};
+export type CourierCharge = {
+  id: string;
+  order_id: string;
+  status: string;
+  total_amount: number;
+  parcel_id?: string | null;
+};
+
+export async function fetchCourierStops(orderId: string): Promise<CourierStop[]> {
+  const { data, error } = await supabase
+    .from("courier_order_stops" as never)
+    .select("id, stop_type, sequence, address, contact_name, contact_phone, contact_edit_count, status, lat, lng")
+    .eq("order_id", orderId)
+    .order("sequence", { ascending: true });
+  if (error) throw new Error(error.message);
+  return (data ?? []) as unknown as CourierStop[];
+}
+
+export async function fetchCourierParcels(orderId: string): Promise<CourierParcel[]> {
+  const { data, error } = await supabase
+    .from("courier_order_parcels" as never)
+    .select("id, pickup_stop_id, drop_stop_id, return_stop_id, status")
+    .eq("order_id", orderId);
+  if (error) throw new Error(error.message);
+  return (data ?? []) as unknown as CourierParcel[];
+}
+
+export async function fetchCourierCharges(orderId: string): Promise<CourierCharge[]> {
+  const { data, error } = await supabase
+    .from("courier_order_charges" as never)
+    .select("*")
+    .eq("order_id", orderId)
+    .order("created_at", { ascending: true });
+  if (error) throw new Error(error.message);
+  return (data ?? []) as unknown as CourierCharge[];
+}
+
+/** Order ids (of the given list) that have an unpaid return charge. */
+export async function fetchPendingReturnOrderIds(orderIds: string[]): Promise<string[]> {
+  if (!orderIds.length) return [];
+  const { data } = await supabase
+    .from("courier_order_charges" as never)
+    .select("order_id")
+    .in("order_id", orderIds)
+    .eq("status", "pending");
+  return Array.from(new Set(((data ?? []) as unknown as Array<{ order_id: string }>).map((r) => r.order_id)));
 }

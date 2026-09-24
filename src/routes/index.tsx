@@ -147,6 +147,10 @@ const CourierTrackingScreen = lazyNamed(
   () => import("@/components/courier/CourierTrackingScreen"),
   "CourierTrackingScreen",
 );
+const ContactParcelsScreen = lazyNamed(
+  () => import("@/components/courier/ContactParcels"),
+  "ContactParcelsScreen",
+);
 const StoreOrderTrackingScreen = lazyNamed(
   () => import("@/components/store/StoreOrderTrackingScreen"),
   "StoreOrderTrackingScreen",
@@ -244,6 +248,7 @@ type Phase =
   | "courier"
   | "courier-track"
   | "store-track"
+  | "parcels-for-you"
   | "not-serviceable";
 
 
@@ -290,6 +295,11 @@ function Index() {
   const [searchQuery, setSearchQuery] = useState("");
   const [courierOrderId, setCourierOrderId] = useState<string | null>(null);
   const [storeOrderId, setStoreOrderId] = useState<string | null>(null);
+  const [contactStopId, setContactStopId] = useState<string | null>(null);
+  const openContactParcels = useCallback((stopId?: string) => {
+    setContactStopId(stopId ?? null);
+    setPhase("parcels-for-you");
+  }, [setPhase]);
   // Where the parcel tracking screen was opened from, so Back returns there.
   const [courierTrackFrom, _setCourierTrackFrom] = useState<Phase>("home");
   const courierTrackFromRef = useRef<Phase>("home");
@@ -465,10 +475,13 @@ function Index() {
       profile: "profile",
       help: "help",
       support: "help",
+      "parcels-for-you": "parcels-for-you",
+      "/parcels-for-you": "parcels-for-you",
     };
     setPushNavigator((route, data) => {
       const phase = ROUTE_TO_PHASE[route];
       if (phase) {
+        if (phase === "parcels-for-you") setContactStopId(null);
         if (route === "offers") setRewardsTab("offers");
         else if (route === "rewards") setRewardsTab("rewards");
         setPhase(phase);
@@ -875,8 +888,18 @@ function Index() {
               setPhase("search-results");
             }}
             onOpenCourier={() => setPhase("courier")}
+            onOpenContactParcels={openContactParcels}
           />
 
+        </div>
+      )}
+      {phase === "parcels-for-you" && (
+        <div className="animate-fade-slide-in">
+          <ContactParcelsScreen
+            key={contactStopId ?? "list"}
+            initialStopId={contactStopId}
+            onBack={() => setPhase("home")}
+          />
         </div>
       )}
       {phase === "courier" && (
@@ -1206,6 +1229,7 @@ function Index() {
             onOpenHome={() => setPhase("home")}
             onOpenRewards={() => setPhase("rewards")}
             onOpenCourier={() => setPhase("courier")}
+            onOpenContactParcels={openContactParcels}
             onOpenStoreOrder={(id) => {
               setStoreOrderId(id);
               setPhase("store-track");

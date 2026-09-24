@@ -19,6 +19,7 @@ import {
 } from "@/lib/segments";
 import { ServiceProductCard } from "./home/ServiceProductCard";
 import { fetchCourierEnabled } from "./courier/courierData";
+import { ContactParcelsCard } from "./courier/ContactParcels";
 import { SectionHeading } from "./SectionHeading";
 import { BrandWatermark } from "./BrandWatermark";
 import { anchorPrice } from "@/lib/price";
@@ -155,6 +156,7 @@ export function HomeScreen({
   onOpenStoreOrder,
   onSearch,
   onOpenCourier,
+  onOpenContactParcels,
 }: {
   onBookService?: (service: BookServicePayload) => void;
   onQuickBook?: (service: BookServicePayload) => void;
@@ -164,6 +166,7 @@ export function HomeScreen({
   onOpenStoreOrder?: (orderId: string) => void;
   onSearch?: (query: string) => void;
   onOpenCourier?: () => void;
+  onOpenContactParcels?: (stopId?: string) => void;
 }) {
   const { data: courierEnabled = false } = useQuery({
     queryKey: ["courier_enabled"],
@@ -428,7 +431,7 @@ export function HomeScreen({
           </button>
         </form>
 
-
+        {onOpenContactParcels && <ContactParcelsCard onOpen={onOpenContactParcels} />}
 
         {/* Services bar (segment tabs) */}
         <ServicesBar

@@ -11,6 +11,14 @@ export function courierErrorMessage(error: unknown, fallback: string): string {
         : "";
   const message = raw.trim();
   if (!message) return fallback;
+  if (/DISTANCE_MISMATCH/i.test(message)) return "Route changed, please refresh the price.";
+  if (/SERVICE_CLOSED/i.test(message)) return "Parcel service is closed right now.";
+  if (/outside our delivery area|not serviceable|OUT_OF_ZONE/i.test(message)) {
+    return "One of the stops is outside our delivery area right now.";
+  }
+  if (/Maximum \d+ (pickups|drops) allowed/i.test(message)) {
+    return message.match(/Maximum \d+ (pickups|drops) allowed/i)![0] + ".";
+  }
 
   // Technical payloads: zod issue arrays, JSON blobs, SQL / stack text.
   const technical =

@@ -24,9 +24,12 @@ export function CourierLiveMap({
   status,
   pickup,
   drop,
+  fetchLocation,
 }: {
   orderId: string;
   status: string;
+  /** Optional custom rider-location source (e.g. contact view). */
+  fetchLocation?: () => ReturnType<typeof fetchRiderLocation>;
   pickup: { lat: number | null; lng: number | null; label: string };
   drop: { lat: number | null; lng: number | null; label: string };
 }) {
@@ -49,8 +52,8 @@ export function CourierLiveMap({
   const hasAny = hasPickup || hasDrop;
 
   const { data: rider } = useQuery({
-    queryKey: ["courier-rider-location", orderId],
-    queryFn: () => fetchRiderLocation(orderId),
+    queryKey: ["courier-rider-location", orderId, fetchLocation ? "contact" : "owner"],
+    queryFn: () => (fetchLocation ? fetchLocation() : fetchRiderLocation(orderId)),
     enabled: live,
     refetchInterval: 8000,
     refetchIntervalInBackground: false,
