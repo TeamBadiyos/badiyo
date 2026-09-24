@@ -4477,6 +4477,7 @@ export type Database = {
       }
       store_categories: {
         Row: {
+          icon: string | null
           icon_url: string | null
           id: string
           is_active: boolean
@@ -4484,8 +4485,11 @@ export type Database = {
           rank: number
           segment_id: string
           slug: string
+          sort_order: number
+          updated_at: string
         }
         Insert: {
+          icon?: string | null
           icon_url?: string | null
           id?: string
           is_active?: boolean
@@ -4493,8 +4497,11 @@ export type Database = {
           rank?: number
           segment_id: string
           slug: string
+          sort_order?: number
+          updated_at?: string
         }
         Update: {
+          icon?: string | null
           icon_url?: string | null
           id?: string
           is_active?: boolean
@@ -4502,6 +4509,8 @@ export type Database = {
           rank?: number
           segment_id?: string
           slug?: string
+          sort_order?: number
+          updated_at?: string
         }
         Relationships: [
           {
