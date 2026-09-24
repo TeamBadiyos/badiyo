@@ -39,7 +39,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthUser } from "@/lib/authUser";
-import { courierQuote, courierCreateOrder, courierConfirmPayment } from "@/lib/courier.functions";
+import { courierQuote, courierCreateOrder, courierConfirmPayment, courierGetRateLimits, courierPlanStops } from "@/lib/courier.functions";
+import { MultiStopSection, PlannedRoute, SourceChips, type DropSource, type ExtraStop } from "./MultiStopEditor";
 import { payWithRazorpay, toPaymentError } from "@/lib/razorpayCheckout";
 import { getPaymentPrefill } from "@/lib/paymentPrefill";
 import { paymentErrorKey } from "@/lib/paymentError";
@@ -66,10 +67,11 @@ type Quote = {
   gst_amount?: number;
   discount_amount?: number;
   distance_km?: number;
+  stops_fee?: number;
 };
 
 type Step = 1 | 2 | 3 | 4;
-type AddressTarget = "pickup" | "drop";
+type AddressTarget = string;
 
 /** Always show weights with two decimals, e.g. 1.00 */
 function formatWeight(value: string | number): string {
@@ -126,6 +128,11 @@ export function CourierBookingScreen({
   const [paying, setPaying] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [closedDialogState, setClosedDialogState] = useState<ServiceState | null>(null);
+  // Multi-stop (only used when the rate allows more than 1 pickup/drop).
+  const [extraPickups, setExtraPickups] = useState<ExtraStop[]>([]);
+  const [extraDrops, setExtraDrops] = useState<ExtraStop[]>([]);
+  const [dropSources, setDropSources] = useState<Record<string, DropSource | undefined>>({});
+  const [planned, setPlanned] = useState<Array<{ key: string; type: "pickup" | "drop" }> | null>(null);
 
   const { data: addresses = [] } = useQuery({ queryKey: ["addresses"], queryFn: fetchAddresses });
   const { data: profile } = useQuery({ queryKey: ["courier_profile"], queryFn: fetchCourierProfile });
@@ -159,6 +166,18 @@ export function CourierBookingScreen({
   const city = (pickup?.city || drop?.city || "").trim() || courierService?.city || "Latur";
   const selectedVehicle = vehicles.find((item) => item.id === vehicleId) ?? null;
   const selectedType = types.find((item) => item.id === typeId) ?? null;
+  const { data: limits } = useQuery({
+    queryKey: ["courier_rate_limits", city, vehicleId],
+    queryFn: () => courierGetRateLimits({ data: { city, vehicle_type_id: vehicleId as string } }),
+    enabled: Boolean(vehicleId && city),
+    staleTime: 5 * 60_000,
+  });
+  const maxPickups = limits?.max_pickups ?? 1;
+  const maxDrops = limits?.max_drops ?? 1;
+  const isMulti = extraPickups.length > 0 || extraDrops.length > 0;
+  const pickupCount = 1 + extraPickups.length;
+  const dropCount = 1 + extraDrops.length;
+  const overLimit = pickupCount > maxPickups || dropCount > maxDrops;
   const maxWeight = selectedVehicle?.max_weight_kg ? Number(selectedVehicle.max_weight_kg) : null;
 
   // Both stops must sit inside a zone mapped to the parcel service.
@@ -210,7 +229,22 @@ export function CourierBookingScreen({
       dropName.trim() &&
       validPhone(dropPhone),
   );
-  const parcelReady = Boolean(vehicleId && typeId && !weightError);
+  const allDropKeys = ["D1", ...extraDrops.map((d) => d.key)];
+  const sourcesOf = (key: string): string[] => {
+    if (pickupCount < 2) return ["P1"];
+    const v = dropSources[key];
+    if (v === "both") return ["P1", "P2"];
+    return v ? [v] : [];
+  };
+  const extrasReady = [...extraPickups, ...extraDrops].every(
+    (st) => st.addr?.latitude != null && st.addr.longitude != null && st.name.trim() && validPhone(st.phone),
+  );
+  const sourcesReady =
+    pickupCount < 2 ||
+    (allDropKeys.every((k) => sourcesOf(k).length > 0) &&
+      ["P1", "P2"].every((p) => allDropKeys.some((k) => sourcesOf(k).includes(p))));
+  const multiReady = !isMulti || (extrasReady && sourcesReady && !overLimit);
+  const parcelReady = Boolean(vehicleId && typeId && !weightError && !overLimit);
 
   const serviceMessage = (state: ServiceState): string => {
     const custom =
@@ -242,11 +276,54 @@ export function CourierBookingScreen({
     [city, vehicleId, typeId, pickup, drop, weight],
   );
 
+  // Every stop with its key, in the order the customer entered them.
+  const allStops = useMemo(() => {
+    const list: Array<{ key: string; type: "pickup" | "drop"; addr: Addr | null; name: string; phone: string }> = [
+      { key: "P1", type: "pickup", addr: pickup, name: pickupName, phone: pickupPhone },
+      ...extraPickups.map((st) => ({ key: st.key, type: "pickup" as const, addr: st.addr as Addr | null, name: st.name, phone: st.phone })),
+      { key: "D1", type: "drop", addr: drop, name: dropName, phone: dropPhone },
+      ...extraDrops.map((st) => ({ key: st.key, type: "drop" as const, addr: st.addr as Addr | null, name: st.name, phone: st.phone })),
+    ];
+    return list;
+  }, [pickup, drop, pickupName, pickupPhone, dropName, dropPhone, extraPickups, extraDrops]);
+
+  const nextKey = (prefix: "P" | "D", list: ExtraStop[]) => {
+    let n = 2;
+    while (list.some((st) => st.key === `${prefix}${n}`)) n++;
+    return `${prefix}${n}`;
+  };
+  );
+
   const getQuote = async () => {
     setErr(null);
     setQuoting(true);
     try {
-      setQuote((await courierQuote({ data: payload })) as Quote);
+      if (!isMulti) {
+        setPlanned(null);
+        setQuote((await courierQuote({ data: payload })) as Quote);
+      } else {
+        const order = await courierPlanStops({
+          data: {
+            stops: allStops.map((st) => ({
+              key: st.key,
+              type: st.type,
+              lat: Number(st.addr?.latitude ?? 0),
+              lng: Number(st.addr?.longitude ?? 0),
+            })),
+          },
+        });
+        setPlanned(order.map((o) => ({ key: o.key, type: o.type })));
+        setQuote(
+          (await courierQuote({
+            data: {
+              ...payload,
+              pickup_count: pickupCount,
+              drop_count: dropCount,
+              route: order.map((o) => ({ lat: o.lat, lng: o.lng })),
+            },
+          })) as Quote,
+        );
+      }
       setStep(4);
     } catch (error) {
       setErr(courierErrorMessage(error, t("courier.priceError")));
@@ -282,6 +359,31 @@ export function CourierBookingScreen({
           drop_contact_phone: dropPhone.replace(/\D/g, "").slice(-10),
           package_description: note.trim() || undefined,
           prohibited_items_confirmed: true as const,
+          ...(isMulti && planned
+            ? {
+                pickup_count: pickupCount,
+                drop_count: dropCount,
+                stops: planned.map((p) => {
+                  const st = allStops.find((x) => x.key === p.key)!;
+                  return {
+                    key: st.key,
+                    type: st.type,
+                    lat: Number(st.addr?.latitude ?? 0),
+                    lng: Number(st.addr?.longitude ?? 0),
+                    address: st.addr?.full_address ?? "",
+                    contact_name: st.name.trim(),
+                    contact_phone: st.phone.replace(/\D/g, "").slice(-10),
+                  };
+                }),
+                parcels: allDropKeys.flatMap((dk) =>
+                  sourcesOf(dk).map((pk) => ({
+                    pickup_key: pk,
+                    drop_key: dk,
+                    description: note.trim() || null,
+                  })),
+                ),
+              }
+            : {}),
         },
       });
       // Fully discounted parcel: nothing to pay, order is already confirmed.
@@ -345,7 +447,11 @@ export function CourierBookingScreen({
         onContinue={(address) => {
           const next = address as Addr;
           if (addressTarget === "pickup") setPickup(next);
-          else setDrop(next);
+          else if (addressTarget === "drop") setDrop(next);
+          else if (addressTarget.startsWith("P"))
+            setExtraPickups((list) => list.map((st) => (st.key === addressTarget ? { ...st, addr: next } : st)));
+          else setExtraDrops((list) => list.map((st) => (st.key === addressTarget ? { ...st, addr: next } : st)));
+          setQuote(null);
           setAddressTarget(null);
         }}
       />
@@ -435,6 +541,21 @@ export function CourierBookingScreen({
               onName={setPickupName}
               onPhone={setPickupPhone}
             />
+            {(maxPickups > 1 || extraPickups.length > 0) && (
+              <MultiStopSection
+                kind="pickup"
+                stops={extraPickups}
+                canAdd={pickupCount < Math.min(maxPickups, 2)}
+                fee={limits?.extra_pickup_fee ?? 0}
+                onAdd={() => setExtraPickups((l) => [...l, { key: nextKey("P", l), addr: null, name: "", phone: "" }])}
+                onRemove={(key) => {
+                  setExtraPickups((l) => l.filter((st) => st.key !== key));
+                  setDropSources({});
+                }}
+                onPickAddress={(key) => setAddressTarget(key)}
+                onChange={(key, patch) => setExtraPickups((l) => l.map((st) => (st.key === key ? { ...st, ...patch } : st)))}
+              />
+            )}
             <ContactFields
               title={t("courier.dropContact")}
               name={dropName}
@@ -442,7 +563,33 @@ export function CourierBookingScreen({
               onName={setDropName}
               onPhone={setDropPhone}
             />
-            <Button className="h-12 w-full text-base font-bold" disabled={!locationsReady} onClick={() => setStep(2)}>
+            {pickupCount > 1 && (
+              <div className="-mt-2">
+                <SourceChipsInline value={dropSources["D1"]} onChange={(v) => setDropSources((m) => ({ ...m, D1: v }))} />
+              </div>
+            )}
+            {(maxDrops > 1 || extraDrops.length > 0) && (
+              <MultiStopSection
+                kind="drop"
+                stops={extraDrops}
+                canAdd={dropCount < maxDrops}
+                fee={limits?.extra_drop_fee ?? 0}
+                onAdd={() => setExtraDrops((l) => [...l, { key: nextKey("D", l), addr: null, name: "", phone: "" }])}
+                onRemove={(key) => setExtraDrops((l) => l.filter((st) => st.key !== key))}
+                onPickAddress={(key) => setAddressTarget(key)}
+                onChange={(key, patch) => setExtraDrops((l) => l.map((st) => (st.key === key ? { ...st, ...patch } : st)))}
+                showSources={pickupCount > 1}
+                sources={dropSources}
+                onSource={(key, v) => setDropSources((m) => ({ ...m, [key]: v }))}
+              />
+            )}
+            {isMulti && extrasReady && !sourcesReady && (
+              <p className="rounded-lg bg-warning/10 p-3 text-xs font-semibold text-foreground">{t("courier.sourcesHint")}</p>
+            )}
+            {overLimit && (
+              <p className="rounded-lg bg-destructive/10 p-3 text-xs font-semibold text-destructive">{t("courier.tooManyStops")}</p>
+            )}
+            <Button className="h-12 w-full text-base font-bold" disabled={!locationsReady || !multiReady} onClick={() => setStep(2)}>
               {t("courier.continueBike")} <ChevronRight />
             </Button>
           </section>
@@ -610,6 +757,12 @@ export function CourierBookingScreen({
                 </div>
               </div>
               <div className="border-t border-border p-4"><RouteSummary pickup={pickup} drop={drop} onEdit={() => setStep(1)} embedded /></div>
+              {isMulti && planned && (
+                <div className="border-t border-border p-4">
+                  <p className="mb-2 text-xs font-bold text-muted-foreground">{t("courier.routeOrder")}</p>
+                  <PlannedRoute items={planned} />
+                </div>
+              )}
             </div>
             <div className="rounded-lg border border-border bg-card p-4">
               <div className="mb-3 flex items-center justify-between">
@@ -618,6 +771,7 @@ export function CourierBookingScreen({
               </div>
               <div className="space-y-2 text-sm">
                 <FareRow label={t("courier.deliveryCharge")} value={quote.base_amount} />
+                {Number(quote.stops_fee ?? 0) > 0 && <FareRow label={t("courier.extraStopsFee")} value={quote.stops_fee} />}
                 {!!quote.extra_fee && <FareRow label={t("courier.handling")} value={quote.extra_fee} />}
                 {!!quote.platform_fee && <FareRow label={t("courier.platformFee")} value={quote.platform_fee} />}
                 {!!quote.discount_amount && <FareRow label={t("courier.discount")} value={-Number(quote.discount_amount)} />}
@@ -731,4 +885,7 @@ function RouteSummary({ pickup, drop, onEdit, embedded = false }: { pickup: Addr
 
 function FareRow({ label, value }: { label: string; value?: number }) {
   return <div className="flex items-center justify-between text-muted-foreground"><span>{label}</span><span>₹{Number(value ?? 0).toFixed(2)}</span></div>;
+}
+function SourceChipsInline({ value, onChange }: { value?: DropSource; onChange: (v: DropSource) => void }) {
+  return <SourceChips value={value} onChange={onChange} />;
 }
