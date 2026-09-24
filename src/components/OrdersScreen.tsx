@@ -574,17 +574,29 @@ export function OrdersScreen({
                   </div>
                   <ParcelChips parcel={item.parcel} returnPending={pendingReturnIds.includes(item.parcel.id)} />
                   <div className="mt-3 flex items-center justify-between">
-                    <span className="text-sm font-bold text-primary">
-                      Rs {Number(item.parcel.total_amount ?? 0)}
-                    </span>
+                    <AmountButton
+                      amount={Number(item.parcel.total_amount ?? 0)}
+                      onOpen={() => setBill(parcelBill(item.parcel))}
+                    />
                     <span className="text-xs font-semibold text-primary">View details →</span>
                   </div>
-                </button>
+                </div>
               ),
             )
           )}
         </section>
       </div>
+
+      <BillSheet
+        open={!!bill}
+        onOpenChange={(v) => { if (!v) setBill(null); }}
+        title={bill?.title ?? "Bill details"}
+        subtitle={bill?.subtitle ?? null}
+        lines={bill?.lines ?? []}
+        total={bill?.total ?? 0}
+        note={bill?.note ?? null}
+      />
+
 
       <BottomNav
         activeKey="orders"
