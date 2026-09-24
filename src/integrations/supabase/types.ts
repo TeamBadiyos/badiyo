@@ -5788,6 +5788,10 @@ export type Database = {
         Args: { _accept: boolean; _offer_id: string }
         Returns: Json
       }
+      courier_order_clean_return: {
+        Args: { _order_id: string }
+        Returns: boolean
+      }
       courier_otp_key: { Args: never; Returns: string }
       courier_otp_owner_gate: {
         Args: { _order_id: string; _purpose: string }
