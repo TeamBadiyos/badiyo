@@ -45,7 +45,7 @@ export function StoreListView({
   const loading = isLoading || (ids.length > 0 && loadingPreviews);
 
   return (
-    <section className="mt-4 pb-20">
+    <section className="mt-4 pb-36">
       {loading ? (
         <div className="mt-8 flex justify-center">
           <Loader2 className="h-5 w-5 animate-spin text-primary" />
