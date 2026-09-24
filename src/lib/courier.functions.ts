@@ -17,6 +17,8 @@ const quoteSchema = z.object({
   coupon_code: z.string().max(40).optional(),
   pickup_count: z.number().int().min(1).max(20).optional(),
   drop_count: z.number().int().min(1).max(20).optional(),
+  // Multi-stop: every stop in the planned order (first pickup ... last drop).
+  route: z.array(latLng).min(2).max(40).optional(),
 });
 
 const createSchema = quoteSchema.extend({
@@ -103,6 +105,57 @@ async function routeDistanceKm(
   return { km: Math.round(straight * 1.3 * 100) / 100, source: "haversine" };
 }
 
+/** Road distance through every stop in order (Routes API waypoints). */
+async function multiRouteDistanceKm(
+  points: Array<{ lat: number; lng: number }>,
+): Promise<{ km: number; source: string }> {
+  if (points.length <= 2) return routeDistanceKm(points[0], points[points.length - 1]);
+  const key = process.env["GOOGLE_MAPS_API_KEY"];
+  const loc = (p: { lat: number; lng: number }) => ({
+    location: { latLng: { latitude: p.lat, longitude: p.lng } },
+  });
+  if (key) {
+    try {
+      const res = await fetch("https://routes.googleapis.com/directions/v2:computeRoutes", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Goog-Api-Key": key,
+          "X-Goog-FieldMask": "routes.distanceMeters",
+        },
+        body: JSON.stringify({
+          origin: loc(points[0]),
+          destination: loc(points[points.length - 1]),
+          intermediates: points.slice(1, -1).map(loc),
+          travelMode: "TWO_WHEELER",
+          routingPreference: "TRAFFIC_UNAWARE",
+        }),
+      });
+      if (res.ok) {
+        const json = (await res.json()) as { routes?: Array<{ distanceMeters?: number }> };
+        const meters = json.routes?.[0]?.distanceMeters;
+        if (typeof meters === "number" && meters > 0) {
+          return { km: Math.round((meters / 1000) * 100) / 100, source: "routes" };
+        }
+      }
+    } catch (err) {
+      console.error("[courier] multi-stop routes api failed", err);
+    }
+  }
+  let total = 0;
+  for (let i = 1; i < points.length; i++) {
+    const a = points[i - 1];
+    const b = points[i];
+    const dLat = ((b.lat - a.lat) * Math.PI) / 180;
+    const dLng = ((b.lng - a.lng) * Math.PI) / 180;
+    const h =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos((a.lat * Math.PI) / 180) * Math.cos((b.lat * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+    total += 2 * 6371 * Math.asin(Math.sqrt(h));
+  }
+  return { km: Math.round(total * 1.3 * 100) / 100, source: "haversine" };
+}
+
 function rpcError(message: string): never {
   throw new Error(message);
 }
@@ -166,10 +219,16 @@ export const courierQuote = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await assertWeightAllowed(supabaseAdmin, data.vehicle_type_id, data.weight_kg);
-    await assertInCourierZone(supabaseAdmin, data.pickup, "Pickup");
-    await assertInCourierZone(supabaseAdmin, data.drop, "Drop");
-    const { km, source } = await routeDistanceKm(data.pickup, data.drop);
-
+    const multi = data.route && data.route.length > 2 ? data.route : null;
+    if (multi) {
+      for (const point of multi) await assertInCourierZone(supabaseAdmin, point, "Pickup");
+    } else {
+      await assertInCourierZone(supabaseAdmin, data.pickup, "Pickup");
+      await assertInCourierZone(supabaseAdmin, data.drop, "Drop");
+    }
+    const { km, source } = multi
+      ? await multiRouteDistanceKm(multi)
+      : await routeDistanceKm(data.pickup, data.drop);
 
     const { data: quote, error } = await supabaseAdmin.rpc("courier_quote_internal" as never, {
       _customer_id: context.userId,
@@ -196,9 +255,19 @@ export const courierCreateOrder = createServerFn({ method: "POST" })
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await assertWeightAllowed(supabaseAdmin, data.vehicle_type_id, data.weight_kg);
-    await assertInCourierZone(supabaseAdmin, data.pickup, "Pickup");
-    await assertInCourierZone(supabaseAdmin, data.drop, "Drop");
-    const { km, source } = await routeDistanceKm(data.pickup, data.drop);
+    const stopPoints = (data.stops ?? [])
+      .map((st) => ({ lat: Number(st["lat"]), lng: Number(st["lng"]) }))
+      .filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lng));
+    const multi = data.stops && stopPoints.length > 2 ? stopPoints : null;
+    if (multi) {
+      for (const point of multi) await assertInCourierZone(supabaseAdmin, point, "Pickup");
+    } else {
+      await assertInCourierZone(supabaseAdmin, data.pickup, "Pickup");
+      await assertInCourierZone(supabaseAdmin, data.drop, "Drop");
+    }
+    const { km, source } = multi
+      ? await multiRouteDistanceKm(multi)
+      : await routeDistanceKm(data.pickup, data.drop);
 
     const { data: created, error } = await supabaseAdmin.rpc("courier_create_order" as never, {
       _customer_id: context.userId,
@@ -540,6 +609,58 @@ export const courierGetRiderLocationForStop = createServerFn({ method: "POST" })
       "courier_get_rider_location_for_stop" as never,
       { _stop_id: data.stop_id } as never,
     );
+    if (error) rpcError(error.message);
+    return out as unknown as Record<string, Json>;
+  });
+
+/** Regular-segment stop limits and extra-stop fees for a city + vehicle. */
+export const courierGetRateLimits = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) =>
+    z.object({ city: z.string().min(1).max(60), vehicle_type_id: z.string().uuid() }).parse(data),
+  )
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: rows } = await supabaseAdmin
+      .from("courier_vehicle_rates" as never)
+      .select("city, extra_pickup_fee, extra_drop_fee, max_pickups, max_drops")
+      .eq("vehicle_type_id", data.vehicle_type_id)
+      .eq("customer_segment", "regular")
+      .eq("is_active" as never, true as never);
+    const list = (rows ?? []) as unknown as Array<{
+      city: string;
+      extra_pickup_fee: number | null;
+      extra_drop_fee: number | null;
+      max_pickups: number | null;
+      max_drops: number | null;
+    }>;
+    const row = list.find((r) => r.city.trim().toLowerCase() === data.city.trim().toLowerCase());
+    return {
+      extra_pickup_fee: Number(row?.extra_pickup_fee ?? 0),
+      extra_drop_fee: Number(row?.extra_drop_fee ?? 0),
+      max_pickups: row ? (row.max_pickups == null ? 20 : Number(row.max_pickups)) : 1,
+      max_drops: row ? (row.max_drops == null ? 20 : Number(row.max_drops)) : 1,
+    };
+  });
+
+/** Change one stop's contact (same edit limits as today, enforced in the database). */
+export const courierUpdateStopContact = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) =>
+    z
+      .object({
+        stop_id: z.string().uuid(),
+        name: z.string().min(1).max(80),
+        phone: z.string().min(10).max(15),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: out, error } = await context.supabase.rpc("courier_update_stop_contact" as never, {
+      _stop_id: data.stop_id,
+      _name: data.name,
+      _phone: data.phone,
+    } as never);
     if (error) rpcError(error.message);
     return out as unknown as Record<string, Json>;
   });
