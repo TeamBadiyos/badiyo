@@ -17,7 +17,7 @@ import {
   confirmStorePayment,
   createStoreOrder,
   StoreOrderError,
-  useDeliveryQuote,
+  useStoreDeliveryQuote,
 } from "@/lib/storeOrders";
 import { getPaymentPrefill } from "@/lib/paymentPrefill";
 import { payWithRazorpay, PaymentCancelledError } from "@/lib/razorpayCheckout";
@@ -53,6 +53,8 @@ const ERROR_KEYS: Record<string, TranslationKey> = {
   product_unavailable: "store.errProduct",
   below_min_order: "store.errMinOrder",
   bad_address: "store.errAddress",
+  delivery_unavailable: "store.errDelivery",
+  delivery_too_far: "store.errDeliveryFar",
 };
 
 export function StoreCartScreen({
@@ -69,7 +71,6 @@ export function StoreCartScreen({
   const cart = useStoreCart();
   const queryClient = useQueryClient();
   const [addressId, setAddressId] = useState<string | null>(null);
-  const [mode, setMode] = useState<"cod" | "online">("cod");
   const [note, setNote] = useState("");
   const [placing, setPlacing] = useState(false);
 
@@ -84,9 +85,14 @@ export function StoreCartScreen({
   }, [addresses, addressId]);
 
   const itemsTotal = cart.total;
-  const { data: quote } = useDeliveryQuote(itemsTotal);
-  const fee = quote?.delivery_fee ?? 0;
+  const { data: quote, isLoading: quoteLoading } = useStoreDeliveryQuote(
+    cart.cart.merchantId,
+    addressId,
+  );
+  const quoteOk = quote?.ok === true;
+  const fee = quote && quote.ok ? quote.delivery_fee : 0;
   const payable = itemsTotal + fee;
+  const quoteError = quote && !quote.ok ? quote.code : null;
 
   const address = useMemo(
     () => addresses.find((a) => a.id === addressId) ?? null,
