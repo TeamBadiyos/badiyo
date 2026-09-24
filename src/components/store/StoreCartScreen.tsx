@@ -312,14 +312,32 @@ export function StoreCartScreen({
               )}
             </section>
 
+            {/* Note */}
+            <section className="mt-3">
+              <label className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                {t("store.noteLabel")}
+              </label>
+              <input
+                value={note}
+                onChange={(e) => setNote(e.target.value.slice(0, 200))}
+                placeholder={t("store.notePlaceholder")}
+                className="mt-1.5 w-full rounded-[14px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none focus:border-primary"
+              />
+            </section>
+
             {/* Bill */}
             <section className="mt-4 rounded-[18px] border border-border bg-card p-3.5 text-sm">
               <div className="flex justify-between text-muted-foreground">
                 <span>{t("store.itemsTotal")}</span>
                 <span className="font-semibold text-foreground">₹{itemsTotal.toFixed(0)}</span>
               </div>
-              <div className="mt-1.5 flex justify-between text-muted-foreground">
-                <span>{t("store.deliveryFee")}</span>
+              <div className="mt-2 flex items-start justify-between gap-3 text-muted-foreground">
+                <span className="min-w-0">
+                  {t("store.deliveryFee")}
+                  <span className="mt-0.5 block text-[11px] text-muted-foreground/80">
+                    {t("store.deliveryAuto")}
+                  </span>
+                </span>
                 <span className="font-semibold text-foreground">
                   {quoteLoading ? (
                     <Loader2 className="inline h-3.5 w-3.5 animate-spin" />
@@ -338,6 +356,17 @@ export function StoreCartScreen({
               <div className="mt-2.5 flex justify-between border-t border-border pt-2.5 text-base font-extrabold text-foreground">
                 <span>{t("store.toPay")}</span>
                 <span>₹{payable.toFixed(0)}</span>
+              </div>
+            </section>
+
+            {/* Secure payment badge */}
+            <section className="mt-3 flex items-start gap-2.5 rounded-[18px] border border-primary/25 bg-primary/5 px-3.5 py-3">
+              <ShieldCheck className="mt-0.5 h-4.5 w-4.5 shrink-0 text-primary" />
+              <div className="min-w-0">
+                <p className="text-[13px] font-extrabold text-primary">{t("store.securePay")}</p>
+                <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">
+                  {t("store.securePayNote")}
+                </p>
               </div>
             </section>
           </>
