@@ -478,13 +478,30 @@ export function CourierTrackingScreen({
               </div>
             </div>
           </div>)}
-          <div className={isMultiOrder ? "flex items-center justify-between text-sm" : "mt-4 flex items-center justify-between border-t border-border pt-3 text-sm"}>
-            <span className="text-muted-foreground">
+          <button
+            type="button"
+            onClick={() => setBillOpen(true)}
+            className={isMultiOrder ? "flex w-full items-center justify-between text-sm" : "mt-4 flex w-full items-center justify-between border-t border-border pt-3 text-sm"}
+          >
+            <span className="flex items-center gap-1.5 text-muted-foreground">
+              <ReceiptText className="h-4 w-4 text-primary" />
               {order.distance_km ? `${order.distance_km} km` : t("common.total")}
             </span>
-            <span className="font-bold">₹{Number(order.total_amount ?? 0).toFixed(2)}</span>
-          </div>
+            <span className="flex items-center gap-1 font-bold">
+              ₹{Number(order.total_amount ?? 0).toFixed(2)}
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            </span>
+          </button>
         </div>
+        <BillSheet
+          open={billOpen}
+          onOpenChange={setBillOpen}
+          title="Bill details"
+          subtitle={order.order_code ? `#${order.order_code}` : null}
+          lines={courierBillLines(order)}
+          total={Number(order.total_amount ?? 0)}
+          note={order.payment_status === "paid" ? "Paid online" : null}
+        />
 
         {canCancel && (
           <Button variant="outline" className="w-full" disabled={cancelling} onClick={cancelOrder}>
