@@ -29,12 +29,15 @@ export function splitProductName(name: string): { title: string; size: string | 
 export function ProductCard({
   product,
   store,
+  closed = false,
   onOpen,
   fluid = false,
 }: {
   product: PublicProduct;
   /** The shop this item belongs to — required for adding to the cart. */
   store?: { id: string; name: string | null };
+  /** Shop is shut right now — items can be browsed but not added. */
+  closed?: boolean;
   onOpen?: () => void;
   fluid?: boolean;
 }) {
@@ -51,6 +54,10 @@ export function ProductCard({
   const add = (e: React.MouseEvent) => {
     stop(e);
     void hapticImpact("light");
+    if (closed) {
+      toast(t("store.errStoreClosed"));
+      return;
+    }
     if (!store) {
       toast(t("store.orderingSoon"));
       return;

@@ -59,7 +59,7 @@ export function StoreRow({
       <div className="-mx-3 mt-3 snap-x snap-mandatory overflow-x-auto scroll-px-3 px-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <div className="flex w-max gap-2.5">
           {products.map((p) => (
-            <ProductCard key={p.id} product={p} store={closed ? undefined : storeRef} onOpen={onOpen} />
+            <ProductCard key={p.id} product={p} store={storeRef} closed={closed} onOpen={onOpen} />
           ))}
         </div>
       </div>
