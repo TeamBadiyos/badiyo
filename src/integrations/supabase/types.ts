@@ -5894,6 +5894,7 @@ export type Database = {
         Returns: undefined
       }
       merchant_ensure_draft: { Args: { _phone: string }; Returns: string }
+      merchant_get_order_rider: { Args: { _order_id: string }; Returns: Json }
       merchant_get_pickup_otp: { Args: { _order_id: string }; Returns: Json }
       merchant_has_login_pin: { Args: { p_phone: string }; Returns: boolean }
       merchant_is_currently_open: {
