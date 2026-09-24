@@ -108,37 +108,3 @@ export function StoreDetailScreen({
     </main>
   );
 }
-
-function ProductRow({ product }: { product: PublicProduct }) {
-  const t = useT();
-  const out = !product.in_stock;
-  const mrp = product.mrp != null && Number(product.mrp) > Number(product.price) ? product.mrp : null;
-
-  return (
-    <div
-      className={
-        "flex items-center gap-3 rounded-[18px] border border-border bg-card p-3 " +
-        (out ? "opacity-55" : "")
-      }
-    >
-      <StoreImage path={product.photo_url} alt={product.name} className="h-14 w-14 shrink-0" />
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-bold text-foreground">{product.name}</p>
-        {product.unit && (
-          <p className="mt-0.5 text-xs text-muted-foreground">{product.unit}</p>
-        )}
-        <div className="mt-1 flex items-baseline gap-2">
-          <span className="text-sm font-bold text-foreground">₹{Number(product.price)}</span>
-          {mrp && (
-            <span className="text-xs text-muted-foreground line-through">₹{Number(mrp)}</span>
-          )}
-        </div>
-      </div>
-      {out && (
-        <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold text-muted-foreground">
-          {t("store.outOfStock")}
-        </span>
-      )}
-    </div>
-  );
-}
