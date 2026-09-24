@@ -116,11 +116,13 @@ export function SourceChips({ value, onChange }: { value?: DropSource; onChange:
   return (
     <div className="mt-3">
       <p className="text-xs font-bold text-muted-foreground">{t("courier.parcelFrom")}</p>
-      <div className="mt-1.5 flex flex-wrap gap-2">
+      <div role="radiogroup" aria-label={t("courier.parcelFrom")} className="mt-1.5 flex flex-wrap gap-2">
         {opts.map((o) => (
           <button
             key={o.v}
             type="button"
+            role="radio"
+            aria-checked={value === o.v}
             onClick={() => onChange(o.v)}
             className={`rounded-full border px-3 py-1.5 text-xs font-bold ${value === o.v ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground"}`}
           >
