@@ -1,8 +1,20 @@
-import { Plus } from "lucide-react";
+import { useState } from "react";
+import { Minus, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useT } from "@/i18n";
 import { hapticImpact } from "@/lib/haptics";
 import { StoreImage } from "./StoreImage";
+import { useStoreCart } from "@/lib/storeCart";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import type { PublicProduct } from "@/lib/store";
 
 const SIZE_RE = /\s*\(([^)]+)\)\s*$/;
@@ -13,25 +25,49 @@ export function splitProductName(name: string): { title: string; size: string | 
   return { title: name.replace(SIZE_RE, "").trim() || name, size: m[1].trim() };
 }
 
-/** Fixed-size product card: name (1 line) · size · unit · price + Add. */
+/** Fixed-size product card: name (1 line) · size · unit · price + Add/stepper. */
 export function ProductCard({
   product,
+  store,
   onOpen,
   fluid = false,
 }: {
   product: PublicProduct;
+  /** The shop this item belongs to — required for adding to the cart. */
+  store?: { id: string; name: string | null };
   onOpen?: () => void;
   fluid?: boolean;
 }) {
   const t = useT();
+  const cart = useStoreCart();
+  const [askSwitch, setAskSwitch] = useState(false);
   const out = !product.in_stock;
   const { title, size } = splitProductName(product.name);
   const mrp = product.mrp != null && Number(product.mrp) > Number(product.price) ? Number(product.mrp) : null;
+  const qty = cart.quantityOf(product.id);
+
+  const stop = (e: React.MouseEvent) => e.stopPropagation();
 
   const add = (e: React.MouseEvent) => {
-    e.stopPropagation();
+    stop(e);
     void hapticImpact("light");
-    toast(t("store.orderingSoon"));
+    if (!store) {
+      toast(t("store.orderingSoon"));
+      return;
+    }
+    if (!cart.add(store, product)) setAskSwitch(true);
+  };
+
+  const dec = (e: React.MouseEvent) => {
+    stop(e);
+    void hapticImpact("light");
+    cart.setQuantity(product.id, qty - 1);
+  };
+
+  const inc = (e: React.MouseEvent) => {
+    stop(e);
+    void hapticImpact("light");
+    if (store) cart.add(store, product);
   };
 
   return (
@@ -63,6 +99,29 @@ export function ProductCard({
           <span className="shrink-0 rounded-full bg-muted px-2 py-1 text-[9px] font-bold text-muted-foreground">
             {t("store.outOfStock")}
           </span>
+        ) : qty > 0 ? (
+          <div
+            onClick={stop}
+            className="flex shrink-0 items-center gap-1 rounded-full bg-primary px-1 py-1 text-primary-foreground shadow-md"
+          >
+            <button
+              type="button"
+              onClick={dec}
+              aria-label="-"
+              className="flex h-5 w-5 items-center justify-center rounded-full active:scale-90"
+            >
+              <Minus className="h-3.5 w-3.5" strokeWidth={3} />
+            </button>
+            <span className="min-w-4 text-center text-[12px] font-extrabold tabular-nums">{qty}</span>
+            <button
+              type="button"
+              onClick={inc}
+              aria-label="+"
+              className="flex h-5 w-5 items-center justify-center rounded-full active:scale-90"
+            >
+              <Plus className="h-3.5 w-3.5" strokeWidth={3} />
+            </button>
+          </div>
         ) : (
           <button
             type="button"
@@ -74,6 +133,27 @@ export function ProductCard({
           </button>
         )}
       </div>
+
+      <AlertDialog open={askSwitch} onOpenChange={setAskSwitch}>
+        <AlertDialogContent onClick={stop} className="max-w-[320px] rounded-[18px]">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("store.switchTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("store.switchBody", { name: cart.cart.storeName ?? "" })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (store) cart.replaceWith(store, product);
+              }}
+            >
+              {t("store.switchConfirm")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
