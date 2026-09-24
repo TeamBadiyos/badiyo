@@ -1191,6 +1191,75 @@ export type Database = {
           },
         ]
       }
+      courier_order_charges: {
+        Row: {
+          amount: number
+          charge_type: string
+          created_at: string
+          distance_km: number
+          gst_amount: number
+          gst_percent: number
+          id: string
+          order_id: string
+          paid_at: string | null
+          parcel_id: string | null
+          razorpay_order_id: string | null
+          razorpay_payment_id: string | null
+          status: string
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          charge_type: string
+          created_at?: string
+          distance_km?: number
+          gst_amount?: number
+          gst_percent?: number
+          id?: string
+          order_id: string
+          paid_at?: string | null
+          parcel_id?: string | null
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          status?: string
+          total_amount: number
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          charge_type?: string
+          created_at?: string
+          distance_km?: number
+          gst_amount?: number
+          gst_percent?: number
+          id?: string
+          order_id?: string
+          paid_at?: string | null
+          parcel_id?: string | null
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          status?: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "courier_order_charges_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "courier_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "courier_order_charges_parcel_id_fkey"
+            columns: ["parcel_id"]
+            isOneToOne: false
+            referencedRelation: "courier_order_parcels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       courier_order_events: {
         Row: {
           actor_id: string | null
@@ -1228,6 +1297,71 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "courier_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      courier_order_parcels: {
+        Row: {
+          created_at: string
+          description: string | null
+          drop_stop_id: string
+          id: string
+          order_id: string
+          pickup_stop_id: string
+          return_stop_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          drop_stop_id: string
+          id?: string
+          order_id: string
+          pickup_stop_id: string
+          return_stop_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          drop_stop_id?: string
+          id?: string
+          order_id?: string
+          pickup_stop_id?: string
+          return_stop_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "courier_order_parcels_drop_stop_id_fkey"
+            columns: ["drop_stop_id"]
+            isOneToOne: false
+            referencedRelation: "courier_order_stops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "courier_order_parcels_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "courier_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "courier_order_parcels_pickup_stop_id_fkey"
+            columns: ["pickup_stop_id"]
+            isOneToOne: false
+            referencedRelation: "courier_order_stops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "courier_order_parcels_return_stop_id_fkey"
+            columns: ["return_stop_id"]
+            isOneToOne: false
+            referencedRelation: "courier_order_stops"
             referencedColumns: ["id"]
           },
         ]
@@ -1303,6 +1437,74 @@ export type Database = {
           },
         ]
       }
+      courier_order_stops: {
+        Row: {
+          address: string
+          arrived_at: string | null
+          completed_at: string | null
+          contact_edit_count: number
+          contact_name: string
+          contact_phone: string
+          created_at: string
+          fail_reason_code: string | null
+          failed_at: string | null
+          id: string
+          lat: number
+          lng: number
+          order_id: string
+          sequence: number
+          status: string
+          stop_type: string
+          updated_at: string
+        }
+        Insert: {
+          address: string
+          arrived_at?: string | null
+          completed_at?: string | null
+          contact_edit_count?: number
+          contact_name: string
+          contact_phone: string
+          created_at?: string
+          fail_reason_code?: string | null
+          failed_at?: string | null
+          id?: string
+          lat: number
+          lng: number
+          order_id: string
+          sequence: number
+          status?: string
+          stop_type: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          arrived_at?: string | null
+          completed_at?: string | null
+          contact_edit_count?: number
+          contact_name?: string
+          contact_phone?: string
+          created_at?: string
+          fail_reason_code?: string | null
+          failed_at?: string | null
+          id?: string
+          lat?: number
+          lng?: number
+          order_id?: string
+          sequence?: number
+          status?: string
+          stop_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "courier_order_stops_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "courier_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       courier_orders: {
         Row: {
           arrived_pickup_at: string | null
@@ -1330,6 +1532,7 @@ export type Database = {
           drop_contact_edit_count: number
           drop_contact_name: string
           drop_contact_phone: string
+          drop_count: number
           drop_lat: number
           drop_lng: number
           earnings_credited_at: string | null
@@ -1353,6 +1556,7 @@ export type Database = {
           pickup_contact_edit_count: number
           pickup_contact_name: string
           pickup_contact_phone: string
+          pickup_count: number
           pickup_lat: number
           pickup_lng: number
           platform_fee: number
@@ -1371,6 +1575,7 @@ export type Database = {
           search_started_at: string | null
           source: string
           status: string
+          stops_fee: number
           store_order_id: string | null
           total_amount: number
           updated_at: string
@@ -1404,6 +1609,7 @@ export type Database = {
           drop_contact_edit_count?: number
           drop_contact_name: string
           drop_contact_phone: string
+          drop_count?: number
           drop_lat: number
           drop_lng: number
           earnings_credited_at?: string | null
@@ -1427,6 +1633,7 @@ export type Database = {
           pickup_contact_edit_count?: number
           pickup_contact_name: string
           pickup_contact_phone: string
+          pickup_count?: number
           pickup_lat: number
           pickup_lng: number
           platform_fee?: number
@@ -1445,6 +1652,7 @@ export type Database = {
           search_started_at?: string | null
           source?: string
           status?: string
+          stops_fee?: number
           store_order_id?: string | null
           total_amount?: number
           updated_at?: string
@@ -1478,6 +1686,7 @@ export type Database = {
           drop_contact_edit_count?: number
           drop_contact_name?: string
           drop_contact_phone?: string
+          drop_count?: number
           drop_lat?: number
           drop_lng?: number
           earnings_credited_at?: string | null
@@ -1501,6 +1710,7 @@ export type Database = {
           pickup_contact_edit_count?: number
           pickup_contact_name?: string
           pickup_contact_phone?: string
+          pickup_count?: number
           pickup_lat?: number
           pickup_lng?: number
           platform_fee?: number
@@ -1519,6 +1729,7 @@ export type Database = {
           search_started_at?: string | null
           source?: string
           status?: string
+          stops_fee?: number
           store_order_id?: string | null
           total_amount?: number
           updated_at?: string
@@ -1588,6 +1799,56 @@ export type Database = {
           id?: string
         }
         Relationships: []
+      }
+      courier_stop_secrets: {
+        Row: {
+          attempts: number
+          created_at: string
+          last_sent_at: string | null
+          locked_until: string | null
+          otp_expires_at: string | null
+          otp_hash: string | null
+          otp_issued_at: string | null
+          send_count: number
+          stop_id: string
+          updated_at: string
+          verified_at: string | null
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          last_sent_at?: string | null
+          locked_until?: string | null
+          otp_expires_at?: string | null
+          otp_hash?: string | null
+          otp_issued_at?: string | null
+          send_count?: number
+          stop_id: string
+          updated_at?: string
+          verified_at?: string | null
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          last_sent_at?: string | null
+          locked_until?: string | null
+          otp_expires_at?: string | null
+          otp_hash?: string | null
+          otp_issued_at?: string | null
+          send_count?: number
+          stop_id?: string
+          updated_at?: string
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "courier_stop_secrets_stop_id_fkey"
+            columns: ["stop_id"]
+            isOneToOne: true
+            referencedRelation: "courier_order_stops"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       courier_types: {
         Row: {
@@ -1670,12 +1931,17 @@ export type Database = {
           city: string
           commission_pct: number
           created_at: string
+          extra_drop_fee: number
+          extra_pickup_fee: number
           id: string
           included_km: number
           is_placeholder: boolean
+          max_drops: number
+          max_pickups: number
           min_fare: number
           per_km: number
           platform_fee: number
+          return_per_km: number
           updated_at: string
           vehicle_type_id: string
         }
@@ -1684,12 +1950,17 @@ export type Database = {
           city: string
           commission_pct?: number
           created_at?: string
+          extra_drop_fee?: number
+          extra_pickup_fee?: number
           id?: string
           included_km?: number
           is_placeholder?: boolean
+          max_drops?: number
+          max_pickups?: number
           min_fare?: number
           per_km?: number
           platform_fee?: number
+          return_per_km?: number
           updated_at?: string
           vehicle_type_id: string
         }
@@ -1698,12 +1969,17 @@ export type Database = {
           city?: string
           commission_pct?: number
           created_at?: string
+          extra_drop_fee?: number
+          extra_pickup_fee?: number
           id?: string
           included_km?: number
           is_placeholder?: boolean
+          max_drops?: number
+          max_pickups?: number
           min_fare?: number
           per_km?: number
           platform_fee?: number
+          return_per_km?: number
           updated_at?: string
           vehicle_type_id?: string
         }
@@ -5447,6 +5723,7 @@ export type Database = {
         Args: { _d: string; _slot: string }
         Returns: string
       }
+      courier_can_read_order: { Args: { _order_id: string }; Returns: boolean }
       courier_cancel_order: {
         Args: { _order_id: string; _reason?: string }
         Returns: Json
@@ -5531,6 +5808,7 @@ export type Database = {
           drop_contact_edit_count: number
           drop_contact_name: string
           drop_contact_phone: string
+          drop_count: number
           drop_lat: number
           drop_lng: number
           earnings_credited_at: string | null
@@ -5554,6 +5832,7 @@ export type Database = {
           pickup_contact_edit_count: number
           pickup_contact_name: string
           pickup_contact_phone: string
+          pickup_count: number
           pickup_lat: number
           pickup_lng: number
           platform_fee: number
@@ -5572,6 +5851,7 @@ export type Database = {
           search_started_at: string | null
           source: string
           status: string
+          stops_fee: number
           store_order_id: string | null
           total_amount: number
           updated_at: string
