@@ -374,6 +374,7 @@ export const en = {
   "store.orderingSoon": "Ordering starts soon",
   "store.emptyStores": "No stores in your area yet",
   "store.emptyItems": "This store has no items yet",
+  "store.newStore": "New",
 } as const;
 
 export type TranslationKey = keyof typeof en;

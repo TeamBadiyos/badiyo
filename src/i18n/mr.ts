@@ -372,4 +372,5 @@ export const mr: Partial<Record<keyof typeof en, string>> = {
   "store.orderingSoon": "ऑर्डर लवकरच सुरू होईल",
   "store.emptyStores": "तुमच्या भागात अजून दुकाने नाहीत",
   "store.emptyItems": "या दुकानात अजून वस्तू नाहीत",
+  "store.newStore": "नवीन",
 };
