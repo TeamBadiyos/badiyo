@@ -6849,6 +6849,7 @@ export type Database = {
       }
       store_delivery_quote: { Args: { _items_total: number }; Returns: Json }
       store_dispatch_refund_job: { Args: never; Returns: undefined }
+      store_expire_unpaid: { Args: never; Returns: number }
       store_get_delivery_otp: { Args: { _order_id: string }; Returns: Json }
       store_is_open_now: { Args: { _merchant_id: string }; Returns: boolean }
       store_mark_refund: {
