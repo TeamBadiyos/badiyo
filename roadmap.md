@@ -42,3 +42,9 @@ drop table if exists public.courier_vehicle_courier_types, public.courier_vehicl
 - [x] Replace parcel straight line with a throttled Google road route to the current stage destination
 - [x] Add road route from the assigned expert to the home-service address
 - [x] Replace generic live dots with dedicated 3D courier/Auto Care and woman Home Care markers
+
+## Multi-stop courier Marathi — DONE
+
+- [x] Translate the stops timeline, OTP sharing, contact editing, return charges, final states, and order chips
+- [x] Translate the “Parcels for you” list and detail screens
+- [x] Send the stop-contact push in the recipient's saved English or Marathi language without including the OTP
