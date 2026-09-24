@@ -59,15 +59,14 @@ export async function fetchPublicStores(): Promise<PublicStore[]> {
   return (data ?? []) as PublicStore[];
 }
 
-/** How far from the customer a shop may be before it is hidden. */
+/**
+ * How far from the customer a shop may be before it is hidden.
+ * `ops_settings` is staff-only, so this comes through a read-only RPC.
+ */
 export async function fetchStoreRadiusKm(): Promise<number> {
-  const { data, error } = await supabase
-    .from("ops_settings")
-    .select("value")
-    .eq("key", "store_max_radius_km")
-    .maybeSingle();
-  if (error || data?.value == null) return DEFAULT_STORE_RADIUS_KM;
-  const km = Number(data.value);
+  const { data, error } = await supabase.rpc("store_max_radius_km");
+  if (error || data == null) return DEFAULT_STORE_RADIUS_KM;
+  const km = Number(data);
   return Number.isFinite(km) && km > 0 ? km : DEFAULT_STORE_RADIUS_KM;
 }
 
