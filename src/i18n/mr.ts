@@ -37,6 +37,17 @@ export const mr: Partial<Record<keyof typeof en, string>> = {
   "nav.rewards": "बक्षिसे",
 
   // ── Courier ──────────────────────────────────────────────
+  "courier.pickupN": "पिकअप {n}",
+  "courier.dropN": "ड्रॉप {n}",
+  "courier.removeStop": "काढा",
+  "courier.addPickup": "पिकअप जोडा",
+  "courier.addDrop": "ड्रॉप जोडा",
+  "courier.parcelFrom": "पार्सल कुठून:",
+  "courier.bothPickups": "दोन्ही",
+  "courier.sourcesHint": "प्रत्येक ड्रॉपचे पार्सल कुठून येते ते निवडा. प्रत्येक पिकअप किमान एका ड्रॉपला जायला हवा.",
+  "courier.tooManyStops": "या वाहनासाठी कमी स्टॉप चालतात. कृपया एक स्टॉप काढा.",
+  "courier.routeOrder": "मार्गाचा क्रम",
+  "courier.extraStopsFee": "अतिरिक्त स्टॉप शुल्क",
   "courier.title": "पार्सल पाठवा",
   "courier.subtitle": "लातूरमध्ये जलद स्थानिक डिलिव्हरी",
   "courier.progress": "बुकिंगची प्रगती",
