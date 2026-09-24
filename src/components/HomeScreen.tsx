@@ -491,9 +491,9 @@ export function HomeScreen({
 }
 
 /**
- * A segment's dedicated page. Only CATEGORY_FIRST is implemented today (the
- * existing Home Cleaning booking list); STORE_FIRST / SEARCH_FIRST can be
- * added as extra branches without touching the rest of Home.
+ * A segment's dedicated page. CATEGORY_FIRST is the existing Home Cleaning
+ * booking list; STORE_FIRST is the read-only shop browser, gated behind the
+ * store service flag (or the internal-tester list).
  */
 function SegmentView({
   segment,
@@ -504,6 +504,9 @@ function SegmentView({
   onOpenTask,
   availability,
   statusBadge,
+  storeUnlocked,
+  storeCoords,
+  onOpenStore,
 }: {
   segment: Segment;
   categories: ServiceCategory[];
@@ -513,8 +516,16 @@ function SegmentView({
   onOpenTask: () => void;
   availability?: AvailabilityMap;
   statusBadge?: string | null;
+  storeUnlocked?: boolean;
+  storeCoords?: { lat: number; lng: number } | null;
+  onOpenStore?: (store: PublicStore) => void;
 }) {
   const t = useT();
+
+  if (segment.display_template === "STORE_FIRST" && storeUnlocked) {
+    return <StoreListView coords={storeCoords ?? null} onOpenStore={(s) => onOpenStore?.(s)} />;
+  }
+
   if (segment.display_template !== "CATEGORY_FIRST") {
     return (
       <div className="mt-8 rounded-[18px] border border-dashed border-border bg-card px-6 py-12 text-center">
