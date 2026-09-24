@@ -5775,6 +5775,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      courier_mark_charge_paid: {
+        Args: { _payment_id: string; _razorpay_order_id: string }
+        Returns: boolean
+      }
       courier_mark_refund_pending: {
         Args: { _amount: number; _order_id: string; _reason: string }
         Returns: undefined
@@ -5886,6 +5890,10 @@ export type Database = {
         }
         Returns: Json
       }
+      courier_recompute_order_progress: {
+        Args: { _order_id: string }
+        Returns: Json
+      }
       courier_refresh_otp: {
         Args: { _order_id: string; _purpose: string }
         Returns: Json
@@ -5925,6 +5933,15 @@ export type Database = {
       }
       courier_rider_cancel: {
         Args: { _order_id: string; _reason: string }
+        Returns: Json
+      }
+      courier_rider_fail_stop: {
+        Args: {
+          _notes?: string
+          _reason_code: string
+          _return_distances?: Json
+          _stop_id: string
+        }
         Returns: Json
       }
       courier_rider_offers: { Args: never; Returns: Json }
@@ -6608,6 +6625,10 @@ export type Database = {
           _sort_order: number
         }
         Returns: string
+      }
+      staff_courier_waive_charge: {
+        Args: { _charge_id: string; _reason: string }
+        Returns: Json
       }
       staff_create_service_catalogue_row: {
         Args: { _payload: Json }
