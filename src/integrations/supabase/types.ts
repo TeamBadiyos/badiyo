@@ -6668,6 +6668,7 @@ export type Database = {
       staff_zone_ids: { Args: { _auth_user_id: string }; Returns: string[] }
       start_service: { Args: { _booking_id: string }; Returns: string }
       store_is_open_now: { Args: { _merchant_id: string }; Returns: boolean }
+      store_max_radius_km: { Args: never; Returns: number }
       submit_booking_review: {
         Args: { _booking_id: string; _rating: number; _review: string }
         Returns: undefined
