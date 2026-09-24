@@ -25,6 +25,9 @@ import { anchorPrice } from "@/lib/price";
 import { useLanguage, useT } from "@/i18n";
 import { toast } from "sonner";
 import { formatNextOpen, useServiceState } from "@/lib/serviceHours";
+import { useIsInternalTester, type PublicStore } from "@/lib/store";
+import { StoreListView } from "./store/StoreListView";
+import { StoreDetailScreen } from "./store/StoreDetailScreen";
 import type { TranslationKey } from "@/i18n/en";
 
 import expertHouse from "@/assets/expert-house-cleaning.jpg";
@@ -187,6 +190,34 @@ export function HomeScreen({
   const { lang } = useLanguage();
   const { data: cleanState } = useServiceState("clean");
 
+  // Store is behind a flag: live for everyone, or visible to internal testers.
+  const { data: storeState } = useServiceState("store");
+  const { data: isTester = false } = useIsInternalTester();
+  const storeUnlocked = storeState?.status === "live" || isTester;
+  const [openStore, setOpenStore] = useState<PublicStore | null>(null);
+
+  /** Customer coordinates used to sort shops nearest-first. */
+  const { data: homeCoords = null } = useQuery({
+    queryKey: ["home_default_coords"],
+    staleTime: 5 * 60_000,
+    queryFn: async (): Promise<{ lat: number; lng: number } | null> => {
+      const { data: userData } = await getAuthUser();
+      const uid = userData.user?.id;
+      if (!uid) return null;
+      const { data } = await supabase
+        .from("addresses")
+        .select("latitude, longitude")
+        .eq("user_id", uid)
+        .not("latitude", "is", null)
+        .order("is_default", { ascending: false })
+        .order("created_at", { ascending: false })
+        .limit(1);
+      const row = data?.[0];
+      if (!row?.latitude || !row?.longitude) return null;
+      return { lat: Number(row.latitude), lng: Number(row.longitude) };
+    },
+  });
+
   /** Short ribbon copy shown in each tile corner when the service isn't orderable. */
   const statusBadge = ((): string | null => {
     if (!cleanState || cleanState.can_order) return null;
@@ -290,6 +321,10 @@ export function HomeScreen({
     if (tileService) guardedBookService(toPayload(tileService, cleanSegment));
   };
 
+  if (openStore) {
+    return <StoreDetailScreen store={openStore} onBack={() => setOpenStore(null)} />;
+  }
+
   return (
     <main className="min-h-screen w-full bg-background pb-28 momentum-scroll">
       <PullToRefreshIndicator pull={pull} refreshing={refreshing} />
@@ -366,6 +401,9 @@ export function HomeScreen({
           onOpenTask={bookTileService}
           availability={availability}
           statusBadge={statusBadge}
+          storeUnlocked={storeUnlocked}
+          storeCoords={homeCoords}
+          onOpenStore={setOpenStore}
         />
         ) : (
           <div className="mt-2">
@@ -453,9 +491,9 @@ export function HomeScreen({
 }
 
 /**
- * A segment's dedicated page. Only CATEGORY_FIRST is implemented today (the
- * existing Home Cleaning booking list); STORE_FIRST / SEARCH_FIRST can be
- * added as extra branches without touching the rest of Home.
+ * A segment's dedicated page. CATEGORY_FIRST is the existing Home Cleaning
+ * booking list; STORE_FIRST is the read-only shop browser, gated behind the
+ * store service flag (or the internal-tester list).
  */
 function SegmentView({
   segment,
@@ -466,6 +504,9 @@ function SegmentView({
   onOpenTask,
   availability,
   statusBadge,
+  storeUnlocked,
+  storeCoords,
+  onOpenStore,
 }: {
   segment: Segment;
   categories: ServiceCategory[];
@@ -475,8 +516,16 @@ function SegmentView({
   onOpenTask: () => void;
   availability?: AvailabilityMap;
   statusBadge?: string | null;
+  storeUnlocked?: boolean;
+  storeCoords?: { lat: number; lng: number } | null;
+  onOpenStore?: (store: PublicStore) => void;
 }) {
   const t = useT();
+
+  if (segment.display_template === "STORE_FIRST" && storeUnlocked) {
+    return <StoreListView coords={storeCoords ?? null} onOpenStore={(s) => onOpenStore?.(s)} />;
+  }
+
   if (segment.display_template !== "CATEGORY_FIRST") {
     return (
       <div className="mt-8 rounded-[18px] border border-dashed border-border bg-card px-6 py-12 text-center">

@@ -362,4 +362,14 @@ export const mr: Partial<Record<keyof typeof en, string>> = {
   "update.later": "नंतर",
   "update.hardTitle": "अपडेट आवश्यक आहे",
   "update.hardBody": "badiyos ची नवीन आवृत्ती उपलब्ध आहे. पुढे जाण्यासाठी अपडेट करा.",
+
+  // ── Store ────────────────────────────────────────────────
+  "store.allCategories": "सर्व",
+  "store.nearbyTitle": "जवळची दुकाने",
+  "store.open": "सुरू",
+  "store.closed": "बंद",
+  "store.outOfStock": "स्टॉक संपला",
+  "store.orderingSoon": "ऑर्डर लवकरच सुरू होईल",
+  "store.emptyStores": "तुमच्या भागात अजून दुकाने नाहीत",
+  "store.emptyItems": "या दुकानात अजून वस्तू नाहीत",
 };
