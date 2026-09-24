@@ -843,38 +843,6 @@ export function CourierBookingScreen({
   );
 }
 
-function AddressStop({ kind, address, onClick }: { kind: AddressTarget; address: Addr | null; onClick: () => void }) {
-  const t = useT();
-  const pickup = kind === "pickup";
-  return (
-    <Button type="button" variant="ghost" onClick={onClick} className="grid h-auto w-full grid-cols-[36px_minmax(0,1fr)_auto] items-center gap-3 whitespace-normal rounded-none px-4 py-4 text-left">
-      <span className={`grid h-9 w-9 place-items-center rounded-full ${pickup ? "bg-primary text-primary-foreground" : "bg-destructive text-destructive-foreground"}`}>
-        {pickup ? <RouteIcon className="h-4 w-4" /> : <MapPinned className="h-4 w-4" />}
-      </span>
-      <span className="min-w-0">
-        <span className="block text-xs font-bold text-muted-foreground">{pickup ? t("courier.pickupFrom") : t("courier.deliverTo")}</span>
-        <span className={`mt-0.5 block truncate text-sm font-extrabold ${address ? "text-foreground" : "text-primary"}`}>{address?.label || (pickup ? t("courier.choosePickup") : t("courier.chooseDrop"))}</span>
-        {address && <span className="mt-0.5 block line-clamp-1 text-xs font-normal text-muted-foreground">{address.full_address}</span>}
-      </span>
-      {address ? <Pencil className="h-4 w-4 text-primary" /> : <Plus className="h-5 w-5 text-primary" />}
-    </Button>
-  );
-}
-
-function ContactFields({ title, name, phone, onName, onPhone }: { title: string; name: string; phone: string; onName: (value: string) => void; onPhone: (value: string) => void }) {
-  const t = useT();
-  return (
-    <div>
-      <div className="mb-2">
-        <h3 className="text-sm font-extrabold text-foreground">{title}</h3>
-      </div>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div className="relative"><UserRound className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" /><Input value={name} onChange={(event) => onName(event.target.value)} placeholder={t("courier.contactName")} className="h-12 pl-10" /></div>
-        <div className="relative"><Phone className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" /><Input inputMode="numeric" value={phone} onChange={(event) => onPhone(event.target.value.replace(/\D/g, "").slice(0, 10))} placeholder={t("courier.mobileNumber")} className="h-12 pl-10" /></div>
-      </div>
-    </div>
-  );
-}
 
 function RouteSummary({ pickup, drop, onEdit, embedded = false }: { pickup: Addr | null; drop: Addr | null; onEdit: () => void; embedded?: boolean }) {
   const t = useT();
@@ -893,7 +861,4 @@ function RouteSummary({ pickup, drop, onEdit, embedded = false }: { pickup: Addr
 
 function FareRow({ label, value }: { label: string; value?: number }) {
   return <div className="flex items-center justify-between text-muted-foreground"><span>{label}</span><span>₹{Number(value ?? 0).toFixed(2)}</span></div>;
-}
-function SourceChipsInline({ value, onChange }: { value?: DropSource; onChange: (v: DropSource) => void }) {
-  return <SourceChips value={value} onChange={onChange} />;
 }
