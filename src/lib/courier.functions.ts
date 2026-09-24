@@ -625,8 +625,7 @@ export const courierGetRateLimits = createServerFn({ method: "POST" })
       .from("courier_vehicle_rates" as never)
       .select("city, extra_pickup_fee, extra_drop_fee, max_pickups, max_drops")
       .eq("vehicle_type_id", data.vehicle_type_id)
-      .eq("customer_segment", "regular")
-      .eq("is_active" as never, true as never);
+      .eq("customer_segment", "regular");
     const list = (rows ?? []) as unknown as Array<{
       city: string;
       extra_pickup_fee: number | null;
