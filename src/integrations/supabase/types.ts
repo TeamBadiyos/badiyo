@@ -1931,13 +1931,14 @@ export type Database = {
           city: string
           commission_pct: number
           created_at: string
+          customer_segment: string
           extra_drop_fee: number
           extra_pickup_fee: number
           id: string
           included_km: number
           is_placeholder: boolean
-          max_drops: number
-          max_pickups: number
+          max_drops: number | null
+          max_pickups: number | null
           min_fare: number
           per_km: number
           platform_fee: number
@@ -1950,13 +1951,14 @@ export type Database = {
           city: string
           commission_pct?: number
           created_at?: string
+          customer_segment?: string
           extra_drop_fee?: number
           extra_pickup_fee?: number
           id?: string
           included_km?: number
           is_placeholder?: boolean
-          max_drops?: number
-          max_pickups?: number
+          max_drops?: number | null
+          max_pickups?: number | null
           min_fare?: number
           per_km?: number
           platform_fee?: number
@@ -1969,13 +1971,14 @@ export type Database = {
           city?: string
           commission_pct?: number
           created_at?: string
+          customer_segment?: string
           extra_drop_fee?: number
           extra_pickup_fee?: number
           id?: string
           included_km?: number
           is_placeholder?: boolean
-          max_drops?: number
-          max_pickups?: number
+          max_drops?: number | null
+          max_pickups?: number | null
           min_fare?: number
           per_km?: number
           platform_fee?: number
