@@ -7,9 +7,11 @@ import { BottomNav } from "./BottomNav";
 import {
   fetchCourierEnabled,
   fetchMyCourierOrders,
+  fetchPendingReturnOrderIds,
   COURIER_ACTIVE_STATUSES,
   type CourierOrder,
 } from "./courier/courierData";
+import { ContactParcelsCard } from "./courier/ContactParcels";
 import { useBookingsLive } from "@/lib/useBookingsLive";
 import {
   fetchMyStoreOrders,
@@ -189,6 +191,7 @@ export function OrdersScreen({
   onOpenBooking,
   onOpenCourier,
   onOpenCourierOrder,
+  onOpenContactParcels,
   onOpenStoreOrder,
 }: {
   onOpenHome: () => void;
@@ -196,6 +199,7 @@ export function OrdersScreen({
   onOpenBooking: (b: BookingRow) => void;
   onOpenCourier?: () => void;
   onOpenCourierOrder?: (orderId: string) => void;
+  onOpenContactParcels?: (stopId?: string) => void;
   onOpenStoreOrder?: (orderId: string) => void;
 }) {
   const { data: courierEnabled = false } = useQuery({
@@ -220,6 +224,13 @@ export function OrdersScreen({
     refetchOnMount: "always",
     refetchInterval: 15_000,
     refetchIntervalInBackground: false,
+  });
+  const parcelIds = parcels.map((p) => p.id);
+  const { data: pendingReturnIds = [] } = useQuery({
+    queryKey: ["courier-pending-returns", parcelIds.join(",")],
+    queryFn: () => fetchPendingReturnOrderIds(parcelIds),
+    enabled: parcelIds.length > 0,
+    refetchInterval: 30_000,
   });
   const { data: storeOrders = [], isLoading: storeLoading } = useQuery({
     queryKey: ["my-store-orders"],
@@ -284,6 +295,7 @@ export function OrdersScreen({
         <p className="mt-1 text-sm text-muted-foreground">
           Track your active orders and view past ones.
         </p>
+        {onOpenContactParcels && <ContactParcelsCard onOpen={onOpenContactParcels} />}
 
         {/* Active orders */}
         {active.length > 0 && (
@@ -365,6 +377,7 @@ export function OrdersScreen({
                       {item.parcel.pickup_address} → {item.parcel.drop_address}
                     </span>
                   </div>
+                  <ParcelChips parcel={item.parcel} returnPending={pendingReturnIds.includes(item.parcel.id)} />
                   <button
                     onClick={() => openParcel(item.parcel)}
                     className="mt-4 w-full rounded-[14px] bg-primary py-3 text-sm font-bold text-primary-foreground shadow-sm transition active:scale-[0.99]"
@@ -486,6 +499,7 @@ export function OrdersScreen({
                       {item.parcel.pickup_address} → {item.parcel.drop_address}
                     </span>
                   </div>
+                  <ParcelChips parcel={item.parcel} returnPending={pendingReturnIds.includes(item.parcel.id)} />
                   <div className="mt-3 flex items-center justify-between">
                     <span className="text-sm font-bold text-primary">
                       Rs {Number(item.parcel.total_amount ?? 0)}
@@ -508,5 +522,26 @@ export function OrdersScreen({
         showParcel={courierEnabled}
       />
     </main>
+  );
+}
+
+function ParcelChips({ parcel, returnPending }: { parcel: CourierOrder; returnPending: boolean }) {
+  const p = Number(parcel.pickup_count ?? 1);
+  const d = Number(parcel.drop_count ?? 1);
+  const multi = p > 1 || d > 1;
+  if (!multi && !returnPending) return null;
+  return (
+    <div className="mt-2 flex flex-wrap gap-1.5">
+      {multi && (
+        <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold text-foreground">
+          {p} {p === 1 ? "pickup" : "pickups"} · {d} {d === 1 ? "drop" : "drops"}
+        </span>
+      )}
+      {returnPending && (
+        <span className="rounded-full bg-warning/15 px-2 py-0.5 text-[11px] font-bold text-warning">
+          Return payment pending
+        </span>
+      )}
+    </div>
   );
 }

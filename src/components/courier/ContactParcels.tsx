@@ -244,8 +244,16 @@ function ContactParcelDetail({ stopId, onBack }: { stopId: string; onBack: () =>
                 <CourierLiveMap
                   orderId={`contact-${stopId}`}
                   status={data.order_status}
-                  pickup={{ lat: null, lng: null, label: "" }}
-                  drop={{ lat: data.stop.lat, lng: data.stop.lng, label: data.stop.address ?? "" }}
+                  pickup={
+                    data.stop.stop_type === "pickup"
+                      ? { lat: data.stop.lat, lng: data.stop.lng, label: data.stop.address ?? "" }
+                      : { lat: null, lng: null, label: "" }
+                  }
+                  drop={
+                    data.stop.stop_type === "pickup"
+                      ? { lat: null, lng: null, label: "" }
+                      : { lat: data.stop.lat, lng: data.stop.lng, label: data.stop.address ?? "" }
+                  }
                   fetchLocation={async () =>
                     (await courierGetRiderLocationForStop({ data: { stop_id: stopId } })) as unknown as RiderLocation
                   }
