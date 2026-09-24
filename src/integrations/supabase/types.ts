@@ -1342,6 +1342,7 @@ export type Database = {
           incident_code: string | null
           incident_notes: string | null
           incident_resolution: string | null
+          merchant_order_id: string | null
           needs_ops_attention: boolean
           order_code: string
           otp_attempts: number
@@ -1368,6 +1369,7 @@ export type Database = {
           refund_status: string
           rider_cancel_count: number
           search_started_at: string | null
+          source: string
           status: string
           total_amount: number
           updated_at: string
@@ -1413,6 +1415,7 @@ export type Database = {
           incident_code?: string | null
           incident_notes?: string | null
           incident_resolution?: string | null
+          merchant_order_id?: string | null
           needs_ops_attention?: boolean
           order_code?: string
           otp_attempts?: number
@@ -1439,6 +1442,7 @@ export type Database = {
           refund_status?: string
           rider_cancel_count?: number
           search_started_at?: string | null
+          source?: string
           status?: string
           total_amount?: number
           updated_at?: string
@@ -1484,6 +1488,7 @@ export type Database = {
           incident_code?: string | null
           incident_notes?: string | null
           incident_resolution?: string | null
+          merchant_order_id?: string | null
           needs_ops_attention?: boolean
           order_code?: string
           otp_attempts?: number
@@ -1510,6 +1515,7 @@ export type Database = {
           refund_status?: string
           rider_cancel_count?: number
           search_started_at?: string | null
+          source?: string
           status?: string
           total_amount?: number
           updated_at?: string
@@ -1537,6 +1543,13 @@ export type Database = {
             columns: ["courier_type_id"]
             isOneToOne: false
             referencedRelation: "courier_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "courier_orders_merchant_order_id_fkey"
+            columns: ["merchant_order_id"]
+            isOneToOne: false
+            referencedRelation: "merchant_orders"
             referencedColumns: ["id"]
           },
           {
@@ -2596,10 +2609,12 @@ export type Database = {
       }
       merchant_orders: {
         Row: {
+          accepted_at: string | null
           address_id: string | null
           cancel_reason: string | null
           cancelled_at: string | null
           commission_amount: number | null
+          courier_order_id: string | null
           created_at: string
           customer_name: string | null
           customer_note: string | null
@@ -2615,8 +2630,13 @@ export type Database = {
           paid_at: string | null
           payment_mode: string
           payment_status: string
+          picked_up_at: string | null
           razorpay_order_id: string | null
           razorpay_payment_id: string | null
+          ready_at: string | null
+          refund_amount: number | null
+          refund_id: string | null
+          refund_status: string | null
           source: string
           status: string
           total_amount: number
@@ -2624,10 +2644,12 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          accepted_at?: string | null
           address_id?: string | null
           cancel_reason?: string | null
           cancelled_at?: string | null
           commission_amount?: number | null
+          courier_order_id?: string | null
           created_at?: string
           customer_name?: string | null
           customer_note?: string | null
@@ -2643,8 +2665,13 @@ export type Database = {
           paid_at?: string | null
           payment_mode?: string
           payment_status?: string
+          picked_up_at?: string | null
           razorpay_order_id?: string | null
           razorpay_payment_id?: string | null
+          ready_at?: string | null
+          refund_amount?: number | null
+          refund_id?: string | null
+          refund_status?: string | null
           source?: string
           status?: string
           total_amount?: number
@@ -2652,10 +2679,12 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          accepted_at?: string | null
           address_id?: string | null
           cancel_reason?: string | null
           cancelled_at?: string | null
           commission_amount?: number | null
+          courier_order_id?: string | null
           created_at?: string
           customer_name?: string | null
           customer_note?: string | null
@@ -2671,8 +2700,13 @@ export type Database = {
           paid_at?: string | null
           payment_mode?: string
           payment_status?: string
+          picked_up_at?: string | null
           razorpay_order_id?: string | null
           razorpay_payment_id?: string | null
+          ready_at?: string | null
+          refund_amount?: number | null
+          refund_id?: string | null
+          refund_status?: string | null
           source?: string
           status?: string
           total_amount?: number
@@ -2685,6 +2719,13 @@ export type Database = {
             columns: ["address_id"]
             isOneToOne: false
             referencedRelation: "addresses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "merchant_orders_courier_order_id_fkey"
+            columns: ["courier_order_id"]
+            isOneToOne: false
+            referencedRelation: "courier_orders"
             referencedColumns: ["id"]
           },
           {
@@ -5465,6 +5506,7 @@ export type Database = {
           incident_code: string | null
           incident_notes: string | null
           incident_resolution: string | null
+          merchant_order_id: string | null
           needs_ops_attention: boolean
           order_code: string
           otp_attempts: number
@@ -5491,6 +5533,7 @@ export type Database = {
           refund_status: string
           rider_cancel_count: number
           search_started_at: string | null
+          source: string
           status: string
           total_amount: number
           updated_at: string
@@ -5554,6 +5597,7 @@ export type Database = {
         Args: { _order_id: string }
         Returns: undefined
       }
+      courier_store_info: { Args: { _order_id: string }; Returns: Json }
       courier_sweeper: { Args: never; Returns: undefined }
       courier_sweeper_tick: { Args: never; Returns: undefined }
       courier_update_contact: {
@@ -6103,6 +6147,16 @@ export type Database = {
         Args: { _booking_id: string; _reason: string }
         Returns: undefined
       }
+      staff_cancel_store_order_apply: {
+        Args: {
+          _order_id: string
+          _reason: string
+          _refund_amount: number
+          _refund_id: string
+          _refund_status: string
+        }
+        Returns: Json
+      }
       staff_clear_availability_override: {
         Args: { _target_id: string; _target_type: string }
         Returns: boolean
@@ -6112,6 +6166,7 @@ export type Database = {
         Args: { _reason?: string; _service_key: string; _until?: string }
         Returns: Json
       }
+      staff_commerce_admin_id: { Args: never; Returns: string }
       staff_confirm_payout_batch: {
         Args: { _batch_id: string }
         Returns: undefined
@@ -6313,6 +6368,10 @@ export type Database = {
       staff_reassign_expert: {
         Args: { _booking_id: string; _new_expert_id: string }
         Returns: undefined
+      }
+      staff_reassign_store_rider: {
+        Args: { _expert_id: string; _order_id: string }
+        Returns: Json
       }
       staff_redraw_zone_boundary: {
         Args: { _boundary: Json; _zone_id: string }
