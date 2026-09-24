@@ -5,7 +5,6 @@ import { MapPinned, Pencil, Phone, Plus, Route as RouteIcon, Trash2, UserRound }
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useT } from "@/i18n";
-import { SourceChips, type DropSource } from "./MultiStopEditor";
 
 export type TimelineAddr = {
   id: string;
@@ -25,7 +24,6 @@ export type TimelineStop = {
   name: string;
   phone: string;
   removable: boolean;
-  source?: DropSource;
 };
 
 export function RouteTimeline({
@@ -34,26 +32,22 @@ export function RouteTimeline({
   canAddDrop,
   pickupFee,
   dropFee,
-  showSources,
   onAddPickup,
   onAddDrop,
   onRemove,
   onPickAddress,
   onChange,
-  onSource,
 }: {
   stops: TimelineStop[];
   canAddPickup: boolean;
   canAddDrop: boolean;
   pickupFee: number;
   dropFee: number;
-  showSources: boolean;
   onAddPickup: () => void;
   onAddDrop: () => void;
   onRemove: (key: string) => void;
   onPickAddress: (key: string) => void;
   onChange: (key: string, patch: { name?: string; phone?: string }) => void;
-  onSource: (key: string, value: DropSource) => void;
 }) {
   const t = useT();
   const lastPickup = [...stops].reverse().find((s) => s.type === "pickup");
@@ -69,8 +63,6 @@ export function RouteTimeline({
               onRemove={() => onRemove(stop.key)}
               onPickAddress={() => onPickAddress(stop.key)}
               onChange={(patch) => onChange(stop.key, patch)}
-              showSources={showSources && stop.type === "drop"}
-              onSource={(v) => onSource(stop.key, v)}
             />
             {canAddPickup && lastPickup?.key === stop.key && (
               <AddStopButton
@@ -95,15 +87,11 @@ function StopCard({
   onRemove,
   onPickAddress,
   onChange,
-  showSources,
-  onSource,
 }: {
   stop: TimelineStop;
   onRemove: () => void;
   onPickAddress: () => void;
   onChange: (patch: { name?: string; phone?: string }) => void;
-  showSources: boolean;
-  onSource: (value: DropSource) => void;
 }) {
   const t = useT();
   const pickup = stop.type === "pickup";
@@ -177,11 +165,6 @@ function StopCard({
               className="h-12 pl-10"
             />
           </div>
-          {showSources && (
-            <div className="sm:col-span-2">
-              <SourceChips value={stop.source} onChange={onSource} />
-            </div>
-          )}
         </div>
       </div>
     </div>

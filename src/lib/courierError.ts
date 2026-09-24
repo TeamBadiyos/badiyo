@@ -16,6 +16,9 @@ export function courierErrorMessage(error: unknown, fallback: string): string {
   if (/outside our delivery area|not serviceable|OUT_OF_ZONE/i.test(message)) {
     return "One of the stops is outside our delivery area right now.";
   }
+  if (/Choose either multiple drops or multiple pickups/i.test(message)) {
+    return "Choose either multiple drops or multiple pickups.";
+  }
   if (/Maximum \d+ (pickups|drops) allowed/i.test(message)) {
     return message.match(/Maximum \d+ (pickups|drops) allowed/i)![0] + ".";
   }

@@ -36,7 +36,7 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthUser } from "@/lib/authUser";
 import { courierQuote, courierCreateOrder, courierConfirmPayment, courierGetRateLimits, courierPlanStops } from "@/lib/courier.functions";
-import { PlannedRoute, type DropSource, type ExtraStop } from "./MultiStopEditor";
+import { PlannedRoute, type ExtraStop } from "./MultiStopEditor";
 import { RouteTimeline, type TimelineStop } from "./RouteTimeline";
 import { payWithRazorpay, toPaymentError } from "@/lib/razorpayCheckout";
 import { getPaymentPrefill } from "@/lib/paymentPrefill";
@@ -97,6 +97,8 @@ async function fetchCourierProfile() {
   };
 }
 
+type StopMode = "single" | "multiDrop" | "multiPickup";
+
 export function CourierBookingScreen({
   onBack,
   onBooked,
@@ -128,8 +130,8 @@ export function CourierBookingScreen({
   // Multi-stop (only used when the rate allows more than 1 pickup/drop).
   const [extraPickups, setExtraPickups] = useState<ExtraStop[]>([]);
   const [extraDrops, setExtraDrops] = useState<ExtraStop[]>([]);
-  const [dropSources, setDropSources] = useState<Record<string, DropSource | undefined>>({});
-  const dropKeyCounter = useRef(2);
+  const [mode, setMode] = useState<StopMode>("single");
+  const keyCounter = useRef(2);
   const [planned, setPlanned] = useState<Array<{ key: string; type: "pickup" | "drop" }> | null>(null);
 
   const { data: addresses = [] } = useQuery({ queryKey: ["addresses"], queryFn: fetchAddresses });
@@ -170,8 +172,8 @@ export function CourierBookingScreen({
     enabled: Boolean(vehicleId && city),
     staleTime: 5 * 60_000,
   });
-  const maxPickups = limits?.max_pickups ?? 1;
-  const maxDrops = limits?.max_drops ?? 1;
+  const maxPickups = limits ? (limits.max_pickups ?? Infinity) : 1;
+  const maxDrops = limits ? (limits.max_drops ?? Infinity) : 1;
   const isMulti = extraPickups.length > 0 || extraDrops.length > 0;
   const pickupCount = 1 + extraPickups.length;
   const dropCount = 1 + extraDrops.length;
@@ -227,21 +229,10 @@ export function CourierBookingScreen({
       dropName.trim() &&
       validPhone(dropPhone),
   );
-  const allDropKeys = ["D1", ...extraDrops.map((d) => d.key)];
-  const sourcesOf = (key: string): string[] => {
-    if (pickupCount < 2) return ["P1"];
-    const v = dropSources[key];
-    if (v === "both") return ["P1", "P2"];
-    return v ? [v] : [];
-  };
   const extrasReady = [...extraPickups, ...extraDrops].every(
     (st) => st.addr?.latitude != null && st.addr.longitude != null && st.name.trim() && validPhone(st.phone),
   );
-  const sourcesReady =
-    pickupCount < 2 ||
-    (allDropKeys.every((k) => sourcesOf(k).length > 0) &&
-      ["P1", "P2"].every((p) => allDropKeys.some((k) => sourcesOf(k).includes(p))));
-  const multiReady = !isMulti || (extrasReady && sourcesReady && !overLimit);
+  const multiReady = !isMulti || (extrasReady && !overLimit);
   const parcelReady = Boolean(vehicleId && typeId && !weightError && !overLimit);
 
   const serviceMessage = (state: ServiceState): string => {
@@ -299,41 +290,23 @@ export function CourierBookingScreen({
         name: st.name,
         phone: st.phone,
         removable: st.key !== "P1" && st.key !== "D1",
-        source: st.type === "drop" ? dropSources[st.key] : undefined,
       };
     });
-  }, [allStops, dropSources]);
+  }, [allStops]);
 
 
-  // Pickups: only one extra (P2) is allowed, so reuse is safe (its choices are
-  // cleared on removal). Drops: a key is never reused in this session so a new
-  // drop can't inherit an old drop's "Parcel from" choice.
-  const nextKey = (prefix: "P" | "D", list: ExtraStop[]) => {
-    if (prefix === "D") {
-      let n = Math.max(dropKeyCounter.current, 2);
-      while (list.some((st) => st.key === `D${n}`)) n++;
-      dropKeyCounter.current = n + 1;
-      return `D${n}`;
-    }
-    let n = 2;
-    while (list.some((st) => st.key === `${prefix}${n}`)) n++;
-    return `${prefix}${n}`;
+  // Keys are never reused within a session.
+  const nextKey = () => keyCounter.current++;
+
+  // Switching mode keeps Pickup 1 and Drop 1 and removes extra stops.
+  const switchMode = (next: StopMode) => {
+    if (next === mode) return;
+    setMode(next);
+    setExtraPickups([]);
+    setExtraDrops([]);
+    setQuote(null);
+    setPlanned(null);
   };
-
-  const sourceSummary =
-    pickupCount > 1 ? (
-      <div className="space-y-1">
-        {allDropKeys.map((dk, i) => {
-          const src = sourcesOf(dk);
-          const list = src.map((p) => t("courier.pickupN", { n: p === "P1" ? 1 : 2 })).join(` ${t("courier.and")} `);
-          return (
-            <p key={dk} className="text-xs font-semibold text-foreground">
-              {t("courier.dropN", { n: i + 1 })}: {src.length ? t("courier.fromList", { list }) : "—"}
-            </p>
-          );
-        })}
-      </div>
-    ) : null;
 
   const getQuote = async () => {
     setErr(null);
@@ -416,13 +389,15 @@ export function CourierBookingScreen({
                     contact_phone: st.phone.replace(/\D/g, "").slice(-10),
                   };
                 }),
-                parcels: allDropKeys.flatMap((dk) =>
-                  sourcesOf(dk).map((pk) => ({
-                    pickup_key: pk,
-                    drop_key: dk,
-                    description: note.trim() || null,
-                  })),
-                ),
+                // Automatic mapping: 1 pickup -> one parcel per drop; 1 drop -> one per pickup.
+                parcels:
+                  pickupCount === 1
+                    ? allStops
+                        .filter((st) => st.type === "drop")
+                        .map((st) => ({ pickup_key: "P1", drop_key: st.key, description: note.trim() || null }))
+                    : allStops
+                        .filter((st) => st.type === "pickup")
+                        .map((st) => ({ pickup_key: st.key, drop_key: "D1", description: note.trim() || null })),
               }
             : {}),
         },
@@ -555,38 +530,51 @@ export function CourierBookingScreen({
                 <h2 className="text-xl font-extrabold text-foreground">{t("courier.routeTitle")}</h2>
                 <p className="mt-1 text-sm text-muted-foreground">{t("courier.routeSub")}</p>
               </div>
-              {(maxPickups > 1 || maxDrops > 1 || isMulti) && (
+              {isMulti && (
                 <span className="shrink-0 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-extrabold text-primary">
                   {t("courier.routeCount", { p: pickupCount, d: dropCount })}
                 </span>
               )}
             </div>
 
+            {(maxPickups > 1 || maxDrops > 1) && (
+              <div role="radiogroup" aria-label={t("courier.modeLabel")} className="grid gap-2">
+                {(
+                  [
+                    { v: "single", label: t("courier.modeSingle"), show: true },
+                    { v: "multiDrop", label: t("courier.modeMultiDrop"), show: maxDrops > 1 },
+                    { v: "multiPickup", label: t("courier.modeMultiPickup"), show: maxPickups > 1 },
+                  ] as Array<{ v: StopMode; label: string; show: boolean }>
+                )
+                  .filter((o) => o.show)
+                  .map((o) => (
+                    <button
+                      key={o.v}
+                      type="button"
+                      role="radio"
+                      aria-checked={mode === o.v}
+                      onClick={() => switchMode(o.v)}
+                      className={`rounded-lg border px-4 py-3 text-left text-sm font-extrabold transition-colors ${
+                        mode === o.v ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-foreground"
+                      }`}
+                    >
+                      {o.label}
+                    </button>
+                  ))}
+              </div>
+            )}
+
             <RouteTimeline
               stops={timelineStops}
-              canAddPickup={maxPickups > 1 && pickupCount < Math.min(maxPickups, 2)}
-              canAddDrop={maxDrops > 1 && dropCount < maxDrops}
+              canAddPickup={mode === "multiPickup" && pickupCount < maxPickups}
+              canAddDrop={mode === "multiDrop" && dropCount < maxDrops}
               pickupFee={limits?.extra_pickup_fee ?? 0}
               dropFee={limits?.extra_drop_fee ?? 0}
-              showSources={pickupCount > 1}
-              onAddPickup={() => setExtraPickups((l) => [...l, { key: nextKey("P", l), addr: null, name: "", phone: "" }])}
-              onAddDrop={() => setExtraDrops((l) => [...l, { key: nextKey("D", l), addr: null, name: "", phone: "" }])}
+              onAddPickup={() => setExtraPickups((l) => [...l, { key: `P${nextKey()}`, addr: null, name: "", phone: "" }])}
+              onAddDrop={() => setExtraDrops((l) => [...l, { key: `D${nextKey()}`, addr: null, name: "", phone: "" }])}
               onRemove={(key) => {
-                if (key.startsWith("P")) {
-                  setExtraPickups((l) => l.filter((st) => st.key !== key));
-                  setDropSources((m) => {
-                    const next: Record<string, DropSource | undefined> = {};
-                    for (const [k, v] of Object.entries(m)) next[k] = v === "P1" ? v : undefined;
-                    return next;
-                  });
-                } else {
-                  setExtraDrops((l) => l.filter((st) => st.key !== key));
-                  setDropSources((m) => {
-                    const next = { ...m };
-                    delete next[key];
-                    return next;
-                  });
-                }
+                if (key.startsWith("P")) setExtraPickups((l) => l.filter((st) => st.key !== key));
+                else setExtraDrops((l) => l.filter((st) => st.key !== key));
                 setQuote(null);
               }}
               onPickAddress={(key) =>
@@ -605,7 +593,6 @@ export function CourierBookingScreen({
                   setExtraDrops((l) => l.map((st) => (st.key === key ? { ...st, ...patch } : st)));
                 }
               }}
-              onSource={(key, v) => setDropSources((m) => ({ ...m, [key]: v }))}
             />
 
             {zonesChecking && (
@@ -621,10 +608,6 @@ export function CourierBookingScreen({
                 {t("courier.dropOutside")}
               </p>
             )}
-            {isMulti && extrasReady && !sourcesReady && (
-              <p className="rounded-lg bg-warning/10 p-3 text-xs font-semibold text-foreground">{t("courier.sourcesHint")}</p>
-            )}
-            {sourceSummary && <div className="rounded-lg border border-border bg-card p-3">{sourceSummary}</div>}
             {overLimit && (
               <p className="rounded-lg bg-destructive/10 p-3 text-xs font-semibold text-destructive">{t("courier.tooManyStops")}</p>
             )}
@@ -802,7 +785,6 @@ export function CourierBookingScreen({
                   <PlannedRoute items={planned} />
                 </div>
               )}
-              {sourceSummary && <div className="border-t border-border p-4">{sourceSummary}</div>}
             </div>
             <div className="rounded-lg border border-border bg-card p-4">
               <div className="mb-3 flex items-center justify-between">
