@@ -156,6 +156,7 @@ const STORE_STATUS_LABELS: Record<string, string> = {
   placed: "Waiting for shop",
   accepted: "Finding Expert",
   expert_assigned: "Expert assigned",
+  ready: "Packed · ready for pickup",
   picked_up: "On the way",
   delivered: "Delivered",
   needs_attention: "Delayed",
