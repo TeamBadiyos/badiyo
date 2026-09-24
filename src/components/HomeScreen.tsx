@@ -25,6 +25,9 @@ import { anchorPrice } from "@/lib/price";
 import { useLanguage, useT } from "@/i18n";
 import { toast } from "sonner";
 import { formatNextOpen, useServiceState } from "@/lib/serviceHours";
+import { useIsInternalTester, type PublicStore } from "@/lib/store";
+import { StoreListView } from "./store/StoreListView";
+import { StoreDetailScreen } from "./store/StoreDetailScreen";
 import type { TranslationKey } from "@/i18n/en";
 
 import expertHouse from "@/assets/expert-house-cleaning.jpg";
