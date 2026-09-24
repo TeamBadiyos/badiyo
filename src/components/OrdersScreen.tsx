@@ -1,7 +1,9 @@
 import { getAuthUser } from "@/lib/authUser";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { usePullToRefresh, PullToRefreshIndicator } from "@/lib/usePullToRefresh";
-import { CalendarCheck, MapPin, Clock, Package } from "lucide-react";
+import { CalendarCheck, MapPin, Clock, Package, ReceiptText } from "lucide-react";
+import { BillSheet, type BillLine } from "@/components/BillSheet";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { BottomNav } from "./BottomNav";
 import {
