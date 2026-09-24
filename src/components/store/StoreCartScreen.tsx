@@ -12,6 +12,8 @@ import { getAuthUser } from "@/lib/authUser";
 import { hapticImpact } from "@/lib/haptics";
 import { useStoreCart } from "@/lib/storeCart";
 import { StoreImage } from "./StoreImage";
+import { AddressSelectionScreen } from "@/components/AddressSelectionScreen";
+import { ShieldCheck } from "lucide-react";
 import {
   attachStorePayment,
   confirmStorePayment,
@@ -55,15 +57,16 @@ const ERROR_KEYS: Record<string, TranslationKey> = {
   bad_address: "store.errAddress",
   delivery_unavailable: "store.errDelivery",
   delivery_too_far: "store.errDeliveryFar",
+  online_only: "store.onlineOnlyNote",
 };
 
 export function StoreCartScreen({
   onBack,
-  onAddAddress,
   onDone,
 }: {
   onBack: () => void;
-  onAddAddress: () => void;
+  /** Kept for callers; adding an address now happens inside the address screen. */
+  onAddAddress?: () => void;
   /** Called after a successful order so the app can show the Orders tab. */
   onDone: (orderId?: string) => void;
 }) {
@@ -73,6 +76,7 @@ export function StoreCartScreen({
   const [addressId, setAddressId] = useState<string | null>(null);
   const [note, setNote] = useState("");
   const [placing, setPlacing] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   const { data: addresses = [], isLoading: loadingAddresses } = useQuery({
     queryKey: ["my-addresses"],
@@ -258,51 +262,54 @@ export function StoreCartScreen({
               ))}
             </ul>
 
-            {/* Delivery address */}
-            <section className="mt-4 rounded-[18px] border border-border bg-card p-3">
-              <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
-                {t("store.deliverTo")}
-              </p>
+            {/* Delivery address — opens the app's own address picker */}
+            <section className="mt-4 overflow-hidden rounded-[18px] border border-border bg-card">
+              <div className="flex items-center justify-between gap-3 px-3.5 pt-3">
+                <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                  {t("store.deliverTo")}
+                </p>
+                {addresses.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setPickerOpen(true)}
+                    className="rounded-full bg-primary/10 px-3 py-1 text-[11px] font-extrabold text-primary"
+                  >
+                    {t("store.changeAddress")}
+                  </button>
+                )}
+              </div>
               {loadingAddresses ? (
-                <Loader2 className="mt-2 h-4 w-4 animate-spin text-primary" />
-              ) : addresses.length === 0 ? (
+                <div className="px-3.5 py-4">
+                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                </div>
+              ) : !address ? (
                 <button
                   type="button"
-                  onClick={onAddAddress}
-                  className="mt-2 w-full rounded-[14px] border border-dashed border-primary/40 px-3 py-3 text-sm font-bold text-primary"
+                  onClick={() => setPickerOpen(true)}
+                  className="m-3 flex w-[calc(100%-1.5rem)] items-center gap-2 rounded-[14px] border border-dashed border-primary/40 px-3 py-3.5 text-sm font-bold text-primary"
                 >
+                  <MapPin className="h-4 w-4" />
                   {t("store.noAddress")}
                 </button>
               ) : (
-                <ul className="mt-2 space-y-1.5">
-                  {addresses.map((a) => (
-                    <li key={a.id}>
-                      <button
-                        type="button"
-                        onClick={() => setAddressId(a.id)}
-                        className={
-                          "flex w-full items-start gap-2 rounded-[14px] border px-3 py-2.5 text-left " +
-                          (a.id === addressId
-                            ? "border-primary bg-primary/5"
-                            : "border-border bg-background")
-                        }
-                      >
-                        <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                        <span className="min-w-0 flex-1">
-                          {a.label && (
-                            <span className="block text-[12px] font-bold text-foreground">
-                              {a.label}
-                            </span>
-                          )}
-                          <span className="block truncate text-[11px] text-muted-foreground">
-                            {[a.full_address, a.area, a.city].filter(Boolean).join(", ")}
-                          </span>
-                        </span>
-                        {a.id === addressId && <Check className="h-4 w-4 shrink-0 text-primary" />}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
+                <button
+                  type="button"
+                  onClick={() => setPickerOpen(true)}
+                  className="flex w-full items-start gap-3 px-3.5 pb-3.5 pt-2.5 text-left"
+                >
+                  <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                    <MapPin className="h-4.5 w-4.5 text-primary" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[13px] font-extrabold text-foreground">
+                      {address.label || t("store.deliverTo")}
+                    </span>
+                    <span className="mt-0.5 block text-[12px] leading-snug text-muted-foreground line-clamp-2">
+                      {[address.full_address, address.area, address.city].filter(Boolean).join(", ")}
+                    </span>
+                  </span>
+                  <Check className="mt-1 h-4 w-4 shrink-0 text-primary" />
+                </button>
               )}
             </section>
 
@@ -319,20 +326,19 @@ export function StoreCartScreen({
               />
             </section>
 
-            {/* Payment: online only */}
-            <section className="mt-4 rounded-[14px] border border-primary bg-primary/5 px-3 py-3">
-              <p className="text-[13px] font-bold text-primary">{t("store.payOnline")}</p>
-              <p className="mt-0.5 text-[11px] text-muted-foreground">{t("store.onlineOnlyNote")}</p>
-            </section>
-
             {/* Bill */}
             <section className="mt-4 rounded-[18px] border border-border bg-card p-3.5 text-sm">
               <div className="flex justify-between text-muted-foreground">
                 <span>{t("store.itemsTotal")}</span>
                 <span className="font-semibold text-foreground">₹{itemsTotal.toFixed(0)}</span>
               </div>
-              <div className="mt-1.5 flex justify-between text-muted-foreground">
-                <span>{t("store.deliveryFee")}</span>
+              <div className="mt-2 flex items-start justify-between gap-3 text-muted-foreground">
+                <span className="min-w-0">
+                  {t("store.deliveryFee")}
+                  <span className="mt-0.5 block text-[11px] text-muted-foreground/80">
+                    {t("store.deliveryAuto")}
+                  </span>
+                </span>
                 <span className="font-semibold text-foreground">
                   {quoteLoading ? (
                     <Loader2 className="inline h-3.5 w-3.5 animate-spin" />
@@ -353,6 +359,17 @@ export function StoreCartScreen({
                 <span>₹{payable.toFixed(0)}</span>
               </div>
             </section>
+
+            {/* Secure payment badge */}
+            <section className="mt-3 flex items-start gap-2.5 rounded-[18px] border border-primary/25 bg-primary/5 px-3.5 py-3">
+              <ShieldCheck className="mt-0.5 h-4.5 w-4.5 shrink-0 text-primary" />
+              <div className="min-w-0">
+                <p className="text-[13px] font-extrabold text-primary">{t("store.securePay")}</p>
+                <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">
+                  {t("store.securePayNote")}
+                </p>
+              </div>
+            </section>
           </>
         )}
       </div>
@@ -365,9 +382,27 @@ export function StoreCartScreen({
             disabled={placing || !addressId || !quoteOk}
             className="mx-auto flex w-full max-w-md items-center justify-center gap-2 rounded-[18px] bg-primary px-4 py-3.5 text-sm font-extrabold text-primary-foreground shadow-lg transition active:scale-[0.99] disabled:opacity-60"
           >
-            {placing && <Loader2 className="h-4 w-4 animate-spin" />}
-            {t("store.placeOrder")} · ₹{payable.toFixed(0)}
+            {placing ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <ShieldCheck className="h-4 w-4" />
+            )}
+            {t("store.proceedPay")} · ₹{payable.toFixed(0)}
           </button>
+        </div>
+      )}
+
+      {/* The app's own address screen: select, edit or add a new address */}
+      {pickerOpen && (
+        <div className="fixed inset-0 z-50 bg-background">
+          <AddressSelectionScreen
+            onBack={() => setPickerOpen(false)}
+            onContinue={(a) => {
+              setAddressId(a.id);
+              setPickerOpen(false);
+              void queryClient.invalidateQueries({ queryKey: ["my-addresses"] });
+            }}
+          />
         </div>
       )}
     </main>

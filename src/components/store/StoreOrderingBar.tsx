@@ -8,7 +8,7 @@ export function StoreOrderingBar({ aboveNav = false }: { aboveNav?: boolean }) {
       className={
         "fixed inset-x-0 z-40 px-5 pt-4 " +
         (aboveNav
-          ? "bottom-[calc(env(safe-area-inset-bottom)+76px)]"
+          ? "bottom-[calc(var(--app-safe-bottom,0px)+98px)]"
           : "bottom-0 bg-gradient-to-t from-background via-background to-transparent pb-[calc(env(safe-area-inset-bottom)+16px)]")
       }
     >
