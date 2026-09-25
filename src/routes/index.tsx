@@ -190,6 +190,19 @@ function ScreenFallback() {
   );
 }
 
+/**
+ * Run background work once the first screen is drawn, so startup requests and
+ * the phone's CPU are not shared with things the user is not waiting for.
+ */
+function runWhenIdle(fn: () => void, timeout = 2500) {
+  if (typeof window === "undefined") return;
+  const ric = (window as unknown as {
+    requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number;
+  }).requestIdleCallback;
+  if (ric) ric(fn, { timeout });
+  else setTimeout(fn, 800);
+}
+
 
 
 export const Route = createFileRoute("/")({
