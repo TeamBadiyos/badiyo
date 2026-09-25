@@ -20,7 +20,10 @@ import {
 } from "@/lib/segments";
 import { ServiceProductCard } from "./home/ServiceProductCard";
 import { fetchCourierEnabled } from "./courier/courierData";
-import { ContactParcelsCard } from "./courier/ContactParcels";
+const ContactParcelsCard = lazy(() =>
+  import("./courier/ContactParcels").then((m) => ({ default: m.ContactParcelsCard })),
+);
+
 import { SectionHeading } from "./SectionHeading";
 import { BrandWatermark } from "./BrandWatermark";
 import { anchorPrice } from "@/lib/price";
