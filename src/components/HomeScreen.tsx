@@ -348,44 +348,51 @@ export function HomeScreen({
 
   if (cartOpen) {
     return (
-      <StoreCartScreen
-        onBack={() => setCartOpen(false)}
-        onAddAddress={() => {
-          setCartOpen(false);
-          setLocationSheetOpen(true);
-        }}
-        onDone={(orderId) => {
-          setCartOpen(false);
-          setOpenStore(null);
-          setOpenCategory(null);
-          if (orderId && onOpenStoreOrder) onOpenStoreOrder(orderId);
-          else onOpenOrders?.();
-        }}
-      />
+      <Suspense fallback={<ScreenSkeleton />}>
+        <StoreCartScreen
+          onBack={() => setCartOpen(false)}
+          onAddAddress={() => {
+            setCartOpen(false);
+            setLocationSheetOpen(true);
+          }}
+          onDone={(orderId) => {
+            setCartOpen(false);
+            setOpenStore(null);
+            setOpenCategory(null);
+            if (orderId && onOpenStoreOrder) onOpenStoreOrder(orderId);
+            else onOpenOrders?.();
+          }}
+        />
+      </Suspense>
     );
   }
   if (openStore) {
     return (
-      <StoreDetailScreen
-        store={openStore}
-        onBack={() => setOpenStore(null)}
-        onOpenCart={() => setCartOpen(true)}
-        orderingEnabled={storeOrdering}
-      />
+      <Suspense fallback={<ScreenSkeleton />}>
+        <StoreDetailScreen
+          store={openStore}
+          onBack={() => setOpenStore(null)}
+          onOpenCart={() => setCartOpen(true)}
+          orderingEnabled={storeOrdering}
+        />
+      </Suspense>
     );
   }
   if (openCategory) {
     return (
-      <StoreCategoryScreen
-        coords={homeCoords ?? null}
-        group={openCategory}
-        onBack={() => setOpenCategory(null)}
-        onOpenStore={setOpenStore}
-        onOpenCart={() => setCartOpen(true)}
-        orderingEnabled={storeOrdering}
-      />
+      <Suspense fallback={<ScreenSkeleton />}>
+        <StoreCategoryScreen
+          coords={homeCoords ?? null}
+          group={openCategory}
+          onBack={() => setOpenCategory(null)}
+          onOpenStore={setOpenStore}
+          onOpenCart={() => setCartOpen(true)}
+          orderingEnabled={storeOrdering}
+        />
+      </Suspense>
     );
   }
+
 
   return (
     <main className="min-h-screen w-full bg-background pb-28 momentum-scroll">
