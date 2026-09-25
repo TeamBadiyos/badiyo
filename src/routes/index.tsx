@@ -190,6 +190,19 @@ function ScreenFallback() {
   );
 }
 
+/**
+ * Run background work once the first screen is drawn, so startup requests and
+ * the phone's CPU are not shared with things the user is not waiting for.
+ */
+function runWhenIdle(fn: () => void, timeout = 2500) {
+  if (typeof window === "undefined") return;
+  const ric = (window as unknown as {
+    requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number;
+  }).requestIdleCallback;
+  if (ric) ric(fn, { timeout });
+  else setTimeout(fn, 800);
+}
+
 
 
 export const Route = createFileRoute("/")({
@@ -332,14 +345,19 @@ function Index() {
       // Home data + Home chunk start loading in parallel with the device call.
       void prefetchHomeData(queryClient);
       void import("@/components/HomeScreen");
-      void registerThisDevice()
-        .then((res) => {
-          if (res.status === "limit_reached") {
-            setLimitDevices(res.devices);
-            setPhase("device-limit");
-          }
-        })
-        .catch((e) => console.error("device registration failed:", e));
+      // The device check is not needed to draw Home, so it waits for a quiet
+      // moment and only interrupts if the two-device limit is reached.
+      runWhenIdle(() => {
+        void registerThisDevice()
+          .then((res) => {
+            if (res.status === "limit_reached") {
+              setLimitDevices(res.devices);
+              setPhase("device-limit");
+            }
+          })
+          .catch((e) => console.error("device registration failed:", e));
+      });
+
     },
     [setPhase, queryClient],
   );
@@ -608,11 +626,15 @@ function Index() {
 
     // Update prompt: hard block below the minimum supported build, a
     // dismissible nudge (snoozed 24h) when a newer build is on the Play Store.
-    void checkForUpdate().then((verdict) => {
-      if (cancelled) return;
-      setStoreUrl(verdict.playStoreUrl);
-      if (verdict.kind === "hard_update") setForceUpdate(true);
-      else if (verdict.kind === "soft_update" && !isSoftUpdateSnoozed()) setSoftUpdate(true);
+    // It runs once the first screen is on the network's spare capacity, so it
+    // never competes with the data the first screen needs.
+    runWhenIdle(() => {
+      void checkForUpdate().then((verdict) => {
+        if (cancelled) return;
+        setStoreUrl(verdict.playStoreUrl);
+        if (verdict.kind === "hard_update") setForceUpdate(true);
+        else if (verdict.kind === "soft_update" && !isSoftUpdateSnoozed()) setSoftUpdate(true);
+      });
     });
 
     // The splash is a brand moment, not a loading wait: it stays on screen only
@@ -645,21 +667,28 @@ function Index() {
         settled = true;
         clearTimeout(splashCap);
         enterAppAfterAuth("home");
-        ensureUserRow()
-          .then(() => import("@/lib/referrals").then((m) => m.linkReferralIfAny()))
-          .then(() => registerPushForCurrentUser())
-          .catch((e) => console.error("post-oauth setup failed:", e));
+        // Account housekeeping is not needed to draw Home, so it waits until
+        // the screen is up instead of sharing the first seconds of bandwidth.
+        runWhenIdle(() => {
+          ensureUserRow()
+            .then(() => import("@/lib/referrals").then((m) => m.linkReferralIfAny()))
+            .then(() => registerPushForCurrentUser())
+            .catch((e) => console.error("post-oauth setup failed:", e));
+        });
         return;
       }
       // Otherwise run the normal splash → login flow. Warm the screens the
       // user is about to hit so no chunk download sits on the critical path.
       void import("@/components/PinLoginScreen");
       void import("@/components/OtpVerifyScreen");
-      void import("@/components/HomeScreen");
       clearTimeout(splashCap);
       goToLogin();
-      ensureUserRow().catch((e) => console.error("startup ensureUserRow failed:", e));
+      runWhenIdle(() => {
+        void import("@/components/HomeScreen");
+        ensureUserRow().catch((e) => console.error("startup ensureUserRow failed:", e));
+      });
     });
+
 
 
 

@@ -1,6 +1,6 @@
 // "Parcels for you": parcels where the signed-in user is a pickup, drop or
 // return contact on someone else's order. No price or payment info here.
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, ChevronRight, Loader2, Package, Share2, ShieldCheck, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,10 +9,16 @@ import {
   courierGetRiderLocationForStop,
   courierMyContactDeliveries,
 } from "@/lib/courier.functions";
-import { CourierLiveMap } from "./CourierLiveMap";
-import { otpShareText, shareOtp } from "./StopsTimeline";
+import { otpShareText, shareOtp } from "./otpShare";
 import type { RiderLocation } from "./courierData";
 import { useT, type TFunction } from "@/i18n";
+
+// Google Maps + the live-tracking bundle load only when a rider is actually
+// on the way; the Home screen never pays for them.
+const CourierLiveMap = lazy(() =>
+  import("./CourierLiveMap").then((m) => ({ default: m.CourierLiveMap })),
+);
+
 
 type ContactRow = {
   order_id: string;
@@ -246,23 +252,28 @@ function ContactParcelDetail({ stopId, onBack }: { stopId: string; onBack: () =>
 
             {data.rider?.available &&
               (data.is_next_stop ? (
-                <CourierLiveMap
-                  orderId={`contact-${stopId}`}
-                  status={data.order_status}
-                  pickup={
-                    data.stop.stop_type === "pickup"
-                      ? { lat: data.stop.lat, lng: data.stop.lng, label: data.stop.address ?? "" }
-                      : { lat: null, lng: null, label: "" }
-                  }
-                  drop={
-                    data.stop.stop_type === "pickup"
-                      ? { lat: null, lng: null, label: "" }
-                      : { lat: data.stop.lat, lng: data.stop.lng, label: data.stop.address ?? "" }
-                  }
-                  fetchLocation={async () =>
-                    (await courierGetRiderLocationForStop({ data: { stop_id: stopId } })) as unknown as RiderLocation
-                  }
-                />
+                <Suspense
+                  fallback={<div className="h-48 animate-pulse rounded-[20px] bg-muted" />}
+                >
+                  <CourierLiveMap
+                    orderId={`contact-${stopId}`}
+                    status={data.order_status}
+                    pickup={
+                      data.stop.stop_type === "pickup"
+                        ? { lat: data.stop.lat, lng: data.stop.lng, label: data.stop.address ?? "" }
+                        : { lat: null, lng: null, label: "" }
+                    }
+                    drop={
+                      data.stop.stop_type === "pickup"
+                        ? { lat: null, lng: null, label: "" }
+                        : { lat: data.stop.lat, lng: data.stop.lng, label: data.stop.address ?? "" }
+                    }
+                    fetchLocation={async () =>
+                      (await courierGetRiderLocationForStop({ data: { stop_id: stopId } })) as unknown as RiderLocation
+                    }
+                  />
+                </Suspense>
+
               ) : (
                 !["DELIVERED", "COMPLETED", "CANCELLED", "FAILED_DELIVERY"].includes(data.order_status) && (
                   <p className="rounded-2xl bg-muted p-4 text-center text-sm text-muted-foreground">

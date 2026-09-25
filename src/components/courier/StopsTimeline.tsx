@@ -21,13 +21,9 @@ import type { CourierCharge, CourierParcel, CourierStop } from "./courierData";
 
 const TERMINAL = ["completed", "failed", "cancelled"];
 
-export function shortAddress(a: string | null | undefined, t: TFunction) {
-  return (a ?? "").split(",").slice(0, 2).join(",").trim() || t("courier.locationFallback");
-}
+import { otpShareText, shareOtp, typeLabel } from "./otpShare";
+export { shortAddress, shareOtp, otpShareText } from "./otpShare";
 
-function typeLabel(type: CourierStop["stop_type"], t: TFunction) {
-  return type === "pickup" ? t("courier.stopPickup") : type === "drop" ? t("courier.stopDrop") : t("courier.stopReturn");
-}
 
 function statusLabel(s: string, t: TFunction) {
   switch (s) {
@@ -40,22 +36,6 @@ function statusLabel(s: string, t: TFunction) {
   }
 }
 
-/** Native share sheet, falling back to a WhatsApp link. */
-export async function shareOtp(text: string) {
-  try {
-    if (typeof navigator !== "undefined" && navigator.share) {
-      await navigator.share({ text });
-      return;
-    }
-  } catch (e) {
-    if ((e as Error)?.name === "AbortError") return;
-  }
-  window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
-}
-
-export function otpShareText(type: CourierStop["stop_type"], address: string | null, otp: string, t: TFunction) {
-  return t("courier.otpShare", { kind: typeLabel(type, t), address: shortAddress(address, t), otp });
-}
 
 export function currentStopId(stops: CourierStop[], riderAssigned: boolean, active: boolean) {
   if (!riderAssigned || !active) return null;

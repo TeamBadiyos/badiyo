@@ -7,7 +7,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -169,10 +169,13 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
-  // Restore the last known public catalogue from the device (client only).
-  useEffect(() => {
+  // Restore the last known public catalogue from the device before anything
+  // renders, so the first screen can paint from it instead of waiting for the
+  // network. No-op on the server.
+  useState(() => {
     startQueryPersistence(queryClient);
-  }, [queryClient]);
+  });
+
 
 
 

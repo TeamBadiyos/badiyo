@@ -1,5 +1,6 @@
 import { getAuthUser } from "@/lib/authUser";
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
+
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { usePullToRefresh, PullToRefreshIndicator } from "@/lib/usePullToRefresh";
 import { ChevronDown, ChevronRight, Clock, Gift, Home, MapPin, Mic, Search, Sparkles, User, Wind, type LucideIcon } from "lucide-react";
@@ -19,7 +20,10 @@ import {
 } from "@/lib/segments";
 import { ServiceProductCard } from "./home/ServiceProductCard";
 import { fetchCourierEnabled } from "./courier/courierData";
-import { ContactParcelsCard } from "./courier/ContactParcels";
+const ContactParcelsCard = lazy(() =>
+  import("./courier/ContactParcels").then((m) => ({ default: m.ContactParcelsCard })),
+);
+
 import { SectionHeading } from "./SectionHeading";
 import { BrandWatermark } from "./BrandWatermark";
 import { anchorPrice } from "@/lib/price";
@@ -28,9 +32,18 @@ import { toast } from "sonner";
 import { formatNextOpen, useServiceState } from "@/lib/serviceHours";
 import { useIsInternalTester, type PublicStore } from "@/lib/store";
 import { StoreListView } from "./store/StoreListView";
-import { StoreDetailScreen } from "./store/StoreDetailScreen";
-import { StoreCategoryScreen } from "./store/StoreCategoryScreen";
-import { StoreCartScreen } from "./store/StoreCartScreen";
+// Shop pages (with their address picker and payment sheet) load only when the
+// customer actually opens a shop, a category or the cart.
+const StoreDetailScreen = lazy(() =>
+  import("./store/StoreDetailScreen").then((m) => ({ default: m.StoreDetailScreen })),
+);
+const StoreCategoryScreen = lazy(() =>
+  import("./store/StoreCategoryScreen").then((m) => ({ default: m.StoreCategoryScreen })),
+);
+const StoreCartScreen = lazy(() =>
+  import("./store/StoreCartScreen").then((m) => ({ default: m.StoreCartScreen })),
+);
+
 import type { StoreCategoryGroup } from "./store/storeGroups";
 import type { TranslationKey } from "@/i18n/en";
 
@@ -50,6 +63,20 @@ function Icon({ name, className }: { name?: string | null; className?: string })
   const Cmp = (name && ICON_MAP[name]) || Sparkles;
   return <Cmp className={className} />;
 }
+
+/** Placeholder shown for the moment a shop page is being fetched. */
+function ScreenSkeleton() {
+  return (
+    <div className="min-h-dvh space-y-3 bg-background p-4">
+      <div className="h-10 w-2/3 animate-pulse rounded-xl bg-muted" />
+      <div className="h-36 animate-pulse rounded-[18px] bg-muted" />
+      <div className="h-24 animate-pulse rounded-[18px] bg-muted" />
+      <div className="h-24 animate-pulse rounded-[18px] bg-muted" />
+    </div>
+  );
+}
+
+
 
 import { fetchSections } from "@/lib/homeData";
 import {
@@ -335,44 +362,51 @@ export function HomeScreen({
 
   if (cartOpen) {
     return (
-      <StoreCartScreen
-        onBack={() => setCartOpen(false)}
-        onAddAddress={() => {
-          setCartOpen(false);
-          setLocationSheetOpen(true);
-        }}
-        onDone={(orderId) => {
-          setCartOpen(false);
-          setOpenStore(null);
-          setOpenCategory(null);
-          if (orderId && onOpenStoreOrder) onOpenStoreOrder(orderId);
-          else onOpenOrders?.();
-        }}
-      />
+      <Suspense fallback={<ScreenSkeleton />}>
+        <StoreCartScreen
+          onBack={() => setCartOpen(false)}
+          onAddAddress={() => {
+            setCartOpen(false);
+            setLocationSheetOpen(true);
+          }}
+          onDone={(orderId) => {
+            setCartOpen(false);
+            setOpenStore(null);
+            setOpenCategory(null);
+            if (orderId && onOpenStoreOrder) onOpenStoreOrder(orderId);
+            else onOpenOrders?.();
+          }}
+        />
+      </Suspense>
     );
   }
   if (openStore) {
     return (
-      <StoreDetailScreen
-        store={openStore}
-        onBack={() => setOpenStore(null)}
-        onOpenCart={() => setCartOpen(true)}
-        orderingEnabled={storeOrdering}
-      />
+      <Suspense fallback={<ScreenSkeleton />}>
+        <StoreDetailScreen
+          store={openStore}
+          onBack={() => setOpenStore(null)}
+          onOpenCart={() => setCartOpen(true)}
+          orderingEnabled={storeOrdering}
+        />
+      </Suspense>
     );
   }
   if (openCategory) {
     return (
-      <StoreCategoryScreen
-        coords={homeCoords ?? null}
-        group={openCategory}
-        onBack={() => setOpenCategory(null)}
-        onOpenStore={setOpenStore}
-        onOpenCart={() => setCartOpen(true)}
-        orderingEnabled={storeOrdering}
-      />
+      <Suspense fallback={<ScreenSkeleton />}>
+        <StoreCategoryScreen
+          coords={homeCoords ?? null}
+          group={openCategory}
+          onBack={() => setOpenCategory(null)}
+          onOpenStore={setOpenStore}
+          onOpenCart={() => setCartOpen(true)}
+          orderingEnabled={storeOrdering}
+        />
+      </Suspense>
     );
   }
+
 
   return (
     <main className="min-h-screen w-full bg-background pb-28 momentum-scroll">
@@ -431,7 +465,12 @@ export function HomeScreen({
           </button>
         </form>
 
-        {onOpenContactParcels && <ContactParcelsCard onOpen={onOpenContactParcels} />}
+        {onOpenContactParcels && (
+          <Suspense fallback={null}>
+            <ContactParcelsCard onOpen={onOpenContactParcels} />
+          </Suspense>
+        )}
+
 
         {/* Services bar (segment tabs) */}
         <ServicesBar
