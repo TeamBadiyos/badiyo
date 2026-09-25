@@ -345,14 +345,19 @@ function Index() {
       // Home data + Home chunk start loading in parallel with the device call.
       void prefetchHomeData(queryClient);
       void import("@/components/HomeScreen");
-      void registerThisDevice()
-        .then((res) => {
-          if (res.status === "limit_reached") {
-            setLimitDevices(res.devices);
-            setPhase("device-limit");
-          }
-        })
-        .catch((e) => console.error("device registration failed:", e));
+      // The device check is not needed to draw Home, so it waits for a quiet
+      // moment and only interrupts if the two-device limit is reached.
+      runWhenIdle(() => {
+        void registerThisDevice()
+          .then((res) => {
+            if (res.status === "limit_reached") {
+              setLimitDevices(res.devices);
+              setPhase("device-limit");
+            }
+          })
+          .catch((e) => console.error("device registration failed:", e));
+      });
+
     },
     [setPhase, queryClient],
   );
