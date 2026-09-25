@@ -543,9 +543,39 @@ export function CourierTrackingScreen({
         />
 
         {canCancel && (
-          <Button variant="outline" className="w-full" disabled={cancelling} onClick={cancelOrder}>
-            {cancelling ? <Loader2 className="h-4 w-4 animate-spin" /> : t("courier.cancelOrder")}
-          </Button>
+          <>
+            <Button
+              variant="outline"
+              className="w-full"
+              disabled={cancelling}
+              onClick={() => setConfirmCancel(true)}
+            >
+              {cancelling ? <Loader2 className="h-4 w-4 animate-spin" /> : t("courier.cancelOrder")}
+            </Button>
+            <AlertDialog open={confirmCancel} onOpenChange={setConfirmCancel}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>{t("courier.cancelConfirmTitle")}</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {!paidOrder
+                      ? t("courier.cancelConfirmPlain")
+                      : cancelFee > 0
+                        ? t("courier.cancelConfirmFee", {
+                            fee: cancelFee.toFixed(2),
+                            refund: cancelRefund.toFixed(2),
+                          })
+                        : t("courier.cancelConfirmFree", { refund: cancelRefund.toFixed(2) })}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>{t("courier.keepOrder")}</AlertDialogCancel>
+                  <AlertDialogAction onClick={cancelOrder}>
+                    {t("courier.yesCancel")}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </>
         )}
         {(status === "PICKED_UP" || status === "IN_TRANSIT") && (
           <p className="text-center text-xs text-muted-foreground">
