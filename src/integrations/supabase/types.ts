@@ -1100,6 +1100,7 @@ export type Database = {
           pickup_point_id: string
           receiver_id: string
           reference_no: string | null
+          requeued_from_id: string | null
           status: string
           updated_at: string
         }
@@ -1121,6 +1122,7 @@ export type Database = {
           pickup_point_id: string
           receiver_id: string
           reference_no?: string | null
+          requeued_from_id?: string | null
           status?: string
           updated_at?: string
         }
@@ -1142,6 +1144,7 @@ export type Database = {
           pickup_point_id?: string
           receiver_id?: string
           reference_no?: string | null
+          requeued_from_id?: string | null
           status?: string
           updated_at?: string
         }
@@ -1200,6 +1203,13 @@ export type Database = {
             columns: ["receiver_id"]
             isOneToOne: false
             referencedRelation: "business_receivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_orders_requeued_from_id_fkey"
+            columns: ["requeued_from_id"]
+            isOneToOne: false
+            referencedRelation: "business_orders"
             referencedColumns: ["id"]
           },
         ]
@@ -2190,6 +2200,7 @@ export type Database = {
           refund_next_attempt_at: string | null
           refund_reason: string | null
           refund_status: string
+          required_skill_id: string | null
           rider_cancel_count: number
           search_started_at: string | null
           source: string
@@ -2268,6 +2279,7 @@ export type Database = {
           refund_next_attempt_at?: string | null
           refund_reason?: string | null
           refund_status?: string
+          required_skill_id?: string | null
           rider_cancel_count?: number
           search_started_at?: string | null
           source?: string
@@ -2346,6 +2358,7 @@ export type Database = {
           refund_next_attempt_at?: string | null
           refund_reason?: string | null
           refund_status?: string
+          required_skill_id?: string | null
           rider_cancel_count?: number
           search_started_at?: string | null
           source?: string
@@ -2399,6 +2412,13 @@ export type Database = {
             columns: ["merchant_order_id"]
             isOneToOne: false
             referencedRelation: "merchant_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "courier_orders_required_skill_id_fkey"
+            columns: ["required_skill_id"]
+            isOneToOne: false
+            referencedRelation: "service_categories"
             referencedColumns: ["id"]
           },
           {
@@ -6337,10 +6357,23 @@ export type Database = {
         Returns: Json
       }
       business_get_profile: { Args: never; Returns: Json }
+      business_get_trip_otps: {
+        Args: { _courier_order_id: string }
+        Returns: Json
+      }
       business_get_wallet: { Args: never; Returns: Json }
       business_group_and_batch: {
         Args: { _group_filter?: Json; _merchant_id: string; _trigger: string }
         Returns: Json
+      }
+      business_notify: {
+        Args: {
+          _body: string
+          _data?: Json
+          _merchant_id: string
+          _title: string
+        }
+        Returns: undefined
       }
       business_order_insert: {
         Args: {
@@ -6369,6 +6402,10 @@ export type Database = {
           _mid: string
           _name: string
         }
+        Returns: string
+      }
+      business_requeue_order: {
+        Args: { _actor_label?: string; _order_id: string }
         Returns: string
       }
       business_require_delivery: { Args: never; Returns: string }
@@ -6709,6 +6746,7 @@ export type Database = {
           refund_next_attempt_at: string | null
           refund_reason: string | null
           refund_status: string
+          required_skill_id: string | null
           rider_cancel_count: number
           search_started_at: string | null
           source: string
