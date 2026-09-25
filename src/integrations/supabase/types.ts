@@ -6410,6 +6410,7 @@ export type Database = {
       }
       business_require_delivery: { Args: never; Returns: string }
       business_require_ops: { Args: never; Returns: undefined }
+      business_require_super_admin: { Args: never; Returns: undefined }
       business_set_receiver_active: {
         Args: { _active: boolean; _actor_label?: string; _id: string }
         Returns: undefined
