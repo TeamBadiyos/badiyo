@@ -608,11 +608,15 @@ function Index() {
 
     // Update prompt: hard block below the minimum supported build, a
     // dismissible nudge (snoozed 24h) when a newer build is on the Play Store.
-    void checkForUpdate().then((verdict) => {
-      if (cancelled) return;
-      setStoreUrl(verdict.playStoreUrl);
-      if (verdict.kind === "hard_update") setForceUpdate(true);
-      else if (verdict.kind === "soft_update" && !isSoftUpdateSnoozed()) setSoftUpdate(true);
+    // It runs once the first screen is on the network's spare capacity, so it
+    // never competes with the data the first screen needs.
+    runWhenIdle(() => {
+      void checkForUpdate().then((verdict) => {
+        if (cancelled) return;
+        setStoreUrl(verdict.playStoreUrl);
+        if (verdict.kind === "hard_update") setForceUpdate(true);
+        else if (verdict.kind === "soft_update" && !isSoftUpdateSnoozed()) setSoftUpdate(true);
+      });
     });
 
     // The splash is a brand moment, not a loading wait: it stays on screen only
@@ -645,21 +649,28 @@ function Index() {
         settled = true;
         clearTimeout(splashCap);
         enterAppAfterAuth("home");
-        ensureUserRow()
-          .then(() => import("@/lib/referrals").then((m) => m.linkReferralIfAny()))
-          .then(() => registerPushForCurrentUser())
-          .catch((e) => console.error("post-oauth setup failed:", e));
+        // Account housekeeping is not needed to draw Home, so it waits until
+        // the screen is up instead of sharing the first seconds of bandwidth.
+        runWhenIdle(() => {
+          ensureUserRow()
+            .then(() => import("@/lib/referrals").then((m) => m.linkReferralIfAny()))
+            .then(() => registerPushForCurrentUser())
+            .catch((e) => console.error("post-oauth setup failed:", e));
+        });
         return;
       }
       // Otherwise run the normal splash → login flow. Warm the screens the
       // user is about to hit so no chunk download sits on the critical path.
       void import("@/components/PinLoginScreen");
       void import("@/components/OtpVerifyScreen");
-      void import("@/components/HomeScreen");
       clearTimeout(splashCap);
       goToLogin();
-      ensureUserRow().catch((e) => console.error("startup ensureUserRow failed:", e));
+      runWhenIdle(() => {
+        void import("@/components/HomeScreen");
+        ensureUserRow().catch((e) => console.error("startup ensureUserRow failed:", e));
+      });
     });
+
 
 
 
