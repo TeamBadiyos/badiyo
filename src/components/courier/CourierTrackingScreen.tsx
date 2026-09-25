@@ -424,6 +424,7 @@ export function CourierTrackingScreen({
             orderId={orderId}
             stops={stops}
             otps={stopOtps}
+            orderCode={order.order_code}
             currentId={curStop}
             editable={!cancelled && !done}
           />
