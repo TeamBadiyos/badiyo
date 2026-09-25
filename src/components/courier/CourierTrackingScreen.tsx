@@ -209,7 +209,19 @@ export function CourierTrackingScreen({
   const searching = status === "REQUESTED" || status === "SEARCHING";
   const canCancel = ["REQUESTED", "SEARCHING", "DRIVER_ASSIGNED", "ARRIVED_PICKUP"].includes(status);
 
+  // Fee preview mirrors the server rule: 50% of the total only once the rider
+  // has reached the pickup point, and only when the order was actually paid.
+  const paidOrder = order?.payment_status === "paid" || order?.payment_status === "refund_pending";
+  const cancelFee =
+    status === "ARRIVED_PICKUP" && paidOrder
+      ? Math.round(Number(order?.total_amount ?? 0) * 0.5 * 100) / 100
+      : 0;
+  const cancelRefund = paidOrder
+    ? Math.max(0, Math.round((Number(order?.total_amount ?? 0) - cancelFee) * 100) / 100)
+    : 0;
+
   const cancelOrder = async () => {
+    setConfirmCancel(false);
     setCancelling(true);
     try {
       const { error } = await supabase.rpc("courier_cancel_order", {
