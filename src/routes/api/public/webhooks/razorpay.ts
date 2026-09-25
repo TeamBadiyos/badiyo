@@ -9,6 +9,7 @@ type RazorpayPaymentEntity = {
   id?: string;
   order_id?: string;
   status?: string;
+  amount?: number;
   notes?: Record<string, string> | null;
 };
 
