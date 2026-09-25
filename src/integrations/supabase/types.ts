@@ -1063,6 +1063,57 @@ export type Database = {
           },
         ]
       }
+      business_wallet_topups: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by_label: string | null
+          id: string
+          merchant_id: string
+          paid_at: string | null
+          razorpay_order_id: string
+          razorpay_payment_id: string | null
+          status: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by_label?: string | null
+          id?: string
+          merchant_id: string
+          paid_at?: string | null
+          razorpay_order_id: string
+          razorpay_payment_id?: string | null
+          status?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by_label?: string | null
+          id?: string
+          merchant_id?: string
+          paid_at?: string | null
+          razorpay_order_id?: string
+          razorpay_payment_id?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_wallet_topups_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_wallet_topups_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "public_stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaign_deliveries: {
         Row: {
           campaign_id: string
@@ -3520,6 +3571,7 @@ export type Database = {
           delivery_enabled: boolean
           delivery_fee_payer: string
           delivery_status: string
+          delivery_wallet_balance: number
           fee_tier_id: string | null
           fulfillment_mode: string
           gst_legal_name: string | null
@@ -3564,6 +3616,7 @@ export type Database = {
           delivery_enabled?: boolean
           delivery_fee_payer?: string
           delivery_status?: string
+          delivery_wallet_balance?: number
           fee_tier_id?: string | null
           fulfillment_mode?: string
           gst_legal_name?: string | null
@@ -3608,6 +3661,7 @@ export type Database = {
           delivery_enabled?: boolean
           delivery_fee_payer?: string
           delivery_status?: string
+          delivery_wallet_balance?: number
           fee_tier_id?: string | null
           fulfillment_mode?: string
           gst_legal_name?: string | null
@@ -5604,6 +5658,7 @@ export type Database = {
           owner_type: string
           reason: string
           type: string
+          wallet_type: string
         }
         Insert: {
           amount: number
@@ -5614,6 +5669,7 @@ export type Database = {
           owner_type: string
           reason: string
           type: string
+          wallet_type?: string
         }
         Update: {
           amount?: number
@@ -5624,6 +5680,7 @@ export type Database = {
           owner_type?: string
           reason?: string
           type?: string
+          wallet_type?: string
         }
         Relationships: [
           {
@@ -5848,7 +5905,24 @@ export type Database = {
         Args: { _lat: number; _lng: number }
         Returns: undefined
       }
+      business_confirm_topup: {
+        Args: {
+          _amount_paid: number
+          _payment_id: string
+          _razorpay_order_id: string
+        }
+        Returns: boolean
+      }
+      business_create_topup_intent: {
+        Args: {
+          _actor_label?: string
+          _amount: number
+          _razorpay_order_id: string
+        }
+        Returns: string
+      }
       business_get_profile: { Args: never; Returns: Json }
+      business_get_wallet: { Args: never; Returns: Json }
       business_phone10: { Args: { _p: string }; Returns: string }
       business_pickup_write: {
         Args: {
@@ -5898,6 +5972,17 @@ export type Database = {
           _lng: number
           _name: string
           _notes?: string
+        }
+        Returns: string
+      }
+      business_wallet_post: {
+        Args: {
+          _allow_negative?: boolean
+          _amount: number
+          _created_by?: string
+          _merchant_id: string
+          _reason: string
+          _type: string
         }
         Returns: string
       }
@@ -6837,6 +6922,15 @@ export type Database = {
       }
       staff_assign_partner_skill: {
         Args: { _expert_id: string; _service_category_id: string }
+        Returns: string
+      }
+      staff_business_wallet_adjust: {
+        Args: {
+          _amount: number
+          _merchant_id: string
+          _reason: string
+          _type: string
+        }
         Returns: string
       }
       staff_campaign_audience_preview:
