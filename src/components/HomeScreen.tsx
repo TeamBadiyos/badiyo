@@ -32,9 +32,18 @@ import { toast } from "sonner";
 import { formatNextOpen, useServiceState } from "@/lib/serviceHours";
 import { useIsInternalTester, type PublicStore } from "@/lib/store";
 import { StoreListView } from "./store/StoreListView";
-import { StoreDetailScreen } from "./store/StoreDetailScreen";
-import { StoreCategoryScreen } from "./store/StoreCategoryScreen";
-import { StoreCartScreen } from "./store/StoreCartScreen";
+// Shop pages (with their address picker and payment sheet) load only when the
+// customer actually opens a shop, a category or the cart.
+const StoreDetailScreen = lazy(() =>
+  import("./store/StoreDetailScreen").then((m) => ({ default: m.StoreDetailScreen })),
+);
+const StoreCategoryScreen = lazy(() =>
+  import("./store/StoreCategoryScreen").then((m) => ({ default: m.StoreCategoryScreen })),
+);
+const StoreCartScreen = lazy(() =>
+  import("./store/StoreCartScreen").then((m) => ({ default: m.StoreCartScreen })),
+);
+
 import type { StoreCategoryGroup } from "./store/storeGroups";
 import type { TranslationKey } from "@/i18n/en";
 
