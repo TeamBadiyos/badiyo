@@ -20,6 +20,7 @@ import { Route as ApiPublicWebhooksRazorpayRouteImport } from './routes/api/publ
 import { Route as ApiPublicStoreProcessRefundsRouteImport } from './routes/api/public/store/process-refunds'
 import { Route as ApiPublicPushSendRouteImport } from './routes/api/public/push/send'
 import { Route as ApiPublicCourierProcessRefundsRouteImport } from './routes/api/public/courier/process-refunds'
+import { Route as ApiPublicBusinessProcessBatchesRouteImport } from './routes/api/public/business/process-batches'
 import { Route as ApiPublicBookingsProcessRefundsRouteImport } from './routes/api/public/bookings/process-refunds'
 import { Route as ApiPublicAdminAlertProcessRouteImport } from './routes/api/public/admin-alert/process'
 
@@ -81,6 +82,12 @@ const ApiPublicCourierProcessRefundsRoute =
     path: '/api/public/courier/process-refunds',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicBusinessProcessBatchesRoute =
+  ApiPublicBusinessProcessBatchesRouteImport.update({
+    id: '/api/public/business/process-batches',
+    path: '/api/public/business/process-batches',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicBookingsProcessRefundsRoute =
   ApiPublicBookingsProcessRefundsRouteImport.update({
     id: '/api/public/bookings/process-refunds',
@@ -104,6 +111,7 @@ export interface FileRoutesByFullPath {
   '/api/public/service-image': typeof ApiPublicServiceImageRoute
   '/api/public/admin-alert/process': typeof ApiPublicAdminAlertProcessRoute
   '/api/public/bookings/process-refunds': typeof ApiPublicBookingsProcessRefundsRoute
+  '/api/public/business/process-batches': typeof ApiPublicBusinessProcessBatchesRoute
   '/api/public/courier/process-refunds': typeof ApiPublicCourierProcessRefundsRoute
   '/api/public/push/send': typeof ApiPublicPushSendRoute
   '/api/public/store/process-refunds': typeof ApiPublicStoreProcessRefundsRoute
@@ -119,6 +127,7 @@ export interface FileRoutesByTo {
   '/api/public/service-image': typeof ApiPublicServiceImageRoute
   '/api/public/admin-alert/process': typeof ApiPublicAdminAlertProcessRoute
   '/api/public/bookings/process-refunds': typeof ApiPublicBookingsProcessRefundsRoute
+  '/api/public/business/process-batches': typeof ApiPublicBusinessProcessBatchesRoute
   '/api/public/courier/process-refunds': typeof ApiPublicCourierProcessRefundsRoute
   '/api/public/push/send': typeof ApiPublicPushSendRoute
   '/api/public/store/process-refunds': typeof ApiPublicStoreProcessRefundsRoute
@@ -135,6 +144,7 @@ export interface FileRoutesById {
   '/api/public/service-image': typeof ApiPublicServiceImageRoute
   '/api/public/admin-alert/process': typeof ApiPublicAdminAlertProcessRoute
   '/api/public/bookings/process-refunds': typeof ApiPublicBookingsProcessRefundsRoute
+  '/api/public/business/process-batches': typeof ApiPublicBusinessProcessBatchesRoute
   '/api/public/courier/process-refunds': typeof ApiPublicCourierProcessRefundsRoute
   '/api/public/push/send': typeof ApiPublicPushSendRoute
   '/api/public/store/process-refunds': typeof ApiPublicStoreProcessRefundsRoute
@@ -152,6 +162,7 @@ export interface FileRouteTypes {
     | '/api/public/service-image'
     | '/api/public/admin-alert/process'
     | '/api/public/bookings/process-refunds'
+    | '/api/public/business/process-batches'
     | '/api/public/courier/process-refunds'
     | '/api/public/push/send'
     | '/api/public/store/process-refunds'
@@ -167,6 +178,7 @@ export interface FileRouteTypes {
     | '/api/public/service-image'
     | '/api/public/admin-alert/process'
     | '/api/public/bookings/process-refunds'
+    | '/api/public/business/process-batches'
     | '/api/public/courier/process-refunds'
     | '/api/public/push/send'
     | '/api/public/store/process-refunds'
@@ -182,6 +194,7 @@ export interface FileRouteTypes {
     | '/api/public/service-image'
     | '/api/public/admin-alert/process'
     | '/api/public/bookings/process-refunds'
+    | '/api/public/business/process-batches'
     | '/api/public/courier/process-refunds'
     | '/api/public/push/send'
     | '/api/public/store/process-refunds'
@@ -198,6 +211,7 @@ export interface RootRouteChildren {
   ApiPublicServiceImageRoute: typeof ApiPublicServiceImageRoute
   ApiPublicAdminAlertProcessRoute: typeof ApiPublicAdminAlertProcessRoute
   ApiPublicBookingsProcessRefundsRoute: typeof ApiPublicBookingsProcessRefundsRoute
+  ApiPublicBusinessProcessBatchesRoute: typeof ApiPublicBusinessProcessBatchesRoute
   ApiPublicCourierProcessRefundsRoute: typeof ApiPublicCourierProcessRefundsRoute
   ApiPublicPushSendRoute: typeof ApiPublicPushSendRoute
   ApiPublicStoreProcessRefundsRoute: typeof ApiPublicStoreProcessRefundsRoute
@@ -283,6 +297,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCourierProcessRefundsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/business/process-batches': {
+      id: '/api/public/business/process-batches'
+      path: '/api/public/business/process-batches'
+      fullPath: '/api/public/business/process-batches'
+      preLoaderRoute: typeof ApiPublicBusinessProcessBatchesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/bookings/process-refunds': {
       id: '/api/public/bookings/process-refunds'
       path: '/api/public/bookings/process-refunds'
@@ -310,6 +331,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicServiceImageRoute: ApiPublicServiceImageRoute,
   ApiPublicAdminAlertProcessRoute: ApiPublicAdminAlertProcessRoute,
   ApiPublicBookingsProcessRefundsRoute: ApiPublicBookingsProcessRefundsRoute,
+  ApiPublicBusinessProcessBatchesRoute: ApiPublicBusinessProcessBatchesRoute,
   ApiPublicCourierProcessRefundsRoute: ApiPublicCourierProcessRefundsRoute,
   ApiPublicPushSendRoute: ApiPublicPushSendRoute,
   ApiPublicStoreProcessRefundsRoute: ApiPublicStoreProcessRefundsRoute,
