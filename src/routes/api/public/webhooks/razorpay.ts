@@ -9,6 +9,7 @@ type RazorpayPaymentEntity = {
   id?: string;
   order_id?: string;
   status?: string;
+  amount?: number;
   notes?: Record<string, string> | null;
 };
 
@@ -127,6 +128,19 @@ export const Route = createFileRoute("/api/public/webhooks/razorpay")({
           const { markCourierPaid } = await import("@/lib/courier.functions");
           const result = await markCourierPaid(courierOrderId, paymentId);
           return new Response(result.ok ? "ok-courier" : "courier-not-found");
+        }
+        // Business delivery wallet top-up: credit the merchant's delivery wallet.
+        // The paid amount always comes from the Razorpay entity, never from notes.
+        if (purpose === "merchant_wallet_topup") {
+          if (!orderId) return new Response("ignored-topup");
+          const { supabaseAdmin: admin } = await import("@/integrations/supabase/client.server");
+          const paidRupees = typeof entity.amount === "number" ? entity.amount / 100 : null;
+          const { data: confirmed } = await admin.rpc("business_confirm_topup" as never, {
+            _razorpay_order_id: orderId,
+            _payment_id: paymentId,
+            _amount_paid: paidRupees,
+          } as never);
+          return new Response(confirmed ? "ok-topup" : "topup-not-confirmed");
         }
         if (!orderId) {
           console.error("[razorpay-webhook] event without order_id", event);
