@@ -7461,6 +7461,16 @@ export type Database = {
         Args: { _batch_id: string }
         Returns: undefined
       }
+      staff_courier_assignable_riders: {
+        Args: { _order_id: string }
+        Returns: {
+          distance_km: number
+          id: string
+          is_online: boolean
+          name: string
+          phone: string
+        }[]
+      }
       staff_courier_confirm_rate: { Args: { _id: string }; Returns: undefined }
       staff_courier_force_cancel: {
         Args: { _order_id: string; _reason: string; _refund_amount?: number }
@@ -7482,6 +7492,10 @@ export type Database = {
           _resolution: string
         }
         Returns: Json
+      }
+      staff_courier_rider_ok: {
+        Args: { _expert_id: string; _order_id: string }
+        Returns: string
       }
       staff_courier_set_courier_type_active: {
         Args: { _id: string; _is_active: boolean }
