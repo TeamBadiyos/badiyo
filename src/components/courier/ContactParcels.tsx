@@ -230,6 +230,9 @@ function ContactParcelDetail({ stopId, onBack }: { stopId: string; onBack: () =>
                 address={data.stop.address}
               />
             )}
+            {data.otp && data.stop.stop_type === "drop" && !data.is_next_stop && data.order_status === "IN_TRANSIT" && (
+              <p className="text-center text-xs text-muted-foreground">{t("courier.riderAfterEarlierDrops")}</p>
+            )}
             {data.return_stop?.otp && (
               <OtpBlock label={t("courier.returnCode")} otp={data.return_stop.otp} type="return" address={data.stop.address} />
             )}

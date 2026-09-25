@@ -43,3 +43,13 @@ export function otpShareText(
     otp,
   });
 }
+
+/** One message listing every visible drop code. */
+export function otpShareAllText(
+  orderCode: string | null | undefined,
+  drops: Array<{ n: number; address: string | null; otp: string }>,
+  t: TFunction,
+) {
+  const lines = drops.map((d) => `${t("courier.stopDrop")} ${d.n} (${shortAddress(d.address, t)}): ${d.otp}`);
+  return [t("courier.shareAllHeader", { code: orderCode ?? "" }), ...lines, t("courier.shareAllFooter")].join("\n");
+}

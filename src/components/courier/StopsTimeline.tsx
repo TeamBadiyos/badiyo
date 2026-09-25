@@ -21,7 +21,7 @@ import type { CourierCharge, CourierParcel, CourierStop } from "./courierData";
 
 const TERMINAL = ["completed", "failed", "cancelled"];
 
-import { otpShareText, shareOtp, typeLabel } from "./otpShare";
+import { otpShareAllText, otpShareText, shareOtp, typeLabel } from "./otpShare";
 export { shortAddress, shareOtp, otpShareText } from "./otpShare";
 
 
@@ -48,20 +48,36 @@ export function StopsTimeline({
   otps,
   currentId,
   editable,
+  orderCode,
 }: {
   orderId: string;
   stops: CourierStop[];
   otps: Record<string, string | null>;
   currentId: string | null;
   editable: boolean;
+  orderCode?: string | null;
 }) {
   const t = useT();
   const [editing, setEditing] = useState<CourierStop | null>(null);
   const anyOtp = Object.values(otps).some(Boolean);
   const counters: Record<string, number> = {};
+  let dn = 0;
+  const dropOtps = stops.flatMap((st) => {
+    if (st.stop_type !== "drop") return [];
+    dn += 1;
+    const o = otps[st.id];
+    return o ? [{ n: dn, address: st.address, otp: o }] : [];
+  });
   return (
     <div className="rounded-[20px] border border-border bg-card p-4">
-      <p className="mb-3 text-sm font-bold">{t("courier.stops")}</p>
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <p className="text-sm font-bold">{t("courier.stops")}</p>
+        {dropOtps.length >= 2 && (
+          <Button type="button" size="sm" variant="outline" onClick={() => void shareOtp(otpShareAllText(orderCode, dropOtps, t))}>
+            <Share2 className="h-4 w-4" /> {t("courier.shareAllOtps")}
+          </Button>
+        )}
+      </div>
       <ol className="space-y-3">
         {stops.map((st) => {
           counters[st.stop_type] = (counters[st.stop_type] ?? 0) + 1;
