@@ -1,6 +1,6 @@
 // "Parcels for you": parcels where the signed-in user is a pickup, drop or
 // return contact on someone else's order. No price or payment info here.
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, ChevronRight, Loader2, Package, Share2, ShieldCheck, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,10 +9,16 @@ import {
   courierGetRiderLocationForStop,
   courierMyContactDeliveries,
 } from "@/lib/courier.functions";
-import { CourierLiveMap } from "./CourierLiveMap";
-import { otpShareText, shareOtp } from "./StopsTimeline";
+import { otpShareText, shareOtp } from "./otpShare";
 import type { RiderLocation } from "./courierData";
 import { useT, type TFunction } from "@/i18n";
+
+// Google Maps + the live-tracking bundle load only when a rider is actually
+// on the way; the Home screen never pays for them.
+const CourierLiveMap = lazy(() =>
+  import("./CourierLiveMap").then((m) => ({ default: m.CourierLiveMap })),
+);
+
 
 type ContactRow = {
   order_id: string;
