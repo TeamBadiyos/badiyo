@@ -19,6 +19,16 @@ import {
 import { BillSheet } from "@/components/BillSheet";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { refreshCourierOtp } from "@/lib/courierOtp.functions";
 import { CourierLiveMap } from "./CourierLiveMap";
@@ -156,6 +166,7 @@ export function CourierTrackingScreen({
 
   const [cancelling, setCancelling] = useState(false);
   const [billOpen, setBillOpen] = useState(false);
+  const [confirmCancel, setConfirmCancel] = useState(false);
 
   // Multi-stop data (stops, parcels, return charges, per-stop OTPs).
   const { data: stops = [] } = useQuery({
@@ -199,7 +210,19 @@ export function CourierTrackingScreen({
   const searching = status === "REQUESTED" || status === "SEARCHING";
   const canCancel = ["REQUESTED", "SEARCHING", "DRIVER_ASSIGNED", "ARRIVED_PICKUP"].includes(status);
 
+  // Fee preview mirrors the server rule: 50% of the total only once the rider
+  // has reached the pickup point, and only when the order was actually paid.
+  const paidOrder = order?.payment_status === "paid" || order?.payment_status === "refund_pending";
+  const cancelFee =
+    status === "ARRIVED_PICKUP" && paidOrder
+      ? Math.round(Number(order?.total_amount ?? 0) * 0.5 * 100) / 100
+      : 0;
+  const cancelRefund = paidOrder
+    ? Math.max(0, Math.round((Number(order?.total_amount ?? 0) - cancelFee) * 100) / 100)
+    : 0;
+
   const cancelOrder = async () => {
+    setConfirmCancel(false);
     setCancelling(true);
     try {
       const { error } = await supabase.rpc("courier_cancel_order", {
@@ -520,9 +543,39 @@ export function CourierTrackingScreen({
         />
 
         {canCancel && (
-          <Button variant="outline" className="w-full" disabled={cancelling} onClick={cancelOrder}>
-            {cancelling ? <Loader2 className="h-4 w-4 animate-spin" /> : t("courier.cancelOrder")}
-          </Button>
+          <>
+            <Button
+              variant="outline"
+              className="w-full"
+              disabled={cancelling}
+              onClick={() => setConfirmCancel(true)}
+            >
+              {cancelling ? <Loader2 className="h-4 w-4 animate-spin" /> : t("courier.cancelOrder")}
+            </Button>
+            <AlertDialog open={confirmCancel} onOpenChange={setConfirmCancel}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>{t("courier.cancelConfirmTitle")}</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {!paidOrder
+                      ? t("courier.cancelConfirmPlain")
+                      : cancelFee > 0
+                        ? t("courier.cancelConfirmFee", {
+                            fee: cancelFee.toFixed(2),
+                            refund: cancelRefund.toFixed(2),
+                          })
+                        : t("courier.cancelConfirmFree", { refund: cancelRefund.toFixed(2) })}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>{t("courier.keepOrder")}</AlertDialogCancel>
+                  <AlertDialogAction onClick={cancelOrder}>
+                    {t("courier.yesCancel")}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </>
         )}
         {(status === "PICKED_UP" || status === "IN_TRANSIT") && (
           <p className="text-center text-xs text-muted-foreground">
