@@ -64,6 +64,20 @@ function Icon({ name, className }: { name?: string | null; className?: string })
   return <Cmp className={className} />;
 }
 
+/** Placeholder shown for the moment a shop page is being fetched. */
+function ScreenSkeleton() {
+  return (
+    <div className="min-h-dvh space-y-3 bg-background p-4">
+      <div className="h-10 w-2/3 animate-pulse rounded-xl bg-muted" />
+      <div className="h-36 animate-pulse rounded-[18px] bg-muted" />
+      <div className="h-24 animate-pulse rounded-[18px] bg-muted" />
+      <div className="h-24 animate-pulse rounded-[18px] bg-muted" />
+    </div>
+  );
+}
+
+
+
 import { fetchSections } from "@/lib/homeData";
 import {
   fetchAvailability,
