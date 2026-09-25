@@ -166,6 +166,7 @@ export function CourierTrackingScreen({
 
   const [cancelling, setCancelling] = useState(false);
   const [billOpen, setBillOpen] = useState(false);
+  const [confirmCancel, setConfirmCancel] = useState(false);
 
   // Multi-stop data (stops, parcels, return charges, per-stop OTPs).
   const { data: stops = [] } = useQuery({
