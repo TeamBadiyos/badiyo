@@ -21,7 +21,9 @@ import type { CourierCharge, CourierParcel, CourierStop } from "./courierData";
 
 const TERMINAL = ["completed", "failed", "cancelled"];
 
+import { otpShareText, shareOtp, typeLabel } from "./otpShare";
 export { shortAddress, shareOtp, otpShareText } from "./otpShare";
+
 
 function statusLabel(s: string, t: TFunction) {
   switch (s) {
