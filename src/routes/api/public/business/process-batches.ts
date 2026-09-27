@@ -245,12 +245,19 @@ async function processRun(admin: Admin, run: Run) {
     trips = await fallbackTrips(admin, run);
     skipped = [];
   }
+  const minDrops = run.min_trip_drops ?? 0;
   let total = 0;
   let n = 0;
+  let heldTrips = 0;
   for (const t of trips) {
+    // qty runs: small trips stay pending for the next check / slot / manual dispatch
+    if (minDrops > 0 && t.receivers.length < minDrops) {
+      heldTrips++;
+      continue;
+    }
     n++;
     total += t.km;
-    const { error: e } = await admin.rpc("business_create_trip", {
+    const { data: res, error: e } = await admin.rpc("business_create_trip", {
       _run_id: run.run_id,
       _trip_no: n,
       _receiver_order: t.receivers,
@@ -258,7 +265,13 @@ async function processRun(admin: Admin, run: Run) {
       _distance_source: method,
     });
     if (e) console.error("[business-dispatch] create trip failed", run.run_id, n, e);
+    else if ((res as { held?: boolean } | null)?.held) {
+      heldTrips++;
+      n--;
+      total -= t.km;
+    }
   }
+  if (heldTrips > 0) console.log("[business-dispatch] held small trips", run.run_id, heldTrips);
   await admin.rpc("business_complete_run", {
     _run_id: run.run_id,
     _method: method,
