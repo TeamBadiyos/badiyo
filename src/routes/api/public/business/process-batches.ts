@@ -170,11 +170,20 @@ async function fallbackTrips(admin: Admin, run: Run): Promise<Trip[]> {
     }
     far.push(...far.splice(0, start));
   }
+  // A drop joins a trip only if its extra road distance costs no more than a separate trip.
+  const fixedCost = Math.max(0, Number(run.trip_fixed_cost ?? 0));
+  const perKm = Math.max(0, Number(run.per_km ?? 0));
+  const tooCostly = (km: number) => perKm > 0 && km * 1.3 * perKm > fixedCost;
   const groups: Drop[][] = [];
   let cur: Array<Drop & { b: number }> = [];
   for (const d of far) {
     const prev = cur[cur.length - 1];
-    if (cur.length && (cur.length >= max || (d.b - prev.b + 360) % 360 > 60)) {
+    if (
+      cur.length &&
+      (cur.length >= max ||
+        (d.b - prev.b + 360) % 360 > 60 ||
+        tooCostly(Math.min(...cur.map((x) => haversineKm(x, d)))))
+    ) {
       groups.push(cur);
       cur = [];
     }
@@ -194,7 +203,7 @@ async function fallbackTrips(admin: Admin, run: Run): Promise<Trip[]> {
         }
       }
     });
-    if (best >= 0) groups[best].push(d);
+    if (best >= 0 && !tooCostly(bestKm)) groups[best].push(d);
     else groups.push([d]);
   }
 
