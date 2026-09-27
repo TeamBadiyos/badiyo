@@ -845,6 +845,7 @@ export type Database = {
           slot_times: string[]
           slots_enabled: boolean
           time_per_drop_min: number
+          trip_fixed_cost: number | null
           updated_at: string
         }
         Insert: {
@@ -861,6 +862,7 @@ export type Database = {
           slot_times?: string[]
           slots_enabled?: boolean
           time_per_drop_min?: number
+          trip_fixed_cost?: number | null
           updated_at?: string
         }
         Update: {
@@ -877,6 +879,7 @@ export type Database = {
           slot_times?: string[]
           slots_enabled?: boolean
           time_per_drop_min?: number
+          trip_fixed_cost?: number | null
           updated_at?: string
         }
         Relationships: []
@@ -1061,9 +1064,11 @@ export type Database = {
           created_at: string
           drops: number
           error: string | null
+          held_drops: number
           id: string
           merchant_id: string
           method: string | null
+          min_trip_drops: number | null
           pickup_point_id: string
           skipped: Json
           status: string
@@ -1077,9 +1082,11 @@ export type Database = {
           created_at?: string
           drops?: number
           error?: string | null
+          held_drops?: number
           id?: string
           merchant_id: string
           method?: string | null
+          min_trip_drops?: number | null
           pickup_point_id: string
           skipped?: Json
           status?: string
@@ -1093,9 +1100,11 @@ export type Database = {
           created_at?: string
           drops?: number
           error?: string | null
+          held_drops?: number
           id?: string
           merchant_id?: string
           method?: string | null
+          min_trip_drops?: number | null
           pickup_point_id?: string
           skipped?: Json
           status?: string
@@ -1499,6 +1508,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      business_qty_check_state: {
+        Row: {
+          last_check_at: string
+          merchant_id: string
+          pickup_point_id: string
+        }
+        Insert: {
+          last_check_at?: string
+          merchant_id: string
+          pickup_point_id: string
+        }
+        Update: {
+          last_check_at?: string
+          merchant_id?: string
+          pickup_point_id?: string
+        }
+        Relationships: []
       }
       business_receivers: {
         Row: {
@@ -8303,6 +8330,7 @@ export type Database = {
           _slot_times: string[]
           _slots_enabled: boolean
           _time_per_drop_min?: number
+          _trip_fixed_cost?: number
         }
         Returns: string
       }
