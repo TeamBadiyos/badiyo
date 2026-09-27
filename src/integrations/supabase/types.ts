@@ -6713,6 +6713,10 @@ export type Database = {
         Args: { _d: string; _slot: string }
         Returns: string
       }
+      courier_business_trip_display: {
+        Args: { _order_id: string }
+        Returns: Json
+      }
       courier_can_read_order: { Args: { _order_id: string }; Returns: boolean }
       courier_cancel_order: {
         Args: { _order_id: string; _reason?: string }
