@@ -6891,10 +6891,6 @@ export type Database = {
         Args: { _lock: boolean; _mid: string; _raw: string }
         Returns: Json
       }
-      business_seal_void_for_batch: {
-        Args: { _batch_id: string; _reason: string }
-        Returns: number
-      }
       business_set_receiver_active: {
         Args: { _active: boolean; _actor_label?: string; _id: string }
         Returns: undefined
