@@ -1,0 +1,2 @@
+ALTER TABLE public.business_batches DROP CONSTRAINT business_batches_status_check;
+ALTER TABLE public.business_batches ADD CONSTRAINT business_batches_status_check CHECK (status = ANY (ARRAY['planning','awaiting_balance','dispatched','failed','completed','rejected']));
