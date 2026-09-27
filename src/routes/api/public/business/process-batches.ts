@@ -149,7 +149,7 @@ async function fallbackTrips(admin: Admin, run: Run): Promise<Trip[]> {
     let start = 0;
     for (let i = 0; i < far.length; i++) {
       const next = far[(i + 1) % far.length];
-      const gap = (next.b - far[i].b + 360) % 360 || (far.length === 1 ? 360 : 0);
+      const gap = (next.b - far[i].b + 360) % 360;
       if (gap > widest) {
         widest = gap;
         start = (i + 1) % far.length;
