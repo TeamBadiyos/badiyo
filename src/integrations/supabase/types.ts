@@ -881,6 +881,8 @@ export type Database = {
       bulk_pricing_plans: {
         Row: {
           base_fare: number
+          cancel_fee_type: string
+          cancel_fee_value: number
           commission_pct: number
           created_at: string
           extra_drop_fee: number
@@ -895,6 +897,8 @@ export type Database = {
         }
         Insert: {
           base_fare?: number
+          cancel_fee_type?: string
+          cancel_fee_value?: number
           commission_pct?: number
           created_at?: string
           extra_drop_fee?: number
@@ -909,6 +913,8 @@ export type Database = {
         }
         Update: {
           base_fare?: number
+          cancel_fee_type?: string
+          cancel_fee_value?: number
           commission_pct?: number
           created_at?: string
           extra_drop_fee?: number
@@ -2259,6 +2265,8 @@ export type Database = {
           business_merchant_id: string | null
           cancel_reason_code: string | null
           cancellation_fee: number
+          cancellation_fee_base: number | null
+          cancellation_fee_gst: number | null
           cancelled_at: string | null
           cancelled_by: string | null
           city: string
@@ -2338,6 +2346,8 @@ export type Database = {
           business_merchant_id?: string | null
           cancel_reason_code?: string | null
           cancellation_fee?: number
+          cancellation_fee_base?: number | null
+          cancellation_fee_gst?: number | null
           cancelled_at?: string | null
           cancelled_by?: string | null
           city: string
@@ -2417,6 +2427,8 @@ export type Database = {
           business_merchant_id?: string | null
           cancel_reason_code?: string | null
           cancellation_fee?: number
+          cancellation_fee_base?: number | null
+          cancellation_fee_gst?: number | null
           cancelled_at?: string | null
           cancelled_by?: string | null
           city?: string
@@ -6729,6 +6741,16 @@ export type Database = {
         Returns: Json
       }
       courier_can_read_order: { Args: { _order_id: string }; Returns: boolean }
+      courier_cancel_fee_for: {
+        Args: { _order_id: string }
+        Returns: {
+          fee_base: number
+          fee_gst: number
+          fee_total: number
+          refund_amount: number
+          rider_share: number
+        }[]
+      }
       courier_cancel_order: {
         Args: { _order_id: string; _reason?: string }
         Returns: Json
@@ -6856,6 +6878,8 @@ export type Database = {
           business_merchant_id: string | null
           cancel_reason_code: string | null
           cancellation_fee: number
+          cancellation_fee_base: number | null
+          cancellation_fee_gst: number | null
           cancelled_at: string | null
           cancelled_by: string | null
           city: string
@@ -7007,6 +7031,10 @@ export type Database = {
       courier_setting: {
         Args: { _default: number; _key: string }
         Returns: number
+      }
+      courier_setting_text: {
+        Args: { _default: string; _key: string }
+        Returns: string
       }
       courier_settle_order: { Args: { _order_id: string }; Returns: undefined }
       courier_start_dispatch: {
@@ -7998,6 +8026,10 @@ export type Database = {
         }
         Returns: Json
       }
+      staff_set_cancel_fee: {
+        Args: { _rider_share_pct: number; _type: string; _value: number }
+        Returns: Json
+      }
       staff_set_commission_rule_active: {
         Args: { _id: string; _is_active: boolean }
         Returns: undefined
@@ -8313,6 +8345,8 @@ export type Database = {
       staff_upsert_pricing_plan: {
         Args: {
           _base_fare: number
+          _cancel_fee_type?: string
+          _cancel_fee_value?: number
           _commission_pct: number
           _extra_drop_fee: number
           _id: string
