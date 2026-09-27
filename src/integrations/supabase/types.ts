@@ -832,6 +832,7 @@ export type Database = {
       }
       bulk_dispatch_plans: {
         Row: {
+          cost_per_extra_trip: number | null
           created_at: string
           id: string
           is_active: boolean
@@ -847,6 +848,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          cost_per_extra_trip?: number | null
           created_at?: string
           id?: string
           is_active?: boolean
@@ -862,6 +864,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          cost_per_extra_trip?: number | null
           created_at?: string
           id?: string
           is_active?: boolean
@@ -8289,6 +8292,7 @@ export type Database = {
       }
       staff_upsert_dispatch_plan: {
         Args: {
+          _cost_per_extra_trip?: number
           _id: string
           _is_active?: boolean
           _manual_enabled: boolean
