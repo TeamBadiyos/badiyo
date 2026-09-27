@@ -6430,6 +6430,10 @@ export type Database = {
         Args: { _actor_label?: string; _order_id: string; _reason?: string }
         Returns: undefined
       }
+      business_cancel_trip: {
+        Args: { _actor_label: string; _batch_id: string; _reason: string }
+        Returns: Json
+      }
       business_check_location: {
         Args: { _lat: number; _lng: number }
         Returns: undefined
@@ -6552,10 +6556,17 @@ export type Database = {
         }
         Returns: string
       }
-      business_reject_trip_internal: {
-        Args: { _cid: string; _reason: string }
-        Returns: boolean
-      }
+      business_reject_trip_internal:
+        | { Args: { _cid: string; _reason: string }; Returns: boolean }
+        | {
+            Args: {
+              _allow_assigned: boolean
+              _by: string
+              _cid: string
+              _reason: string
+            }
+            Returns: Json
+          }
       business_requeue_order: {
         Args: { _actor_label?: string; _order_id: string }
         Returns: string
