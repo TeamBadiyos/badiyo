@@ -842,6 +842,7 @@ export type Database = {
           qty_threshold: number | null
           slot_times: string[]
           slots_enabled: boolean
+          time_per_drop_min: number
           updated_at: string
         }
         Insert: {
@@ -855,6 +856,7 @@ export type Database = {
           qty_threshold?: number | null
           slot_times?: string[]
           slots_enabled?: boolean
+          time_per_drop_min?: number
           updated_at?: string
         }
         Update: {
@@ -868,6 +870,7 @@ export type Database = {
           qty_threshold?: number | null
           slot_times?: string[]
           slots_enabled?: boolean
+          time_per_drop_min?: number
           updated_at?: string
         }
         Relationships: []
@@ -7428,6 +7431,10 @@ export type Database = {
         Args: { _merchant_id: string; _reason: string }
         Returns: Json
       }
+      staff_business_reject_trip: {
+        Args: { _batch_id: string; _reason: string }
+        Returns: Json
+      }
       staff_business_wallet_adjust: {
         Args: {
           _amount: number
@@ -8104,6 +8111,7 @@ export type Database = {
           _qty_threshold: number
           _slot_times: string[]
           _slots_enabled: boolean
+          _time_per_drop_min?: number
         }
         Returns: string
       }
