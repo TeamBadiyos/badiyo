@@ -1587,6 +1587,106 @@ export type Database = {
           },
         ]
       }
+      business_trip_counters: {
+        Row: {
+          day: string
+          last_no: number
+          merchant_id: string
+          updated_at: string
+        }
+        Insert: {
+          day: string
+          last_no?: number
+          merchant_id: string
+          updated_at?: string
+        }
+        Update: {
+          day?: string
+          last_no?: number
+          merchant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_trip_counters_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: true
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_trip_counters_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: true
+            referencedRelation: "public_stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_trip_packets: {
+        Row: {
+          batch_id: string
+          code: string
+          courier_order_id: string
+          created_at: string
+          drop_label: string
+          drop_stop_id: string
+          id: string
+          packet_no: number
+          packet_total: number
+          scanned_drop_at: string | null
+          scanned_pickup_at: string | null
+        }
+        Insert: {
+          batch_id: string
+          code: string
+          courier_order_id: string
+          created_at?: string
+          drop_label: string
+          drop_stop_id: string
+          id?: string
+          packet_no: number
+          packet_total: number
+          scanned_drop_at?: string | null
+          scanned_pickup_at?: string | null
+        }
+        Update: {
+          batch_id?: string
+          code?: string
+          courier_order_id?: string
+          created_at?: string
+          drop_label?: string
+          drop_stop_id?: string
+          id?: string
+          packet_no?: number
+          packet_total?: number
+          scanned_drop_at?: string | null
+          scanned_pickup_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_trip_packets_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "business_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_trip_packets_courier_order_id_fkey"
+            columns: ["courier_order_id"]
+            isOneToOne: false
+            referencedRelation: "courier_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_trip_packets_drop_stop_id_fkey"
+            columns: ["drop_stop_id"]
+            isOneToOne: false
+            referencedRelation: "courier_order_stops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       business_wallet_topups: {
         Row: {
           amount: number
@@ -2230,6 +2330,9 @@ export type Database = {
           lat: number
           lng: number
           order_id: string
+          scan_skip_reason: string | null
+          scan_skipped_at: string | null
+          scan_skipped_by: string | null
           sequence: number
           status: string
           stop_type: string
@@ -2249,6 +2352,9 @@ export type Database = {
           lat: number
           lng: number
           order_id: string
+          scan_skip_reason?: string | null
+          scan_skipped_at?: string | null
+          scan_skipped_by?: string | null
           sequence: number
           status?: string
           stop_type: string
@@ -2268,6 +2374,9 @@ export type Database = {
           lat?: number
           lng?: number
           order_id?: string
+          scan_skip_reason?: string | null
+          scan_skipped_at?: string | null
+          scan_skipped_by?: string | null
           sequence?: number
           status?: string
           stop_type?: string
@@ -6533,6 +6642,10 @@ export type Database = {
         }
         Returns: Json
       }
+      business_create_trip_packets: {
+        Args: { _batch_id: string; _cid: string }
+        Returns: number
+      }
       business_dispatch_now: { Args: { _actor_label?: string }; Returns: Json }
       business_finalize_batch: {
         Args: {
@@ -6557,6 +6670,7 @@ export type Database = {
         Args: { _group_filter?: Json; _merchant_id: string; _trigger: string }
         Returns: Json
       }
+      business_next_trip_no: { Args: { _merchant_id: string }; Returns: number }
       business_notify: {
         Args: {
           _body: string
@@ -6802,6 +6916,9 @@ export type Database = {
           lat: number
           lng: number
           order_id: string
+          scan_skip_reason: string | null
+          scan_skipped_at: string | null
+          scan_skipped_by: string | null
           sequence: number
           status: string
           stop_type: string
@@ -7055,6 +7172,15 @@ export type Database = {
         Returns: Json
       }
       courier_rider_offers: { Args: never; Returns: Json }
+      courier_scan_packet: {
+        Args: {
+          _code: string
+          _courier_order_id: string
+          _stage: string
+          _stop_id: string
+        }
+        Returns: Json
+      }
       courier_setting: {
         Args: { _default: number; _key: string }
         Returns: number
@@ -7073,6 +7199,10 @@ export type Database = {
       courier_store_info: { Args: { _order_id: string }; Returns: Json }
       courier_sweeper: { Args: never; Returns: undefined }
       courier_sweeper_tick: { Args: never; Returns: undefined }
+      courier_trip_packets: {
+        Args: { _courier_order_id: string }
+        Returns: Json
+      }
       courier_update_contact: {
         Args: { _new_phone: string; _order_id: string; _purpose: string }
         Returns: Json
@@ -7749,6 +7879,10 @@ export type Database = {
       }
       staff_courier_set_zones: {
         Args: { _city: string; _zone_ids: string[] }
+        Returns: Json
+      }
+      staff_courier_skip_scan: {
+        Args: { _reason: string; _stop_id: string }
         Returns: Json
       }
       staff_courier_upsert_courier_type: {
