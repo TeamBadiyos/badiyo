@@ -8,7 +8,17 @@ import { createFileRoute } from "@tanstack/react-router";
 
 type Point = { lat: number; lng: number };
 type Drop = { receiver_id: string; lat: number; lng: number };
-type Run = { run_id: string; max_drops: number; service_minutes: number; pickup: Point | null; drops: Drop[] };
+type Run = {
+  run_id: string;
+  trigger?: string;
+  min_trip_drops?: number | null;
+  max_drops: number;
+  service_minutes: number;
+  trip_fixed_cost?: number;
+  per_km?: number;
+  pickup: Point | null;
+  drops: Drop[];
+};
 type RetryBatch = {
   batch_id: string;
   receiver_order: string[] | null;
@@ -86,7 +96,9 @@ async function optimizeWithGoogle(run: Run): Promise<{ trips: Trip[]; skipped: s
   const sa = JSON.parse(raw) as { client_email: string; private_key: string; project_id: string };
   const token = await googleAccessToken(sa);
   const pickup = run.pickup!;
-  const vehicles = Math.ceil(run.drops.length / run.max_drops);
+  // Up to one vehicle per drop; each used trip costs trip_fixed_cost, so Google picks how many trips.
+  const vehicles = run.drops.length;
+  const fixedCost = Math.max(0, Number(run.trip_fixed_cost ?? 0));
   const loc = (p: Point) => ({ latitude: p.lat, longitude: p.lng });
   const body = {
     model: {
@@ -101,6 +113,7 @@ async function optimizeWithGoogle(run: Run): Promise<{ trips: Trip[]; skipped: s
         travelMode: "DRIVING",
         loadLimits: { drops: { maxLoad: String(run.max_drops) } },
         costPerHour: 100,
+        fixedCost,
       })),
     },
     considerRoadTraffic: false,
