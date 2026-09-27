@@ -8706,6 +8706,7 @@ export type Database = {
           _cancel_fee_type?: string
           _cancel_fee_value?: number
           _commission_pct: number
+          _drop_count_basis?: string
           _extra_drop_fee: number
           _id: string
           _included_km: number
