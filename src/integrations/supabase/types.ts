@@ -840,6 +840,7 @@ export type Database = {
           name: string
           qty_enabled: boolean
           qty_threshold: number | null
+          service_minutes_per_drop: number
           slot_times: string[]
           slots_enabled: boolean
           time_per_drop_min: number
@@ -854,6 +855,7 @@ export type Database = {
           name: string
           qty_enabled?: boolean
           qty_threshold?: number | null
+          service_minutes_per_drop?: number
           slot_times?: string[]
           slots_enabled?: boolean
           time_per_drop_min?: number
@@ -868,6 +870,7 @@ export type Database = {
           name?: string
           qty_enabled?: boolean
           qty_threshold?: number | null
+          service_minutes_per_drop?: number
           slot_times?: string[]
           slots_enabled?: boolean
           time_per_drop_min?: number
@@ -940,17 +943,22 @@ export type Database = {
           claimed_at: string | null
           courier_order_id: string | null
           created_at: string
+          dispatch_run_id: string | null
           distance_km: number | null
           distance_source: string | null
+          drop_labels: Json
           drops_count: number
           fail_reason: string | null
           fare_breakdown: Json
           id: string
           merchant_id: string
           pickup_point_id: string
+          receiver_order: string[] | null
           status: string
           total_amount: number
           trigger: string
+          trip_label: string | null
+          trip_no: number | null
           updated_at: string
           zone_id: string | null
         }
@@ -958,17 +966,22 @@ export type Database = {
           claimed_at?: string | null
           courier_order_id?: string | null
           created_at?: string
+          dispatch_run_id?: string | null
           distance_km?: number | null
           distance_source?: string | null
+          drop_labels?: Json
           drops_count?: number
           fail_reason?: string | null
           fare_breakdown?: Json
           id?: string
           merchant_id: string
           pickup_point_id: string
+          receiver_order?: string[] | null
           status?: string
           total_amount?: number
           trigger: string
+          trip_label?: string | null
+          trip_no?: number | null
           updated_at?: string
           zone_id?: string | null
         }
@@ -976,17 +989,22 @@ export type Database = {
           claimed_at?: string | null
           courier_order_id?: string | null
           created_at?: string
+          dispatch_run_id?: string | null
           distance_km?: number | null
           distance_source?: string | null
+          drop_labels?: Json
           drops_count?: number
           fail_reason?: string | null
           fare_breakdown?: Json
           id?: string
           merchant_id?: string
           pickup_point_id?: string
+          receiver_order?: string[] | null
           status?: string
           total_amount?: number
           trigger?: string
+          trip_label?: string | null
+          trip_no?: number | null
           updated_at?: string
           zone_id?: string | null
         }
@@ -996,6 +1014,13 @@ export type Database = {
             columns: ["courier_order_id"]
             isOneToOne: false
             referencedRelation: "courier_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_batches_dispatch_run_id_fkey"
+            columns: ["dispatch_run_id"]
+            isOneToOne: false
+            referencedRelation: "business_dispatch_runs"
             referencedColumns: ["id"]
           },
           {
@@ -1021,18 +1046,97 @@ export type Database = {
           },
         ]
       }
+      business_dispatch_runs: {
+        Row: {
+          claimed_at: string | null
+          created_at: string
+          drops: number
+          error: string | null
+          id: string
+          merchant_id: string
+          method: string | null
+          pickup_point_id: string
+          skipped: Json
+          status: string
+          total_km: number
+          trigger: string
+          trips: number
+          updated_at: string
+        }
+        Insert: {
+          claimed_at?: string | null
+          created_at?: string
+          drops?: number
+          error?: string | null
+          id?: string
+          merchant_id: string
+          method?: string | null
+          pickup_point_id: string
+          skipped?: Json
+          status?: string
+          total_km?: number
+          trigger: string
+          trips?: number
+          updated_at?: string
+        }
+        Update: {
+          claimed_at?: string | null
+          created_at?: string
+          drops?: number
+          error?: string | null
+          id?: string
+          merchant_id?: string
+          method?: string | null
+          pickup_point_id?: string
+          skipped?: Json
+          status?: string
+          total_km?: number
+          trigger?: string
+          trips?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_dispatch_runs_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_dispatch_runs_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "public_stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_dispatch_runs_pickup_point_id_fkey"
+            columns: ["pickup_point_id"]
+            isOneToOne: false
+            referencedRelation: "business_pickup_points"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       business_dispatch_state: {
         Row: {
+          last_notice_date: string | null
+          last_notice_time: string | null
           last_slot_date: string | null
           last_slot_time: string | null
           merchant_id: string
         }
         Insert: {
+          last_notice_date?: string | null
+          last_notice_time?: string | null
           last_slot_date?: string | null
           last_slot_time?: string | null
           merchant_id: string
         }
         Update: {
+          last_notice_date?: string | null
+          last_notice_time?: string | null
           last_slot_date?: string | null
           last_slot_time?: string | null
           merchant_id?: string
@@ -1095,6 +1199,7 @@ export type Database = {
           created_by_label: string | null
           delivered_at: string | null
           description: string | null
+          dispatch_run_id: string | null
           drop_stop_id: string | null
           id: string
           merchant_id: string
@@ -1117,6 +1222,7 @@ export type Database = {
           created_by_label?: string | null
           delivered_at?: string | null
           description?: string | null
+          dispatch_run_id?: string | null
           drop_stop_id?: string | null
           id?: string
           merchant_id: string
@@ -1139,6 +1245,7 @@ export type Database = {
           created_by_label?: string | null
           delivered_at?: string | null
           description?: string | null
+          dispatch_run_id?: string | null
           drop_stop_id?: string | null
           id?: string
           merchant_id?: string
@@ -1164,6 +1271,13 @@ export type Database = {
             columns: ["courier_order_id"]
             isOneToOne: false
             referencedRelation: "courier_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_orders_dispatch_run_id_fkey"
+            columns: ["dispatch_run_id"]
+            isOneToOne: false
+            referencedRelation: "business_dispatch_runs"
             referencedColumns: ["id"]
           },
           {
@@ -6324,6 +6438,17 @@ export type Database = {
         Args: { _limit?: number }
         Returns: Json
       }
+      business_claim_planning_runs: { Args: { _limit?: number }; Returns: Json }
+      business_complete_run: {
+        Args: {
+          _error: string
+          _method: string
+          _run_id: string
+          _skipped: string[]
+          _total_km: number
+        }
+        Returns: Json
+      }
       business_confirm_topup: {
         Args: {
           _amount_paid: number
@@ -6354,6 +6479,16 @@ export type Database = {
           _razorpay_order_id: string
         }
         Returns: string
+      }
+      business_create_trip: {
+        Args: {
+          _distance_km: number
+          _distance_source: string
+          _receiver_order: string[]
+          _run_id: string
+          _trip_no: number
+        }
+        Returns: Json
       }
       business_dispatch_now: { Args: { _actor_label?: string }; Returns: Json }
       business_finalize_batch: {
@@ -6416,6 +6551,10 @@ export type Database = {
           _name: string
         }
         Returns: string
+      }
+      business_reject_trip_internal: {
+        Args: { _cid: string; _reason: string }
+        Returns: boolean
       }
       business_requeue_order: {
         Args: { _actor_label?: string; _order_id: string }
@@ -7680,6 +7819,7 @@ export type Database = {
           unread_total: number
         }[]
       }
+      staff_list_unassigned_business_trips: { Args: never; Returns: Json }
       staff_mark_all_notifications_read: { Args: never; Returns: undefined }
       staff_mark_notification_read: {
         Args: { _id: string; _read?: boolean }
