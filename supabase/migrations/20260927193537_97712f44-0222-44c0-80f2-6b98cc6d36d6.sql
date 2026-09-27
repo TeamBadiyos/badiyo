@@ -1,0 +1,1 @@
+grant execute on function public.seal_luhn_digit(text), public.seal_code_for_serial(int) to authenticated, service_role;
