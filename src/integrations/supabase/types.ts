@@ -1831,6 +1831,72 @@ export type Database = {
           },
         ]
       }
+      business_trip_removed_packets: {
+        Row: {
+          batch_id: string | null
+          business_order_id: string | null
+          code: string | null
+          courier_order_id: string | null
+          drop_label: string | null
+          id: string
+          merchant_id: string
+          notes: string | null
+          reason_code: string
+          receiver_id: string | null
+          removal_id: string
+          removed_at: string
+          removed_by: string
+          removed_by_id: string | null
+        }
+        Insert: {
+          batch_id?: string | null
+          business_order_id?: string | null
+          code?: string | null
+          courier_order_id?: string | null
+          drop_label?: string | null
+          id?: string
+          merchant_id: string
+          notes?: string | null
+          reason_code: string
+          receiver_id?: string | null
+          removal_id: string
+          removed_at?: string
+          removed_by: string
+          removed_by_id?: string | null
+        }
+        Update: {
+          batch_id?: string | null
+          business_order_id?: string | null
+          code?: string | null
+          courier_order_id?: string | null
+          drop_label?: string | null
+          id?: string
+          merchant_id?: string
+          notes?: string | null
+          reason_code?: string
+          receiver_id?: string | null
+          removal_id?: string
+          removed_at?: string
+          removed_by?: string
+          removed_by_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_trip_removed_packets_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "business_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_trip_removed_packets_business_order_id_fkey"
+            columns: ["business_order_id"]
+            isOneToOne: false
+            referencedRelation: "business_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       business_wallet_topups: {
         Row: {
           amount: number
@@ -6825,6 +6891,10 @@ export type Database = {
         Args: { _group_filter?: Json; _merchant_id: string; _trigger: string }
         Returns: Json
       }
+      business_left_behind_stats: {
+        Args: { _date: string; _merchant_id: string }
+        Returns: Json
+      }
       business_next_trip_no: { Args: { _merchant_id: string }; Returns: number }
       business_notify: {
         Args: {
@@ -6875,6 +6945,10 @@ export type Database = {
             }
             Returns: Json
           }
+      business_remove_packets_from_trip: {
+        Args: { _batch_id: string; _order_ids: string[]; _reason: string }
+        Returns: Json
+      }
       business_requeue_order: {
         Args: { _actor_label?: string; _order_id: string }
         Returns: string
@@ -6896,6 +6970,17 @@ export type Database = {
         Returns: undefined
       }
       business_slot_tick: { Args: never; Returns: undefined }
+      business_trip_remove_orders_internal: {
+        Args: {
+          _by: string
+          _by_id: string
+          _cid: string
+          _notes: string
+          _order_ids: string[]
+          _reason_code: string
+        }
+        Returns: Json
+      }
       business_upsert_pickup_point: {
         Args: {
           _actor_label?: string
@@ -7332,6 +7417,15 @@ export type Database = {
           _reason_code: string
           _return_distances?: Json
           _stop_id: string
+        }
+        Returns: Json
+      }
+      courier_rider_leave_packets: {
+        Args: {
+          _courier_order_id: string
+          _notes?: string
+          _packet_ids: string[]
+          _reason_code: string
         }
         Returns: Json
       }
