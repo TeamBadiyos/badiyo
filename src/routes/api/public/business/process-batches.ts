@@ -8,7 +8,17 @@ import { createFileRoute } from "@tanstack/react-router";
 
 type Point = { lat: number; lng: number };
 type Drop = { receiver_id: string; lat: number; lng: number };
-type Run = { run_id: string; max_drops: number; service_minutes: number; pickup: Point | null; drops: Drop[] };
+type Run = {
+  run_id: string;
+  trigger?: string;
+  min_trip_drops?: number | null;
+  max_drops: number;
+  service_minutes: number;
+  trip_fixed_cost?: number;
+  per_km?: number;
+  pickup: Point | null;
+  drops: Drop[];
+};
 type RetryBatch = {
   batch_id: string;
   receiver_order: string[] | null;
@@ -86,7 +96,9 @@ async function optimizeWithGoogle(run: Run): Promise<{ trips: Trip[]; skipped: s
   const sa = JSON.parse(raw) as { client_email: string; private_key: string; project_id: string };
   const token = await googleAccessToken(sa);
   const pickup = run.pickup!;
-  const vehicles = Math.ceil(run.drops.length / run.max_drops);
+  // Up to one vehicle per drop; each used trip costs trip_fixed_cost, so Google picks how many trips.
+  const vehicles = run.drops.length;
+  const fixedCost = Math.max(0, Number(run.trip_fixed_cost ?? 0));
   const loc = (p: Point) => ({ latitude: p.lat, longitude: p.lng });
   const body = {
     model: {
@@ -101,6 +113,7 @@ async function optimizeWithGoogle(run: Run): Promise<{ trips: Trip[]; skipped: s
         travelMode: "DRIVING",
         loadLimits: { drops: { maxLoad: String(run.max_drops) } },
         costPerHour: 100,
+        fixedCost,
       })),
     },
     considerRoadTraffic: false,
@@ -157,11 +170,20 @@ async function fallbackTrips(admin: Admin, run: Run): Promise<Trip[]> {
     }
     far.push(...far.splice(0, start));
   }
+  // A drop joins a trip only if its extra road distance costs no more than a separate trip.
+  const fixedCost = Math.max(0, Number(run.trip_fixed_cost ?? 0));
+  const perKm = Math.max(0, Number(run.per_km ?? 0));
+  const tooCostly = (km: number) => perKm > 0 && km * 1.3 * perKm > fixedCost;
   const groups: Drop[][] = [];
   let cur: Array<Drop & { b: number }> = [];
   for (const d of far) {
     const prev = cur[cur.length - 1];
-    if (cur.length && (cur.length >= max || (d.b - prev.b + 360) % 360 > 60)) {
+    if (
+      cur.length &&
+      (cur.length >= max ||
+        (d.b - prev.b + 360) % 360 > 60 ||
+        tooCostly(Math.min(...cur.map((x) => haversineKm(x, d)))))
+    ) {
       groups.push(cur);
       cur = [];
     }
@@ -181,7 +203,7 @@ async function fallbackTrips(admin: Admin, run: Run): Promise<Trip[]> {
         }
       }
     });
-    if (best >= 0) groups[best].push(d);
+    if (best >= 0 && !tooCostly(bestKm)) groups[best].push(d);
     else groups.push([d]);
   }
 
@@ -223,12 +245,19 @@ async function processRun(admin: Admin, run: Run) {
     trips = await fallbackTrips(admin, run);
     skipped = [];
   }
+  const minDrops = run.min_trip_drops ?? 0;
   let total = 0;
   let n = 0;
+  let heldTrips = 0;
   for (const t of trips) {
+    // qty runs: small trips stay pending for the next check / slot / manual dispatch
+    if (minDrops > 0 && t.receivers.length < minDrops) {
+      heldTrips++;
+      continue;
+    }
     n++;
     total += t.km;
-    const { error: e } = await admin.rpc("business_create_trip", {
+    const { data: res, error: e } = await admin.rpc("business_create_trip", {
       _run_id: run.run_id,
       _trip_no: n,
       _receiver_order: t.receivers,
@@ -236,7 +265,13 @@ async function processRun(admin: Admin, run: Run) {
       _distance_source: method,
     });
     if (e) console.error("[business-dispatch] create trip failed", run.run_id, n, e);
+    else if ((res as { held?: boolean } | null)?.held) {
+      heldTrips++;
+      n--;
+      total -= t.km;
+    }
   }
+  if (heldTrips > 0) console.log("[business-dispatch] held small trips", run.run_id, heldTrips);
   await admin.rpc("business_complete_run", {
     _run_id: run.run_id,
     _method: method,
