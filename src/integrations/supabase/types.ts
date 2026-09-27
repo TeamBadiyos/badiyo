@@ -888,6 +888,7 @@ export type Database = {
           cancel_fee_value: number
           commission_pct: number
           created_at: string
+          drop_count_basis: string
           extra_drop_fee: number
           id: string
           included_km: number
@@ -904,6 +905,7 @@ export type Database = {
           cancel_fee_value?: number
           commission_pct?: number
           created_at?: string
+          drop_count_basis?: string
           extra_drop_fee?: number
           id?: string
           included_km?: number
@@ -920,6 +922,7 @@ export type Database = {
           cancel_fee_value?: number
           commission_pct?: number
           created_at?: string
+          drop_count_basis?: string
           extra_drop_fee?: number
           id?: string
           included_km?: number
@@ -1216,6 +1219,7 @@ export type Database = {
           description: string | null
           dispatch_run_id: string | null
           drop_stop_id: string | null
+          entry_method: string | null
           id: string
           merchant_id: string
           packet_count: number
@@ -1224,6 +1228,7 @@ export type Database = {
           receiver_id: string
           reference_no: string | null
           requeued_from_id: string | null
+          seal_code: string | null
           status: string
           updated_at: string
         }
@@ -1239,6 +1244,7 @@ export type Database = {
           description?: string | null
           dispatch_run_id?: string | null
           drop_stop_id?: string | null
+          entry_method?: string | null
           id?: string
           merchant_id: string
           packet_count?: number
@@ -1247,6 +1253,7 @@ export type Database = {
           receiver_id: string
           reference_no?: string | null
           requeued_from_id?: string | null
+          seal_code?: string | null
           status?: string
           updated_at?: string
         }
@@ -1262,6 +1269,7 @@ export type Database = {
           description?: string | null
           dispatch_run_id?: string | null
           drop_stop_id?: string | null
+          entry_method?: string | null
           id?: string
           merchant_id?: string
           packet_count?: number
@@ -1270,6 +1278,7 @@ export type Database = {
           receiver_id?: string
           reference_no?: string | null
           requeued_from_id?: string | null
+          seal_code?: string | null
           status?: string
           updated_at?: string
         }
@@ -1343,6 +1352,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "business_orders"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_orders_seal_code_fkey"
+            columns: ["seal_code"]
+            isOneToOne: true
+            referencedRelation: "business_seal_stickers"
+            referencedColumns: ["code"]
           },
         ]
       }
@@ -1587,6 +1603,128 @@ export type Database = {
           },
         ]
       }
+      business_seal_batches: {
+        Row: {
+          assigned_at: string | null
+          batch_no: number
+          charge_amount: number
+          created_at: string
+          created_by: string | null
+          id: string
+          merchant_id: string | null
+          notes: string | null
+          serial_from: number
+          serial_to: number
+        }
+        Insert: {
+          assigned_at?: string | null
+          batch_no?: number
+          charge_amount?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          merchant_id?: string | null
+          notes?: string | null
+          serial_from: number
+          serial_to: number
+        }
+        Update: {
+          assigned_at?: string | null
+          batch_no?: number
+          charge_amount?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          merchant_id?: string | null
+          notes?: string | null
+          serial_from?: number
+          serial_to?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_seal_batches_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_seal_batches_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "public_stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_seal_stickers: {
+        Row: {
+          batch_id: string
+          business_order_id: string | null
+          code: string
+          entry_method: string | null
+          merchant_id: string | null
+          serial: number
+          status: string
+          used_at: string | null
+          void_reason: string | null
+          voided_at: string | null
+        }
+        Insert: {
+          batch_id: string
+          business_order_id?: string | null
+          code: string
+          entry_method?: string | null
+          merchant_id?: string | null
+          serial: number
+          status?: string
+          used_at?: string | null
+          void_reason?: string | null
+          voided_at?: string | null
+        }
+        Update: {
+          batch_id?: string
+          business_order_id?: string | null
+          code?: string
+          entry_method?: string | null
+          merchant_id?: string | null
+          serial?: number
+          status?: string
+          used_at?: string | null
+          void_reason?: string | null
+          voided_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_seal_stickers_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "business_seal_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_seal_stickers_business_order_id_fkey"
+            columns: ["business_order_id"]
+            isOneToOne: true
+            referencedRelation: "business_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_seal_stickers_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_seal_stickers_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "public_stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       business_trip_counters: {
         Row: {
           day: string
@@ -1629,11 +1767,13 @@ export type Database = {
           code: string
           courier_order_id: string
           created_at: string
+          drop_entry_method: string | null
           drop_label: string
           drop_stop_id: string
           id: string
           packet_no: number
           packet_total: number
+          pickup_entry_method: string | null
           scanned_drop_at: string | null
           scanned_pickup_at: string | null
         }
@@ -1642,11 +1782,13 @@ export type Database = {
           code: string
           courier_order_id: string
           created_at?: string
+          drop_entry_method?: string | null
           drop_label: string
           drop_stop_id: string
           id?: string
           packet_no: number
           packet_total: number
+          pickup_entry_method?: string | null
           scanned_drop_at?: string | null
           scanned_pickup_at?: string | null
         }
@@ -1655,11 +1797,13 @@ export type Database = {
           code?: string
           courier_order_id?: string
           created_at?: string
+          drop_entry_method?: string | null
           drop_label?: string
           drop_stop_id?: string
           id?: string
           packet_no?: number
           packet_total?: number
+          pickup_entry_method?: string | null
           scanned_drop_at?: string | null
           scanned_pickup_at?: string | null
         }
@@ -6624,6 +6768,17 @@ export type Database = {
         Args: { _actor_label?: string; _orders: Json }
         Returns: Json
       }
+      business_create_packet_orders: {
+        Args: {
+          _actor_label?: string
+          _codes: string[]
+          _entry_methods: string[]
+          _merchant_id: string
+          _pickup_point_id: string
+          _receiver_id: string
+        }
+        Returns: Json
+      }
       business_create_topup_intent: {
         Args: {
           _actor_label?: string
@@ -6727,6 +6882,19 @@ export type Database = {
       business_require_delivery: { Args: never; Returns: string }
       business_require_ops: { Args: never; Returns: undefined }
       business_require_super_admin: { Args: never; Returns: undefined }
+      business_seal_check: {
+        Args: { _merchant_id: string; _raw: string }
+        Returns: Json
+      }
+      business_seal_stock: { Args: { _merchant_id: string }; Returns: Json }
+      business_seal_validate: {
+        Args: { _lock: boolean; _mid: string; _raw: string }
+        Returns: Json
+      }
+      business_seal_void_for_batch: {
+        Args: { _batch_id: string; _reason: string }
+        Returns: number
+      }
       business_set_receiver_active: {
         Args: { _active: boolean; _actor_label?: string; _id: string }
         Returns: undefined
@@ -7176,6 +7344,7 @@ export type Database = {
         Args: {
           _code: string
           _courier_order_id: string
+          _entry_method?: string
           _stage: string
           _stop_id: string
         }
@@ -7695,6 +7864,11 @@ export type Database = {
         Args: { _force_period_start?: string }
         Returns: number
       }
+      seal_code_for_serial: { Args: { _serial: number }; Returns: string }
+      seal_code_normalize: { Args: { _raw: string }; Returns: string }
+      seal_luhn_digit: { Args: { _serial6: string }; Returns: number }
+      seal_luhn_ok: { Args: { _raw: string }; Returns: boolean }
+      seal_printed_text: { Args: { _code: string }; Returns: string }
       send_completion_reminders: { Args: never; Returns: number }
       send_scheduled_booking_reminders: { Args: never; Returns: number }
       service_can_order: {
@@ -8151,6 +8325,32 @@ export type Database = {
       staff_save_capacity_message: {
         Args: { _payload: Json }
         Returns: undefined
+      }
+      staff_seal_assign_batch: {
+        Args: {
+          _batch_id: string
+          _charge_amount?: number
+          _merchant_id: string
+        }
+        Returns: Json
+      }
+      staff_seal_batch_export: {
+        Args: { _batch_id: string }
+        Returns: {
+          code: string
+          printed_text: string
+          qr_payload: string
+          serial: number
+        }[]
+      }
+      staff_seal_create_batch: {
+        Args: { _notes?: string; _serial_from: number; _serial_to: number }
+        Returns: Json
+      }
+      staff_seal_lookup: { Args: { _raw: string }; Returns: Json }
+      staff_seal_void: {
+        Args: { _code: string; _reason: string }
+        Returns: Json
       }
       staff_send_campaign: { Args: { _id: string }; Returns: number }
       staff_send_support_message: {
