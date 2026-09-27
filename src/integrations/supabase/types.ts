@@ -3969,6 +3969,8 @@ export type Database = {
           commission_value: number
           country: string | null
           created_at: string
+          delete_reason: string | null
+          deleted_at: string | null
           delivery_enabled: boolean
           delivery_fee_payer: string
           delivery_status: string
@@ -4014,6 +4016,8 @@ export type Database = {
           commission_value?: number
           country?: string | null
           created_at?: string
+          delete_reason?: string | null
+          deleted_at?: string | null
           delivery_enabled?: boolean
           delivery_fee_payer?: string
           delivery_status?: string
@@ -4059,6 +4063,8 @@ export type Database = {
           commission_value?: number
           country?: string | null
           created_at?: string
+          delete_reason?: string | null
+          deleted_at?: string | null
           delivery_enabled?: boolean
           delivery_fee_payer?: string
           delivery_status?: string
@@ -6361,6 +6367,10 @@ export type Database = {
         Args: { _courier_order_id: string }
         Returns: Json
       }
+      business_get_trip_rider: {
+        Args: { _courier_order_id: string }
+        Returns: Json
+      }
       business_get_wallet: { Args: never; Returns: Json }
       business_group_and_batch: {
         Args: { _group_filter?: Json; _merchant_id: string; _trigger: string }
@@ -7817,6 +7827,15 @@ export type Database = {
         }
         Returns: string
       }
+      staff_set_booking_refund: {
+        Args: {
+          _booking_id: string
+          _refund_amount: number
+          _refund_id: string
+          _refund_status: string
+        }
+        Returns: Json
+      }
       staff_set_commission_rule_active: {
         Args: { _id: string; _is_active: boolean }
         Returns: undefined
@@ -7936,6 +7955,10 @@ export type Database = {
       staff_soft_delete_booking: {
         Args: { _booking_id: string; _reason: string }
         Returns: undefined
+      }
+      staff_soft_delete_merchant: {
+        Args: { _merchant_id: string; _reason: string }
+        Returns: Json
       }
       staff_soft_delete_zone: {
         Args: { _reason: string; _zone_id: string }
