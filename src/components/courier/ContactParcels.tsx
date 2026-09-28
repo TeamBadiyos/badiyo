@@ -2,7 +2,7 @@
 // return contact on someone else's order. No price or payment info here.
 import { lazy, Suspense, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, ChevronRight, Loader2, Package, Share2, ShieldCheck, UserRound } from "lucide-react";
+import { ArrowLeft, ChevronRight, Loader2, MapPin, Package, Share2, ShieldCheck, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   courierGetContactView,

@@ -205,6 +205,7 @@ export const mr: Partial<Record<keyof typeof en, string>> = {
   "courier.dropsCount": "{count} ड्रॉप",
   "courier.returnPaymentPending": "परताव्याचे पेमेंट बाकी",
   "courier.trackParcel": "पार्सल ट्रॅक करा",
+  "courier.viewDetails": "तपशील पहा",
   "courier.stagePlaced": "नोंदवले",
   "courier.stageRider": "रायडर",
   "courier.stagePickup": "पिकअप",

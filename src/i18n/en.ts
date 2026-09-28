@@ -203,6 +203,7 @@ export const en = {
   "courier.dropsCount": "{count} drops",
   "courier.returnPaymentPending": "Return payment pending",
   "courier.trackParcel": "Track parcel",
+  "courier.viewDetails": "View details",
   "courier.stagePlaced": "Placed",
   "courier.stageRider": "Rider",
   "courier.stagePickup": "Pickup",
