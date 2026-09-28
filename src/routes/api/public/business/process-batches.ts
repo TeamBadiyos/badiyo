@@ -311,7 +311,8 @@ export const Route = createFileRoute("/api/public/business/process-batches")({
         }
 
         // 2. Trips waiting to be finalized (e.g. retried after a wallet top-up)
-        const { data: claimed } = await admin.rpc("business_claim_planning_batches", { _limit: 5 });
+        const { data: claimed, error: claimErr } = await admin.rpc("business_claim_planning_batches", { _limit: 5 });
+        if (claimErr) console.error("[business-dispatch] claim batches failed", claimErr);
         let dispatched = 0;
         let held = 0;
         let failed = 0;
