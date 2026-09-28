@@ -512,8 +512,15 @@ export function OrdersScreen({
             </p>
           ) : (
             past.map((item) =>
-              item.kind === "store" ? (
+              item.kind === "contact" ? (
+                <ContactParcelOrderCard
+                  key={item.id}
+                  row={item.contact}
+                  onOpen={(stopId) => onOpenContactParcels?.(stopId)}
+                />
+              ) : item.kind === "store" ? (
                 <StoreOrderCard key={item.id} order={item.order} active={false} onOpen={() => onOpenStoreOrder?.(item.order.id)} onBill={() => setBill(storeBill(item.order))} />
+
               ) : item.kind === "booking" ? (
                 <div
                   key={item.id}
