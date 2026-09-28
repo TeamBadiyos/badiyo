@@ -465,11 +465,6 @@ export function HomeScreen({
           </button>
         </form>
 
-        {onOpenContactParcels && (
-          <Suspense fallback={null}>
-            <ContactParcelsCard onOpen={onOpenContactParcels} />
-          </Suspense>
-        )}
 
 
         {/* Services bar (segment tabs) */}
