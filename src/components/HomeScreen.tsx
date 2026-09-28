@@ -20,9 +20,6 @@ import {
 } from "@/lib/segments";
 import { ServiceProductCard } from "./home/ServiceProductCard";
 import { fetchCourierEnabled } from "./courier/courierData";
-const ContactParcelsCard = lazy(() =>
-  import("./courier/ContactParcels").then((m) => ({ default: m.ContactParcelsCard })),
-);
 
 import { SectionHeading } from "./SectionHeading";
 import { BrandWatermark } from "./BrandWatermark";
@@ -465,11 +462,6 @@ export function HomeScreen({
           </button>
         </form>
 
-        {onOpenContactParcels && (
-          <Suspense fallback={null}>
-            <ContactParcelsCard onOpen={onOpenContactParcels} />
-          </Suspense>
-        )}
 
 
         {/* Services bar (segment tabs) */}

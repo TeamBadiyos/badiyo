@@ -14,7 +14,13 @@ import {
   courierBillLines,
   type CourierOrder,
 } from "./courier/courierData";
-import { ContactParcelsCard } from "./courier/ContactParcels";
+import {
+  ContactParcelOrderCard,
+  useContactDeliveries,
+  CONTACT_DONE_STATUSES,
+  type ContactRow,
+} from "./courier/ContactParcels";
+
 import { useBookingsLive } from "@/lib/useBookingsLive";
 import {
   fetchMyStoreOrders,
@@ -149,11 +155,13 @@ function AmountButton({ amount, onOpen }: { amount: number; onOpen: () => void }
   );
 }
 
-/** One row in the Orders list — either a home service or a parcel. */
+/** One row in the Orders list — a home service, a parcel or an incoming parcel. */
 type OrderItem =
   | { kind: "booking"; id: string; createdAt: string | null; booking: BookingRow }
   | { kind: "parcel"; id: string; createdAt: string | null; parcel: CourierOrder }
+  | { kind: "contact"; id: string; createdAt: string | null; contact: ContactRow }
   | { kind: "store"; id: string; createdAt: string | null; order: StoreOrder };
+
 
 /** Card for one shop order — same shape as the booking/parcel cards. */
 function StoreOrderCard({ order, active, onOpen, onBill }: { order: StoreOrder; active: boolean; onOpen?: () => void; onBill: () => void }) {
@@ -307,7 +315,9 @@ export function OrdersScreen({
     refetchIntervalInBackground: false,
   });
   useBookingsLive();
+  const { data: contactParcels = [] } = useContactDeliveries();
   const [bill, setBill] = useState<Bill | null>(null);
+
 
 
   const queryClient = useQueryClient();
@@ -334,6 +344,9 @@ export function OrdersScreen({
     ...visibleParcels
       .filter((p) => COURIER_ACTIVE_STATUSES.includes(p.status))
       .map((p) => ({ kind: "parcel" as const, id: p.id, createdAt: p.created_at, parcel: p })),
+    ...contactParcels
+      .filter((c) => !CONTACT_DONE_STATUSES.includes(c.order_status))
+      .map((c) => ({ kind: "contact" as const, id: c.stop_id, createdAt: c.created_at, contact: c })),
     ...storeOrders
       .filter(isStoreOrderActive)
       .map((o) => ({ kind: "store" as const, id: o.id, createdAt: o.created_at, order: o })),
@@ -346,10 +359,14 @@ export function OrdersScreen({
     ...visibleParcels
       .filter((p) => !COURIER_ACTIVE_STATUSES.includes(p.status))
       .map((p) => ({ kind: "parcel" as const, id: p.id, createdAt: p.created_at, parcel: p })),
+    ...contactParcels
+      .filter((c) => CONTACT_DONE_STATUSES.includes(c.order_status))
+      .map((c) => ({ kind: "contact" as const, id: c.stop_id, createdAt: c.created_at, contact: c })),
     ...storeOrders
       .filter((o) => !isStoreOrderActive(o))
       .map((o) => ({ kind: "store" as const, id: o.id, createdAt: o.created_at, order: o })),
   ].sort(byNewest);
+
 
   const openParcel = (p: CourierOrder) => onOpenCourierOrder?.(p.id);
 
@@ -361,7 +378,6 @@ export function OrdersScreen({
         <p className="mt-1 text-sm text-muted-foreground">
           Track your active orders and view past ones.
         </p>
-        {onOpenContactParcels && <ContactParcelsCard onOpen={onOpenContactParcels} />}
 
         {/* Active orders */}
         {active.length > 0 && (
@@ -370,8 +386,15 @@ export function OrdersScreen({
               Active
             </h2>
             {active.map((item) =>
-              item.kind === "store" ? (
+              item.kind === "contact" ? (
+                <ContactParcelOrderCard
+                  key={item.id}
+                  row={item.contact}
+                  onOpen={(stopId) => onOpenContactParcels?.(stopId)}
+                />
+              ) : item.kind === "store" ? (
                 <StoreOrderCard key={item.id} order={item.order} active onOpen={() => onOpenStoreOrder?.(item.order.id)} onBill={() => setBill(storeBill(item.order))} />
+
               ) : item.kind === "booking" ? (
                 <div
                   key={item.id}
@@ -489,8 +512,15 @@ export function OrdersScreen({
             </p>
           ) : (
             past.map((item) =>
-              item.kind === "store" ? (
+              item.kind === "contact" ? (
+                <ContactParcelOrderCard
+                  key={item.id}
+                  row={item.contact}
+                  onOpen={(stopId) => onOpenContactParcels?.(stopId)}
+                />
+              ) : item.kind === "store" ? (
                 <StoreOrderCard key={item.id} order={item.order} active={false} onOpen={() => onOpenStoreOrder?.(item.order.id)} onBill={() => setBill(storeBill(item.order))} />
+
               ) : item.kind === "booking" ? (
                 <div
                   key={item.id}
