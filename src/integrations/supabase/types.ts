@@ -1058,6 +1058,96 @@ export type Database = {
           },
         ]
       }
+      business_delivery_proofs: {
+        Row: {
+          accuracy_m: number | null
+          captured_at: string | null
+          courier_order_id: string
+          created_at: string
+          distance_from_pin_m: number | null
+          expert_id: string | null
+          id: string
+          lat: number | null
+          lng: number | null
+          location_unverified: boolean
+          merchant_id: string
+          receiver_id: string | null
+          seal_codes: string[]
+          stop_id: string
+          storage_path: string
+        }
+        Insert: {
+          accuracy_m?: number | null
+          captured_at?: string | null
+          courier_order_id: string
+          created_at?: string
+          distance_from_pin_m?: number | null
+          expert_id?: string | null
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          location_unverified?: boolean
+          merchant_id: string
+          receiver_id?: string | null
+          seal_codes?: string[]
+          stop_id: string
+          storage_path: string
+        }
+        Update: {
+          accuracy_m?: number | null
+          captured_at?: string | null
+          courier_order_id?: string
+          created_at?: string
+          distance_from_pin_m?: number | null
+          expert_id?: string | null
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          location_unverified?: boolean
+          merchant_id?: string
+          receiver_id?: string | null
+          seal_codes?: string[]
+          stop_id?: string
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_delivery_proofs_courier_order_id_fkey"
+            columns: ["courier_order_id"]
+            isOneToOne: false
+            referencedRelation: "courier_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_delivery_proofs_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_delivery_proofs_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "public_stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_delivery_proofs_receiver_id_fkey"
+            columns: ["receiver_id"]
+            isOneToOne: false
+            referencedRelation: "business_receivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_delivery_proofs_stop_id_fkey"
+            columns: ["stop_id"]
+            isOneToOne: false
+            referencedRelation: "courier_order_stops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       business_dispatch_runs: {
         Row: {
           claimed_at: string | null
@@ -1432,10 +1522,12 @@ export type Database = {
           courier_type_id: string | null
           created_at: string
           dispatch_plan_id: string | null
+          drop_proof_mode: string
           gstin: string | null
           low_balance_threshold: number
           merchant_id: string
           pricing_plan_id: string | null
+          proof_retention_days: number
           qty_threshold: number
           time_slab_minutes: number
           updated_at: string
@@ -1450,10 +1542,12 @@ export type Database = {
           courier_type_id?: string | null
           created_at?: string
           dispatch_plan_id?: string | null
+          drop_proof_mode?: string
           gstin?: string | null
           low_balance_threshold?: number
           merchant_id: string
           pricing_plan_id?: string | null
+          proof_retention_days?: number
           qty_threshold?: number
           time_slab_minutes?: number
           updated_at?: string
@@ -1468,10 +1562,12 @@ export type Database = {
           courier_type_id?: string | null
           created_at?: string
           dispatch_plan_id?: string | null
+          drop_proof_mode?: string
           gstin?: string | null
           low_balance_threshold?: number
           merchant_id?: string
           pricing_plan_id?: string | null
+          proof_retention_days?: number
           qty_threshold?: number
           time_slab_minutes?: number
           updated_at?: string
@@ -1555,6 +1651,9 @@ export type Database = {
           name: string
           notes: string | null
           updated_at: string
+          verified_at: string | null
+          verified_lat: number | null
+          verified_lng: number | null
         }
         Insert: {
           address: string
@@ -1570,6 +1669,9 @@ export type Database = {
           name: string
           notes?: string | null
           updated_at?: string
+          verified_at?: string | null
+          verified_lat?: number | null
+          verified_lng?: number | null
         }
         Update: {
           address?: string
@@ -1585,6 +1687,9 @@ export type Database = {
           name?: string
           notes?: string | null
           updated_at?: string
+          verified_at?: string | null
+          verified_lat?: number | null
+          verified_lng?: number | null
         }
         Relationships: [
           {
@@ -2530,6 +2635,7 @@ export type Database = {
           address: string
           arrived_at: string | null
           completed_at: string | null
+          completed_via: string | null
           contact_edit_count: number
           contact_name: string
           contact_phone: string
@@ -2552,6 +2658,7 @@ export type Database = {
           address: string
           arrived_at?: string | null
           completed_at?: string | null
+          completed_via?: string | null
           contact_edit_count?: number
           contact_name: string
           contact_phone: string
@@ -2574,6 +2681,7 @@ export type Database = {
           address?: string
           arrived_at?: string | null
           completed_at?: string | null
+          completed_via?: string | null
           contact_edit_count?: number
           contact_name?: string
           contact_phone?: string
@@ -6891,6 +6999,10 @@ export type Database = {
         Args: { _group_filter?: Json; _merchant_id: string; _trigger: string }
         Returns: Json
       }
+      business_haversine_m: {
+        Args: { _lat1: number; _lat2: number; _lng1: number; _lng2: number }
+        Returns: number
+      }
       business_left_behind_stats: {
         Args: { _date: string; _merchant_id: string }
         Returns: Json
@@ -6917,6 +7029,7 @@ export type Database = {
         }
         Returns: string
       }
+      business_order_proofs: { Args: { _order_id: string }; Returns: Json }
       business_phone10: { Args: { _p: string }; Returns: string }
       business_pickup_write: {
         Args: {
@@ -6933,6 +7046,38 @@ export type Database = {
           _name: string
         }
         Returns: string
+      }
+      business_proof_can_read: {
+        Args: { _merchant_id: string }
+        Returns: boolean
+      }
+      business_proof_cleanup_wake: { Args: never; Returns: undefined }
+      business_proof_expired: {
+        Args: { _limit?: number }
+        Returns: {
+          id: string
+          storage_path: string
+        }[]
+      }
+      business_proof_purge: { Args: { _ids: string[] }; Returns: number }
+      business_proof_readable_paths: {
+        Args: { _paths: string[] }
+        Returns: string[]
+      }
+      business_proof_report: {
+        Args: {
+          _from: string
+          _limit?: number
+          _merchant_id: string
+          _offset?: number
+          _receiver_id?: string
+          _to: string
+        }
+        Returns: Json
+      }
+      business_proof_upload_check: {
+        Args: { _stop_id: string; _uid: string }
+        Returns: Json
       }
       business_reject_trip_internal:
         | { Args: { _cid: string; _reason: string }; Returns: boolean }
@@ -6970,6 +7115,8 @@ export type Database = {
         Returns: undefined
       }
       business_slot_tick: { Args: never; Returns: undefined }
+      business_stop_proof_mode: { Args: { _stop_id: string }; Returns: string }
+      business_stop_proofs: { Args: { _stop_id: string }; Returns: Json }
       business_trip_remove_orders_internal: {
         Args: {
           _by: string
@@ -7149,12 +7296,34 @@ export type Database = {
         Args: { _lat: number; _lng: number }
         Returns: Json
       }
+      courier_complete_drop_internal: {
+        Args: {
+          _eid: string
+          _order_id: string
+          _proof_url?: string
+          _stop_id: string
+          _via: string
+        }
+        Returns: Json
+      }
+      courier_complete_drop_with_proof: {
+        Args: {
+          _accuracy_m: number
+          _captured_at: string
+          _lat: number
+          _lng: number
+          _paths: string[]
+          _stop_id: string
+        }
+        Returns: Json
+      }
       courier_contact_stop_gate: {
         Args: { _stop_id: string }
         Returns: {
           address: string
           arrived_at: string | null
           completed_at: string | null
+          completed_via: string | null
           contact_edit_count: number
           contact_name: string
           contact_phone: string
@@ -8484,6 +8653,15 @@ export type Database = {
           _refund_amount: number
           _refund_id: string
           _refund_status: string
+        }
+        Returns: Json
+      }
+      staff_set_business_proof_settings: {
+        Args: {
+          _drop_proof_mode: string
+          _merchant_id: string
+          _proof_retention_days: number
+          _reason?: string
         }
         Returns: Json
       }
