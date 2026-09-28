@@ -378,7 +378,6 @@ export function OrdersScreen({
         <p className="mt-1 text-sm text-muted-foreground">
           Track your active orders and view past ones.
         </p>
-        {onOpenContactParcels && <ContactParcelsCard onOpen={onOpenContactParcels} />}
 
         {/* Active orders */}
         {active.length > 0 && (
@@ -387,8 +386,15 @@ export function OrdersScreen({
               Active
             </h2>
             {active.map((item) =>
-              item.kind === "store" ? (
+              item.kind === "contact" ? (
+                <ContactParcelOrderCard
+                  key={item.id}
+                  row={item.contact}
+                  onOpen={(stopId) => onOpenContactParcels?.(stopId)}
+                />
+              ) : item.kind === "store" ? (
                 <StoreOrderCard key={item.id} order={item.order} active onOpen={() => onOpenStoreOrder?.(item.order.id)} onBill={() => setBill(storeBill(item.order))} />
+
               ) : item.kind === "booking" ? (
                 <div
                   key={item.id}
