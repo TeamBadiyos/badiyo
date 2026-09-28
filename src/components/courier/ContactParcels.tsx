@@ -91,6 +91,71 @@ export function useContactDeliveries() {
   });
 }
 
+/**
+ * One incoming parcel shown inside the normal Orders list: same size and
+ * structure as an order card, just a lighter green tint so it reads as
+ * "someone else's parcel involving you".
+ */
+export function ContactParcelOrderCard({
+  row,
+  onOpen,
+}: {
+  row: ContactRow;
+  onOpen: (stopId: string) => void;
+}) {
+  const t = useT();
+  const date = row.created_at
+    ? new Date(row.created_at).toLocaleDateString("en-US", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      })
+    : "—";
+  const done = CONTACT_DONE_STATUSES.includes(row.order_status);
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={() => onOpen(row.stop_id)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") onOpen(row.stop_id);
+      }}
+      className="w-full rounded-[18px] border border-primary/20 bg-primary/[0.06] p-4 text-left shadow-sm transition active:scale-[0.99]"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h3 className="flex items-center gap-1.5 truncate text-base font-bold text-foreground">
+            <Package className="h-4 w-4 shrink-0 text-primary" />
+            {roleLabel(row.role, t)}
+          </h3>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {row.sender_label ? `${row.sender_label} · ` : ""}
+            {date}
+          </p>
+        </div>
+        <span
+          className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+            done ? "bg-primary/15 text-primary" : "bg-blue-100 text-blue-700"
+          }`}
+        >
+          {orderStatusLabel(row.order_status, t)}
+        </span>
+      </div>
+      {row.address && (
+        <div className="mt-3 flex items-start gap-1.5 text-xs text-muted-foreground">
+          <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+          <span className="line-clamp-2">{row.address}</span>
+        </div>
+      )}
+      <div className="mt-3 flex items-center justify-end">
+        <span className="text-xs font-semibold text-primary">{t("courier.viewDetails")} →</span>
+      </div>
+    </div>
+  );
+}
+
+
+
 export function ContactParcelsCard({ onOpen }: { onOpen: (stopId?: string) => void }) {
   const t = useT();
   const { data = [] } = useContactDeliveries();
