@@ -19,6 +19,9 @@ import { Route as ApiPublicGeocodeSearchRouteImport } from './routes/api/public/
 import { Route as ApiPublicWebhooksRazorpayRouteImport } from './routes/api/public/webhooks/razorpay'
 import { Route as ApiPublicStoreProcessRefundsRouteImport } from './routes/api/public/store/process-refunds'
 import { Route as ApiPublicPushSendRouteImport } from './routes/api/public/push/send'
+import { Route as ApiPublicProofUploadUrlRouteImport } from './routes/api/public/proof/upload-url'
+import { Route as ApiPublicProofDownloadUrlsRouteImport } from './routes/api/public/proof/download-urls'
+import { Route as ApiPublicProofCleanupRouteImport } from './routes/api/public/proof/cleanup'
 import { Route as ApiPublicCourierProcessRefundsRouteImport } from './routes/api/public/courier/process-refunds'
 import { Route as ApiPublicBusinessProcessBatchesRouteImport } from './routes/api/public/business/process-batches'
 import { Route as ApiPublicBookingsProcessRefundsRouteImport } from './routes/api/public/bookings/process-refunds'
@@ -76,6 +79,22 @@ const ApiPublicPushSendRoute = ApiPublicPushSendRouteImport.update({
   path: '/api/public/push/send',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicProofUploadUrlRoute = ApiPublicProofUploadUrlRouteImport.update({
+  id: '/api/public/proof/upload-url',
+  path: '/api/public/proof/upload-url',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicProofDownloadUrlsRoute =
+  ApiPublicProofDownloadUrlsRouteImport.update({
+    id: '/api/public/proof/download-urls',
+    path: '/api/public/proof/download-urls',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicProofCleanupRoute = ApiPublicProofCleanupRouteImport.update({
+  id: '/api/public/proof/cleanup',
+  path: '/api/public/proof/cleanup',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicCourierProcessRefundsRoute =
   ApiPublicCourierProcessRefundsRouteImport.update({
     id: '/api/public/courier/process-refunds',
@@ -113,6 +132,9 @@ export interface FileRoutesByFullPath {
   '/api/public/bookings/process-refunds': typeof ApiPublicBookingsProcessRefundsRoute
   '/api/public/business/process-batches': typeof ApiPublicBusinessProcessBatchesRoute
   '/api/public/courier/process-refunds': typeof ApiPublicCourierProcessRefundsRoute
+  '/api/public/proof/cleanup': typeof ApiPublicProofCleanupRoute
+  '/api/public/proof/download-urls': typeof ApiPublicProofDownloadUrlsRoute
+  '/api/public/proof/upload-url': typeof ApiPublicProofUploadUrlRoute
   '/api/public/push/send': typeof ApiPublicPushSendRoute
   '/api/public/store/process-refunds': typeof ApiPublicStoreProcessRefundsRoute
   '/api/public/webhooks/razorpay': typeof ApiPublicWebhooksRazorpayRoute
@@ -129,6 +151,9 @@ export interface FileRoutesByTo {
   '/api/public/bookings/process-refunds': typeof ApiPublicBookingsProcessRefundsRoute
   '/api/public/business/process-batches': typeof ApiPublicBusinessProcessBatchesRoute
   '/api/public/courier/process-refunds': typeof ApiPublicCourierProcessRefundsRoute
+  '/api/public/proof/cleanup': typeof ApiPublicProofCleanupRoute
+  '/api/public/proof/download-urls': typeof ApiPublicProofDownloadUrlsRoute
+  '/api/public/proof/upload-url': typeof ApiPublicProofUploadUrlRoute
   '/api/public/push/send': typeof ApiPublicPushSendRoute
   '/api/public/store/process-refunds': typeof ApiPublicStoreProcessRefundsRoute
   '/api/public/webhooks/razorpay': typeof ApiPublicWebhooksRazorpayRoute
@@ -146,6 +171,9 @@ export interface FileRoutesById {
   '/api/public/bookings/process-refunds': typeof ApiPublicBookingsProcessRefundsRoute
   '/api/public/business/process-batches': typeof ApiPublicBusinessProcessBatchesRoute
   '/api/public/courier/process-refunds': typeof ApiPublicCourierProcessRefundsRoute
+  '/api/public/proof/cleanup': typeof ApiPublicProofCleanupRoute
+  '/api/public/proof/download-urls': typeof ApiPublicProofDownloadUrlsRoute
+  '/api/public/proof/upload-url': typeof ApiPublicProofUploadUrlRoute
   '/api/public/push/send': typeof ApiPublicPushSendRoute
   '/api/public/store/process-refunds': typeof ApiPublicStoreProcessRefundsRoute
   '/api/public/webhooks/razorpay': typeof ApiPublicWebhooksRazorpayRoute
@@ -164,6 +192,9 @@ export interface FileRouteTypes {
     | '/api/public/bookings/process-refunds'
     | '/api/public/business/process-batches'
     | '/api/public/courier/process-refunds'
+    | '/api/public/proof/cleanup'
+    | '/api/public/proof/download-urls'
+    | '/api/public/proof/upload-url'
     | '/api/public/push/send'
     | '/api/public/store/process-refunds'
     | '/api/public/webhooks/razorpay'
@@ -180,6 +211,9 @@ export interface FileRouteTypes {
     | '/api/public/bookings/process-refunds'
     | '/api/public/business/process-batches'
     | '/api/public/courier/process-refunds'
+    | '/api/public/proof/cleanup'
+    | '/api/public/proof/download-urls'
+    | '/api/public/proof/upload-url'
     | '/api/public/push/send'
     | '/api/public/store/process-refunds'
     | '/api/public/webhooks/razorpay'
@@ -196,6 +230,9 @@ export interface FileRouteTypes {
     | '/api/public/bookings/process-refunds'
     | '/api/public/business/process-batches'
     | '/api/public/courier/process-refunds'
+    | '/api/public/proof/cleanup'
+    | '/api/public/proof/download-urls'
+    | '/api/public/proof/upload-url'
     | '/api/public/push/send'
     | '/api/public/store/process-refunds'
     | '/api/public/webhooks/razorpay'
@@ -213,6 +250,9 @@ export interface RootRouteChildren {
   ApiPublicBookingsProcessRefundsRoute: typeof ApiPublicBookingsProcessRefundsRoute
   ApiPublicBusinessProcessBatchesRoute: typeof ApiPublicBusinessProcessBatchesRoute
   ApiPublicCourierProcessRefundsRoute: typeof ApiPublicCourierProcessRefundsRoute
+  ApiPublicProofCleanupRoute: typeof ApiPublicProofCleanupRoute
+  ApiPublicProofDownloadUrlsRoute: typeof ApiPublicProofDownloadUrlsRoute
+  ApiPublicProofUploadUrlRoute: typeof ApiPublicProofUploadUrlRoute
   ApiPublicPushSendRoute: typeof ApiPublicPushSendRoute
   ApiPublicStoreProcessRefundsRoute: typeof ApiPublicStoreProcessRefundsRoute
   ApiPublicWebhooksRazorpayRoute: typeof ApiPublicWebhooksRazorpayRoute
@@ -290,6 +330,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPushSendRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/proof/upload-url': {
+      id: '/api/public/proof/upload-url'
+      path: '/api/public/proof/upload-url'
+      fullPath: '/api/public/proof/upload-url'
+      preLoaderRoute: typeof ApiPublicProofUploadUrlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/proof/download-urls': {
+      id: '/api/public/proof/download-urls'
+      path: '/api/public/proof/download-urls'
+      fullPath: '/api/public/proof/download-urls'
+      preLoaderRoute: typeof ApiPublicProofDownloadUrlsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/proof/cleanup': {
+      id: '/api/public/proof/cleanup'
+      path: '/api/public/proof/cleanup'
+      fullPath: '/api/public/proof/cleanup'
+      preLoaderRoute: typeof ApiPublicProofCleanupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/courier/process-refunds': {
       id: '/api/public/courier/process-refunds'
       path: '/api/public/courier/process-refunds'
@@ -333,6 +394,9 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicBookingsProcessRefundsRoute: ApiPublicBookingsProcessRefundsRoute,
   ApiPublicBusinessProcessBatchesRoute: ApiPublicBusinessProcessBatchesRoute,
   ApiPublicCourierProcessRefundsRoute: ApiPublicCourierProcessRefundsRoute,
+  ApiPublicProofCleanupRoute: ApiPublicProofCleanupRoute,
+  ApiPublicProofDownloadUrlsRoute: ApiPublicProofDownloadUrlsRoute,
+  ApiPublicProofUploadUrlRoute: ApiPublicProofUploadUrlRoute,
   ApiPublicPushSendRoute: ApiPublicPushSendRoute,
   ApiPublicStoreProcessRefundsRoute: ApiPublicStoreProcessRefundsRoute,
   ApiPublicWebhooksRazorpayRoute: ApiPublicWebhooksRazorpayRoute,
