@@ -155,11 +155,13 @@ function AmountButton({ amount, onOpen }: { amount: number; onOpen: () => void }
   );
 }
 
-/** One row in the Orders list — either a home service or a parcel. */
+/** One row in the Orders list — a home service, a parcel or an incoming parcel. */
 type OrderItem =
   | { kind: "booking"; id: string; createdAt: string | null; booking: BookingRow }
   | { kind: "parcel"; id: string; createdAt: string | null; parcel: CourierOrder }
+  | { kind: "contact"; id: string; createdAt: string | null; contact: ContactRow }
   | { kind: "store"; id: string; createdAt: string | null; order: StoreOrder };
+
 
 /** Card for one shop order — same shape as the booking/parcel cards. */
 function StoreOrderCard({ order, active, onOpen, onBill }: { order: StoreOrder; active: boolean; onOpen?: () => void; onBill: () => void }) {
