@@ -8438,6 +8438,16 @@ export type Database = {
         Returns: Json
       }
       staff_seal_lookup: { Args: { _raw: string }; Returns: Json }
+      staff_seal_reassign_batch: {
+        Args: {
+          _batch_id: string
+          _charge_amount?: number
+          _merchant_id?: string
+          _reason?: string
+          _refund_amount?: number
+        }
+        Returns: Json
+      }
       staff_seal_void: {
         Args: { _code: string; _reason: string }
         Returns: Json
