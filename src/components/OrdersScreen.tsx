@@ -344,6 +344,9 @@ export function OrdersScreen({
     ...visibleParcels
       .filter((p) => COURIER_ACTIVE_STATUSES.includes(p.status))
       .map((p) => ({ kind: "parcel" as const, id: p.id, createdAt: p.created_at, parcel: p })),
+    ...contactParcels
+      .filter((c) => !CONTACT_DONE_STATUSES.includes(c.order_status))
+      .map((c) => ({ kind: "contact" as const, id: c.stop_id, createdAt: c.created_at, contact: c })),
     ...storeOrders
       .filter(isStoreOrderActive)
       .map((o) => ({ kind: "store" as const, id: o.id, createdAt: o.created_at, order: o })),
@@ -356,10 +359,14 @@ export function OrdersScreen({
     ...visibleParcels
       .filter((p) => !COURIER_ACTIVE_STATUSES.includes(p.status))
       .map((p) => ({ kind: "parcel" as const, id: p.id, createdAt: p.created_at, parcel: p })),
+    ...contactParcels
+      .filter((c) => CONTACT_DONE_STATUSES.includes(c.order_status))
+      .map((c) => ({ kind: "contact" as const, id: c.stop_id, createdAt: c.created_at, contact: c })),
     ...storeOrders
       .filter((o) => !isStoreOrderActive(o))
       .map((o) => ({ kind: "store" as const, id: o.id, createdAt: o.created_at, order: o })),
   ].sort(byNewest);
+
 
   const openParcel = (p: CourierOrder) => onOpenCourierOrder?.(p.id);
 
