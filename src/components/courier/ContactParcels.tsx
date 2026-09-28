@@ -20,7 +20,7 @@ const CourierLiveMap = lazy(() =>
 );
 
 
-type ContactRow = {
+export type ContactRow = {
   order_id: string;
   order_code: string | null;
   stop_id: string;
@@ -28,8 +28,19 @@ type ContactRow = {
   address: string | null;
   stop_status: string;
   order_status: string;
+  created_at: string | null;
   sender_label: string | null;
 };
+
+/** Statuses that mean this parcel is no longer moving. */
+export const CONTACT_DONE_STATUSES = [
+  "DELIVERED",
+  "COMPLETED",
+  "CANCELLED",
+  "FAILED_DELIVERY",
+  "EXPIRED",
+];
+
 
 type ContactView = {
   stop: {
