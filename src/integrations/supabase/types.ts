@@ -8515,6 +8515,10 @@ export type Database = {
         Returns: undefined
       }
       staff_require_super_admin: { Args: never; Returns: undefined }
+      staff_reset_receiver_location: {
+        Args: { _reason: string; _receiver_id: string }
+        Returns: Json
+      }
       staff_reverse_referral_reward: {
         Args: { _reason: string; _txn_id: string }
         Returns: undefined
