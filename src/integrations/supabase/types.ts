@@ -5280,27 +5280,33 @@ export type Database = {
       }
       referral_config: {
         Row: {
+          booking_reward_coins: number
           id: string
           is_active: boolean
           milestone_referrals: number | null
           milestone_reward_coins: number | null
           reward_coins: number
+          signup_reward_coins: number
           updated_at: string | null
         }
         Insert: {
+          booking_reward_coins?: number
           id?: string
           is_active?: boolean
           milestone_referrals?: number | null
           milestone_reward_coins?: number | null
           reward_coins?: number
+          signup_reward_coins?: number
           updated_at?: string | null
         }
         Update: {
+          booking_reward_coins?: number
           id?: string
           is_active?: boolean
           milestone_referrals?: number | null
           milestone_reward_coins?: number | null
           reward_coins?: number
+          signup_reward_coins?: number
           updated_at?: string | null
         }
         Relationships: []
@@ -5395,6 +5401,8 @@ export type Database = {
       referral_transactions: {
         Row: {
           booking_id: string | null
+          booking_reward_amount: number | null
+          booking_reward_date: string | null
           created_at: string | null
           id: string
           referred_user_id: string | null
@@ -5403,10 +5411,14 @@ export type Database = {
           reversed_at: string | null
           reward_amount: number | null
           reward_date: string | null
+          signup_reward_amount: number | null
+          signup_reward_date: string | null
           status: string
         }
         Insert: {
           booking_id?: string | null
+          booking_reward_amount?: number | null
+          booking_reward_date?: string | null
           created_at?: string | null
           id?: string
           referred_user_id?: string | null
@@ -5415,10 +5427,14 @@ export type Database = {
           reversed_at?: string | null
           reward_amount?: number | null
           reward_date?: string | null
+          signup_reward_amount?: number | null
+          signup_reward_date?: string | null
           status?: string
         }
         Update: {
           booking_id?: string | null
+          booking_reward_amount?: number | null
+          booking_reward_date?: string | null
           created_at?: string | null
           id?: string
           referred_user_id?: string | null
@@ -5427,6 +5443,8 @@ export type Database = {
           reversed_at?: string | null
           reward_amount?: number | null
           reward_date?: string | null
+          signup_reward_amount?: number | null
+          signup_reward_date?: string | null
           status?: string
         }
         Relationships: [
@@ -7671,6 +7689,7 @@ export type Database = {
         Args: { _booking_id: string }
         Returns: undefined
       }
+      credit_referral_signup: { Args: { _txn_id: string }; Returns: number }
       current_merchant_id: { Args: never; Returns: string }
       customer_cancel_booking_apply: {
         Args: {
@@ -8439,6 +8458,7 @@ export type Database = {
       staff_generate_merchant_payout_batch: { Args: never; Returns: string }
       staff_generate_payout_batch: { Args: never; Returns: string }
       staff_generate_subscription_invoices: { Args: never; Returns: Json }
+      staff_get_referral_config: { Args: never; Returns: Json }
       staff_list_bulk_plans: { Args: never; Returns: Json }
       staff_list_notifications: {
         Args: { _filter?: string }
@@ -8837,6 +8857,16 @@ export type Database = {
       staff_update_referral_config: {
         Args: { _is_active: boolean; _reward: number }
         Returns: undefined
+      }
+      staff_update_referral_rewards: {
+        Args: {
+          _booking_reward: number
+          _is_active?: boolean
+          _milestone_referrals?: number
+          _milestone_reward_coins?: number
+          _signup_reward: number
+        }
+        Returns: Json
       }
       staff_update_service_price: {
         Args: { _id: string; _payload: Json }
