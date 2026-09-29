@@ -1,11 +1,14 @@
-import { ArrowLeft, Check, ChevronRight, Clock, Calendar, Home as HomeIcon, Tag, X } from "lucide-react";
+import { ArrowLeft, Check, ChevronRight, Clock, Calendar, Coins, Home as HomeIcon, Tag, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import type { SelectedService, SelectedSlot } from "./SlotSelectionScreen";
 import { useT, type TFunction } from "@/i18n";
 import { hapticImpact } from "@/lib/haptics";
 import { billBreakdown, useGstPercent } from "@/lib/gst";
 import { fetchMyCoupons, type AppliedCoupon } from "@/lib/coupons";
+import { fetchMyCoinBalance } from "@/lib/coins";
+
 
 export type SelectedAddress = {
   id: string;
@@ -44,6 +47,8 @@ export function BookingSummaryScreen({
   coupon,
   onCouponChange,
   onOpenCoupons,
+  redeemCoins = false,
+  onRedeemCoinsChange,
   onBack,
   onEditAddress,
   onProceedToPay,
@@ -54,6 +59,8 @@ export function BookingSummaryScreen({
   coupon: AppliedCoupon | null;
   onCouponChange: (coupon: AppliedCoupon | null) => void;
   onOpenCoupons: () => void;
+  redeemCoins?: boolean;
+  onRedeemCoinsChange?: (on: boolean) => void;
   onBack: () => void;
   onEditAddress: () => void;
   onProceedToPay: () => void;
@@ -68,12 +75,20 @@ export function BookingSummaryScreen({
   );
   const tax = bill.gst;
   const discount = bill.discount;
-  const total = bill.total;
   const { data: availableCoupons } = useQuery({
     queryKey: ["my_coupons"],
     queryFn: () => fetchMyCoupons(),
     staleTime: 60_000,
   });
+  const { data: coinBalance = 0 } = useQuery({
+    queryKey: ["my_coin_balance"],
+    queryFn: fetchMyCoinBalance,
+    staleTime: 30_000,
+  });
+  const maxCoins = Math.max(0, Math.min(coinBalance, bill.total));
+  const coinsApplied = redeemCoins ? maxCoins : 0;
+  const total = Math.max(0, bill.total - coinsApplied);
+
 
   return (
     <main className="min-h-screen w-full bg-background pb-28">
