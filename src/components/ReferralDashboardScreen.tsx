@@ -478,6 +478,8 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
                 <ul className="mt-3 space-y-2">
                   {transactions.map((t) => {
                     const meta = statusMeta(t.status);
+                    const earned = txnEarned(t);
+                    const pending = Math.max(totalPerReferral - earned, 0);
                     const date = new Date(t.created_at).toLocaleDateString(undefined, {
                       day: "numeric",
                       month: "short",
@@ -494,7 +496,12 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
                           <div className="truncate text-sm font-bold text-foreground">
                             Friend {t.referred_user_id?.slice(0, 6) ?? "—"}
                           </div>
-                          <div className="text-[11px] text-muted-foreground">{date}</div>
+                          <div className="text-[11px] text-muted-foreground">
+                            {date} · {earned} coins earned
+                            {pending > 0 && t.status !== "reversed"
+                              ? ` · ${pending} after first booking`
+                              : ""}
+                          </div>
                         </div>
                         <span
                           className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold ${meta.className}`}
