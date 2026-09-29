@@ -77,16 +77,6 @@ export type SelectedSlot =
 
 type Mode = "now" | "later";
 
-function getNext7Days() {
-  const days: Date[] = [];
-  const today = new Date();
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(today);
-    d.setDate(today.getDate() + i);
-    days.push(d);
-  }
-  return days;
-}
 function IncExcLists({
   inclusions,
   exclusions,
