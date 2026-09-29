@@ -88,12 +88,16 @@ async function fetchAll() {
       .maybeSingle(),
     supabase
       .from("referral_transactions")
-      .select("id, status, reward_amount, created_at, referred_user_id")
+      .select(
+        "id, status, reward_amount, signup_reward_amount, booking_reward_amount, created_at, referred_user_id",
+      )
       .eq("referrer_id", uid)
       .order("created_at", { ascending: false }),
     supabase
       .from("referral_config")
-      .select("milestone_referrals, milestone_reward_coins, reward_coins")
+      .select(
+        "milestone_referrals, milestone_reward_coins, reward_coins, signup_reward_coins, booking_reward_coins",
+      )
       .eq("is_active", true)
       .maybeSingle(),
   ]);
