@@ -2,9 +2,10 @@ import { useMemo, useState } from "react";
 import { Check, ChevronDown, Clock, X } from "lucide-react";
 import {
   getAllHourSlots,
+  getNext7DayOptions,
   isHourBookable,
-  toDateKey,
 } from "@/lib/hourSlots";
+
 import { useLanguage, useT } from "@/i18n";
 import { hapticSelection } from "@/lib/haptics";
 import { useQuery } from "@tanstack/react-query";
