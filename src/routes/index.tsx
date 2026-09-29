@@ -300,6 +300,8 @@ function Index() {
   const [selectedSlot, setSelectedSlot] = useState<SelectedSlot | null>(null);
   const [selectedAddress, setSelectedAddress] = useState<SelectedAddress | null>(null);
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
+  const [redeemCoins, setRedeemCoins] = useState(false);
+
   const [rewardsTab, setRewardsTab] = useState<"rewards" | "offers">("rewards");
   const [notServiceable, setNotServiceable] = useState<NotServiceableLocation | null>(null);
   const [activeBookingId, setActiveBookingId] = useState<string | null>(null);
@@ -1031,7 +1033,10 @@ function Index() {
             address={selectedAddress}
             coupon={appliedCoupon}
             onCouponChange={setAppliedCoupon}
+            redeemCoins={redeemCoins}
+            onRedeemCoinsChange={setRedeemCoins}
             onOpenCoupons={() => setPhase("coupon-picker")}
+
             onBack={() => setPhase("address")}
             onEditAddress={() => setPhase("address")}
             onProceedToPay={() => setPhase("payment")}
@@ -1058,6 +1063,8 @@ function Index() {
             slot={selectedSlot}
             address={selectedAddress}
             coupon={appliedCoupon}
+            redeemCoins={redeemCoins}
+
             onBack={() => setPhase("summary")}
             onDone={resetAndGoHome}
             onOpenHelp={() => setPhase("help")}
