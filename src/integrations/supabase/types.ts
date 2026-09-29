@@ -1830,6 +1830,24 @@ export type Database = {
           },
         ]
       }
+      business_slot_notice_log: {
+        Row: {
+          notice_date: string
+          notified_at: string
+          slot_time: string
+        }
+        Insert: {
+          notice_date: string
+          notified_at?: string
+          slot_time: string
+        }
+        Update: {
+          notice_date?: string
+          notified_at?: string
+          slot_time?: string
+        }
+        Relationships: []
+      }
       business_trip_counters: {
         Row: {
           day: string
