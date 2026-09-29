@@ -226,11 +226,24 @@ export function SlotSelectionScreen({
     },
   });
 
+  // Blocked purely because the service can't finish before closing time.
+  const durationBlocks = (hour: number): boolean =>
+    !slotFitsWindow(cleanState, hour, durationMinutes);
+
   const slotDisabled = (hour: number): boolean => {
-    if (!slotFitsWindow(cleanState, hour, durationMinutes)) return true;
+    if (durationBlocks(hour)) return true;
     if (dayAllowed?.get(hour) === false) return true;
     return false;
   };
+
+  const closeLabel = formatClockLabel(cleanState?.close_time) ?? "";
+  const durationLabel = formatDurationLabel(durationMinutes);
+  const nowTooLong =
+    cleanState != null &&
+    cleanState.can_order &&
+    !durationFitsNow(cleanState, durationMinutes);
+
+  const [tooLongMsg, setTooLongMsg] = useState<string | null>(null);
 
   const visibleSlots = useMemo(() => {
     if (!selectedDay) return allSlots;
