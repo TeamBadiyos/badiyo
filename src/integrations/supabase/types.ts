@@ -2142,6 +2142,36 @@ export type Database = {
         }
         Relationships: []
       }
+      coin_redemptions: {
+        Row: {
+          coins: number
+          created_at: string
+          id: string
+          razorpay_order_id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          coins: number
+          created_at?: string
+          id?: string
+          razorpay_order_id: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          coins?: number
+          created_at?: string
+          id?: string
+          razorpay_order_id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       commission_rules: {
         Row: {
           created_at: string
@@ -7940,6 +7970,7 @@ export type Database = {
         Args: { p_phone: string; p_pin: string }
         Returns: Json
       }
+      my_coin_balance: { Args: never; Returns: number }
       my_coupons: {
         Args: never
         Returns: {
@@ -8094,6 +8125,10 @@ export type Database = {
       register_device_token: {
         Args: { p_fcm_token: string; p_platform: string }
         Returns: string
+      }
+      release_my_coin_redemption: {
+        Args: { _order_id: string }
+        Returns: number
       }
       release_stale_coupon_reservations: { Args: never; Returns: number }
       resolve_booking_payouts: {
@@ -9172,6 +9207,11 @@ export type Database = {
         Returns: Json
       }
       system_check_no_accept_alerts: { Args: never; Returns: string[] }
+      system_coins_release: { Args: { _order_id: string }; Returns: number }
+      system_coins_reserve: {
+        Args: { _coins: number; _order_id: string; _user_id: string }
+        Returns: number
+      }
       system_coupon_release: { Args: { _order_id: string }; Returns: undefined }
       system_coupon_reserve: {
         Args: {
