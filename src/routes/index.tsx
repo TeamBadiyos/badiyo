@@ -505,7 +505,11 @@ function Index() {
     setPushNavigator((route, data) => {
       const phase = ROUTE_TO_PHASE[route];
       if (phase) {
-        if (phase === "parcels-for-you") setContactStopId(null);
+        if (phase === "parcels-for-you") {
+          setContactStopId(null);
+          parcelsFromRef.current = "home";
+          _setParcelsFrom("home");
+        }
         if (route === "offers") setRewardsTab("offers");
         else if (route === "rewards") setRewardsTab("rewards");
         setPhase(phase);
@@ -933,7 +937,7 @@ function Index() {
           <ContactParcelsScreen
             key={contactStopId ?? "list"}
             initialStopId={contactStopId}
-            onBack={() => setPhase("home")}
+            onBack={() => setPhase(parcelsFrom)}
           />
         </div>
       )}
