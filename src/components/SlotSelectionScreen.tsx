@@ -559,9 +559,28 @@ export function SlotSelectionScreen({
                   toast(msg);
                   return;
                 }
+                if (nowTooLong) {
+                  setTooLongMsg(
+                    t("slot.tooLongNow", {
+                      duration: durationLabel,
+                      close: closeLabel,
+                    }),
+                  );
+                  return;
+                }
                 onContinue({ mode: "now" });
               } else if (selectedDay && selectedHour !== null) {
                 const s = allSlots.find((x) => x.hour === selectedHour)!;
+                if (durationBlocks(s.hour)) {
+                  setTooLongMsg(
+                    t("slot.tooLongSlot", {
+                      duration: durationLabel,
+                      start: s.label,
+                      close: closeLabel,
+                    }),
+                  );
+                  return;
+                }
                 onContinue({
                   mode: "later",
                   day: selectedDay,
@@ -581,6 +600,33 @@ export function SlotSelectionScreen({
           </button>
         </div>
       </div>
+
+      <AlertDialog
+        open={tooLongMsg !== null}
+        onOpenChange={(o) => {
+          if (!o) setTooLongMsg(null);
+        }}
+      >
+        <AlertDialogContent className="max-w-[340px] rounded-[20px]">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("slot.tooLongTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>{tooLongMsg}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel className="mt-0">
+              {t("slot.tooLongGotIt")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setTooLongMsg(null);
+                setMode("later");
+              }}
+            >
+              {t("slot.tooLongPickAnother")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 }
