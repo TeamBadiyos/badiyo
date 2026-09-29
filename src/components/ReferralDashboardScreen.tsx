@@ -25,6 +25,8 @@ type Txn = {
   id: string;
   status: string;
   reward_amount: number | null;
+  signup_reward_amount: number | null;
+  booking_reward_amount: number | null;
   created_at: string;
   referred_user_id: string | null;
 };
@@ -40,20 +42,29 @@ type ReferralConfigRow = {
   milestone_referrals: number | null;
   milestone_reward_coins: number | null;
   reward_coins: number | null;
+  signup_reward_coins: number | null;
+  booking_reward_coins: number | null;
 };
 
 const STATUS_META: Record<string, { label: string; className: string }> = {
   pending: { label: "Pending", className: "bg-muted text-muted-foreground" },
-  registered: { label: "Registered", className: "bg-blue-100 text-blue-700" },
+  registered: { label: "Joined", className: "bg-blue-100 text-blue-700" },
   first_booking_completed: {
     label: "First Booking",
     className: "bg-orange-100 text-orange-700",
   },
   reward_credited: {
-    label: "Reward Credited",
+    label: "Fully Rewarded",
     className: "bg-primary/15 text-primary",
   },
+  reversed: { label: "Reversed", className: "bg-muted text-muted-foreground" },
 };
+
+function txnEarned(t: Txn) {
+  const staged =
+    Number(t.signup_reward_amount ?? 0) + Number(t.booking_reward_amount ?? 0);
+  return staged > 0 ? staged : Number(t.reward_amount ?? 0);
+}
 
 function statusMeta(status: string) {
   return (
@@ -77,12 +88,16 @@ async function fetchAll() {
       .maybeSingle(),
     supabase
       .from("referral_transactions")
-      .select("id, status, reward_amount, created_at, referred_user_id")
+      .select(
+        "id, status, reward_amount, signup_reward_amount, booking_reward_amount, created_at, referred_user_id",
+      )
       .eq("referrer_id", uid)
       .order("created_at", { ascending: false }),
     supabase
       .from("referral_config")
-      .select("milestone_referrals, milestone_reward_coins, reward_coins")
+      .select(
+        "milestone_referrals, milestone_reward_coins, reward_coins, signup_reward_coins, booking_reward_coins",
+      )
       .eq("is_active", true)
       .maybeSingle(),
   ]);
@@ -177,9 +192,14 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
   const joinedCount = progress?.joined ?? transactions.length;
   const qualifiedCount = progress?.qualified ?? successful.length;
   const totalRewards = useMemo(
-    () => successful.reduce((sum, t) => sum + Number(t.reward_amount ?? 0), 0),
-    [successful],
+    () => transactions.reduce((sum, t) => sum + txnEarned(t), 0),
+    [transactions],
   );
+  const signupReward = Number(config?.signup_reward_coins ?? 10);
+  const bookingReward = Number(config?.booking_reward_coins ?? 20);
+  const totalPerReferral =
+    Number(config?.reward_coins ?? signupReward + bookingReward) ||
+    signupReward + bookingReward;
   const familiesHelped = successful.length;
   const totalReferred = transactions.length;
   const walletBalance = user?.total_coins_earned ?? 0;
@@ -299,6 +319,37 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
               <StatCard label="Successful Referrals" value={String(successful.length)} />
             </section>
 
+            {/* How rewards work */}
+            <section className="mt-4 rounded-[18px] border border-border bg-card p-4">
+              <h2 className="text-sm font-bold text-foreground">
+                Earn {totalPerReferral} coins per friend
+              </h2>
+              <div className="mt-3 space-y-2">
+                <div className="flex items-start gap-3">
+                  <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-100 text-[11px] font-extrabold text-blue-700">
+                    1
+                  </span>
+                  <p className="text-xs text-muted-foreground">
+                    <span className="font-bold text-foreground">
+                      {signupReward} coins
+                    </span>{" "}
+                    as soon as your friend joins badiyos with your code.
+                  </p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/15 text-[11px] font-extrabold text-primary">
+                    2
+                  </span>
+                  <p className="text-xs text-muted-foreground">
+                    <span className="font-bold text-foreground">
+                      {bookingReward} coins
+                    </span>{" "}
+                    when they complete their first booking.
+                  </p>
+                </div>
+              </div>
+            </section>
+
             {/* Apply a friend's code */}
             <section className="mt-6">
               <h2 className="text-sm font-bold text-foreground">Enter a friend&apos;s code</h2>
@@ -386,7 +437,8 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
               ))}
             </section>
             <p className="mt-2 text-[11px] text-muted-foreground">
-              A referral qualifies once your friend completes their first booking.
+              You get {signupReward} coins when a friend joins, and {bookingReward} more
+              once they complete their first booking.
             </p>
 
             {/* Milestone */}
@@ -426,6 +478,8 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
                 <ul className="mt-3 space-y-2">
                   {transactions.map((t) => {
                     const meta = statusMeta(t.status);
+                    const earned = txnEarned(t);
+                    const pending = Math.max(totalPerReferral - earned, 0);
                     const date = new Date(t.created_at).toLocaleDateString(undefined, {
                       day: "numeric",
                       month: "short",
@@ -442,7 +496,12 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
                           <div className="truncate text-sm font-bold text-foreground">
                             Friend {t.referred_user_id?.slice(0, 6) ?? "—"}
                           </div>
-                          <div className="text-[11px] text-muted-foreground">{date}</div>
+                          <div className="text-[11px] text-muted-foreground">
+                            {date} · {earned} coins earned
+                            {pending > 0 && t.status !== "reversed"
+                              ? ` · ${pending} after first booking`
+                              : ""}
+                          </div>
                         </div>
                         <span
                           className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold ${meta.className}`}
