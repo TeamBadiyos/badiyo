@@ -192,9 +192,14 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
   const joinedCount = progress?.joined ?? transactions.length;
   const qualifiedCount = progress?.qualified ?? successful.length;
   const totalRewards = useMemo(
-    () => successful.reduce((sum, t) => sum + Number(t.reward_amount ?? 0), 0),
-    [successful],
+    () => transactions.reduce((sum, t) => sum + txnEarned(t), 0),
+    [transactions],
   );
+  const signupReward = Number(config?.signup_reward_coins ?? 10);
+  const bookingReward = Number(config?.booking_reward_coins ?? 20);
+  const totalPerReferral =
+    Number(config?.reward_coins ?? signupReward + bookingReward) ||
+    signupReward + bookingReward;
   const familiesHelped = successful.length;
   const totalReferred = transactions.length;
   const walletBalance = user?.total_coins_earned ?? 0;
