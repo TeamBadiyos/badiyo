@@ -437,7 +437,8 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
               ))}
             </section>
             <p className="mt-2 text-[11px] text-muted-foreground">
-              A referral qualifies once your friend completes their first booking.
+              You get {signupReward} coins when a friend joins, and {bookingReward} more
+              once they complete their first booking.
             </p>
 
             {/* Milestone */}
