@@ -383,7 +383,9 @@ Deno.serve(async (req) => {
           ...(discountPaise > 0 && couponCode
             ? { coupon_code: couponCode, discount: String(discountPaise / 100) }
             : {}),
+          ...(coinsToUse > 0 ? { coins_redeemed: String(coinsToUse) } : {}),
         },
+
       }),
     });
 
