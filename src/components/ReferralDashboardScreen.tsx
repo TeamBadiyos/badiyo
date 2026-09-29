@@ -25,6 +25,8 @@ type Txn = {
   id: string;
   status: string;
   reward_amount: number | null;
+  signup_reward_amount: number | null;
+  booking_reward_amount: number | null;
   created_at: string;
   referred_user_id: string | null;
 };
@@ -40,20 +42,29 @@ type ReferralConfigRow = {
   milestone_referrals: number | null;
   milestone_reward_coins: number | null;
   reward_coins: number | null;
+  signup_reward_coins: number | null;
+  booking_reward_coins: number | null;
 };
 
 const STATUS_META: Record<string, { label: string; className: string }> = {
   pending: { label: "Pending", className: "bg-muted text-muted-foreground" },
-  registered: { label: "Registered", className: "bg-blue-100 text-blue-700" },
+  registered: { label: "Joined", className: "bg-blue-100 text-blue-700" },
   first_booking_completed: {
     label: "First Booking",
     className: "bg-orange-100 text-orange-700",
   },
   reward_credited: {
-    label: "Reward Credited",
+    label: "Fully Rewarded",
     className: "bg-primary/15 text-primary",
   },
+  reversed: { label: "Reversed", className: "bg-muted text-muted-foreground" },
 };
+
+function txnEarned(t: Txn) {
+  const staged =
+    Number(t.signup_reward_amount ?? 0) + Number(t.booking_reward_amount ?? 0);
+  return staged > 0 ? staged : Number(t.reward_amount ?? 0);
+}
 
 function statusMeta(status: string) {
   return (
