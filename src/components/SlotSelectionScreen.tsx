@@ -409,7 +409,14 @@ export function SlotSelectionScreen({
             {(["now", "later"] as Mode[]).map((m) => (
               <button
                 key={m}
-                onClick={() => { void hapticSelection(); setMode(m); }}
+                onClick={() => {
+                  void hapticSelection();
+                  setMode(m);
+                  if (m === "later" && selectedDay === null) {
+                    setSelectedDay(firstOpenDay());
+                  }
+                }}
+
                 className={`rounded-[10px] px-4 py-2.5 text-sm font-bold transition ${
                   mode === m
                     ? "bg-primary text-primary-foreground"
