@@ -355,6 +355,8 @@ export function BookingDetailsScreen({
         open={rescheduleOpen}
         initialDate={scheduledDate}
         initialSlot={scheduledSlot}
+        durationMinutes={booking.service_duration_minutes}
+
         onClose={() => setRescheduleOpen(false)}
         onConfirm={handleReschedule}
         saving={saving}
