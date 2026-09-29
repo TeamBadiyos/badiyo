@@ -1,11 +1,14 @@
-import { ArrowLeft, Check, ChevronRight, Clock, Calendar, Home as HomeIcon, Tag, X } from "lucide-react";
+import { ArrowLeft, Check, ChevronRight, Clock, Calendar, Coins, Home as HomeIcon, Tag, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import type { SelectedService, SelectedSlot } from "./SlotSelectionScreen";
 import { useT, type TFunction } from "@/i18n";
 import { hapticImpact } from "@/lib/haptics";
 import { billBreakdown, useGstPercent } from "@/lib/gst";
 import { fetchMyCoupons, type AppliedCoupon } from "@/lib/coupons";
+import { fetchMyCoinBalance } from "@/lib/coins";
+
 
 export type SelectedAddress = {
   id: string;
@@ -44,6 +47,8 @@ export function BookingSummaryScreen({
   coupon,
   onCouponChange,
   onOpenCoupons,
+  redeemCoins = false,
+  onRedeemCoinsChange,
   onBack,
   onEditAddress,
   onProceedToPay,
@@ -54,6 +59,8 @@ export function BookingSummaryScreen({
   coupon: AppliedCoupon | null;
   onCouponChange: (coupon: AppliedCoupon | null) => void;
   onOpenCoupons: () => void;
+  redeemCoins?: boolean;
+  onRedeemCoinsChange?: (on: boolean) => void;
   onBack: () => void;
   onEditAddress: () => void;
   onProceedToPay: () => void;
@@ -68,12 +75,20 @@ export function BookingSummaryScreen({
   );
   const tax = bill.gst;
   const discount = bill.discount;
-  const total = bill.total;
   const { data: availableCoupons } = useQuery({
     queryKey: ["my_coupons"],
     queryFn: () => fetchMyCoupons(),
     staleTime: 60_000,
   });
+  const { data: coinBalance = 0 } = useQuery({
+    queryKey: ["my_coin_balance"],
+    queryFn: fetchMyCoinBalance,
+    staleTime: 30_000,
+  });
+  const maxCoins = Math.max(0, Math.min(coinBalance, bill.total));
+  const coinsApplied = redeemCoins ? maxCoins : 0;
+  const total = Math.max(0, bill.total - coinsApplied);
+
 
   return (
     <main className="min-h-screen w-full bg-background pb-28">
@@ -210,6 +225,32 @@ export function BookingSummaryScreen({
           </Button>
         </section>
 
+        {/* Redeem coins */}
+        {coinBalance > 0 && (
+          <section className="mt-4 flex items-center gap-3 rounded-[18px] border border-border bg-card px-5 py-4">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/15">
+              <Coins className="h-5 w-5 text-primary" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-bold text-foreground">Use Badiyos coins</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                {coinBalance} coins available (₹{coinBalance})
+                {redeemCoins && coinsApplied > 0 ? ` · using ${coinsApplied}` : ""}
+              </p>
+            </div>
+            <Switch
+              checked={redeemCoins}
+              onCheckedChange={(v) => {
+                void hapticImpact("light");
+                onRedeemCoinsChange?.(v);
+              }}
+              aria-label="Use Badiyos coins"
+            />
+          </section>
+        )}
+
+
+
         {/* Price breakdown */}
         <section className="mt-4 rounded-[18px] border border-border bg-card p-5">
           <div className="text-sm font-bold text-foreground">
@@ -244,7 +285,14 @@ export function BookingSummaryScreen({
               </span>
             </div>
           )}
+          {coinsApplied > 0 && (
+            <div className="mt-2 flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Coins redeemed</span>
+              <span className="font-bold text-primary">−₹{coinsApplied}</span>
+            </div>
+          )}
           <div className="my-4 h-px bg-border" />
+
 
           <div className="flex items-center justify-between">
             <span className="text-base font-bold text-foreground">{t("common.total")}</span>

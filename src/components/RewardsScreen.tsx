@@ -89,8 +89,30 @@ export function RewardsScreen({
 
         {tab === "rewards" && (
           <>
+        {/* Referral first */}
+        <h2 className="mt-6 text-base font-bold text-foreground">Refer &amp; Earn</h2>
+        <button
+          type="button"
+          onClick={onOpenReferrals}
+          className="mt-3 flex w-full items-start gap-3 rounded-[18px] border border-border bg-primary/5 p-4 text-left shadow-sm transition active:scale-[0.98]"
+        >
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/15">
+            <Gift className="h-5 w-5 text-primary" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-bold text-foreground">Invite friends, earn coins</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Share your code and get coins when a friend joins, plus more once they
+              complete their first booking.
+            </p>
+            <span className="mt-2 inline-block text-xs font-bold text-primary">
+              Share your code →
+            </span>
+          </div>
+        </button>
+
         {/* Summary card */}
-        <section className="mt-5 rounded-[18px] bg-primary/10 p-5">
+        <section className="mt-6 rounded-[18px] bg-primary/10 p-5">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-primary/80">
@@ -127,23 +149,7 @@ export function RewardsScreen({
           {isLoading && (
             <p className="text-sm text-muted-foreground">Loading…</p>
           )}
-          {!isLoading && programs.length === 0 && (
-            <button
-              type="button"
-              onClick={onOpenReferrals}
-              className="flex w-full items-start gap-3 rounded-[18px] border border-border bg-card p-4 text-left shadow-sm transition active:scale-[0.98]"
-            >
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                <Gift className="h-5 w-5 text-primary" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-bold text-foreground">Refer a friend</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  No offers running right now — invite friends and earn coins when they book.
-                </p>
-              </div>
-            </button>
-          )}
+
           {programs.map((p) => {
             const pct = p.progress
               ? Math.round((p.progress.current / Math.max(p.progress.total, 1)) * 100)

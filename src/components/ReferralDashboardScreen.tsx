@@ -219,10 +219,6 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
     ? `Join badiyos and get trusted home cleaning! Use my code ${code}: ${inviteUrl}`
     : `Join badiyos and get trusted home cleaning! ${inviteUrl}`;
 
-  const milestone = Number(config?.milestone_referrals ?? 5) || 5;
-  const progressCount = Math.min(successful.length, milestone);
-  const progressPct = Math.min(100, Math.round((progressCount / milestone) * 100));
-  const remaining = Math.max(0, milestone - successful.length);
 
   useEffect(() => {
     if (!copied) return;
@@ -448,26 +444,6 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
               once they complete their first booking.
             </p>
 
-            {/* Milestone */}
-            <section className="mt-8 rounded-[18px] border border-border bg-card p-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-sm font-bold text-foreground">Milestone</h2>
-                <span className="text-xs font-semibold text-muted-foreground">
-                  {progressCount} of {milestone}
-                </span>
-              </div>
-              <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-muted">
-                <div
-                  className="h-full rounded-full bg-primary transition-all"
-                  style={{ width: `${progressPct}%` }}
-                />
-              </div>
-              <p className="mt-3 text-xs text-muted-foreground">
-                {remaining > 0
-                  ? `Refer ${remaining} more to unlock a bonus reward of ${config?.milestone_reward_coins ?? 0} coins`
-                  : "You've unlocked the bonus reward — amazing!"}
-              </p>
-            </section>
 
             {/* Referral history */}
             <section className="mt-8">

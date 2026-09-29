@@ -311,10 +311,24 @@ Deno.serve(async (req) => {
     );
     const taxablePaise = basePaise - discountPaise;
     const gstPaise = Math.round((taxablePaise * gstPercent) / 100);
-    const amount = Math.round((taxablePaise + gstPaise) / 100) * 100;
-    if (!Number.isInteger(amount) || amount < 0) {
+    const grossAmount = Math.round((taxablePaise + gstPaise) / 100) * 100;
+    if (!Number.isInteger(grossAmount) || grossAmount < 0) {
       return json({ error: "Invalid service price" }, 400);
     }
+
+    // Wallet coins (1 coin = Rs 1) reduce whatever is payable after GST.
+    // The balance is read server-side; the client never sends an amount.
+    let coinsToUse = 0;
+    if (body?.redeem_coins === true && userId && purpose === "booking") {
+      const { data: balRow } = await supabase
+        .from("users")
+        .select("total_coins_earned")
+        .eq("id", userId)
+        .maybeSingle();
+      const balance = Math.max(0, Math.floor(Number(balRow?.total_coins_earned ?? 0)));
+      coinsToUse = Math.min(balance, Math.floor(grossAmount / 100));
+    }
+    const amount = grossAmount - coinsToUse * 100;
 
     // Fully discounted bill: no gateway payment at all.
     if (amount === 0) {
@@ -332,6 +346,14 @@ Deno.serve(async (req) => {
           return json({ error: "Coupon could not be applied" }, 400);
         }
       }
+      if (coinsToUse > 0 && userId) {
+        const { error: coinErr } = await supabase.rpc("system_coins_reserve", {
+          _user_id: userId,
+          _order_id: freeOrderId,
+          _coins: coinsToUse,
+        });
+        if (coinErr) console.error("system_coins_reserve failed", coinErr);
+      }
       return json({
         free: true,
         order_id: freeOrderId,
@@ -340,6 +362,7 @@ Deno.serve(async (req) => {
         key_id: keyId,
       });
     }
+
 
 
     const auth = btoa(`${keyId}:${keySecret}`);
@@ -360,7 +383,9 @@ Deno.serve(async (req) => {
           ...(discountPaise > 0 && couponCode
             ? { coupon_code: couponCode, discount: String(discountPaise / 100) }
             : {}),
+          ...(coinsToUse > 0 ? { coins_redeemed: String(coinsToUse) } : {}),
         },
+
       }),
     });
 
@@ -411,6 +436,18 @@ Deno.serve(async (req) => {
       });
       if (reserveErr) console.error("system_coupon_reserve failed", reserveErr);
     }
+
+    // Hold the redeemed coins against this order; released if payment fails.
+    if (coinsToUse > 0 && userId) {
+      const { error: coinErr } = await supabase.rpc("system_coins_reserve", {
+        _user_id: userId,
+        _order_id: order.id,
+        _coins: coinsToUse,
+      });
+      if (coinErr) console.error("system_coins_reserve failed", coinErr);
+    }
+
+
 
     return json({
       order_id: order.id,
