@@ -309,10 +309,16 @@ function Index() {
   const [courierOrderId, setCourierOrderId] = useState<string | null>(null);
   const [storeOrderId, setStoreOrderId] = useState<string | null>(null);
   const [contactStopId, setContactStopId] = useState<string | null>(null);
+  // Where the "parcels for you" screen was opened from, so Back returns there.
+  const [parcelsFrom, _setParcelsFrom] = useState<Phase>("home");
+  const parcelsFromRef = useRef<Phase>("home");
   const openContactParcels = useCallback((stopId?: string) => {
     setContactStopId(stopId ?? null);
+    const from = phaseRef.current === "parcels-for-you" ? parcelsFromRef.current : phaseRef.current;
+    parcelsFromRef.current = from;
+    _setParcelsFrom(from);
     setPhase("parcels-for-you");
-  }, [setPhase]);
+  }, [setPhase, phaseRef]);
   // Where the parcel tracking screen was opened from, so Back returns there.
   const [courierTrackFrom, _setCourierTrackFrom] = useState<Phase>("home");
   const courierTrackFromRef = useRef<Phase>("home");
@@ -499,7 +505,11 @@ function Index() {
     setPushNavigator((route, data) => {
       const phase = ROUTE_TO_PHASE[route];
       if (phase) {
-        if (phase === "parcels-for-you") setContactStopId(null);
+        if (phase === "parcels-for-you") {
+          setContactStopId(null);
+          parcelsFromRef.current = "home";
+          _setParcelsFrom("home");
+        }
         if (route === "offers") setRewardsTab("offers");
         else if (route === "rewards") setRewardsTab("rewards");
         setPhase(phase);
@@ -927,7 +937,7 @@ function Index() {
           <ContactParcelsScreen
             key={contactStopId ?? "list"}
             initialStopId={contactStopId}
-            onBack={() => setPhase("home")}
+            onBack={() => setPhase(parcelsFrom)}
           />
         </div>
       )}
