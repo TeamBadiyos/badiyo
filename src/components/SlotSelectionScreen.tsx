@@ -450,11 +450,9 @@ export function SlotSelectionScreen({
               <div className="mt-3 -mx-5 overflow-x-auto px-5 momentum-scroll">
                 <div className="flex gap-2 pb-1">
                   {days.map((d) => {
-                    const key = toDateKey(d);
+                    const key = d.key;
                     const active = selectedDay === key;
-                    const weekday = d.toLocaleDateString("en-US", {
-                      weekday: "short",
-                    });
+                    const weekday = d.weekday;
                     return (
                       <button
                         key={key}
@@ -477,9 +475,10 @@ export function SlotSelectionScreen({
                         <span className="text-xs font-semibold text-muted-foreground">
                           {weekday}
                         </span>
-                        <span className="mt-1 text-lg font-bold">{d.getDate()}</span>
+                        <span className="mt-1 text-lg font-bold">{d.dayNum}</span>
                       </button>
                     );
+
                   })}
                 </div>
               </div>
