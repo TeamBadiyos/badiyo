@@ -87,13 +87,7 @@ async function fetchAll() {
       .select("full_name, referral_code, total_coins_earned, referred_by")
       .eq("id", uid)
       .maybeSingle(),
-    supabase
-      .from("referral_transactions")
-      .select(
-        "id, status, reward_amount, signup_reward_amount, booking_reward_amount, created_at, referred_user_id",
-      )
-      .eq("referrer_id", uid)
-      .order("created_at", { ascending: false }),
+    supabase.rpc("my_referral_history"),
     supabase
       .from("referral_config")
       .select(
