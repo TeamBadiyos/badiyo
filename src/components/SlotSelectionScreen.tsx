@@ -144,7 +144,7 @@ export function SlotSelectionScreen({
 }) {
   const t = useT();
   const [mode, setMode] = useState<Mode>("now");
-  const days = useMemo(getNext7Days, []);
+  const days = useMemo(getNext7DayOptions, []);
   const allSlots = useMemo(getAllHourSlots, []);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [selectedHour, setSelectedHour] = useState<number | null>(null);
