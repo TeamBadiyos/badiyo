@@ -497,11 +497,11 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
                         className="flex items-center gap-3 rounded-[16px] border border-border bg-card p-3"
                       >
                         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-extrabold text-primary">
-                          {initialsFor(t.referred_user_id)}
+                          {initialsFor(t)}
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="truncate text-sm font-bold text-foreground">
-                            Friend {t.referred_user_id?.slice(0, 6) ?? "—"}
+                            {friendLabel(t)}
                           </div>
                           <div className="text-[11px] text-muted-foreground">
                             {date} · {earned} coins earned
