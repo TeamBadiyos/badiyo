@@ -2,9 +2,10 @@ import { useMemo, useState } from "react";
 import { Check, ChevronDown, Clock, X } from "lucide-react";
 import {
   getAllHourSlots,
+  getNext7DayOptions,
   isHourBookable,
-  toDateKey,
 } from "@/lib/hourSlots";
+
 import { useLanguage, useT } from "@/i18n";
 import { hapticSelection } from "@/lib/haptics";
 import { useQuery } from "@tanstack/react-query";
@@ -76,16 +77,6 @@ export type SelectedSlot =
 
 type Mode = "now" | "later";
 
-function getNext7Days() {
-  const days: Date[] = [];
-  const today = new Date();
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(today);
-    d.setDate(today.getDate() + i);
-    days.push(d);
-  }
-  return days;
-}
 function IncExcLists({
   inclusions,
   exclusions,
@@ -153,7 +144,7 @@ export function SlotSelectionScreen({
 }) {
   const t = useT();
   const [mode, setMode] = useState<Mode>("now");
-  const days = useMemo(getNext7Days, []);
+  const days = useMemo(getNext7DayOptions, []);
   const allSlots = useMemo(getAllHourSlots, []);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [selectedHour, setSelectedHour] = useState<number | null>(null);
@@ -245,10 +236,19 @@ export function SlotSelectionScreen({
 
   const [tooLongMsg, setTooLongMsg] = useState<string | null>(null);
 
+  /** First upcoming day that still has at least one bookable hour. */
+  const firstOpenDay = (): string => {
+    const found = days.find((d) =>
+      allSlots.some((s) => isHourBookable(d.key, s.hour) && !durationBlocks(s.hour)),
+    );
+    return (found ?? days[0]).key;
+  };
+
   const visibleSlots = useMemo(() => {
     if (!selectedDay) return allSlots;
     return allSlots.filter((s) => isHourBookable(selectedDay, s.hour));
   }, [selectedDay, allSlots]);
+
 
   const allDayBlocked =
     selectedDay !== null && visibleSlots.every((s) => slotDisabled(s.hour));
@@ -409,7 +409,14 @@ export function SlotSelectionScreen({
             {(["now", "later"] as Mode[]).map((m) => (
               <button
                 key={m}
-                onClick={() => { void hapticSelection(); setMode(m); }}
+                onClick={() => {
+                  void hapticSelection();
+                  setMode(m);
+                  if (m === "later" && selectedDay === null) {
+                    setSelectedDay(firstOpenDay());
+                  }
+                }}
+
                 className={`rounded-[10px] px-4 py-2.5 text-sm font-bold transition ${
                   mode === m
                     ? "bg-primary text-primary-foreground"
@@ -443,11 +450,9 @@ export function SlotSelectionScreen({
               <div className="mt-3 -mx-5 overflow-x-auto px-5 momentum-scroll">
                 <div className="flex gap-2 pb-1">
                   {days.map((d) => {
-                    const key = toDateKey(d);
+                    const key = d.key;
                     const active = selectedDay === key;
-                    const weekday = d.toLocaleDateString("en-US", {
-                      weekday: "short",
-                    });
+                    const weekday = d.weekday;
                     return (
                       <button
                         key={key}
@@ -470,9 +475,10 @@ export function SlotSelectionScreen({
                         <span className="text-xs font-semibold text-muted-foreground">
                           {weekday}
                         </span>
-                        <span className="mt-1 text-lg font-bold">{d.getDate()}</span>
+                        <span className="mt-1 text-lg font-bold">{d.dayNum}</span>
                       </button>
                     );
+
                   })}
                 </div>
               </div>

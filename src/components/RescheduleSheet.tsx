@@ -2,25 +2,22 @@ import { useMemo, useState } from "react";
 import { X } from "lucide-react";
 import {
   getAllHourSlots,
+  getNext7DayOptions,
   isHourBookable,
-  toDateKey,
 } from "@/lib/hourSlots";
-
-function getNext7Days() {
-  const days: Date[] = [];
-  const today = new Date();
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(today);
-    d.setDate(today.getDate() + i);
-    days.push(d);
-  }
-  return days;
-}
+import {
+  formatClockLabel,
+  formatDurationLabel,
+  slotFitsWindow,
+  slotStartHour,
+  useServiceState,
+} from "@/lib/serviceHours";
 
 export function RescheduleSheet({
   open,
   initialDate,
   initialSlot,
+  durationMinutes,
   onClose,
   onConfirm,
   saving,
@@ -28,17 +25,23 @@ export function RescheduleSheet({
   open: boolean;
   initialDate: string | null;
   initialSlot: string | null;
+  /** Service length, used so the job still finishes before closing time. */
+  durationMinutes?: number | null;
   onClose: () => void;
   onConfirm: (date: string, slotLabel: string) => void;
   saving?: boolean;
 }) {
-  const days = useMemo(getNext7Days, []);
+  const days = useMemo(getNext7DayOptions, []);
   const allSlots = useMemo(getAllHourSlots, []);
   const [selectedDay, setSelectedDay] = useState<string | null>(initialDate);
-  const [selectedHour, setSelectedHour] = useState<number | null>(() => {
-    const match = allSlots.find((s) => s.label === initialSlot);
-    return match?.hour ?? null;
-  });
+  const [selectedHour, setSelectedHour] = useState<number | null>(() =>
+    initialSlot ? slotStartHour(initialSlot) : null,
+  );
+  const { data: cleanState } = useServiceState("clean", open);
+  const duration = durationMinutes && durationMinutes > 0 ? durationMinutes : 60;
+
+  const tooLong = (hour: number) => !slotFitsWindow(cleanState, hour, duration);
+  const [tooLongMsg, setTooLongMsg] = useState<string | null>(null);
 
   const visibleSlots = useMemo(() => {
     if (!selectedDay) return allSlots;
@@ -47,7 +50,8 @@ export function RescheduleSheet({
 
   if (!open) return null;
 
-  const canContinue = selectedDay && selectedHour !== null;
+  const canContinue =
+    selectedDay && selectedHour !== null && !tooLong(selectedHour);
 
   return (
     <div className="fixed inset-0 z-50 flex items-end bg-black/40">
@@ -67,9 +71,8 @@ export function RescheduleSheet({
         <div className="mt-2 -mx-1 overflow-x-auto px-1">
           <div className="flex gap-2 pb-1">
             {days.map((d) => {
-              const key = toDateKey(d);
+              const key = d.key;
               const active = selectedDay === key;
-              const weekday = d.toLocaleDateString("en-US", { weekday: "short" });
               return (
                 <button
                   key={key}
@@ -88,8 +91,10 @@ export function RescheduleSheet({
                       : "border-border bg-card text-foreground"
                   }`}
                 >
-                  <span className="text-xs font-semibold text-muted-foreground">{weekday}</span>
-                  <span className="mt-1 text-lg font-bold">{d.getDate()}</span>
+                  <span className="text-xs font-semibold text-muted-foreground">
+                    {d.weekday}
+                  </span>
+                  <span className="mt-1 text-lg font-bold">{d.dayNum}</span>
                 </button>
               );
             })}
@@ -105,14 +110,33 @@ export function RescheduleSheet({
           <div className="mt-2 grid grid-cols-3 gap-2">
             {visibleSlots.map((slot) => {
               const active = selectedHour === slot.hour;
+              const blocked = tooLong(slot.hour);
               return (
                 <button
                   key={slot.hour}
-                  onClick={() => setSelectedHour(slot.hour)}
+                  onClick={() => {
+                    if (blocked) {
+                      setSelectedHour(null);
+                      setTooLongMsg(
+                        `This service takes about ${formatDurationLabel(
+                          duration,
+                        )}, so a ${slot.label} start won't finish before we close${
+                          formatClockLabel(cleanState?.close_time)
+                            ? ` at ${formatClockLabel(cleanState?.close_time)}`
+                            : ""
+                        }. Please pick an earlier time.`,
+                      );
+                      return;
+                    }
+                    setTooLongMsg(null);
+                    setSelectedHour(slot.hour);
+                  }}
                   className={`rounded-[14px] border px-3 py-2.5 text-sm font-semibold transition ${
-                    active
-                      ? "border-primary bg-primary/10 text-primary"
-                      : "border-border bg-card text-foreground"
+                    blocked
+                      ? "border-border bg-muted text-muted-foreground/50"
+                      : active
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border bg-card text-foreground"
                   }`}
                 >
                   {slot.label}
@@ -122,12 +146,16 @@ export function RescheduleSheet({
           </div>
         )}
 
+        {tooLongMsg && (
+          <p className="mt-3 text-sm font-semibold text-destructive">{tooLongMsg}</p>
+        )}
+
         <button
           disabled={!canContinue || saving}
           onClick={() => {
             if (!selectedDay || selectedHour === null) return;
             const s = allSlots.find((x) => x.hour === selectedHour)!;
-            onConfirm(selectedDay, s.label);
+            onConfirm(selectedDay, s.range);
           }}
           className={`mt-6 w-full rounded-[14px] px-4 py-3.5 text-sm font-bold transition ${
             canContinue && !saving
