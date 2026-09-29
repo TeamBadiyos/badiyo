@@ -285,7 +285,14 @@ export function BookingSummaryScreen({
               </span>
             </div>
           )}
+          {coinsApplied > 0 && (
+            <div className="mt-2 flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Coins redeemed</span>
+              <span className="font-bold text-primary">−₹{coinsApplied}</span>
+            </div>
+          )}
           <div className="my-4 h-px bg-border" />
+
 
           <div className="flex items-center justify-between">
             <span className="text-base font-bold text-foreground">{t("common.total")}</span>
