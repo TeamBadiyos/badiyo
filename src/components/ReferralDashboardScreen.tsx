@@ -29,6 +29,7 @@ type Txn = {
   booking_reward_amount: number | null;
   created_at: string;
   referred_user_id: string | null;
+  referred_name?: string | null;
 };
 
 type UserRow = {
@@ -86,13 +87,7 @@ async function fetchAll() {
       .select("full_name, referral_code, total_coins_earned, referred_by")
       .eq("id", uid)
       .maybeSingle(),
-    supabase
-      .from("referral_transactions")
-      .select(
-        "id, status, reward_amount, signup_reward_amount, booking_reward_amount, created_at, referred_user_id",
-      )
-      .eq("referrer_id", uid)
-      .order("created_at", { ascending: false }),
+    supabase.rpc("my_referral_history"),
     supabase
       .from("referral_config")
       .select(
@@ -113,9 +108,21 @@ async function fetchAll() {
   };
 }
 
-function initialsFor(id: string | null | undefined) {
-  if (!id) return "?";
-  return id.slice(0, 2).toUpperCase();
+function friendLabel(t: Txn) {
+  const name = t.referred_name?.trim();
+  if (name) return name;
+  return "Friend";
+}
+
+function initialsFor(t: Txn) {
+  const name = t.referred_name?.trim();
+  if (name) {
+    const parts = name.split(/\s+/).filter(Boolean);
+    const letters =
+      parts.length >= 2 ? `${parts[0][0]}${parts[1][0]}` : parts[0].slice(0, 2);
+    return letters.toUpperCase();
+  }
+  return t.referred_user_id ? t.referred_user_id.slice(0, 2).toUpperCase() : "?";
 }
 
 function StatCard({
@@ -490,11 +497,11 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
                         className="flex items-center gap-3 rounded-[16px] border border-border bg-card p-3"
                       >
                         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-extrabold text-primary">
-                          {initialsFor(t.referred_user_id)}
+                          {initialsFor(t)}
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="truncate text-sm font-bold text-foreground">
-                            Friend {t.referred_user_id?.slice(0, 6) ?? "—"}
+                            {friendLabel(t)}
                           </div>
                           <div className="text-[11px] text-muted-foreground">
                             {date} · {earned} coins earned
