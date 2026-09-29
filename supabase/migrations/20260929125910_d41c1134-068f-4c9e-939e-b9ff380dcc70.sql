@@ -1,0 +1,1 @@
+update public.ops_settings set value = '1' where key = 'service_hours_enforce';
