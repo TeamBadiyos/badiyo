@@ -256,6 +256,11 @@ export const en = {
   "slot.chooseDay": "Choose a day",
   "slot.chooseTime": "Choose a time",
   "slot.noSlots": "No time slots left for today. Please pick another day.",
+  "slot.tooLongTitle": "Service won't finish before closing",
+  "slot.tooLongNow": "This service takes about {duration}. Starting now, it would finish after our closing time of {close}. Please schedule it for a day when it can finish in time.",
+  "slot.tooLongSlot": "This service takes about {duration}. Starting at {start}, it would finish after our closing time of {close}. Please pick an earlier time.",
+  "slot.tooLongPickAnother": "Choose another time",
+  "slot.tooLongGotIt": "Got it",
 
   // ── Address ──────────────────────────────────────────────
   "address.title": "Select Address",

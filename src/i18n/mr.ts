@@ -258,6 +258,11 @@ export const mr: Partial<Record<keyof typeof en, string>> = {
   "slot.chooseDay": "दिवस निवडा",
   "slot.chooseTime": "वेळ निवडा",
   "slot.noSlots": "आजसाठी वेळ शिल्लक नाही. कृपया दुसरा दिवस निवडा.",
+  "slot.tooLongTitle": "बंद होण्याआधी सेवा पूर्ण होणार नाही",
+  "slot.tooLongNow": "या सेवेला सुमारे {duration} लागतात. आता सुरू केल्यास ती आमच्या बंद होण्याच्या वेळेनंतर ({close}) संपेल. कृपया दुसऱ्या दिवशी वेळ ठरवा.",
+  "slot.tooLongSlot": "या सेवेला सुमारे {duration} लागतात. {start} वाजता सुरू केल्यास ती बंद होण्याच्या वेळेनंतर ({close}) संपेल. कृपया आधीची वेळ निवडा.",
+  "slot.tooLongPickAnother": "दुसरी वेळ निवडा",
+  "slot.tooLongGotIt": "ठीक आहे",
 
   // ── Address ──────────────────────────────────────────────
   "address.title": "पत्ता निवडा",
