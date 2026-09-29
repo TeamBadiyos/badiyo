@@ -1066,7 +1066,11 @@ function Index() {
             redeemCoins={redeemCoins}
 
             onBack={() => setPhase("summary")}
-            onDone={resetAndGoHome}
+            onDone={() => {
+              setRedeemCoins(false);
+              resetAndGoHome();
+            }}
+
             onOpenHelp={() => setPhase("help")}
             onTrackBooking={(id) => {
               if (!id) return;
