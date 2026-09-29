@@ -109,3 +109,56 @@ export function slotFitsWindow(
   const endHour = hour + durationMinutes / 60;
   return hour >= openH && endHour <= closeH + 1e-9;
 }
+
+/** "19:00:00" -> minutes since midnight. Null when unparsable. */
+export function timeToMinutes(t: string | null | undefined): number | null {
+  if (!t) return null;
+  const m = t.match(/^(\d{1,2}):(\d{2})/);
+  if (!m) return null;
+  return parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
+}
+
+/** Current minutes since midnight in IST (service timezone). */
+export function istNowMinutes(): number {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Kolkata",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(new Date());
+  const [h, mi] = parts.split(":").map((x) => parseInt(x, 10));
+  return h * 60 + mi;
+}
+
+/**
+ * Instant booking: starting right now, would the service still end before closing?
+ * Fail-open when hours are unknown.
+ */
+export function durationFitsNow(
+  state: ServiceState | null | undefined,
+  durationMinutes: number,
+): boolean {
+  const close = timeToMinutes(state?.close_time);
+  if (close == null) return true;
+  return istNowMinutes() + Math.max(durationMinutes, 1) <= close;
+}
+
+/** "19:00:00" -> "7:00 PM" */
+export function formatClockLabel(t: string | null | undefined): string | null {
+  const mins = timeToMinutes(t);
+  if (mins == null) return null;
+  const h24 = Math.floor(mins / 60);
+  const mm = mins % 60;
+  const suffix = h24 >= 12 ? "PM" : "AM";
+  const h = h24 % 12 === 0 ? 12 : h24 % 12;
+  return `${h}:${String(mm).padStart(2, "0")} ${suffix}`;
+}
+
+/** Human duration: 480 -> "8 hours", 90 -> "1 hr 30 min" */
+export function formatDurationLabel(mins: number): string {
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  if (h === 0) return `${m} min`;
+  if (m === 0) return h === 1 ? "1 hour" : `${h} hours`;
+  return `${h} hr ${m} min`;
+}

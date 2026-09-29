@@ -10,11 +10,24 @@ import { hapticSelection } from "@/lib/haptics";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
+  durationFitsNow,
   fetchSlotAllowed,
+  formatClockLabel,
+  formatDurationLabel,
   formatNextOpen,
   slotFitsWindow,
   useServiceState,
 } from "@/lib/serviceHours";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { MediaGallery, type MediaItem } from "./product/MediaGallery";
 
 export type TaskTypeDetail = {
@@ -213,11 +226,24 @@ export function SlotSelectionScreen({
     },
   });
 
+  // Blocked purely because the service can't finish before closing time.
+  const durationBlocks = (hour: number): boolean =>
+    !slotFitsWindow(cleanState, hour, durationMinutes);
+
   const slotDisabled = (hour: number): boolean => {
-    if (!slotFitsWindow(cleanState, hour, durationMinutes)) return true;
+    if (durationBlocks(hour)) return true;
     if (dayAllowed?.get(hour) === false) return true;
     return false;
   };
+
+  const closeLabel = formatClockLabel(cleanState?.close_time) ?? "";
+  const durationLabel = formatDurationLabel(durationMinutes);
+  const nowTooLong =
+    cleanState != null &&
+    cleanState.can_order &&
+    !durationFitsNow(cleanState, durationMinutes);
+
+  const [tooLongMsg, setTooLongMsg] = useState<string | null>(null);
 
   const visibleSlots = useMemo(() => {
     if (!selectedDay) return allSlots;
@@ -463,12 +489,26 @@ export function SlotSelectionScreen({
                   <div className="mt-3 grid grid-cols-3 gap-2">
                     {visibleSlots.map((slot) => {
                       const active = selectedHour === slot.hour;
+                      const tooLong = durationBlocks(slot.hour);
                       const disabled = slotDisabled(slot.hour);
                       return (
                         <button
                           key={slot.hour}
-                          disabled={disabled}
-                          onClick={() => { void hapticSelection(); setSelectedHour(slot.hour); }}
+                          disabled={disabled && !tooLong}
+                          onClick={() => {
+                            void hapticSelection();
+                            if (tooLong) {
+                              setTooLongMsg(
+                                t("slot.tooLongSlot", {
+                                  duration: durationLabel,
+                                  start: slot.label,
+                                  close: closeLabel,
+                                }),
+                              );
+                              return;
+                            }
+                            setSelectedHour(slot.hour);
+                          }}
                           className={`rounded-[14px] border px-3 py-3 text-sm font-semibold transition ${
                             disabled
                               ? "border-border bg-muted text-muted-foreground/50"
@@ -519,9 +559,28 @@ export function SlotSelectionScreen({
                   toast(msg);
                   return;
                 }
+                if (nowTooLong) {
+                  setTooLongMsg(
+                    t("slot.tooLongNow", {
+                      duration: durationLabel,
+                      close: closeLabel,
+                    }),
+                  );
+                  return;
+                }
                 onContinue({ mode: "now" });
               } else if (selectedDay && selectedHour !== null) {
                 const s = allSlots.find((x) => x.hour === selectedHour)!;
+                if (durationBlocks(s.hour)) {
+                  setTooLongMsg(
+                    t("slot.tooLongSlot", {
+                      duration: durationLabel,
+                      start: s.label,
+                      close: closeLabel,
+                    }),
+                  );
+                  return;
+                }
                 onContinue({
                   mode: "later",
                   day: selectedDay,
@@ -541,6 +600,33 @@ export function SlotSelectionScreen({
           </button>
         </div>
       </div>
+
+      <AlertDialog
+        open={tooLongMsg !== null}
+        onOpenChange={(o) => {
+          if (!o) setTooLongMsg(null);
+        }}
+      >
+        <AlertDialogContent className="max-w-[340px] rounded-[20px]">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("slot.tooLongTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>{tooLongMsg}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel className="mt-0">
+              {t("slot.tooLongGotIt")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setTooLongMsg(null);
+                setMode("later");
+              }}
+            >
+              {t("slot.tooLongPickAnother")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 }
