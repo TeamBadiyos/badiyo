@@ -236,10 +236,19 @@ export function SlotSelectionScreen({
 
   const [tooLongMsg, setTooLongMsg] = useState<string | null>(null);
 
+  /** First upcoming day that still has at least one bookable hour. */
+  const firstOpenDay = (): string => {
+    const found = days.find((d) =>
+      allSlots.some((s) => isHourBookable(d.key, s.hour) && !durationBlocks(s.hour)),
+    );
+    return (found ?? days[0]).key;
+  };
+
   const visibleSlots = useMemo(() => {
     if (!selectedDay) return allSlots;
     return allSlots.filter((s) => isHourBookable(selectedDay, s.hour));
   }, [selectedDay, allSlots]);
+
 
   const allDayBlocked =
     selectedDay !== null && visibleSlots.every((s) => slotDisabled(s.hour));
