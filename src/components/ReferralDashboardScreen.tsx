@@ -319,6 +319,37 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
               <StatCard label="Successful Referrals" value={String(successful.length)} />
             </section>
 
+            {/* How rewards work */}
+            <section className="mt-4 rounded-[18px] border border-border bg-card p-4">
+              <h2 className="text-sm font-bold text-foreground">
+                Earn {totalPerReferral} coins per friend
+              </h2>
+              <div className="mt-3 space-y-2">
+                <div className="flex items-start gap-3">
+                  <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-100 text-[11px] font-extrabold text-blue-700">
+                    1
+                  </span>
+                  <p className="text-xs text-muted-foreground">
+                    <span className="font-bold text-foreground">
+                      {signupReward} coins
+                    </span>{" "}
+                    as soon as your friend joins badiyos with your code.
+                  </p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/15 text-[11px] font-extrabold text-primary">
+                    2
+                  </span>
+                  <p className="text-xs text-muted-foreground">
+                    <span className="font-bold text-foreground">
+                      {bookingReward} coins
+                    </span>{" "}
+                    when they complete their first booking.
+                  </p>
+                </div>
+              </div>
+            </section>
+
             {/* Apply a friend's code */}
             <section className="mt-6">
               <h2 className="text-sm font-bold text-foreground">Enter a friend&apos;s code</h2>
