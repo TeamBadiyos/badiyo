@@ -437,6 +437,18 @@ Deno.serve(async (req) => {
       if (reserveErr) console.error("system_coupon_reserve failed", reserveErr);
     }
 
+    // Hold the redeemed coins against this order; released if payment fails.
+    if (coinsToUse > 0 && userId) {
+      const { error: coinErr } = await supabase.rpc("system_coins_reserve", {
+        _user_id: userId,
+        _order_id: order.id,
+        _coins: coinsToUse,
+      });
+      if (coinErr) console.error("system_coins_reserve failed", coinErr);
+    }
+
+
+
     return json({
       order_id: order.id,
       amount: order.amount,
