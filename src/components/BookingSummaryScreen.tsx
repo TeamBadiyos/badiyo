@@ -225,6 +225,32 @@ export function BookingSummaryScreen({
           </Button>
         </section>
 
+        {/* Redeem coins */}
+        {coinBalance > 0 && (
+          <section className="mt-4 flex items-center gap-3 rounded-[18px] border border-border bg-card px-5 py-4">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/15">
+              <Coins className="h-5 w-5 text-primary" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-bold text-foreground">Use Badiyos coins</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                {coinBalance} coins available (₹{coinBalance})
+                {redeemCoins && coinsApplied > 0 ? ` · using ${coinsApplied}` : ""}
+              </p>
+            </div>
+            <Switch
+              checked={redeemCoins}
+              onCheckedChange={(v) => {
+                void hapticImpact("light");
+                onRedeemCoinsChange?.(v);
+              }}
+              aria-label="Use Badiyos coins"
+            />
+          </section>
+        )}
+
+
+
         {/* Price breakdown */}
         <section className="mt-4 rounded-[18px] border border-border bg-card p-5">
           <div className="text-sm font-bold text-foreground">
