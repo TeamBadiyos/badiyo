@@ -2,6 +2,9 @@
 export const BUSINESS_START_HOUR = 9;
 export const BUSINESS_END_HOUR = 20;
 
+/** Minimum notice before a same-day slot can start (minutes). */
+export const MIN_LEAD_MINUTES = 45;
+
 export type HourSlot = {
   hour: number; // 24h
   label: string; // "9 AM"
@@ -33,14 +36,62 @@ export function toDateKey(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
-export function isTodayKey(dateKey: string): boolean {
-  return dateKey === toDateKey(new Date());
+/** Current date/time in IST (service timezone), independent of the device clock. */
+function istNow(): { key: string; minutes: number } {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(new Date());
+  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "00";
+  const hour = parseInt(get("hour"), 10) % 24;
+  return {
+    key: `${get("year")}-${get("month")}-${get("day")}`,
+    minutes: hour * 60 + parseInt(get("minute"), 10),
+  };
 }
 
-// For today, only allow hours strictly greater than the current hour
-// (i.e. if it's 6:20 PM, the 7 PM slot onward is bookable).
+/** Today's date key in IST, e.g. "2026-09-29". */
+export function istTodayKey(): string {
+  return istNow().key;
+}
+
+export type DayOption = {
+  key: string; // YYYY-MM-DD (IST)
+  weekday: string; // "Mon"
+  dayNum: number; // 29
+};
+
+/** Next 7 calendar days starting with today, in IST. */
+export function getNext7DayOptions(): DayOption[] {
+  const base = new Date(`${istTodayKey()}T00:00:00Z`);
+  const out: DayOption[] = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(base.getTime() + i * 86400000);
+    out.push({
+      key: d.toISOString().slice(0, 10),
+      weekday: d.toLocaleDateString("en-US", { weekday: "short", timeZone: "UTC" }),
+      dayNum: d.getUTCDate(),
+    });
+  }
+  return out;
+}
+
+export function isTodayKey(dateKey: string): boolean {
+  return dateKey === istTodayKey();
+}
+
+/**
+ * For today, a slot is bookable only when it starts at least MIN_LEAD_MINUTES
+ * from now (IST). e.g. at 6:20 PM the 7 PM slot is too soon, 8 PM is fine.
+ */
 export function isHourBookable(dateKey: string, hour: number): boolean {
-  if (!isTodayKey(dateKey)) return true;
-  const now = new Date();
-  return hour > now.getHours();
+  const now = istNow();
+  if (dateKey > now.key) return true;
+  if (dateKey < now.key) return false;
+  return hour * 60 >= now.minutes + MIN_LEAD_MINUTES;
 }
