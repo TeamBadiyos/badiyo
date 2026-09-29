@@ -489,12 +489,26 @@ export function SlotSelectionScreen({
                   <div className="mt-3 grid grid-cols-3 gap-2">
                     {visibleSlots.map((slot) => {
                       const active = selectedHour === slot.hour;
+                      const tooLong = durationBlocks(slot.hour);
                       const disabled = slotDisabled(slot.hour);
                       return (
                         <button
                           key={slot.hour}
-                          disabled={disabled}
-                          onClick={() => { void hapticSelection(); setSelectedHour(slot.hour); }}
+                          disabled={disabled && !tooLong}
+                          onClick={() => {
+                            void hapticSelection();
+                            if (tooLong) {
+                              setTooLongMsg(
+                                t("slot.tooLongSlot", {
+                                  duration: durationLabel,
+                                  start: slot.label,
+                                  close: closeLabel,
+                                }),
+                              );
+                              return;
+                            }
+                            setSelectedHour(slot.hour);
+                          }}
                           className={`rounded-[14px] border px-3 py-3 text-sm font-semibold transition ${
                             disabled
                               ? "border-border bg-muted text-muted-foreground/50"
