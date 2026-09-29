@@ -309,10 +309,16 @@ function Index() {
   const [courierOrderId, setCourierOrderId] = useState<string | null>(null);
   const [storeOrderId, setStoreOrderId] = useState<string | null>(null);
   const [contactStopId, setContactStopId] = useState<string | null>(null);
+  // Where the "parcels for you" screen was opened from, so Back returns there.
+  const [parcelsFrom, _setParcelsFrom] = useState<Phase>("home");
+  const parcelsFromRef = useRef<Phase>("home");
   const openContactParcels = useCallback((stopId?: string) => {
     setContactStopId(stopId ?? null);
+    const from = phaseRef.current === "parcels-for-you" ? parcelsFromRef.current : phaseRef.current;
+    parcelsFromRef.current = from;
+    _setParcelsFrom(from);
     setPhase("parcels-for-you");
-  }, [setPhase]);
+  }, [setPhase, phaseRef]);
   // Where the parcel tracking screen was opened from, so Back returns there.
   const [courierTrackFrom, _setCourierTrackFrom] = useState<Phase>("home");
   const courierTrackFromRef = useRef<Phase>("home");
