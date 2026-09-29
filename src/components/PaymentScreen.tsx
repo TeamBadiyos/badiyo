@@ -11,6 +11,7 @@ import { useT } from "@/i18n";
 import { hapticImpact } from "@/lib/haptics";
 import { billBreakdown, useGstPercent } from "@/lib/gst";
 import type { AppliedCoupon } from "@/lib/coupons";
+import { releaseMyCoins } from "@/lib/coins";
 
 import { payWithRazorpay, toPaymentError } from "@/lib/razorpayCheckout";
 import { getPaymentPrefill } from "@/lib/paymentPrefill";
@@ -44,6 +45,7 @@ export function PaymentScreen({
   slot,
   address,
   coupon,
+  redeemCoins = false,
   onBack,
   onDone,
   onTrackBooking,
@@ -53,6 +55,7 @@ export function PaymentScreen({
   slot: SelectedSlot;
   address: SelectedAddress;
   coupon?: AppliedCoupon | null;
+  redeemCoins?: boolean;
   onBack: () => void;
   onDone: () => void;
   onTrackBooking: (bookingId: string | null) => void;
@@ -258,6 +261,7 @@ export function PaymentScreen({
             receipt,
             purpose: "booking",
             coupon_code: coupon?.code ?? null,
+            redeem_coins: redeemCoins === true,
             // Saved server-side so the booking can be recovered automatically
             // if this device fails to write it after a successful payment.
             booking_draft: {
@@ -328,6 +332,9 @@ export function PaymentScreen({
           parsed: { ...err.parsed } as Record<string, unknown>,
         },
       }).catch(() => {});
+
+      // Payment did not go through — give any held coins back.
+      await releaseMyCoins(rzpOrderId);
 
       if (err.category === "cancelled") {
         toast(t("payment.cancelledToast"));
