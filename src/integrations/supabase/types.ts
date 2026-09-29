@@ -7956,6 +7956,19 @@ export type Database = {
           valid_until: string
         }[]
       }
+      my_referral_history: {
+        Args: never
+        Returns: {
+          booking_reward_amount: number
+          created_at: string
+          id: string
+          referred_name: string
+          referred_user_id: string
+          reward_amount: number
+          signup_reward_amount: number
+          status: string
+        }[]
+      }
       my_referral_progress: { Args: never; Returns: Json }
       notify_courier_offer_push: {
         Args: { _expert_id: string; _offer_id: string }
