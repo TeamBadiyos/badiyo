@@ -215,9 +215,7 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
   const inviteUrl = code
     ? buildPlayStoreInviteUrl(code)
     : buildPlayStoreInviteUrl("");
-  const shareText = code
-    ? `Join badiyos and get trusted home cleaning! Use my code ${code}: ${inviteUrl}`
-    : `Join badiyos and get trusted home cleaning! ${inviteUrl}`;
+  const shareText = buildReferralShareMessage(code);
 
 
   useEffect(() => {
