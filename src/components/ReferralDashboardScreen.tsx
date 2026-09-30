@@ -245,7 +245,8 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
       const { Capacitor } = await import("@capacitor/core");
       if (Capacitor.isNativePlatform()) {
         const { Share } = await import("@capacitor/share");
-        await Share.share({ title: "badiyos", text: shareText, url: inviteUrl, dialogTitle: "Share badiyos" });
+        // Only `text` — passing `url` too makes the link appear twice.
+        await Share.share({ text: shareText, dialogTitle: "Share badiyos" });
         return;
       }
     } catch {
