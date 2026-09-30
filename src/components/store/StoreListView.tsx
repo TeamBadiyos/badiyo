@@ -11,6 +11,7 @@ import {
   type PublicStore,
 } from "@/lib/store";
 import { StoreRow } from "./StoreRow";
+import { SellOnBadiyosCard } from "./SellOnBadiyosCard";
 import { CartBar } from "./CartBar";
 import { buildStoreGroups, type StoreCategoryGroup } from "./storeGroups";
 
