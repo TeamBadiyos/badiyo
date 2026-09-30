@@ -1,10 +1,12 @@
 import { useMemo } from "react";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, Share2 } from "lucide-react";
+import { toast } from "sonner";
 import { useT } from "@/i18n";
 import { StoreImage } from "./StoreImage";
 import { StoreRating } from "./StoreRating";
 import { ProductCard } from "./ProductCard";
 import { CartBar } from "./CartBar";
+import { buildStoreLink, buildStoreShareMessage } from "@/lib/storeShare";
 import { isStoreOpen, useStoreProducts, type PublicProduct, type PublicStore } from "@/lib/store";
 
 /** Read-only shop page: products grouped by their category, no cart, no checkout. */
