@@ -12,6 +12,8 @@ import { haversineKm } from "@/lib/addressSearch";
 export type PublicStore = {
   id: string;
   store_name: string | null;
+  /** Readable custom link name used in the shareable store URL. */
+  store_slug: string | null;
   store_category_id: string | null;
   category_name: string | null;
   category_slug: string | null;
