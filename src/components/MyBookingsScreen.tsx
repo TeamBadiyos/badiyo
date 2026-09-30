@@ -5,6 +5,7 @@ import { ArrowLeft, CalendarCheck, MapPin } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useBookingsLive } from "@/lib/useBookingsLive";
+import { readLangOutsideReact, translateCatalog, translateStatus } from "@/lib/catalogI18n";
 
 
 export type BookingRow = {
@@ -77,10 +78,7 @@ function statusPillClasses(status: string): string {
 }
 
 function statusLabel(status: string): string {
-  return status
-    .split("_")
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(" ");
+  return translateStatus(status, readLangOutsideReact());
 }
 
 function formatBookingDate(b: BookingRow): string {
@@ -184,7 +182,7 @@ export function MyBookingsScreen({
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <h3 className="truncate text-base font-bold text-foreground">
-                      {b.service_label}
+                      {translateCatalog(b.service_label, readLangOutsideReact())}
                     </h3>
                     <p className="mt-0.5 text-xs text-muted-foreground">
                       {formatBookingDate(b)}

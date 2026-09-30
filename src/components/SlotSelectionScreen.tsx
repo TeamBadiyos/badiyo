@@ -30,6 +30,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { MediaGallery, type MediaItem } from "./product/MediaGallery";
+import { translateCatalog, translateCatalogList } from "@/lib/catalogI18n";
 
 export type TaskTypeDetail = {
   id: string;
@@ -143,6 +144,7 @@ export function SlotSelectionScreen({
   onContinue: (slot: SelectedSlot) => void;
 }) {
   const t = useT();
+  const { lang } = useLanguage();
   const [mode, setMode] = useState<Mode>("now");
   const days = useMemo(getNext7DayOptions, []);
   const allSlots = useMemo(getAllHourSlots, []);
@@ -167,28 +169,34 @@ export function SlotSelectionScreen({
     return items;
   }, [service.image_url, service.gallery_urls, service.video_url]);
 
-  const inclusions = (service.inclusions ?? []).filter((x) => x?.trim());
-  const exclusions = (service.exclusions ?? []).filter((x) => x?.trim());
+  const inclusions = translateCatalogList(service.inclusions, lang).filter((x) =>
+    x?.trim(),
+  );
+  const exclusions = translateCatalogList(service.exclusions, lang).filter((x) =>
+    x?.trim(),
+  );
   const taskTypes = useMemo(
     () =>
       (service.task_types ?? [])
         .map((tt) => ({
           ...tt,
-          inclusions: (tt.inclusions ?? []).filter((x) => x?.trim()),
-          exclusions: (tt.exclusions ?? []).filter((x) => x?.trim()),
+          name: translateCatalog(tt.name, lang),
+          inclusions: translateCatalogList(tt.inclusions, lang).filter((x) => x?.trim()),
+          exclusions: translateCatalogList(tt.exclusions, lang).filter((x) => x?.trim()),
         }))
         .filter((tt) => tt.inclusions.length > 0 || tt.exclusions.length > 0),
-    [service.task_types],
+    [service.task_types, lang],
   );
   const hasFlatDetails = inclusions.length > 0 || exclusions.length > 0;
   const hasDetails = taskTypes.length > 0 || hasFlatDetails;
 
-  const description = service.description?.trim() || null;
+  const durationLabelText = translateCatalog(service.duration_label, lang);
+  const description = translateCatalog(service.description, lang).trim() || null;
   const isFlat = service.pricing_type === "flat";
-  const title = service.service_name?.trim() || service.duration_label;
+  const title =
+    translateCatalog(service.service_name, lang).trim() || durationLabelText;
 
   // Service status + hours (server-side IST). Fail-open when not loaded.
-  const { lang } = useLanguage();
   const { data: cleanState } = useServiceState("clean");
   // Authoritative from the catalogue (estimated_minutes). No guessing: when it
   // is missing we block the booking instead of assuming 60 minutes.
@@ -314,13 +322,13 @@ export function SlotSelectionScreen({
               )}
             {!isFlat && (
               <span className="text-sm font-semibold text-muted-foreground">
-                · {service.duration_label}
+                · {durationLabelText}
               </span>
             )}
           </div>
           {service.subtitle && (
             <p className="mt-1 text-xs font-semibold text-muted-foreground">
-              {service.subtitle}
+              {translateCatalog(service.subtitle, lang)}
             </p>
           )}
 
@@ -556,7 +564,7 @@ export function SlotSelectionScreen({
             </span>
             {!isFlat && (
               <span className="text-[11px] font-semibold text-muted-foreground">
-                {service.duration_label}
+                {durationLabelText}
               </span>
             )}
           </div>

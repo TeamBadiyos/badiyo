@@ -7,6 +7,11 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { BottomNav } from "./BottomNav";
 import {
+  readLangOutsideReact,
+  translateCatalog,
+  translateStatus,
+} from "@/lib/catalogI18n";
+import {
   fetchCourierEnabled,
   fetchMyCourierOrders,
   fetchPendingReturnOrderIds,
@@ -62,11 +67,7 @@ function statusPill(status: string): string {
 }
 
 function statusLabel(status: string): string {
-  return status
-    .toLowerCase()
-    .split("_")
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(" ");
+  return translateStatus(status, readLangOutsideReact());
 }
 
 function formatDate(b: BookingRow): string {
@@ -106,10 +107,11 @@ type Bill = {
 function bookingBill(b: BookingRow): Bill {
   const total =
     b.total_amount && Number(b.total_amount) > 0 ? Number(b.total_amount) : Number(b.price);
-  const lines: BillLine[] = [{ label: b.service_label, value: Number(b.price) }];
+  const label = translateCatalog(b.service_label, readLangOutsideReact());
+  const lines: BillLine[] = [{ label, value: Number(b.price) }];
   const gst = Number(b.gst_amount ?? 0);
   if (gst > 0) lines.push({ label: `GST (${Number(b.gst_percent ?? 0)}%)`, value: gst, muted: true });
-  return { title: "Bill details", subtitle: b.service_label, lines, total };
+  return { title: "Bill details", subtitle: label, lines, total };
 }
 
 function parcelBill(p: CourierOrder): Bill {
@@ -224,7 +226,7 @@ function StoreOrderCard({ order, active, onOpen, onBill }: { order: StoreOrder; 
   );
 }
 
-const STORE_STATUS_LABELS: Record<string, string> = {
+const STORE_STATUS_LABELS_EN: Record<string, string> = {
   pending: "Awaiting payment",
   paid: "Placed",
   placed: "Waiting for shop",
@@ -237,6 +239,30 @@ const STORE_STATUS_LABELS: Record<string, string> = {
   rejected: "Rejected · refund",
   cancelled: "Cancelled · refund",
 };
+
+const STORE_STATUS_LABELS_MR: Record<string, string> = {
+  pending: "पेमेंटची प्रतीक्षा",
+  paid: "ऑर्डर नोंदवली",
+  placed: "दुकानाच्या प्रतीक्षेत",
+  accepted: "एक्स्पर्ट शोधत आहोत",
+  expert_assigned: "एक्स्पर्ट नेमला",
+  ready: "पॅक झाले · उचलण्यासाठी तयार",
+  picked_up: "मार्गावर आहे",
+  delivered: "पोहोचवले",
+  needs_attention: "उशीर होत आहे",
+  rejected: "नाकारले · परतावा",
+  cancelled: "रद्द झाले · परतावा",
+};
+
+const STORE_STATUS_LABELS: Record<string, string> = new Proxy(
+  {},
+  {
+    get: (_target, key: string) =>
+      readLangOutsideReact() === "mr"
+        ? STORE_STATUS_LABELS_MR[key]
+        : STORE_STATUS_LABELS_EN[key],
+  },
+) as Record<string, string>;
 
 function StoreDeliveryCode({ orderId }: { orderId: string }) {
   const t = useT();
@@ -403,7 +429,7 @@ export function OrdersScreen({
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <h3 className="truncate text-base font-bold text-foreground">
-                        {item.booking.service_label}
+                        {translateCatalog(item.booking.service_label, readLangOutsideReact())}
                       </h3>
                       <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
                         <Clock className="h-3.5 w-3.5" />
@@ -533,7 +559,7 @@ export function OrdersScreen({
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <h3 className="truncate text-base font-bold text-foreground">
-                        {item.booking.service_label}
+                        {translateCatalog(item.booking.service_label, readLangOutsideReact())}
                       </h3>
                       <p className="mt-0.5 text-xs text-muted-foreground">
                         {formatDate(item.booking)}
