@@ -121,6 +121,22 @@ export function useStoreList() {
   });
 }
 
+/** Single place to change the "Sell on badiyos" contact number. */
+export const SELL_ON_BADIYOS = {
+  phone: "+918007444464",
+  whatsappText: "Namaste, mujhe apni dukaan badiyos pe listing karni hai.",
+};
+
+export function sellCallHref(): string {
+  return `tel:${SELL_ON_BADIYOS.phone}`;
+}
+
+export function sellWhatsAppHref(): string {
+  return `https://wa.me/${SELL_ON_BADIYOS.phone.replace(/\D/g, "")}?text=${encodeURIComponent(
+    SELL_ON_BADIYOS.whatsappText,
+  )}`;
+}
+
 export function useStoreCategories() {
   return useQuery({
     queryKey: ["store_categories"],
