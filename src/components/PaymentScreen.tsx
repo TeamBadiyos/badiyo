@@ -139,6 +139,7 @@ export function PaymentScreen({
         .insert({
           user_id: uid,
           address_id: address.id,
+          price_option_id: service.id,
           service_duration_minutes: service.duration_minutes,
           service_label: service.duration_label,
           price: service.price,
