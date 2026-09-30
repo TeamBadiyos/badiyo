@@ -103,7 +103,7 @@ export function RewardsScreen({
             <p className="text-sm font-bold text-foreground">Invite friends, earn coins</p>
             <p className="mt-0.5 text-xs text-muted-foreground">
               Share your code and get coins when a friend joins, plus more once they
-              complete their first booking.
+              complete their first booking. 1 coin = Rs 1.
             </p>
             <span className="mt-2 inline-block text-xs font-bold text-primary">
               Share your code →
@@ -122,6 +122,9 @@ export function RewardsScreen({
                 {isLoading ? "—" : coins}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
+                Worth Rs {isLoading ? "—" : coins} • 1 coin = Rs 1
+              </p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
                 Includes referral coins and rewards credited to you.
               </p>
             </div>
