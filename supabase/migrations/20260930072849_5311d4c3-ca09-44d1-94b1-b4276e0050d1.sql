@@ -1,0 +1,1 @@
+GRANT EXECUTE ON FUNCTION public.admin_alert_dispatch() TO service_role;
