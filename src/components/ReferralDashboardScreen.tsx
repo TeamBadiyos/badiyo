@@ -18,7 +18,7 @@ import { fetchReferralProgress } from "@/lib/coupons";
 import { toast } from "sonner";
 
 
-import { buildPlayStoreInviteUrl } from "@/lib/referrals";
+import { buildPlayStoreInviteUrl, buildReferralShareMessage } from "@/lib/referrals";
 
 
 type Txn = {
