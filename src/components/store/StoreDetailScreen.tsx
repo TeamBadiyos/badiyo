@@ -60,6 +60,14 @@ export function StoreDetailScreen({
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
+            <button
+              type="button"
+              onClick={shareStore}
+              aria-label="Share"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-card active:scale-[0.97]"
+            >
+              <Share2 className="h-[18px] w-[18px] text-primary" />
+            </button>
             <StoreRating rating={store.rating} />
             <span
               className={
