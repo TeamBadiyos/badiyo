@@ -1,0 +1,1 @@
+revoke execute on function public.bookings_stamp_journey() from public, anon, authenticated;
