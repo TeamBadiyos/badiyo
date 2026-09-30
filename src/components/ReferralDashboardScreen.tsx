@@ -18,7 +18,7 @@ import { fetchReferralProgress } from "@/lib/coupons";
 import { toast } from "sonner";
 
 
-import { buildPlayStoreInviteUrl } from "@/lib/referrals";
+import { buildPlayStoreInviteUrl, buildReferralShareMessage } from "@/lib/referrals";
 
 
 type Txn = {
@@ -215,9 +215,7 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
   const inviteUrl = code
     ? buildPlayStoreInviteUrl(code)
     : buildPlayStoreInviteUrl("");
-  const shareText = code
-    ? `Join badiyos and get trusted home cleaning! Use my code ${code}: ${inviteUrl}`
-    : `Join badiyos and get trusted home cleaning! ${inviteUrl}`;
+  const shareText = buildReferralShareMessage(code);
 
 
   useEffect(() => {
@@ -247,7 +245,8 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
       const { Capacitor } = await import("@capacitor/core");
       if (Capacitor.isNativePlatform()) {
         const { Share } = await import("@capacitor/share");
-        await Share.share({ title: "badiyos", text: shareText, url: inviteUrl, dialogTitle: "Share badiyos" });
+        // Only `text` — passing `url` too makes the link appear twice.
+        await Share.share({ text: shareText, dialogTitle: "Share badiyos" });
         return;
       }
     } catch {
@@ -256,7 +255,7 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
 
     if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
       try {
-        await navigator.share({ title: "badiyos", text: shareText, url: inviteUrl });
+        await navigator.share({ text: shareText });
         return;
       } catch (e) {
         // User cancelled — don't fall back to copy.
