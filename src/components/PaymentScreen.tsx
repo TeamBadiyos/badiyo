@@ -4,7 +4,6 @@ import { CheckCircle2, XCircle, Loader2, ArrowLeft, AlertCircle } from "lucide-r
 import { supabase } from "@/integrations/supabase/client";
 import type { SelectedService, SelectedSlot } from "./SlotSelectionScreen";
 import type { SelectedAddress } from "./BookingSummaryScreen";
-import { creditReferralForBooking } from "@/lib/referrals";
 import { getErrorMessage } from "@/lib/errorMessage";
 import { getCurrentCoords } from "@/lib/nativeGeolocation";
 import { useT } from "@/i18n";
@@ -171,9 +170,10 @@ export function PaymentScreen({
       setBookingId(data.id);
       setBooking(data as BookingRow);
 
-      // Credit the referral reward BEFORE auto-accept: the reward is only
-      // valid while the booking is still in 'confirmed'.
-      await creditReferralForBooking(data.id);
+      // Referral reward is credited automatically by the database trigger
+      // when the booking reaches 'completed'. No client call needed.
+
+
 
       // Auto-advance from 'confirmed' -> 'accepted' so the expert broadcast
       // fires without a manual staff Accept in Command Center. The RPC writes

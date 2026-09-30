@@ -159,14 +159,9 @@ export function referralResultMessage(result: ApplyReferralResult): string {
 }
 
 /**
- * Called after a booking has been created with status='confirmed'.
- * Server decides if it's the user's first confirmed booking and credits the referrer.
+ * Referral crediting is handled entirely in the database:
+ * the trigger `trg_bookings_after_complete_referral` on `bookings` credits the
+ * referrer once when a booking reaches status 'completed'. The RPC is no longer
+ * callable from the client.
  */
-export async function creditReferralForBooking(bookingId: string): Promise<void> {
-  const { error } = await supabase.rpc("credit_referral_for_booking", {
-    _booking_id: bookingId,
-  });
-  if (error) {
-    console.error("credit_referral_for_booking failed:", error);
-  }
-}
+
