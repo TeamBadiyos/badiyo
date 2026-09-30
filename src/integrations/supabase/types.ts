@@ -7587,6 +7587,10 @@ export type Database = {
         }
         Returns: Json
       }
+      coupon_reconcile_user_reservations: {
+        Args: { _user_id: string }
+        Returns: undefined
+      }
       courier_booking_start_at: {
         Args: { _d: string; _slot: string }
         Returns: string
@@ -8403,6 +8407,10 @@ export type Database = {
         Returns: string
       }
       release_my_coin_redemption: {
+        Args: { _order_id: string }
+        Returns: number
+      }
+      release_my_coupon_redemption: {
         Args: { _order_id: string }
         Returns: number
       }
