@@ -257,11 +257,12 @@ export function SlotSelectionScreen({
     selectedDay !== null && visibleSlots.every((s) => slotDisabled(s.hour));
 
   const canContinue =
-    (mode === "now" && !nowBlocked) ||
-    (mode === "later" &&
-      selectedDay !== null &&
-      selectedHour !== null &&
-      !slotDisabled(selectedHour));
+    !durationMissing &&
+    ((mode === "now" && !nowBlocked) ||
+      (mode === "later" &&
+        selectedDay !== null &&
+        selectedHour !== null &&
+        !slotDisabled(selectedHour)));
 
   return (
     <main className="min-h-screen w-full bg-background pb-32">
