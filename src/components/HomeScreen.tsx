@@ -29,6 +29,7 @@ import { toast } from "sonner";
 import { formatNextOpen, useServiceState } from "@/lib/serviceHours";
 import { useIsInternalTester, type PublicStore } from "@/lib/store";
 import { StoreListView } from "./store/StoreListView";
+import { SellOnBadiyosCard } from "./store/SellOnBadiyosCard";
 // Shop pages (with their address picker and payment sheet) load only when the
 // customer actually opens a shop, a category or the cart.
 const StoreDetailScreen = lazy(() =>
