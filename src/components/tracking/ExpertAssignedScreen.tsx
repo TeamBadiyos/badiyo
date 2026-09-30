@@ -154,7 +154,7 @@ export function ExpertAssignedScreen({
   // can already read it aloud without tapping anything.
   useEffect(() => {
     if (!bookingId) return;
-    if (status !== "expert_assigned") return;
+    if (!["expert_assigned", "on_the_way", "arrived"].includes(status)) return;
     if (booking?.start_otp) return;
     supabase.rpc("ensure_start_otp", { _booking_id: bookingId }).then(({ data, error }) => {
       if (error) {
