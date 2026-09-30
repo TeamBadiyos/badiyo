@@ -127,10 +127,26 @@ async function fetchExpertProfile(bookingId: string): Promise<ExpertProfile | nu
   return (row as ExpertProfile | undefined) ?? null;
 }
 
-async function fetchExtensionOptions(): Promise<CatalogueItem[]> {
+async function fetchExtensionOptions(bookingId: string): Promise<CatalogueItem[]> {
+  // Extensions must stay inside the same service the booking was made for.
+  const { data: booking } = await supabase
+    .from("bookings")
+    .select("price_option_id")
+    .eq("id", bookingId)
+    .maybeSingle();
+  const optionId = booking?.price_option_id as string | null | undefined;
+  if (!optionId) return [];
+  const { data: baseOption } = await supabase
+    .from("service_price_options")
+    .select("service_id")
+    .eq("id", optionId)
+    .maybeSingle();
+  const serviceId = baseOption?.service_id as string | null | undefined;
+  if (!serviceId) return [];
   const { data, error } = await supabase
     .from("service_price_options")
     .select("id, label, duration_minutes, estimated_minutes, customer_price, is_active, display_order")
+    .eq("service_id", serviceId)
     .eq("is_active", true)
     .order("display_order", { ascending: true });
   if (error) {
