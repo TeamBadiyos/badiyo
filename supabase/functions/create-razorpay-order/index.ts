@@ -208,13 +208,20 @@ Deno.serve(async (req) => {
     }
 
     let price: number | null = null;
+    let itemMinutes: number | null = null;
 
-    if (itemId) {
-      // Primary path: works for BOTH duration-based and flat-priced items,
-      // because the price is read from the exact item the customer picked.
+    // The price ALWAYS comes from the exact catalogue item the customer picked.
+    // There is no duration-based fallback: a wrong guess would charge the wrong
+    // amount for flat-priced services.
+    if (!itemId) {
+      return json({ error: "item_id is required" }, 400);
+    }
+    {
       const { data: item, error: itemErr } = await supabase
         .from("service_price_options")
-        .select("id, customer_price, is_active, service_id, services(id, is_active, category_id)")
+        .select(
+          "id, customer_price, estimated_minutes, duration_minutes, is_active, service_id, services(id, is_active, category_id)",
+        )
         .eq("id", itemId)
         .maybeSingle();
 
@@ -237,23 +244,10 @@ Deno.serve(async (req) => {
       }
 
       price = Number(item.customer_price);
-    } else {
-      // Legacy fallback for older clients that only send a duration.
-      if (!Number.isInteger(durationMinutes) || durationMinutes <= 0) {
-        return json({ error: "item_id is required" }, 400);
+      itemMinutes = Number(item.estimated_minutes ?? item.duration_minutes ?? 0) || null;
+      if (purpose === "booking" && !itemMinutes) {
+        return json({ error: "This service is not set up yet. Please try again later." }, 400);
       }
-      const { data: svc, error: svcErr } = await supabase
-        .from("service_catalogue_config")
-        .select("price")
-        .eq("duration_minutes", durationMinutes)
-        .eq("is_active", true)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (svcErr || !svc) {
-        return json({ error: "Service not available" }, 400);
-      }
-      price = Number(svc.price);
     }
 
     if (!Number.isFinite(price!) || price! <= 0) {
