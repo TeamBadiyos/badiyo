@@ -30,6 +30,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { MediaGallery, type MediaItem } from "./product/MediaGallery";
+import { translateCatalog, translateCatalogList } from "@/lib/catalogI18n";
 
 export type TaskTypeDetail = {
   id: string;
@@ -196,7 +197,6 @@ export function SlotSelectionScreen({
     translateCatalog(service.service_name, lang).trim() || durationLabelText;
 
   // Service status + hours (server-side IST). Fail-open when not loaded.
-  const { lang } = useLanguage();
   const { data: cleanState } = useServiceState("clean");
   // Authoritative from the catalogue (estimated_minutes). No guessing: when it
   // is missing we block the booking instead of assuming 60 minutes.
