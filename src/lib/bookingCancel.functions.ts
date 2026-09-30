@@ -176,19 +176,20 @@ export const getCancellationQuote = createServerFn({ method: "GET" })
       .maybeSingle();
     if (!booking) throw new Error("Booking not found");
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const feeKey = booking.assigned_expert_id
-      ? "booking_cancel_fee_assigned"
-      : "booking_cancel_fee_searching";
-    const { data: setting } = await supabaseAdmin
-      .from("ops_settings")
-      .select("value")
-      .eq("key", feeKey)
-      .maybeSingle();
+    let configuredFee = 0;
+    if (booking.assigned_expert_id) {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: setting } = await supabaseAdmin
+        .from("ops_settings")
+        .select("value")
+        .eq("key", "booking_cancel_fee_assigned")
+        .maybeSingle();
+      configuredFee = Math.max(0, Number(setting?.value ?? 0) || 0);
+    }
 
     const paid = Math.max(0, Number(booking.total_amount ?? 0));
     const charged = isGatewayPayment(booking.razorpay_payment_id) && paid > 0;
-    const fee = charged ? Math.min(Math.max(0, Number(setting?.value ?? 0) || 0), paid) : 0;
+    const fee = charged ? Math.min(configuredFee, paid) : 0;
     return {
       paid,
       cancellation_fee: fee,
