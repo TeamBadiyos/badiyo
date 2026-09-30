@@ -255,7 +255,7 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
 
     if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
       try {
-        await navigator.share({ title: "badiyos", text: shareText, url: inviteUrl });
+        await navigator.share({ text: shareText });
         return;
       } catch (e) {
         // User cancelled — don't fall back to copy.
