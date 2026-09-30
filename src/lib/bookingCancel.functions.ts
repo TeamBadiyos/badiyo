@@ -23,7 +23,13 @@ export type CancelBookingResult = {
   refund_id: string | null;
 };
 
-const CANCELLABLE = new Set(["confirmed", "accepted", "expert_assigned"]);
+const CANCELLABLE = new Set([
+  "confirmed",
+  "accepted",
+  "expert_assigned",
+  "on_the_way",
+  "arrived",
+]);
 
 function isGatewayPayment(paymentId: string | null | undefined): boolean {
   return !!paymentId && !paymentId.startsWith("free_");
