@@ -24,6 +24,8 @@ export function stageFromStatus(status: string | null | undefined): TrackingStag
     case "accepted":
       return "confirming";
     case "expert_assigned":
+    case "on_the_way":
+    case "arrived":
       return "expert_assigned";
     case "in_progress":
       return "service_started";
