@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { RescheduleSheet } from "./RescheduleSheet";
 import { getErrorMessage } from "@/lib/errorMessage";
 import { cancelBooking } from "@/lib/bookingCancel.functions";
+import { readLangOutsideReact, translateCatalog, translateStatus } from "@/lib/catalogI18n";
 
 function refundLine(b: BookingRow): { label: string; note: string } | null {
   const status = b.refund_status ?? null;
@@ -37,10 +38,7 @@ function statusPillClasses(status: string): string {
   return "bg-blue-100 text-blue-700";
 }
 function statusLabel(status: string): string {
-  return status
-    .split("_")
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(" ");
+  return translateStatus(status, readLangOutsideReact());
 }
 
 function slotText(b: BookingRow): { title: string; subtitle: string } {
@@ -176,7 +174,7 @@ export function BookingDetailsScreen({
             </div>
             <div className="min-w-0">
               <h3 className="truncate text-base font-bold text-foreground">
-                {booking.service_label}
+                {translateCatalog(booking.service_label, readLangOutsideReact())}
               </h3>
               <p className="text-xs text-muted-foreground">
                 {booking.service_duration_minutes} minutes

@@ -1,5 +1,6 @@
 import type { Segment } from "@/lib/segments";
-import { useT } from "@/i18n";
+import { useLanguage, useT } from "@/i18n";
+import { translateCatalog } from "@/lib/catalogI18n";
 
 export function ServicesBar({
   segments,
@@ -11,9 +12,13 @@ export function ServicesBar({
   onSelect: (segmentId: string | null) => void;
 }) {
   const t = useT();
+  const { lang } = useLanguage();
   const tabs: { id: string | null; label: string }[] = [
     { id: null, label: t("home.tabAll") },
-    ...segments.map((s) => ({ id: s.id, label: s.short_name || s.name })),
+    ...segments.map((s) => ({
+      id: s.id,
+      label: translateCatalog(s.short_name || s.name, lang),
+    })),
   ];
 
   return (

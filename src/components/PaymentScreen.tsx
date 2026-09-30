@@ -21,6 +21,7 @@ import {
 } from "@/lib/paymentError";
 import { logPaymentFailure } from "@/lib/paymentLog.functions";
 import { toast } from "sonner";
+import { readLangOutsideReact, translateCatalog } from "@/lib/catalogI18n";
 
 
 type Status = "loading" | "success" | "failed";
@@ -421,7 +422,10 @@ export function PaymentScreen({
     };
   }, [bookingId]);
 
-  const displayLabel = booking?.service_label ?? service.duration_label;
+  const displayLabel = translateCatalog(
+    booking?.service_label ?? service.duration_label,
+    readLangOutsideReact(),
+  );
   const displayPrice =
     booking?.total_amount && Number(booking.total_amount) > 0
       ? Number(booking.total_amount)

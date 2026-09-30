@@ -6,6 +6,7 @@ import { sizedImageUrl } from "@/lib/serviceImage";
 import { useT } from "@/i18n";
 
 import fallbackImage from "@/assets/expert-house-cleaning.jpg";
+import { readLangOutsideReact, translateCatalog } from "@/lib/catalogI18n";
 
 export type ProductCardService = {
   name: string;
@@ -63,7 +64,7 @@ function ServiceProductCardBase({
         <div className="brand-grade aspect-square w-full overflow-hidden rounded-[14px] bg-muted">
           <img
             src={src}
-            alt={service.name}
+            alt={translateCatalog(service.name, readLangOutsideReact())}
             loading="lazy"
             decoding="async"
             onLoad={() => setLoaded(true)}

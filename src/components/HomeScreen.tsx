@@ -78,6 +78,7 @@ function ScreenSkeleton() {
 
 import { fetchSections } from "@/lib/homeData";
 import {
+import { readLangOutsideReact, translateCatalog } from "@/lib/catalogI18n";
   fetchAvailability,
   isUnavailable,
   unavailableReason,
@@ -499,7 +500,7 @@ export function HomeScreen({
               return (
                 <section key={segment.id} className="mt-6 first:mt-4">
                   <div className="flex items-center justify-between gap-3">
-                    <SectionHeading>{segment.name}</SectionHeading>
+                    <SectionHeading>{translateCatalog(segment.name, readLangOutsideReact())}</SectionHeading>
                     <button
                       onClick={() => setActiveSegmentId(segment.id)}
                       className="flex items-center gap-0.5 text-sm font-bold text-primary"
@@ -705,7 +706,7 @@ function CategoryRow({
     <div className={`mt-4 ${categoryBlocked ? "opacity-70" : ""}`}>
       <div className="flex items-center gap-2">
         <h3 className="text-[13px] font-bold tracking-[-0.01em] text-muted-foreground">
-          {category.name}
+          {translateCatalog(category.name, readLangOutsideReact())}
         </h3>
         {categoryBlocked ? (
           <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold text-muted-foreground">
