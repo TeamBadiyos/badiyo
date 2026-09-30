@@ -267,6 +267,7 @@ export function PaymentScreen({
             // if this device fails to write it after a successful payment.
             booking_draft: {
               address_id: address.id ?? null,
+              price_option_id: service.id,
               service_duration_minutes: service.duration_minutes,
               service_label: service.duration_label,
               slot_type: slot.mode === "now" ? "now" : "scheduled",
