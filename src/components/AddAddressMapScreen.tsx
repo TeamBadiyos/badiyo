@@ -520,6 +520,14 @@ export function AddAddressMapScreen({
           <MapPin className="h-10 w-10 text-primary drop-shadow" strokeWidth={2.5} fill="currentColor" />
         </div>
 
+        {/* Detecting banner (shown while the GPS fix is being taken) */}
+        {locating && !searchResultsOpen && (
+          <div className="pointer-events-none absolute bottom-16 left-1/2 z-10 -translate-x-1/2 rounded-full bg-foreground/85 px-3 py-1.5 text-[11px] font-bold text-background shadow-md">
+            Detecting your location…
+          </div>
+        )}
+
+
         {/* Use current location */}
         <button
           onClick={() => useCurrentLocation()}
