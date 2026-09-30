@@ -148,7 +148,9 @@ export function referralResultMessage(result: ApplyReferralResult): string {
       return "You can't use your own code";
     case "already_referred":
       return "An invite code is already applied to your account";
-    case "not_authenticated":
+    case "not_eligible_existing_user":
+      return "Referrals are only valid for first-time new users";
+
       return "Please sign in first";
     default:
       return "Couldn't apply the code. Please try again.";
