@@ -116,8 +116,10 @@ export type ApplyReferralResult =
   | "invalid_code"
   | "self_referral"
   | "already_referred"
+  | "not_eligible_existing_user"
   | "not_authenticated"
   | "error";
+
 
 /**
  * Apply an invite code entered manually (or prefilled from an invite link) and
