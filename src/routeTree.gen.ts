@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as StoreSlugRouteImport } from './routes/store.$slug'
 import { Route as InviteCodeRouteImport } from './routes/invite.$code'
 import { Route as ApiPublicServiceImageRouteImport } from './routes/api/public/service-image'
 import { Route as ApiPublicReverseGeocodeRouteImport } from './routes/api/public/reverse-geocode'
@@ -30,6 +31,11 @@ import { Route as ApiPublicAdminAlertProcessRouteImport } from './routes/api/pub
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StoreSlugRoute = StoreSlugRouteImport.update({
+  id: '/store/$slug',
+  path: '/store/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InviteCodeRoute = InviteCodeRouteImport.update({
@@ -123,6 +129,7 @@ const ApiPublicAdminAlertProcessRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/invite/$code': typeof InviteCodeRoute
+  '/store/$slug': typeof StoreSlugRoute
   '/api/public/geocode-search': typeof ApiPublicGeocodeSearchRoute
   '/api/public/has-login-pin': typeof ApiPublicHasLoginPinRoute
   '/api/public/places-search': typeof ApiPublicPlacesSearchRoute
@@ -142,6 +149,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/invite/$code': typeof InviteCodeRoute
+  '/store/$slug': typeof StoreSlugRoute
   '/api/public/geocode-search': typeof ApiPublicGeocodeSearchRoute
   '/api/public/has-login-pin': typeof ApiPublicHasLoginPinRoute
   '/api/public/places-search': typeof ApiPublicPlacesSearchRoute
@@ -162,6 +170,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/invite/$code': typeof InviteCodeRoute
+  '/store/$slug': typeof StoreSlugRoute
   '/api/public/geocode-search': typeof ApiPublicGeocodeSearchRoute
   '/api/public/has-login-pin': typeof ApiPublicHasLoginPinRoute
   '/api/public/places-search': typeof ApiPublicPlacesSearchRoute
@@ -183,6 +192,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/invite/$code'
+    | '/store/$slug'
     | '/api/public/geocode-search'
     | '/api/public/has-login-pin'
     | '/api/public/places-search'
@@ -202,6 +212,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/invite/$code'
+    | '/store/$slug'
     | '/api/public/geocode-search'
     | '/api/public/has-login-pin'
     | '/api/public/places-search'
@@ -221,6 +232,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/invite/$code'
+    | '/store/$slug'
     | '/api/public/geocode-search'
     | '/api/public/has-login-pin'
     | '/api/public/places-search'
@@ -241,6 +253,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   InviteCodeRoute: typeof InviteCodeRoute
+  StoreSlugRoute: typeof StoreSlugRoute
   ApiPublicGeocodeSearchRoute: typeof ApiPublicGeocodeSearchRoute
   ApiPublicHasLoginPinRoute: typeof ApiPublicHasLoginPinRoute
   ApiPublicPlacesSearchRoute: typeof ApiPublicPlacesSearchRoute
@@ -265,6 +278,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/store/$slug': {
+      id: '/store/$slug'
+      path: '/store/$slug'
+      fullPath: '/store/$slug'
+      preLoaderRoute: typeof StoreSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/invite/$code': {
@@ -385,6 +405,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   InviteCodeRoute: InviteCodeRoute,
+  StoreSlugRoute: StoreSlugRoute,
   ApiPublicGeocodeSearchRoute: ApiPublicGeocodeSearchRoute,
   ApiPublicHasLoginPinRoute: ApiPublicHasLoginPinRoute,
   ApiPublicPlacesSearchRoute: ApiPublicPlacesSearchRoute,
