@@ -55,7 +55,7 @@ export async function fetchPublicStores(): Promise<PublicStore[]> {
   const { data, error } = await supabase
     .from("public_stores")
     .select(
-      "id, store_name, store_category_id, category_name, category_slug, zone_id, photo_url, short_address, lat, lng, is_accepting_orders, is_open_now, rating",
+      "id, store_name, store_slug, store_category_id, category_name, category_slug, zone_id, photo_url, short_address, lat, lng, is_accepting_orders, is_open_now, rating",
     );
   if (error) throw error;
   return (data ?? []) as PublicStore[];
