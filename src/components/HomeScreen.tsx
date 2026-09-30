@@ -240,6 +240,36 @@ export function HomeScreen({
   // Ordering is on only when the store service itself is live.
   const storeOrdering = storeState?.status === "live";
 
+  /**
+   * Shared store links (user.badiyos.com/store/<custom-name>) open that shop
+   * directly — at launch, after sign-in, or when the app is already open.
+   */
+  useEffect(() => {
+    let cancelled = false;
+    async function openPending(key: string | null) {
+      if (!key) return;
+      const store = await fetchStoreByKey(key);
+      clearPendingStoreKey();
+      if (cancelled) return;
+      if (!store) {
+        toast.error("Ye dukaan abhi uplabdh nahi hai");
+        return;
+      }
+      setOpenCategory(null);
+      setOpenStore(store);
+    }
+    void openPending(capturePendingStoreKey());
+    const onPending = (e: Event) => {
+      void openPending((e as CustomEvent<string>).detail);
+    };
+    window.addEventListener(PENDING_STORE_EVENT, onPending);
+    return () => {
+      cancelled = true;
+      window.removeEventListener(PENDING_STORE_EVENT, onPending);
+    };
+  }, []);
+
+
   /** Customer coordinates used to sort shops nearest-first. */
   const { data: homeCoords = null } = useQuery({
     queryKey: ["home_default_coords"],
