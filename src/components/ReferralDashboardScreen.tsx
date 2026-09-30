@@ -355,6 +355,11 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
                   </p>
                 </div>
               </div>
+              <p className="mt-3 rounded-[12px] bg-muted/60 p-3 text-xs text-muted-foreground">
+                <span className="font-bold text-foreground">1 Badiyos coin = Rs 1.</span>{" "}
+                So {totalPerReferral} coins are worth Rs {totalPerReferral}. Use your coins
+                at checkout to pay less on any booking.
+              </p>
             </section>
 
             {/* Apply a friend's code */}
