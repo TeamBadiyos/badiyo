@@ -10,7 +10,7 @@ import { useT } from "@/i18n";
 import { hapticImpact } from "@/lib/haptics";
 import { billBreakdown, useGstPercent } from "@/lib/gst";
 import type { AppliedCoupon } from "@/lib/coupons";
-import { releaseMyCoins } from "@/lib/coins";
+import { releaseMyCoins, releaseMyCoupon } from "@/lib/coins";
 
 import { payWithRazorpay, toPaymentError } from "@/lib/razorpayCheckout";
 import { getPaymentPrefill } from "@/lib/paymentPrefill";
@@ -335,8 +335,10 @@ export function PaymentScreen({
         },
       }).catch(() => {});
 
-      // Payment did not go through — give any held coins back.
+      // Payment did not go through — give any held coins and coupon back
+      // straight away, so the customer can retry with the same coupon.
       await releaseMyCoins(rzpOrderId);
+      await releaseMyCoupon(rzpOrderId);
 
       if (err.category === "cancelled") {
         toast(t("payment.cancelledToast"));
