@@ -4741,6 +4741,7 @@ export type Database = {
           query_doc_types: string[] | null
           query_notes: string | null
           rejection_reason: string | null
+          reuploaded_at: string | null
           segment_id: string | null
           shop_photo_url: string | null
           state: string | null
@@ -4794,6 +4795,7 @@ export type Database = {
           query_doc_types?: string[] | null
           query_notes?: string | null
           rejection_reason?: string | null
+          reuploaded_at?: string | null
           segment_id?: string | null
           shop_photo_url?: string | null
           state?: string | null
@@ -4847,6 +4849,7 @@ export type Database = {
           query_doc_types?: string[] | null
           query_notes?: string | null
           rejection_reason?: string | null
+          reuploaded_at?: string | null
           segment_id?: string | null
           shop_photo_url?: string | null
           state?: string | null
@@ -9056,6 +9059,10 @@ export type Database = {
       staff_set_last_order_buffer: {
         Args: { _minutes: number; _service_key: string }
         Returns: Json
+      }
+      staff_set_lead_status: {
+        Args: { _kind: string; _lead_id: string; _status: string }
+        Returns: boolean
       }
       staff_set_merchant_commission: {
         Args: { _merchant_id: string; _pct: number }
