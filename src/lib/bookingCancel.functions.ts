@@ -63,17 +63,17 @@ export const cancelBooking = createServerFn({ method: "POST" })
     const paid = Math.max(0, Number(booking.total_amount ?? 0));
     const charged = isGatewayPayment(booking.razorpay_payment_id) && paid > 0;
 
-    // Fee depends on how far the booking got: nothing while we're still
-    // searching, the configured fee once an expert is on the job.
-    const feeKey = booking.assigned_expert_id
-      ? "booking_cancel_fee_assigned"
-      : "booking_cancel_fee_searching";
-    const { data: setting } = await supabaseAdmin
-      .from("ops_settings")
-      .select("value")
-      .eq("key", feeKey)
-      .maybeSingle();
-    const configuredFee = Math.max(0, Number(setting?.value ?? 0) || 0);
+    // No expert on the job yet => always a free cancel with a full refund.
+    // Once an expert is assigned, the configured fee applies.
+    let configuredFee = 0;
+    if (booking.assigned_expert_id) {
+      const { data: setting } = await supabaseAdmin
+        .from("ops_settings")
+        .select("value")
+        .eq("key", "booking_cancel_fee_assigned")
+        .maybeSingle();
+      configuredFee = Math.max(0, Number(setting?.value ?? 0) || 0);
+    }
 
     const fee = charged ? Math.min(configuredFee, paid) : 0;
     const refundAmount = charged ? Math.max(0, Math.round((paid - fee) * 100) / 100) : 0;
