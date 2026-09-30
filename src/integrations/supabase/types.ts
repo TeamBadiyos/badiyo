@@ -522,6 +522,33 @@ export type Database = {
           },
         ]
       }
+      booking_price_fallback_log: {
+        Row: {
+          booking_id: string | null
+          created_at: string
+          id: string
+          matched_price_option_id: string | null
+          service_category_id: string | null
+          service_label: string | null
+        }
+        Insert: {
+          booking_id?: string | null
+          created_at?: string
+          id?: string
+          matched_price_option_id?: string | null
+          service_category_id?: string | null
+          service_label?: string | null
+        }
+        Update: {
+          booking_id?: string | null
+          created_at?: string
+          id?: string
+          matched_price_option_id?: string | null
+          service_category_id?: string | null
+          service_label?: string | null
+        }
+        Relationships: []
+      }
       booking_tips: {
         Row: {
           amount: number
@@ -610,6 +637,7 @@ export type Database = {
           onway_alert_sent: boolean
           partner_payout_batch_id: string | null
           price: number
+          price_option_id: string | null
           rating: number | null
           razorpay_order_id: string | null
           razorpay_payment_id: string | null
@@ -677,6 +705,7 @@ export type Database = {
           onway_alert_sent?: boolean
           partner_payout_batch_id?: string | null
           price: number
+          price_option_id?: string | null
           rating?: number | null
           razorpay_order_id?: string | null
           razorpay_payment_id?: string | null
@@ -744,6 +773,7 @@ export type Database = {
           onway_alert_sent?: boolean
           partner_payout_batch_id?: string | null
           price?: number
+          price_option_id?: string | null
           rating?: number | null
           razorpay_order_id?: string | null
           razorpay_payment_id?: string | null
@@ -823,6 +853,13 @@ export type Database = {
             columns: ["partner_payout_batch_id"]
             isOneToOne: false
             referencedRelation: "payout_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_price_option_id_fkey"
+            columns: ["price_option_id"]
+            isOneToOne: false
+            referencedRelation: "service_price_options"
             referencedColumns: ["id"]
           },
           {
@@ -6176,6 +6213,7 @@ export type Database = {
           description: string | null
           display_order: number
           duration_minutes: number | null
+          estimated_minutes: number | null
           exclusions: string[]
           expert_payout: number | null
           gallery_urls: string[]
@@ -6197,6 +6235,7 @@ export type Database = {
           description?: string | null
           display_order?: number
           duration_minutes?: number | null
+          estimated_minutes?: number | null
           exclusions?: string[]
           expert_payout?: number | null
           gallery_urls?: string[]
@@ -6218,6 +6257,7 @@ export type Database = {
           description?: string | null
           display_order?: number
           duration_minutes?: number | null
+          estimated_minutes?: number | null
           exclusions?: string[]
           expert_payout?: number | null
           gallery_urls?: string[]
@@ -7481,6 +7521,7 @@ export type Database = {
           onway_alert_sent: boolean
           partner_payout_batch_id: string | null
           price: number
+          price_option_id: string | null
           rating: number | null
           razorpay_order_id: string | null
           razorpay_payment_id: string | null

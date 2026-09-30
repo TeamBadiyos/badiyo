@@ -73,6 +73,21 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
+    // The catalogue item is the single source of truth for how long the job
+    // takes. Resolved up front so the slot-fit check uses the real length.
+    let catalogueMinutes: number | null = null;
+    if (itemId) {
+      const { data: durRow } = await supabase
+        .from("service_price_options")
+        .select("estimated_minutes, duration_minutes")
+        .eq("id", itemId)
+        .maybeSingle();
+      catalogueMinutes =
+        Number(durRow?.estimated_minutes ?? durRow?.duration_minutes ?? 0) || null;
+    }
+    const effectiveMinutes =
+      catalogueMinutes ?? (Number.isInteger(durationMinutes) ? durationMinutes : null);
+
     // Service status/hours guard: block NEW booking/courier payments when the
     // service is closed (status, holiday, outside hours, last-order buffer).
     // Extension and tip payments for running orders are never blocked.
@@ -93,7 +108,7 @@ Deno.serve(async (req) => {
           _service_key: serviceKey,
           _date: draftForSlot.scheduled_date,
           _slot: draftForSlot.scheduled_time_slot,
-          _duration_minutes: Number.isInteger(durationMinutes) ? durationMinutes : 60,
+          _duration_minutes: effectiveMinutes,
         });
         blocked = !slotErr && slotOk?.ok === false;
       } else {
@@ -208,13 +223,20 @@ Deno.serve(async (req) => {
     }
 
     let price: number | null = null;
+    let itemMinutes: number | null = null;
 
-    if (itemId) {
-      // Primary path: works for BOTH duration-based and flat-priced items,
-      // because the price is read from the exact item the customer picked.
+    // The price ALWAYS comes from the exact catalogue item the customer picked.
+    // There is no duration-based fallback: a wrong guess would charge the wrong
+    // amount for flat-priced services.
+    if (!itemId) {
+      return json({ error: "item_id is required" }, 400);
+    }
+    {
       const { data: item, error: itemErr } = await supabase
         .from("service_price_options")
-        .select("id, customer_price, is_active, service_id, services(id, is_active, category_id)")
+        .select(
+          "id, customer_price, estimated_minutes, duration_minutes, is_active, service_id, services(id, is_active, category_id)",
+        )
         .eq("id", itemId)
         .maybeSingle();
 
@@ -237,23 +259,10 @@ Deno.serve(async (req) => {
       }
 
       price = Number(item.customer_price);
-    } else {
-      // Legacy fallback for older clients that only send a duration.
-      if (!Number.isInteger(durationMinutes) || durationMinutes <= 0) {
-        return json({ error: "item_id is required" }, 400);
+      itemMinutes = Number(item.estimated_minutes ?? item.duration_minutes ?? 0) || null;
+      if (purpose === "booking" && !itemMinutes) {
+        return json({ error: "This service is not set up yet. Please try again later." }, 400);
       }
-      const { data: svc, error: svcErr } = await supabase
-        .from("service_catalogue_config")
-        .select("price")
-        .eq("duration_minutes", durationMinutes)
-        .eq("is_active", true)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (svcErr || !svc) {
-        return json({ error: "Service not available" }, 400);
-      }
-      price = Number(svc.price);
     }
 
     if (!Number.isFinite(price!) || price! <= 0) {
@@ -293,7 +302,7 @@ Deno.serve(async (req) => {
         _user_id: userId,
         _code: couponCode,
         _base_amount: price!,
-        _duration_minutes: Number.isInteger(durationMinutes) ? durationMinutes : null,
+        _duration_minutes: effectiveMinutes,
       });
       if (quoteErr) {
         console.error("coupon_quote failed", quoteErr);
@@ -339,7 +348,7 @@ Deno.serve(async (req) => {
           _code: couponCode,
           _order_id: freeOrderId,
           _base_amount: price!,
-          _duration_minutes: Number.isInteger(durationMinutes) ? durationMinutes : 0,
+          _duration_minutes: effectiveMinutes ?? 0,
         });
         if (reserveErr) {
           console.error("system_coupon_reserve failed", reserveErr);
@@ -409,7 +418,8 @@ Deno.serve(async (req) => {
           currency: order.currency,
           payload: {
             address_id: draft.address_id ?? null,
-            service_duration_minutes: draft.service_duration_minutes ?? 0,
+            service_duration_minutes: effectiveMinutes ?? draft.service_duration_minutes ?? 0,
+            price_option_id: itemId || null,
             service_label: draft.service_label ?? "Service",
             slot_type: draft.slot_type ?? "now",
             scheduled_date: draft.scheduled_date ?? null,
@@ -432,7 +442,7 @@ Deno.serve(async (req) => {
         _code: couponCode,
         _order_id: order.id,
         _base_amount: price!,
-        _duration_minutes: Number.isInteger(durationMinutes) ? durationMinutes : 0,
+        _duration_minutes: effectiveMinutes ?? 0,
       });
       if (reserveErr) console.error("system_coupon_reserve failed", reserveErr);
     }

@@ -190,7 +190,10 @@ export function SlotSelectionScreen({
   // Service status + hours (server-side IST). Fail-open when not loaded.
   const { lang } = useLanguage();
   const { data: cleanState } = useServiceState("clean");
-  const durationMinutes = service.duration_minutes ?? 60;
+  // Authoritative from the catalogue (estimated_minutes). No guessing: when it
+  // is missing we block the booking instead of assuming 60 minutes.
+  const durationMinutes = Number(service.duration_minutes) || 0;
+  const durationMissing = durationMinutes <= 0;
 
   const closedMessage = (): string | null => {
     if (!cleanState || cleanState.can_order) return null;
@@ -254,11 +257,12 @@ export function SlotSelectionScreen({
     selectedDay !== null && visibleSlots.every((s) => slotDisabled(s.hour));
 
   const canContinue =
-    (mode === "now" && !nowBlocked) ||
-    (mode === "later" &&
-      selectedDay !== null &&
-      selectedHour !== null &&
-      !slotDisabled(selectedHour));
+    !durationMissing &&
+    ((mode === "now" && !nowBlocked) ||
+      (mode === "later" &&
+        selectedDay !== null &&
+        selectedHour !== null &&
+        !slotDisabled(selectedHour)));
 
   return (
     <main className="min-h-screen w-full bg-background pb-32">
