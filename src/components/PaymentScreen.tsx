@@ -170,9 +170,10 @@ export function PaymentScreen({
       setBookingId(data.id);
       setBooking(data as BookingRow);
 
-      // Credit the referral reward BEFORE auto-accept: the reward is only
-      // valid while the booking is still in 'confirmed'.
-      await creditReferralForBooking(data.id);
+      // Referral reward is credited automatically by the database trigger
+      // when the booking reaches 'completed'. No client call needed.
+
+
 
       // Auto-advance from 'confirmed' -> 'accepted' so the expert broadcast
       // fires without a manual staff Accept in Command Center. The RPC writes
