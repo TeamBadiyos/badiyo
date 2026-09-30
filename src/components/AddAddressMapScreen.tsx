@@ -320,10 +320,10 @@ export function AddAddressMapScreen({
     };
   }, [center, serviceCheck, segmentId]);
 
-  const useCurrentLocation = () => {
+  const useCurrentLocation = (auto = false) => {
     if (locating) return;
     setLocating(true);
-    console.info("[address] requesting current location");
+    console.info("[address] requesting current location", { auto });
     getCurrentCoords()
       .then((c) => {
         console.info("[address] got coords", c);
@@ -336,7 +336,7 @@ export function AddAddressMapScreen({
           setLocHelp("denied");
         } else if (err instanceof LocationDisabledError) {
           setLocHelp("disabled");
-        } else {
+        } else if (!auto) {
           toast.error(
             (err as Error)?.message || "Couldn't detect your location.",
           );
@@ -344,6 +344,20 @@ export function AddAddressMapScreen({
       })
       .finally(() => setLocating(false));
   };
+
+  // First-time address: detect the customer's GPS position automatically so
+  // the pin starts on their real location instead of the city default.
+  // Skipped when editing an address or when the caller already gave a point.
+  const autoLocatedRef = useRef(false);
+  useEffect(() => {
+    if (autoLocatedRef.current) return;
+    if (!mapReady) return;
+    if (initial || initialPoint) return;
+    autoLocatedRef.current = true;
+    useCurrentLocation(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mapReady]);
+
 
   // Only the parcel flow needs a hard zone gate; saving/editing a personal
   // address anywhere else stays possible, with just a warning.
