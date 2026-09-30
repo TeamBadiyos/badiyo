@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS public._referral_test_log;
