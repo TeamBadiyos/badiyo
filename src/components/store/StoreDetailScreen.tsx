@@ -36,6 +36,27 @@ export function StoreDetailScreen({
     return Array.from(map.entries());
   }, [products]);
 
+  async function shareStore() {
+    const link = buildStoreLink(store);
+    const text = buildStoreShareMessage(store);
+    try {
+      const nav = navigator as Navigator & { share?: (d: ShareData) => Promise<void> };
+      if (nav.share) {
+        await nav.share({ title: store.store_name ?? "Badiyos", text, url: link });
+        return;
+      }
+    } catch {
+      return; // user dismissed the share sheet
+    }
+    try {
+      await navigator.clipboard.writeText(`${text}`);
+      toast.success("दुकान की लिंक कॉपी हो गई!");
+    } catch {
+      toast.error("लिंक कॉपी नहीं हो पाई");
+    }
+  }
+
+
   return (
     <main className="min-h-screen w-full bg-background pb-32 momentum-scroll">
       <div className="mx-auto w-full max-w-md px-5 pt-2">
