@@ -47,6 +47,7 @@ export function StoreListView({
 
   return (
     <section className="mt-4 pb-36">
+      <SellOnBadiyosCard />
       {loading ? (
         <div className="mt-8 flex justify-center">
           <Loader2 className="h-5 w-5 animate-spin text-primary" />
