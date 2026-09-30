@@ -4,7 +4,6 @@ import { CheckCircle2, XCircle, Loader2, ArrowLeft, AlertCircle } from "lucide-r
 import { supabase } from "@/integrations/supabase/client";
 import type { SelectedService, SelectedSlot } from "./SlotSelectionScreen";
 import type { SelectedAddress } from "./BookingSummaryScreen";
-import { creditReferralForBooking } from "@/lib/referrals";
 import { getErrorMessage } from "@/lib/errorMessage";
 import { getCurrentCoords } from "@/lib/nativeGeolocation";
 import { useT } from "@/i18n";
