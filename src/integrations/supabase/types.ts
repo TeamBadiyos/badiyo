@@ -3414,6 +3414,30 @@ export type Database = {
           },
         ]
       }
+      deleted_accounts_registry: {
+        Row: {
+          deleted_at: string
+          had_referred_by: string | null
+          id: string
+          original_user_id: string
+          phone: string | null
+        }
+        Insert: {
+          deleted_at?: string
+          had_referred_by?: string | null
+          id?: string
+          original_user_id: string
+          phone?: string | null
+        }
+        Update: {
+          deleted_at?: string
+          had_referred_by?: string | null
+          id?: string
+          original_user_id?: string
+          phone?: string | null
+        }
+        Relationships: []
+      }
       device_sessions: {
         Row: {
           created_at: string
@@ -5442,6 +5466,39 @@ export type Database = {
           reward_max_discount?: number | null
           reward_min_order_amount?: number
           reward_validity_days?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      referral_phone_registry: {
+        Row: {
+          created_at: string
+          first_user_id: string | null
+          is_deleted_account: boolean
+          last_user_id: string | null
+          phone: string
+          referral_used: boolean
+          referred_by_code: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          first_user_id?: string | null
+          is_deleted_account?: boolean
+          last_user_id?: string | null
+          phone: string
+          referral_used?: boolean
+          referred_by_code?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          first_user_id?: string | null
+          is_deleted_account?: boolean
+          last_user_id?: string | null
+          phone?: string
+          referral_used?: boolean
+          referred_by_code?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -8140,6 +8197,7 @@ export type Database = {
         }
         Returns: string
       }
+      referral_phone10: { Args: { _phone: string }; Returns: string }
       register_device_token: {
         Args: { p_fcm_token: string; p_platform: string }
         Returns: string
