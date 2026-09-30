@@ -106,8 +106,10 @@ export function CompleteProfileSheet({ enabled }: { enabled: boolean }) {
           .eq("id", u.id)
           .maybeSingle();
         if (!data) return;
-        const authPhone = (u.phone ?? "").replace(/^\+?91/, "").replace(/\D/g, "");
-        const rowPhone = (data.phone ?? "").replace(/^\+?91/, "").replace(/\D/g, "");
+        // Keep only the last 10 digits. Stripping a leading "91" would eat the
+        // first two digits of numbers that legitimately start with 91.
+        const authPhone = (u.phone ?? "").replace(/\D/g, "").slice(-10);
+        const rowPhone = (data.phone ?? "").replace(/\D/g, "").slice(-10);
         const existingPhone = rowPhone || authPhone;
         const nameOk = !!data.full_name?.trim();
         const phoneOk = /^[6-9]\d{9}$/.test(existingPhone);
