@@ -599,6 +599,11 @@ function Index() {
         if (!isNativeShell()) return;
         const { App } = await import("@capacitor/app");
         const handle = async (url: string) => {
+          // Shared shop link → remember it; Home opens that shop.
+          const share = await import("@/lib/storeShare");
+          const storeKey = share.readStoreKeyFromLink(url);
+          if (storeKey) share.storePendingStoreKey(storeKey);
+
           const m = url?.match(/\/invite\/([^/?#]+)/i);
           if (!m?.[1]) return;
           const code = decodeURIComponent(m[1]).trim().toUpperCase();

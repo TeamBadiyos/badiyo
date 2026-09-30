@@ -12,6 +12,8 @@ import { haversineKm } from "@/lib/addressSearch";
 export type PublicStore = {
   id: string;
   store_name: string | null;
+  /** Readable custom link name used in the shareable store URL. */
+  store_slug: string | null;
   store_category_id: string | null;
   category_name: string | null;
   category_slug: string | null;
@@ -53,7 +55,7 @@ export async function fetchPublicStores(): Promise<PublicStore[]> {
   const { data, error } = await supabase
     .from("public_stores")
     .select(
-      "id, store_name, store_category_id, category_name, category_slug, zone_id, photo_url, short_address, lat, lng, is_accepting_orders, is_open_now, rating",
+      "id, store_name, store_slug, store_category_id, category_name, category_slug, zone_id, photo_url, short_address, lat, lng, is_accepting_orders, is_open_now, rating",
     );
   if (error) throw error;
   return (data ?? []) as PublicStore[];

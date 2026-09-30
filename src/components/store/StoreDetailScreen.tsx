@@ -1,10 +1,12 @@
 import { useMemo } from "react";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, Share2 } from "lucide-react";
+import { toast } from "sonner";
 import { useT } from "@/i18n";
 import { StoreImage } from "./StoreImage";
 import { StoreRating } from "./StoreRating";
 import { ProductCard } from "./ProductCard";
 import { CartBar } from "./CartBar";
+import { buildStoreShareMessage } from "@/lib/storeShare";
 import { isStoreOpen, useStoreProducts, type PublicProduct, type PublicStore } from "@/lib/store";
 
 /** Read-only shop page: products grouped by their category, no cart, no checkout. */
@@ -34,6 +36,27 @@ export function StoreDetailScreen({
     return Array.from(map.entries());
   }, [products]);
 
+  async function shareStore() {
+    const text = buildStoreShareMessage(store);
+    try {
+      const nav = navigator as Navigator & { share?: (d: ShareData) => Promise<void> };
+      if (nav.share) {
+        // text already contains the link — passing `url` too would duplicate it
+        await nav.share({ title: store.store_name ?? "Badiyos", text });
+        return;
+      }
+    } catch {
+      return; // user dismissed the share sheet
+    }
+    try {
+      await navigator.clipboard.writeText(`${text}`);
+      toast.success("दुकान की लिंक कॉपी हो गई!");
+    } catch {
+      toast.error("लिंक कॉपी नहीं हो पाई");
+    }
+  }
+
+
   return (
     <main className="min-h-screen w-full bg-background pb-32 momentum-scroll">
       <div className="mx-auto w-full max-w-md px-5 pt-2">
@@ -58,6 +81,14 @@ export function StoreDetailScreen({
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
+            <button
+              type="button"
+              onClick={shareStore}
+              aria-label="Share"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-card active:scale-[0.97]"
+            >
+              <Share2 className="h-[18px] w-[18px] text-primary" />
+            </button>
             <StoreRating rating={store.rating} />
             <span
               className={

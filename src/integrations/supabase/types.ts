@@ -4750,6 +4750,7 @@ export type Database = {
           store_enabled: boolean
           store_hours: Json | null
           store_name: string | null
+          store_slug: string | null
           updated_at: string
           zone_id: string | null
         }
@@ -4804,6 +4805,7 @@ export type Database = {
           store_enabled?: boolean
           store_hours?: Json | null
           store_name?: string | null
+          store_slug?: string | null
           updated_at?: string
           zone_id?: string | null
         }
@@ -4858,6 +4860,7 @@ export type Database = {
           store_enabled?: boolean
           store_hours?: Json | null
           store_name?: string | null
+          store_slug?: string | null
           updated_at?: string
           zone_id?: string | null
         }
@@ -7047,6 +7050,7 @@ export type Database = {
           short_address: string | null
           store_category_id: string | null
           store_name: string | null
+          store_slug: string | null
           zone_id: string | null
         }
         Relationships: [
@@ -9152,6 +9156,10 @@ export type Database = {
         Args: { _staff_user_id: string; _zone_ids: string[] }
         Returns: undefined
       }
+      staff_set_store_slug: {
+        Args: { _merchant_id: string; _slug: string }
+        Returns: string
+      }
       staff_set_user_deleted: {
         Args: { _deleted: boolean; _user_id: string }
         Returns: Json
@@ -9506,7 +9514,12 @@ export type Database = {
         Args: { _default: number; _key: string }
         Returns: number
       }
+      store_slugify: { Args: { _text: string }; Returns: string }
       store_sweeper: { Args: never; Returns: undefined }
+      store_unique_slug: {
+        Args: { _base: string; _merchant_id: string }
+        Returns: string
+      }
       submit_booking_review: {
         Args: { _booking_id: string; _rating: number; _review: string }
         Returns: undefined
