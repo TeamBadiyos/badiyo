@@ -1,6 +1,7 @@
-// Business hours: 9 AM – 8 PM (last bookable start hour = 20)
-export const BUSINESS_START_HOUR = 9;
-export const BUSINESS_END_HOUR = 20;
+// Bookable slot window: 10 AM – 6 PM start (last slot 6–7 PM).
+// Must stay in sync with ops_settings slot_first_start_hour / slot_last_start_hour.
+export const BUSINESS_START_HOUR = 10;
+export const BUSINESS_END_HOUR = 18;
 
 /** Minimum notice before a same-day slot can start (minutes). */
 export const MIN_LEAD_MINUTES = 45;
