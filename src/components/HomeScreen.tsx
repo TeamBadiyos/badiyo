@@ -625,12 +625,19 @@ function SegmentView({
 
   if (segment.display_template !== "CATEGORY_FIRST") {
     return (
-      <div className="mt-8 rounded-[18px] border border-dashed border-border bg-card px-6 py-12 text-center">
-        <p className="text-base font-bold text-foreground">
-          {t("home.comingSoon", { segment: segment.name })}
-        </p>
-        <p className="mt-1 text-sm text-muted-foreground">{t("home.comingSoonSub")}</p>
-      </div>
+      <>
+        {segment.display_template === "STORE_FIRST" && (
+          <div className="mt-4">
+            <SellOnBadiyosCard />
+          </div>
+        )}
+        <div className="mt-8 rounded-[18px] border border-dashed border-border bg-card px-6 py-12 text-center">
+          <p className="text-base font-bold text-foreground">
+            {t("home.comingSoon", { segment: segment.name })}
+          </p>
+          <p className="mt-1 text-sm text-muted-foreground">{t("home.comingSoonSub")}</p>
+        </div>
+      </>
     );
   }
 
