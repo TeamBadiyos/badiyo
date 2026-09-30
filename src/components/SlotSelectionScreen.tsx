@@ -322,13 +322,13 @@ export function SlotSelectionScreen({
               )}
             {!isFlat && (
               <span className="text-sm font-semibold text-muted-foreground">
-                · {service.duration_label}
+                · {durationLabelText}
               </span>
             )}
           </div>
           {service.subtitle && (
             <p className="mt-1 text-xs font-semibold text-muted-foreground">
-              {service.subtitle}
+              {translateCatalog(service.subtitle, lang)}
             </p>
           )}
 
@@ -564,7 +564,7 @@ export function SlotSelectionScreen({
             </span>
             {!isFlat && (
               <span className="text-[11px] font-semibold text-muted-foreground">
-                {service.duration_label}
+                {durationLabelText}
               </span>
             )}
           </div>
