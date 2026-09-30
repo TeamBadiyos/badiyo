@@ -17,6 +17,28 @@ export function buildPlayStoreInviteUrl(code: string): string {
   return `${base}&referrer=${referrer}`;
 }
 
+/**
+ * Ready-to-send invite message (Hindi, WhatsApp-style bold) with the invite
+ * link embedded once. Share sheets must send ONLY this text — passing a
+ * separate `url` makes Android/WhatsApp append the link a second time.
+ */
+export function buildReferralShareMessage(code: string): string {
+  const url = buildPlayStoreInviteUrl(code);
+  return [
+    "*आज कामवाली नहीं आई?* 😩",
+    "*अब टेंशन नहीं!*",
+    "",
+    "*Badiyos है ना!* 💚",
+    "",
+    "अब घर बैठे, सिर्फ मोबाइल से कामवाली बुक करे और पाएँ 30 मिनट में सर्विस! 🏠",
+    "",
+    "*आज ही Badiyos App Download करें*",
+    url,
+    "",
+    "*Badiyos — हर घर का अपना साथी 💚*",
+  ].join("\n");
+}
+
 /** Extract a referral code from the current URL, either ?ref=CODE or /invite/CODE. */
 export function readReferralCodeFromUrl(): string | null {
   if (typeof window === "undefined") return null;
