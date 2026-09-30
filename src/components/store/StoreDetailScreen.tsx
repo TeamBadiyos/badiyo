@@ -6,7 +6,7 @@ import { StoreImage } from "./StoreImage";
 import { StoreRating } from "./StoreRating";
 import { ProductCard } from "./ProductCard";
 import { CartBar } from "./CartBar";
-import { buildStoreLink, buildStoreShareMessage } from "@/lib/storeShare";
+import { buildStoreShareMessage } from "@/lib/storeShare";
 import { isStoreOpen, useStoreProducts, type PublicProduct, type PublicStore } from "@/lib/store";
 
 /** Read-only shop page: products grouped by their category, no cart, no checkout. */
