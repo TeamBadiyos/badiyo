@@ -129,20 +129,34 @@ async function fetchExpertProfile(bookingId: string): Promise<ExpertProfile | nu
 
 async function fetchExtensionOptions(): Promise<CatalogueItem[]> {
   const { data, error } = await supabase
-    .from("service_catalogue_config")
-    .select("id, duration_minutes, duration_label, price, is_active, display_order")
+    .from("service_price_options")
+    .select("id, label, duration_minutes, estimated_minutes, customer_price, is_active, display_order")
     .eq("is_active", true)
-    .order("duration_minutes", { ascending: true });
+    .order("display_order", { ascending: true });
   if (error) {
     console.error("fetchExtensionOptions failed:", error);
     return [];
   }
-  return (data ?? []).map((r) => ({
-    id: r.id as string,
-    duration_minutes: r.duration_minutes as number,
-    duration_label: (r.duration_label as string) ?? `${r.duration_minutes} minutes`,
-    price: Number(r.price),
-  }));
+  const rows = (data ?? [])
+    .map((r) => {
+      const minutes = Number(r.estimated_minutes ?? r.duration_minutes ?? 0);
+      return {
+        id: r.id as string,
+        duration_minutes: minutes,
+        duration_label: (r.label as string) ?? `${minutes} minutes`,
+        price: Number(r.customer_price),
+      };
+    })
+    // Only time-based items can extend a running service.
+    .filter((r) => r.duration_minutes > 0)
+    .sort((a, b) => a.duration_minutes - b.duration_minutes);
+  // One entry per length: the cheapest option wins, matching extend_booking.
+  const seen = new Set<number>();
+  return rows.filter((r) => {
+    if (seen.has(r.duration_minutes)) return false;
+    seen.add(r.duration_minutes);
+    return true;
+  });
 }
 
 export function ServiceInProgressScreen({
