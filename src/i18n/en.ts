@@ -356,6 +356,16 @@ export const en = {
   "stage.assigned": "Assigned",
   "stage.started": "Started",
   "stage.completed": "Completed",
+  "journey.assigned": "Expert assigned",
+  "journey.onWay": "Nikal gayi",
+  "journey.arrived": "Pahunch gayi",
+  "journey.started": "Service chalu",
+  "journey.done": "Poora",
+  "journey.onWayTitle": "Expert aapke ghar ke liye nikal gayi hain",
+  "journey.arrivedTitle": "Expert pahunch gayi hain",
+  "journey.tellOtp": "Ye OTP Expert ko batayein",
+  "journey.locationUpdating": "Location update ho rahi hai…",
+  "journey.heldConfirmed": "Booking confirmed ✅. Expert ki details {time} tak aa jayengi.",
 
   // ── Tracking: searching ──────────────────────────────────
   "track.finding": "Finding your expert…",
