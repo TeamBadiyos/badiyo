@@ -7,5 +7,7 @@ export const ACTIVE_TRACKING_STATUSES = [
   "confirmed",
   "accepted",
   "expert_assigned",
+  "on_the_way",
+  "arrived",
   "in_progress",
 ];

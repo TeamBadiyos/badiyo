@@ -43,6 +43,8 @@ export const UPCOMING_STATUSES = [
   "confirmed",
   "accepted",
   "expert_assigned",
+  "on_the_way",
+  "arrived",
   "in_progress",
 ];
 export const PAST_STATUSES = ["completed", "cancelled", "rejected"];

@@ -119,6 +119,8 @@ export function SearchingForExpertScreen({
     if (
       booking.assigned_expert_id ||
       booking.status === "expert_assigned" ||
+      booking.status === "on_the_way" ||
+      booking.status === "arrived" ||
       booking.status === "in_progress" ||
       booking.status === "completed"
     ) {

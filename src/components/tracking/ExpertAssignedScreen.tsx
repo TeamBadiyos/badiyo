@@ -176,7 +176,11 @@ export function ExpertAssignedScreen({
   // map rendering moved to <ServiceLocationMap />
 
 
-  const showExpert = status === "expert_assigned" || status === "in_progress";
+  const showExpert =
+    status === "expert_assigned" ||
+    status === "on_the_way" ||
+    status === "arrived" ||
+    status === "in_progress";
   const isConfirmed = status === "confirmed";
   const isAccepted = status === "accepted";
 
@@ -302,10 +306,16 @@ export function ExpertAssignedScreen({
 
         <ServiceLocationMap address={address} bookingId={bookingId} />
 
-        {(status === "expert_assigned" || status === "accepted" || status === "confirmed") && (
+        {(status === "expert_assigned" ||
+          status === "on_the_way" ||
+          status === "arrived" ||
+          status === "accepted" ||
+          status === "confirmed") && (
           <CancelBookingButton
             bookingId={bookingId}
-            stage={status === "expert_assigned" ? "assigned" : "searching"}
+            stage={
+              status === "accepted" || status === "confirmed" ? "searching" : "assigned"
+            }
             price={booking?.price ?? null}
             onCancelled={onCancelled}
           />

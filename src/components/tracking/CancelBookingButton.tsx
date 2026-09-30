@@ -93,7 +93,7 @@ export function CancelBookingButton({
       // Tell the customer exactly what happened to their money.
       if (result.refund_status === "processing") {
         toast.success(
-          `Booking cancelled. Refund of ₹${result.refund_amount} will reach your account in 5-7 working days.`,
+          `Booking cancel ho gayi. ₹${result.refund_amount} ka refund 5-7 din me aa jayega.`,
         );
       } else if (result.refund_status === "pending") {
         toast.warning(
