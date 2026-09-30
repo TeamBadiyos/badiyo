@@ -14,6 +14,21 @@ export type Database = {
   }
   public: {
     Tables: {
+      _referral_test_log: {
+        Row: {
+          k: string | null
+          v: string | null
+        }
+        Insert: {
+          k?: string | null
+          v?: string | null
+        }
+        Update: {
+          k?: string | null
+          v?: string | null
+        }
+        Relationships: []
+      }
       account_deletion_requests: {
         Row: {
           account_type: string
