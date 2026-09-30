@@ -77,8 +77,8 @@ function ScreenSkeleton() {
 
 
 import { fetchSections } from "@/lib/homeData";
-import {
 import { readLangOutsideReact, translateCatalog } from "@/lib/catalogI18n";
+import {
   fetchAvailability,
   isUnavailable,
   unavailableReason,
