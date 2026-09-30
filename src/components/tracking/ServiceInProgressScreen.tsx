@@ -149,7 +149,7 @@ async function fetchExtensionOptions(): Promise<CatalogueItem[]> {
     })
     // Only time-based items can extend a running service.
     .filter((r) => r.duration_minutes > 0)
-    .sort((a, b) => a.duration_minutes - b.duration_minutes);
+    .sort((a, b) => a.duration_minutes - b.duration_minutes || a.price - b.price);
   // One entry per length: the cheapest option wins, matching extend_booking.
   const seen = new Set<number>();
   return rows.filter((r) => {
