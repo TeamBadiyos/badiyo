@@ -122,6 +122,9 @@ export function RewardsScreen({
                 {isLoading ? "—" : coins}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
+                Worth Rs {isLoading ? "—" : coins} • 1 coin = Rs 1
+              </p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
                 Includes referral coins and rewards credited to you.
               </p>
             </div>
