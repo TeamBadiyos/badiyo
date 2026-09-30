@@ -28,6 +28,12 @@ import { useLanguage, useT } from "@/i18n";
 import { toast } from "sonner";
 import { formatNextOpen, useServiceState } from "@/lib/serviceHours";
 import { useIsInternalTester, type PublicStore } from "@/lib/store";
+import {
+  PENDING_STORE_EVENT,
+  capturePendingStoreKey,
+  clearPendingStoreKey,
+  fetchStoreByKey,
+} from "@/lib/storeShare";
 import { StoreListView } from "./store/StoreListView";
 import { SellOnBadiyosCard } from "./store/SellOnBadiyosCard";
 // Shop pages (with their address picker and payment sheet) load only when the
