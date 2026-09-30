@@ -73,6 +73,21 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
+    // The catalogue item is the single source of truth for how long the job
+    // takes. Resolved up front so the slot-fit check uses the real length.
+    let catalogueMinutes: number | null = null;
+    if (itemId) {
+      const { data: durRow } = await supabase
+        .from("service_price_options")
+        .select("estimated_minutes, duration_minutes")
+        .eq("id", itemId)
+        .maybeSingle();
+      catalogueMinutes =
+        Number(durRow?.estimated_minutes ?? durRow?.duration_minutes ?? 0) || null;
+    }
+    const effectiveMinutes =
+      catalogueMinutes ?? (Number.isInteger(durationMinutes) ? durationMinutes : null);
+
     // Service status/hours guard: block NEW booking/courier payments when the
     // service is closed (status, holiday, outside hours, last-order buffer).
     // Extension and tip payments for running orders are never blocked.
@@ -93,7 +108,7 @@ Deno.serve(async (req) => {
           _service_key: serviceKey,
           _date: draftForSlot.scheduled_date,
           _slot: draftForSlot.scheduled_time_slot,
-          _duration_minutes: Number.isInteger(durationMinutes) ? durationMinutes : 60,
+          _duration_minutes: effectiveMinutes,
         });
         blocked = !slotErr && slotOk?.ok === false;
       } else {
