@@ -308,9 +308,9 @@ export function ServiceInProgressScreen({
   // Extension sheet
   const [sheetOpen, setSheetOpen] = useState(false);
   const { data: extOptions = [] } = useQuery({
-    queryKey: ["extension-options"],
-    queryFn: fetchExtensionOptions,
-    enabled: sheetOpen,
+    queryKey: ["extension-options", bookingId],
+    queryFn: () => fetchExtensionOptions(bookingId!),
+    enabled: sheetOpen && !!bookingId,
     staleTime: 5 * 60_000,
   });
   const [busyOptionId, setBusyOptionId] = useState<string | null>(null);
