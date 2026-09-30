@@ -7471,6 +7471,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      coins_release_stale_reservations: { Args: never; Returns: number }
       compute_tds: {
         Args: { _gross: number; _owner_id: string; _owner_type: string }
         Returns: {
