@@ -152,6 +152,17 @@ export function SearchingForExpertScreen({
           <StageTracker stage={stageFromStatus(status)} />
         </div>
 
+        {slot?.mode === "later" && status === "confirmed" && (() => {
+          const h = slot.slotId - 1;
+          const disp = `${h % 12 === 0 ? 12 : h % 12}:00 ${h >= 12 ? "PM" : "AM"}`;
+          return (
+            <div className="mt-5 rounded-[18px] border border-primary/30 bg-primary/10 p-4 text-sm font-semibold text-foreground">
+              {t("journey.heldConfirmed", { time: `${slot.day}, ${disp}` })}
+            </div>
+          );
+        })()}
+
+
         {/* Radiating search indicator */}
         <section className="mt-6 rounded-[20px] border border-border bg-card p-6">
           <div className="flex flex-col items-center text-center">

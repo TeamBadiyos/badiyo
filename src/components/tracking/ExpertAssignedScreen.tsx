@@ -8,6 +8,67 @@ import { usePullToRefresh, PullToRefreshIndicator } from "@/lib/usePullToRefresh
 import { ServiceLocationMap } from "./ServiceLocationMap";
 import { CancelBookingButton } from "./CancelBookingButton";
 import { useT } from "@/i18n";
+import { lazy, Suspense } from "react";
+import type { RiderLocation } from "../courier/courierData";
+
+const CourierLiveMap = lazy(() =>
+  import("../courier/CourierLiveMap").then((m) => ({ default: m.CourierLiveMap })),
+);
+
+async function fetchExpertLocation(bookingId: string): Promise<RiderLocation | null> {
+  const { data, error } = await supabase.rpc("booking_get_expert_location", {
+    p_booking_id: bookingId,
+  });
+  if (error) return null;
+  const d = (data ?? {}) as Record<string, unknown>;
+  const lat = d.lat ?? d.latitude ?? d.current_lat;
+  const lng = d.lng ?? d.longitude ?? d.current_lng;
+  return {
+    available: !!d.available && lat != null && lng != null,
+    lat: lat != null ? Number(lat) : undefined,
+    lng: lng != null ? Number(lng) : undefined,
+    location_updated_at: (d.location_updated_at ?? d.updated_at) as string | undefined,
+    stale: !!d.stale,
+    reason: d.reason as string | undefined,
+  };
+}
+
+function ExpertLiveMap({ bookingId, address }: { bookingId: string; address: SelectedAddress }) {
+  const t = useT();
+  const { data } = useQuery({
+    queryKey: ["expert-live-location", bookingId],
+    queryFn: () => fetchExpertLocation(bookingId),
+    refetchInterval: 15000,
+    staleTime: 0,
+  });
+  if (!data?.available) {
+    return (
+      <div className="mt-5 flex items-center justify-center gap-2 rounded-[18px] border border-border bg-card p-6 text-sm text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin text-primary" />
+        {t("journey.locationUpdating")}
+      </div>
+    );
+  }
+  return (
+    <div className="mt-5 overflow-hidden rounded-[18px]">
+      <Suspense fallback={<div className="h-56 animate-pulse rounded-[18px] bg-muted" />}>
+        <CourierLiveMap
+          orderId={`booking-${bookingId}`}
+          status="IN_TRANSIT"
+          refetchMs={15000}
+          fetchLocation={() => fetchExpertLocation(bookingId)}
+          pickup={{ lat: null, lng: null, label: "" }}
+          drop={{
+            lat: address.latitude ?? null,
+            lng: address.longitude ?? null,
+            label: address.full_address,
+          }}
+        />
+      </Suspense>
+    </div>
+  );
+}
+
 
 
 type ExpertInfo = {
@@ -93,7 +154,7 @@ export function ExpertAssignedScreen({
   // can already read it aloud without tapping anything.
   useEffect(() => {
     if (!bookingId) return;
-    if (status !== "expert_assigned") return;
+    if (!["expert_assigned", "on_the_way", "arrived"].includes(status)) return;
     if (booking?.start_otp) return;
     supabase.rpc("ensure_start_otp", { _booking_id: bookingId }).then(({ data, error }) => {
       if (error) {
@@ -183,12 +244,64 @@ export function ExpertAssignedScreen({
     status === "in_progress";
   const isConfirmed = status === "confirmed";
   const isAccepted = status === "accepted";
+  const isOnWay = status === "on_the_way";
+  const isArrived = status === "arrived";
 
   const headline = isConfirmed
     ? t("track.findingExpert")
     : isAccepted
       ? t("track.assigningExpert")
-      : t("track.assignedTitle");
+      : isOnWay
+        ? t("journey.onWayTitle")
+        : isArrived
+          ? t("journey.arrivedTitle")
+          : t("track.assignedTitle");
+
+  const otpBlock = (
+    <div
+      className={`mt-4 rounded-[14px] border border-primary/30 bg-primary/5 text-center ${
+        isArrived ? "p-6" : "p-4"
+      }`}
+    >
+      <div
+        className={
+          isArrived
+            ? "text-base font-bold text-foreground"
+            : "text-[10px] font-bold uppercase tracking-wide text-muted-foreground"
+        }
+      >
+        {isArrived ? t("journey.tellOtp") : t("track.startCode")}
+      </div>
+      <div
+        className={`mt-2 flex items-center justify-center gap-2 font-mono font-bold text-primary ${
+          isArrived ? "text-6xl tracking-[0.3em]" : "text-3xl tracking-[0.35em]"
+        }`}
+      >
+        {booking?.start_otp ? (
+          booking.start_otp
+        ) : (
+          <>
+            <Loader2 className="h-5 w-5 animate-spin" />
+            <span className="text-sm font-medium text-muted-foreground">
+              {t("track.preparingCode")}
+            </span>
+          </>
+        )}
+      </div>
+      {!isArrived && (
+        <p className="mt-2 text-[11px] text-muted-foreground">{t("track.showToExpert")}</p>
+      )}
+      {onShowStartOtp && (
+        <button
+          type="button"
+          onClick={onShowStartOtp}
+          className="mt-3 text-xs font-bold text-primary underline"
+        >
+          {t("track.openFullScreen")}
+        </button>
+      )}
+    </div>
+  );
 
   return (
     <main className="min-h-screen w-full bg-background pb-8">
@@ -212,6 +325,12 @@ export function ExpertAssignedScreen({
         <div className="mt-5">
           <StageTracker stage={stageFromStatus(status)} />
         </div>
+
+        {isArrived && otpBlock}
+
+        {isOnWay && bookingId && (
+          <ExpertLiveMap bookingId={bookingId} address={address} />
+        )}
 
         {/* Expert card / waiting states */}
         {showExpert ? (
@@ -252,36 +371,7 @@ export function ExpertAssignedScreen({
               </div>
             )}
 
-            {/* Start code shown directly — no hidden button */}
-            <div className="mt-4 rounded-[14px] border border-primary/30 bg-primary/5 p-4 text-center">
-              <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
-                {t("track.startCode")}
-              </div>
-              <div className="mt-1 flex items-center justify-center gap-2 font-mono text-3xl font-bold tracking-[0.35em] text-primary">
-                {booking?.start_otp ? (
-                  booking.start_otp
-                ) : (
-                  <>
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                    <span className="text-sm font-medium text-muted-foreground">
-                      {t("track.preparingCode")}
-                    </span>
-                  </>
-                )}
-              </div>
-              <p className="mt-2 text-[11px] text-muted-foreground">
-                {t("track.showToExpert")}
-              </p>
-              {onShowStartOtp && (
-                <button
-                  type="button"
-                  onClick={onShowStartOtp}
-                  className="mt-3 text-xs font-bold text-primary underline"
-                >
-                  {t("track.openFullScreen")}
-                </button>
-              )}
-            </div>
+            {!isArrived && otpBlock}
           </section>
         ) : (
           <section className="mt-5 rounded-[18px] border border-border bg-card p-5">
@@ -304,7 +394,9 @@ export function ExpertAssignedScreen({
           </section>
         )}
 
-        <ServiceLocationMap address={address} bookingId={bookingId} />
+        {!isOnWay && !isArrived && (
+          <ServiceLocationMap address={address} bookingId={bookingId} />
+        )}
 
         {(status === "expert_assigned" ||
           status === "on_the_way" ||

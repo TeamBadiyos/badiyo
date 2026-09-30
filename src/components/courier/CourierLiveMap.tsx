@@ -26,6 +26,7 @@ export function CourierLiveMap({
   pickup,
   drop,
   fetchLocation,
+  refetchMs = 8000,
 }: {
   orderId: string;
   status: string;
@@ -33,6 +34,7 @@ export function CourierLiveMap({
   fetchLocation?: () => ReturnType<typeof fetchRiderLocation>;
   pickup: { lat: number | null; lng: number | null; label: string };
   drop: { lat: number | null; lng: number | null; label: string };
+  refetchMs?: number;
 }) {
   const t = useT();
   const mapDivRef = useRef<HTMLDivElement>(null);
@@ -57,7 +59,7 @@ export function CourierLiveMap({
     queryKey: ["courier-rider-location", orderId, fetchLocation ? "contact" : "owner"],
     queryFn: () => (fetchLocation ? fetchLocation() : fetchRiderLocation(orderId)),
     enabled: live,
-    refetchInterval: 8000,
+    refetchInterval: refetchMs,
     refetchIntervalInBackground: false,
     staleTime: 0,
   });

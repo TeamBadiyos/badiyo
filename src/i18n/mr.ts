@@ -358,6 +358,16 @@ export const mr: Partial<Record<keyof typeof en, string>> = {
   "stage.assigned": "नेमले",
   "stage.started": "सुरू",
   "stage.completed": "पूर्ण",
+  "journey.assigned": "एक्सपर्ट नेमले",
+  "journey.onWay": "निघाल्या",
+  "journey.arrived": "पोहोचल्या",
+  "journey.started": "सेवा सुरू",
+  "journey.done": "पूर्ण",
+  "journey.onWayTitle": "एक्सपर्ट तुमच्या घरी येण्यासाठी निघाल्या आहेत",
+  "journey.arrivedTitle": "एक्सपर्ट पोहोचल्या आहेत",
+  "journey.tellOtp": "हा OTP एक्सपर्टला सांगा",
+  "journey.locationUpdating": "लोकेशन अपडेट होत आहे…",
+  "journey.heldConfirmed": "बुकिंग निश्चित ✅. एक्सपर्टची माहिती {time} पर्यंत येईल.",
 
   // ── Tracking: searching ──────────────────────────────────
   "track.finding": "तुमचा एक्सपर्ट शोधत आहोत…",
