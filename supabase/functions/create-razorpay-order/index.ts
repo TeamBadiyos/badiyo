@@ -302,7 +302,7 @@ Deno.serve(async (req) => {
         _user_id: userId,
         _code: couponCode,
         _base_amount: price!,
-        _duration_minutes: Number.isInteger(durationMinutes) ? durationMinutes : null,
+        _duration_minutes: effectiveMinutes,
       });
       if (quoteErr) {
         console.error("coupon_quote failed", quoteErr);
@@ -348,7 +348,7 @@ Deno.serve(async (req) => {
           _code: couponCode,
           _order_id: freeOrderId,
           _base_amount: price!,
-          _duration_minutes: Number.isInteger(durationMinutes) ? durationMinutes : 0,
+          _duration_minutes: effectiveMinutes ?? 0,
         });
         if (reserveErr) {
           console.error("system_coupon_reserve failed", reserveErr);
@@ -418,7 +418,8 @@ Deno.serve(async (req) => {
           currency: order.currency,
           payload: {
             address_id: draft.address_id ?? null,
-            service_duration_minutes: draft.service_duration_minutes ?? 0,
+            service_duration_minutes: effectiveMinutes ?? draft.service_duration_minutes ?? 0,
+            price_option_id: itemId || null,
             service_label: draft.service_label ?? "Service",
             slot_type: draft.slot_type ?? "now",
             scheduled_date: draft.scheduled_date ?? null,
@@ -441,7 +442,7 @@ Deno.serve(async (req) => {
         _code: couponCode,
         _order_id: order.id,
         _base_amount: price!,
-        _duration_minutes: Number.isInteger(durationMinutes) ? durationMinutes : 0,
+        _duration_minutes: effectiveMinutes ?? 0,
       });
       if (reserveErr) console.error("system_coupon_reserve failed", reserveErr);
     }
