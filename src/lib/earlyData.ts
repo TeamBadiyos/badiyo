@@ -19,7 +19,7 @@ export const SEGMENTS_SELECT = "id, name, short_name, slug, vertical_type, displ
 export const SERVICE_CATEGORIES_SELECT = "id, segment_id, name, slug, icon_url, rank";
 
 export const SERVICES_SELECT =
-  "id, name, image_url, pricing_type, display_order, category_id, description, gallery_urls, video_url, inclusions, exclusions, service_categories(segment_id, icon_url), service_price_options(id, label, duration_minutes, unit_label, customer_price, strikethrough_price, display_order, is_active, image_url, description, gallery_urls, video_url, inclusions, exclusions, item_task_types(display_order, task_types(id, name, inclusions, exclusions, is_active, rank)))";
+  "id, name, image_url, pricing_type, display_order, category_id, description, gallery_urls, video_url, inclusions, exclusions, service_categories(segment_id, icon_url), service_price_options(id, label, duration_minutes, estimated_minutes, unit_label, customer_price, strikethrough_price, display_order, is_active, image_url, description, gallery_urls, video_url, inclusions, exclusions, item_task_types(display_order, task_types(id, name, inclusions, exclusions, is_active, rank)))";
 
 export const HOMEPAGE_SECTIONS_SELECT = "section_type, display_order, payload";
 
