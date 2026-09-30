@@ -37,7 +37,6 @@ export function StoreDetailScreen({
   }, [products]);
 
   async function shareStore() {
-    const link = buildStoreLink(store);
     const text = buildStoreShareMessage(store);
     try {
       const nav = navigator as Navigator & { share?: (d: ShareData) => Promise<void> };
