@@ -229,3 +229,16 @@ export function translateStatus(status: string, lang: string): string {
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(" ");
 }
+
+/**
+ * Active language read outside React (for module-level label helpers).
+ * Components should prefer useLanguage(); this is a safe fallback.
+ */
+export function readLangOutsideReact(): string {
+  if (typeof window === "undefined") return "en";
+  try {
+    return window.localStorage.getItem("badiyo.lang") === "mr" ? "mr" : "en";
+  } catch {
+    return "en";
+  }
+}
