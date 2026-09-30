@@ -265,15 +265,20 @@ export function CompleteProfileSheet({ enabled }: { enabled: boolean }) {
             placeholder="Full name"
             className="h-12 w-full rounded-[14px] border border-border bg-background px-4 text-sm font-semibold text-foreground outline-none focus:border-primary"
           />
-          <input
-            value={phone}
-            onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
-            type="tel"
-            inputMode="numeric"
-            maxLength={10}
-            placeholder="Mobile number (10 digits)"
-            className="h-12 w-full rounded-[14px] border border-border bg-background px-4 text-sm font-semibold text-foreground outline-none focus:border-primary"
-          />
+          <div className="flex h-12 w-full items-center rounded-[14px] border border-border bg-background focus-within:border-primary">
+            <span className="flex h-full items-center border-r border-border px-3 text-sm font-semibold text-muted-foreground">
+              +91
+            </span>
+            <input
+              value={phone}
+              onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(-10))}
+              type="tel"
+              inputMode="numeric"
+              maxLength={10}
+              placeholder="10-digit mobile number"
+              className="h-full flex-1 rounded-r-[14px] bg-transparent px-3 text-sm font-semibold text-foreground outline-none"
+            />
+          </div>
           <input
             value={email}
             onChange={(e) => setEmail(e.target.value)}
