@@ -42,7 +42,8 @@ export function StoreDetailScreen({
     try {
       const nav = navigator as Navigator & { share?: (d: ShareData) => Promise<void> };
       if (nav.share) {
-        await nav.share({ title: store.store_name ?? "Badiyos", text, url: link });
+        // text already contains the link — passing `url` too would duplicate it
+        await nav.share({ title: store.store_name ?? "Badiyos", text });
         return;
       }
     } catch {
