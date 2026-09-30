@@ -149,7 +149,9 @@ export async function fetchSegmentServices(): Promise<SegmentService[]> {
         id: o.id,
         icon: null,
         duration_label: o.label,
-        duration_minutes: Number(o.duration_minutes ?? 60),
+        // Authoritative internal length. Never guessed: 0 means "not configured"
+        // and the booking flow refuses instead of assuming an hour.
+        duration_minutes: Number(o.estimated_minutes ?? o.duration_minutes ?? 0),
         subtitle: o.unit_label ?? null,
         price: Number(o.customer_price),
         strikethrough_price:
