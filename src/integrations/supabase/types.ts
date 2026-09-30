@@ -576,6 +576,7 @@ export type Database = {
       bookings: {
         Row: {
           address_id: string | null
+          arrived_at: string | null
           assigned_area_partner_id: string | null
           assigned_expert_id: string | null
           booking_lat: number | null
@@ -597,11 +598,16 @@ export type Database = {
           dispatch_alert_sent: boolean
           dispatch_exhausted_at: string | null
           end_otp: string | null
+          expert_assigned_at: string | null
           expert_payout_batch_id: string | null
+          expert_slot_reminder_sent: boolean
           gst_amount: number
           gst_percent: number
           id: string
           last_rebroadcast_at: string | null
+          no_expert_alert_sent: boolean
+          on_the_way_at: string | null
+          onway_alert_sent: boolean
           partner_payout_batch_id: string | null
           price: number
           rating: number | null
@@ -637,6 +643,7 @@ export type Database = {
         }
         Insert: {
           address_id?: string | null
+          arrived_at?: string | null
           assigned_area_partner_id?: string | null
           assigned_expert_id?: string | null
           booking_lat?: number | null
@@ -658,11 +665,16 @@ export type Database = {
           dispatch_alert_sent?: boolean
           dispatch_exhausted_at?: string | null
           end_otp?: string | null
+          expert_assigned_at?: string | null
           expert_payout_batch_id?: string | null
+          expert_slot_reminder_sent?: boolean
           gst_amount?: number
           gst_percent?: number
           id?: string
           last_rebroadcast_at?: string | null
+          no_expert_alert_sent?: boolean
+          on_the_way_at?: string | null
+          onway_alert_sent?: boolean
           partner_payout_batch_id?: string | null
           price: number
           rating?: number | null
@@ -698,6 +710,7 @@ export type Database = {
         }
         Update: {
           address_id?: string | null
+          arrived_at?: string | null
           assigned_area_partner_id?: string | null
           assigned_expert_id?: string | null
           booking_lat?: number | null
@@ -719,11 +732,16 @@ export type Database = {
           dispatch_alert_sent?: boolean
           dispatch_exhausted_at?: string | null
           end_otp?: string | null
+          expert_assigned_at?: string | null
           expert_payout_batch_id?: string | null
+          expert_slot_reminder_sent?: boolean
           gst_amount?: number
           gst_percent?: number
           id?: string
           last_rebroadcast_at?: string | null
+          no_expert_alert_sent?: boolean
+          on_the_way_at?: string | null
+          onway_alert_sent?: boolean
           partner_payout_batch_id?: string | null
           price?: number
           rating?: number | null
@@ -7121,6 +7139,12 @@ export type Database = {
       apply_referral_code: { Args: { _code: string }; Returns: string }
       award_referral_milestones: { Args: { _user_id: string }; Returns: number }
       booking_dispatch_refund_job: { Args: never; Returns: undefined }
+      booking_dispatch_release_due: { Args: never; Returns: number }
+      booking_get_expert_location: {
+        Args: { p_booking_id: string }
+        Returns: Json
+      }
+      booking_journey_sweeper: { Args: never; Returns: number }
       booking_verify_job_secret: { Args: { _secret: string }; Returns: boolean }
       broadcast_booking_to_experts: {
         Args: { _booking_id: string; _radius?: number }
@@ -7423,6 +7447,7 @@ export type Database = {
         Args: { p_booking_id: string }
         Returns: {
           address_id: string | null
+          arrived_at: string | null
           assigned_area_partner_id: string | null
           assigned_expert_id: string | null
           booking_lat: number | null
@@ -7444,11 +7469,16 @@ export type Database = {
           dispatch_alert_sent: boolean
           dispatch_exhausted_at: string | null
           end_otp: string | null
+          expert_assigned_at: string | null
           expert_payout_batch_id: string | null
+          expert_slot_reminder_sent: boolean
           gst_amount: number
           gst_percent: number
           id: string
           last_rebroadcast_at: string | null
+          no_expert_alert_sent: boolean
+          on_the_way_at: string | null
+          onway_alert_sent: boolean
           partner_payout_batch_id: string | null
           price: number
           rating: number | null
@@ -8004,6 +8034,11 @@ export type Database = {
           full_name: string
           phone: string
         }[]
+      }
+      expert_mark_arrived: { Args: { p_booking_id: string }; Returns: string }
+      expert_mark_on_the_way: {
+        Args: { p_booking_id: string }
+        Returns: string
       }
       expert_register_device: {
         Args: { _device_id: string; _device_label?: string }
