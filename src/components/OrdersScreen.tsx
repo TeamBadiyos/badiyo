@@ -62,11 +62,7 @@ function statusPill(status: string): string {
 }
 
 function statusLabel(status: string): string {
-  return status
-    .toLowerCase()
-    .split("_")
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(" ");
+  return translateStatus(status, readLangOutsideReact());
 }
 
 function formatDate(b: BookingRow): string {
