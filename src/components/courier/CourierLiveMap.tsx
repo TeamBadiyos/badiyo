@@ -27,6 +27,7 @@ export function CourierLiveMap({
   drop,
   fetchLocation,
   refetchMs = 8000,
+  markerIconUrl,
 }: {
   orderId: string;
   status: string;
@@ -35,6 +36,8 @@ export function CourierLiveMap({
   pickup: { lat: number | null; lng: number | null; label: string };
   drop: { lat: number | null; lng: number | null; label: string };
   refetchMs?: number;
+  /** Override the moving marker image (e.g. maid symbol for cleaning experts). */
+  markerIconUrl?: string;
 }) {
   const t = useT();
   const mapDivRef = useRef<HTMLDivElement>(null);
