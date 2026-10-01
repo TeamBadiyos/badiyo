@@ -164,6 +164,11 @@ export function ExpertAssignedScreen({
 
   const status = booking?.status ?? currentStatus ?? "confirmed";
   const expert = booking?.experts ?? null;
+  const categorySlug = booking?.service_categories?.slug ?? null;
+  const usesRiderIcon =
+    (categorySlug != null && RIDER_CATEGORY_SLUGS.includes(categorySlug)) ||
+    booking?.service_category_id === CAR_BIKE_WASH_CATEGORY_ID;
+  const expertMarkerIcon = usesRiderIcon ? riderMarkerImage : womanMarkerImage;
 
   // When status reaches expert_assigned and no otp yet, ensure one exists so the customer
   // can already read it aloud without tapping anything.
