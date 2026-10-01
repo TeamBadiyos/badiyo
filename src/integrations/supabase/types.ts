@@ -2354,6 +2354,7 @@ export type Database = {
       }
       coupons: {
         Row: {
+          applicable_category_ids: string[] | null
           audience: string
           code: string
           created_at: string
@@ -2374,6 +2375,7 @@ export type Database = {
           valid_until: string | null
         }
         Insert: {
+          applicable_category_ids?: string[] | null
           audience?: string
           code: string
           created_at?: string
@@ -2394,6 +2396,7 @@ export type Database = {
           valid_until?: string | null
         }
         Update: {
+          applicable_category_ids?: string[] | null
           audience?: string
           code?: string
           created_at?: string
@@ -7751,6 +7754,7 @@ export type Database = {
       coupon_preview: {
         Args: {
           _base_amount: number
+          _category_id?: string
           _code: string
           _duration_minutes?: number
         }
@@ -7759,6 +7763,7 @@ export type Database = {
       coupon_quote: {
         Args: {
           _base_amount: number
+          _category_id?: string
           _code: string
           _duration_minutes?: number
           _user_id: string
@@ -8431,6 +8436,7 @@ export type Database = {
       my_coupons: {
         Args: never
         Returns: {
+          applicable_category_ids: string[]
           code: string
           description: string
           discount_type: string
@@ -9220,6 +9226,10 @@ export type Database = {
         Args: { _active: boolean; _id: string }
         Returns: undefined
       }
+      staff_set_coupon_categories: {
+        Args: { _category_ids: string[]; _id: string }
+        Returns: undefined
+      }
       staff_set_delivery_status: {
         Args: { _merchant_id: string; _reason: string; _status: string }
         Returns: undefined
@@ -9755,6 +9765,7 @@ export type Database = {
       system_coupon_reserve: {
         Args: {
           _base_amount: number
+          _category_id?: string
           _code: string
           _duration_minutes: number
           _order_id: string
