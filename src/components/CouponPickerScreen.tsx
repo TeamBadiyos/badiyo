@@ -27,6 +27,7 @@ async function evaluateCoupons(service: SelectedService): Promise<EvaluatedCoupo
         coupon.code,
         Number(service.price),
         service.duration_minutes,
+        service.service_category_id,
       ),
     })),
   );
@@ -125,6 +126,7 @@ export function CouponPickerScreen({
       normalized,
       Number(service.price),
       service.duration_minutes,
+      service.service_category_id,
     );
     setApplyingCode(null);
     if (!result.ok) {

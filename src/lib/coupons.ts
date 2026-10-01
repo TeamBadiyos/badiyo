@@ -19,6 +19,7 @@ export type MyCoupon = {
   valid_until: string | null;
   source: string;
   is_personal: boolean;
+  applicable_category_ids?: string[] | null;
 };
 
 export type CouponPreview =
@@ -55,6 +56,7 @@ export async function previewCoupon(
   code: string,
   baseAmount: number,
   durationMinutes?: number | null,
+  categoryId?: string | null,
 ): Promise<CouponPreview> {
   const trimmed = code.trim().toUpperCase();
   if (!trimmed) return { ok: false, message: reasonMessage("invalid_code") };
@@ -63,6 +65,7 @@ export async function previewCoupon(
     _code: trimmed,
     _base_amount: baseAmount,
     ...(durationMinutes ? { _duration_minutes: durationMinutes } : {}),
+    ...(categoryId ? { _category_id: categoryId } : {}),
   });
   if (error) {
     console.error("coupon_preview failed:", error);
