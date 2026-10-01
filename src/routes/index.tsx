@@ -134,6 +134,10 @@ const SupportTicketDetailScreen = lazyNamed(
   () => import("@/components/profile/SupportTicketDetailScreen"),
   "SupportTicketDetailScreen",
 );
+const SuggestionsScreen = lazyNamed(
+  () => import("@/components/profile/SuggestionsScreen"),
+  "SuggestionsScreen",
+);
 const SearchResultsScreen = lazyNamed(
   () => import("@/components/SearchResultsScreen"),
   "SearchResultsScreen",
@@ -251,6 +255,7 @@ type Phase =
   | "about"
   | "referrals"
   | "support-tickets"
+  | "suggestions"
   | "support-ticket"
   | "search-results"
   | "orders"
@@ -1231,6 +1236,7 @@ function Index() {
             onOpenHelp={() => setPhase("help")}
             onOpenReferrals={() => setPhase("referrals")}
             onOpenTickets={() => setPhase("support-tickets")}
+            onOpenSuggestions={() => setPhase("suggestions")}
             onOpenAddresses={() => setPhase("manage-addresses")}
             onLogout={() => setPhase("login")}
           />
@@ -1239,6 +1245,11 @@ function Index() {
       {phase === "manage-addresses" && (
         <div className="animate-fade-slide-in">
           <AddressSelectionScreen manage onBack={() => setPhase("profile")} />
+        </div>
+      )}
+      {phase === "suggestions" && (
+        <div className="animate-fade-slide-in">
+          <SuggestionsScreen onBack={() => setPhase("profile")} />
         </div>
       )}
       {phase === "support-tickets" && (

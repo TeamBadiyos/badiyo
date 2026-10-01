@@ -13,13 +13,14 @@ import {
   LogOut,
   MessageCircle,
   MapPin,
+  Lightbulb,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAvatarUrl } from "@/lib/useAvatarUrl";
-import { useT } from "@/i18n";
+import { useT, useLanguage } from "@/i18n";
 
 
 
@@ -35,6 +36,7 @@ export function ProfileScreen({
   onOpenSettings,
   onOpenHelp,
   onOpenTickets,
+  onOpenSuggestions,
   onOpenReferrals,
   onOpenAddresses,
   onLogout,
@@ -47,6 +49,7 @@ export function ProfileScreen({
   onOpenSettings: () => void;
   onOpenHelp: () => void;
   onOpenTickets: () => void;
+  onOpenSuggestions: () => void;
   onOpenReferrals: () => void;
   onOpenAddresses: () => void;
   onLogout: () => void;
@@ -55,6 +58,7 @@ export function ProfileScreen({
   const [fullName, setFullName] = useState<string | null>(null);
   const { data: avatarUrl } = useAvatarUrl();
   const t = useT();
+  const { lang } = useLanguage();
 
   useEffect(() => {
     (async () => {
@@ -110,6 +114,13 @@ export function ProfileScreen({
           desc: `FAQs, contact us & ${t("legal.section").toLowerCase()}`,
           icon: HelpCircle,
           onClick: onOpenHelp,
+        },
+        {
+          key: "suggest",
+          label: lang === "mr" ? "💡 सूचना द्या" : "💡 Suggestion dein",
+          desc: lang === "mr" ? "ॲप सुधारण्यासाठी तुमची कल्पना सांगा" : "App behtar banane ke liye apna idea bhejein",
+          icon: Lightbulb,
+          onClick: onOpenSuggestions,
         },
         {
           key: "tickets",
