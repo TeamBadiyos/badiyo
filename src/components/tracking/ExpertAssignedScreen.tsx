@@ -351,7 +351,11 @@ export function ExpertAssignedScreen({
         {isArrived && otpBlock}
 
         {isOnWay && bookingId && (
-          <ExpertLiveMap bookingId={bookingId} address={address} />
+          <ExpertLiveMap
+            bookingId={bookingId}
+            address={address}
+            markerIconUrl={expertMarkerIcon}
+          />
         )}
 
         {/* Expert card / waiting states */}
