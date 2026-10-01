@@ -10,6 +10,8 @@ import { CancelBookingButton } from "./CancelBookingButton";
 import { useT } from "@/i18n";
 import { lazy, Suspense } from "react";
 import type { RiderLocation } from "../courier/courierData";
+import riderMarkerImage from "@/assets/map-rider-worker.png";
+import womanMarkerImage from "@/assets/map-woman-worker.png";
 
 const CourierLiveMap = lazy(() =>
   import("../courier/CourierLiveMap").then((m) => ({ default: m.CourierLiveMap })),
