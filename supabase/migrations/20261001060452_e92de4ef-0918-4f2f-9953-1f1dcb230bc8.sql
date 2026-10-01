@@ -1,0 +1,1 @@
+UPDATE public.ops_settings SET value = '10', updated_at = now() WHERE key = 'asap_onway_deadline_minutes';
