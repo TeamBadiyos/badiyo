@@ -93,14 +93,20 @@ type BookingRow = {
   start_otp: string | null;
   deleted_at: string | null;
   price: number | null;
+  service_category_id?: string | null;
+  service_categories?: { slug: string | null } | null;
   experts: ExpertInfo;
 };
+
+/** Categories whose expert travels on a two-wheeler; everything else is a maid. */
+const RIDER_CATEGORY_SLUGS = ["car-bike-wash", "courier"];
+const CAR_BIKE_WASH_CATEGORY_ID = "78fb0c2e-94b5-4951-aa61-b5b4e0052d84";
 
 async function fetchBookingRow(bookingId: string): Promise<BookingRow | null> {
   const { data, error } = await supabase
     .from("bookings")
     .select(
-      "status, assigned_expert_id, start_otp, deleted_at, price, experts:assigned_expert_id ( id, name, phone, photo_url )",
+      "status, assigned_expert_id, start_otp, deleted_at, price, service_category_id, service_categories!bookings_service_category_id_fkey ( slug ), experts:assigned_expert_id ( id, name, phone, photo_url )",
     )
     .eq("id", bookingId)
     .maybeSingle();
