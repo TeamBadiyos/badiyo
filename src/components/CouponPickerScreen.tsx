@@ -109,11 +109,13 @@ export function CouponPickerScreen({
     staleTime: 60_000,
   });
 
-  const { applicable, unavailable } = useMemo(() => {
+  const { special, applicable, unavailable } = useMemo(() => {
     const entries = data ?? [];
+    const isSpecial = (e: EvaluatedCoupon) => Boolean(e.coupon.is_targeted);
     return {
-      applicable: entries.filter((entry) => entry.result.ok),
-      unavailable: entries.filter((entry) => !entry.result.ok),
+      special: entries.filter((entry) => isSpecial(entry)),
+      applicable: entries.filter((entry) => !isSpecial(entry) && entry.result.ok),
+      unavailable: entries.filter((entry) => !isSpecial(entry) && !entry.result.ok),
     };
   }, [data]);
 
@@ -194,6 +196,17 @@ export function CouponPickerScreen({
               <p className="mt-3 text-sm font-semibold text-foreground">{t("coupon.empty")}</p>
               <p className="mt-1 text-xs text-muted-foreground">{t("coupon.enterAnyCode")}</p>
             </div>
+          )}
+
+          {special.length > 0 && (
+            <section className="mb-7">
+              <h2 className="text-xs font-extrabold uppercase text-primary">🎁 Aapke liye special</h2>
+              <div className="mt-2">
+                {special.map((entry) => (
+                  <CouponRow key={entry.coupon.id} entry={entry} applyingCode={applyingCode} appliedCode={appliedCoupon?.code ?? null} onApply={(code) => void apply(code)} />
+                ))}
+              </div>
+            </section>
           )}
 
           {applicable.length > 0 && (

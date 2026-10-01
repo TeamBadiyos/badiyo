@@ -20,6 +20,7 @@ export type MyCoupon = {
   source: string;
   is_personal: boolean;
   applicable_category_ids?: string[] | null;
+  is_targeted?: boolean;
 };
 
 export type CouponPreview =
@@ -39,7 +40,9 @@ function reasonMessage(reason: string, extra?: Record<string, unknown>): string 
     case "already_used":
       return "You've already used this coupon";
     case "not_eligible":
-      return "This coupon isn't available on your account";
+      return "Ye coupon aapke account ke liye nahi hai";
+    case "too_many_attempts":
+      return "Bahut baar galat code. 10 minute baad try karein.";
     case "not_applicable":
       return "This coupon doesn't apply to this service";
     case "no_discount":
@@ -61,7 +64,10 @@ export async function previewCoupon(
   const trimmed = code.trim().toUpperCase();
   if (!trimmed) return { ok: false, message: reasonMessage("invalid_code") };
 
-  const { data, error } = await supabase.rpc("coupon_preview", {
+  // Listed coupons are checked without using up wrong-code attempts;
+  // any other typed code counts toward the 5-per-10-minutes limit.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase.rpc as any)("coupon_preview_listed", {
     _code: trimmed,
     _base_amount: baseAmount,
     ...(durationMinutes ? { _duration_minutes: durationMinutes } : {}),
@@ -87,6 +93,9 @@ export async function previewCoupon(
 }
 
 export async function fetchMyCoupons(options?: { throwOnError?: boolean }): Promise<MyCoupon[]> {
+  // Pick up any coupons gifted to this phone number before signup.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabase.rpc as any)("my_coupon_claim_phone_grants").then(() => null, () => null);
   const { data, error } = await supabase.rpc("my_coupons");
   if (error) {
     console.error("my_coupons failed:", error);
