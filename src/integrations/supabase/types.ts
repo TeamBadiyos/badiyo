@@ -8875,6 +8875,14 @@ export type Database = {
         Args: { _batch_id: string }
         Returns: undefined
       }
+      staff_coupon_grant_phones: {
+        Args: { _id: string; _phones: string[] }
+        Returns: Json
+      }
+      staff_coupon_revoke_grant: {
+        Args: { _coupon_id: string; _grant_id: string; _kind: string }
+        Returns: undefined
+      }
       staff_courier_assignable_riders: {
         Args: { _order_id: string }
         Returns: {
@@ -9598,6 +9606,7 @@ export type Database = {
           _max_discount: number
           _min_order_amount: number
           _per_user_limit: number
+          _show_in_list?: boolean
           _title: string
           _total_usage_limit: number
           _valid_from: string
