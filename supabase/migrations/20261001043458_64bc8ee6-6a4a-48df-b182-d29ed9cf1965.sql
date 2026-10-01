@@ -1,0 +1,1 @@
+GRANT EXECUTE ON FUNCTION public.coupon_preview(text, numeric, integer) TO service_role;
