@@ -2298,6 +2298,68 @@ export type Database = {
           },
         ]
       }
+      coupon_attempt_logs: {
+        Row: {
+          code_attempted: string | null
+          created_at: string
+          id: string
+          reason: string | null
+          user_id: string
+        }
+        Insert: {
+          code_attempted?: string | null
+          created_at?: string
+          id?: string
+          reason?: string | null
+          user_id: string
+        }
+        Update: {
+          code_attempted?: string | null
+          created_at?: string
+          id?: string
+          reason?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      coupon_phone_grants: {
+        Row: {
+          converted_at: string | null
+          converted_user_id: string | null
+          coupon_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          phone10: string
+        }
+        Insert: {
+          converted_at?: string | null
+          converted_user_id?: string | null
+          coupon_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          phone10: string
+        }
+        Update: {
+          converted_at?: string | null
+          converted_user_id?: string | null
+          coupon_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          phone10?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coupon_phone_grants_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coupon_redemptions: {
         Row: {
           base_amount: number
@@ -2367,6 +2429,7 @@ export type Database = {
           max_discount: number | null
           min_order_amount: number
           per_user_limit: number
+          show_in_list: boolean
           title: string
           total_usage_limit: number | null
           updated_at: string
@@ -2388,6 +2451,7 @@ export type Database = {
           max_discount?: number | null
           min_order_amount?: number
           per_user_limit?: number
+          show_in_list?: boolean
           title?: string
           total_usage_limit?: number | null
           updated_at?: string
@@ -2409,6 +2473,7 @@ export type Database = {
           max_discount?: number | null
           min_order_amount?: number
           per_user_limit?: number
+          show_in_list?: boolean
           title?: string
           total_usage_limit?: number | null
           updated_at?: string
@@ -7751,6 +7816,10 @@ export type Database = {
           rate: number
         }[]
       }
+      coupon_convert_phone_grants: {
+        Args: { _phone: string; _user_id: string }
+        Returns: number
+      }
       coupon_preview: {
         Args: {
           _base_amount: number
@@ -7760,7 +7829,26 @@ export type Database = {
         }
         Returns: Json
       }
+      coupon_preview_listed: {
+        Args: {
+          _base_amount: number
+          _category_id?: string
+          _code: string
+          _duration_minutes?: number
+        }
+        Returns: Json
+      }
       coupon_quote: {
+        Args: {
+          _base_amount: number
+          _category_id?: string
+          _code: string
+          _duration_minutes?: number
+          _user_id: string
+        }
+        Returns: Json
+      }
+      coupon_quote_core: {
         Args: {
           _base_amount: number
           _category_id?: string
@@ -8433,6 +8521,7 @@ export type Database = {
         Returns: Json
       }
       my_coin_balance: { Args: never; Returns: number }
+      my_coupon_claim_phone_grants: { Args: never; Returns: number }
       my_coupons: {
         Args: never
         Returns: {
@@ -8443,6 +8532,7 @@ export type Database = {
           discount_value: number
           id: string
           is_personal: boolean
+          is_targeted: boolean
           max_discount: number
           min_order_amount: number
           source: string
