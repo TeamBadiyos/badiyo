@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.bookings_sync_expert_busy() FROM PUBLIC, anon, authenticated;
