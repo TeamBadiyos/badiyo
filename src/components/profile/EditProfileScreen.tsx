@@ -98,6 +98,10 @@ export function EditProfileScreen({ onBack }: { onBack: () => void }) {
       setFormError("Please enter your name");
       return;
     }
+    if (name.length < 3) {
+      setFormError("Naam kam se kam 3 letters ka hona chahiye.");
+      return;
+    }
     if (!phoneReadOnly && !/^[6-9]\d{9}$/.test(mobile)) {
       setFormError("Please enter a valid 10-digit mobile number");
       return;
