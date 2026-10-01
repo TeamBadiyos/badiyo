@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.coupon_preview(text, numeric, integer) FROM anon;
