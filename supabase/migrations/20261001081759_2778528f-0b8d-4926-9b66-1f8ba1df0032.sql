@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.partner_skills_mirror_festival() FROM PUBLIC, anon, authenticated;
