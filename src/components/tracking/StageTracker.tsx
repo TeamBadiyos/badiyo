@@ -37,7 +37,10 @@ export function stageFromStatus(status: string | null | undefined): TrackingStag
 
 export function StageTracker({ stage }: { stage: TrackingStage }) {
   const t = useT();
-  const currentIdx = STAGES.findIndex((s) => s.key === stage);
+  // "searching" (confirmed/accepted, no expert yet) sits before step 1 —
+  // render step 1 as active so the bar never looks empty.
+  const currentIdx =
+    stage === "searching" ? 0 : STAGES.findIndex((s) => s.key === stage);
   return (
     <div className="w-full">
       <div className="flex items-start justify-between">
