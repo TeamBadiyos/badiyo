@@ -27,6 +27,7 @@ export function CourierLiveMap({
   drop,
   fetchLocation,
   refetchMs = 8000,
+  markerIconUrl,
 }: {
   orderId: string;
   status: string;
@@ -35,6 +36,8 @@ export function CourierLiveMap({
   pickup: { lat: number | null; lng: number | null; label: string };
   drop: { lat: number | null; lng: number | null; label: string };
   refetchMs?: number;
+  /** Override the moving marker image (e.g. maid symbol for cleaning experts). */
+  markerIconUrl?: string;
 }) {
   const t = useT();
   const mapDivRef = useRef<HTMLDivElement>(null);
@@ -196,7 +199,7 @@ export function CourierLiveMap({
     }
 
     const icon = {
-      url: riderMarkerImage,
+      url: markerIconUrl ?? riderMarkerImage,
       scaledSize: new window.google.maps.Size(58, 58),
       anchor: new window.google.maps.Point(29, 55),
     };
@@ -212,6 +215,7 @@ export function CourierLiveMap({
     } else {
       riderMarkerRef.current.setPosition(riderPos);
       riderMarkerRef.current.setOpacity(riderStale ? 0.55 : 1);
+      riderMarkerRef.current.setIcon(icon);
     }
 
     if (target && Number.isFinite(target.lat) && Number.isFinite(target.lng)) {
@@ -221,7 +225,7 @@ export function CourierLiveMap({
       map.fitBounds(bounds, 70);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready, riderPos?.lat, riderPos?.lng, riderStale, status]);
+  }, [ready, riderPos?.lat, riderPos?.lng, riderStale, status, markerIconUrl]);
 
   // Faint pickup -> drop route, always visible.
   useEffect(() => {

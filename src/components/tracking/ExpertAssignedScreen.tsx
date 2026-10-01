@@ -10,6 +10,8 @@ import { CancelBookingButton } from "./CancelBookingButton";
 import { useT } from "@/i18n";
 import { lazy, Suspense } from "react";
 import type { RiderLocation } from "../courier/courierData";
+import riderMarkerImage from "@/assets/map-rider-worker.png";
+import womanMarkerImage from "@/assets/map-woman-worker.png";
 
 const CourierLiveMap = lazy(() =>
   import("../courier/CourierLiveMap").then((m) => ({ default: m.CourierLiveMap })),
@@ -33,7 +35,15 @@ async function fetchExpertLocation(bookingId: string): Promise<RiderLocation | n
   };
 }
 
-function ExpertLiveMap({ bookingId, address }: { bookingId: string; address: SelectedAddress }) {
+function ExpertLiveMap({
+  bookingId,
+  address,
+  markerIconUrl,
+}: {
+  bookingId: string;
+  address: SelectedAddress;
+  markerIconUrl?: string;
+}) {
   const t = useT();
   const { data } = useQuery({
     queryKey: ["expert-live-location", bookingId],
@@ -56,6 +66,7 @@ function ExpertLiveMap({ bookingId, address }: { bookingId: string; address: Sel
           orderId={`booking-${bookingId}`}
           status="IN_TRANSIT"
           refetchMs={15000}
+          markerIconUrl={markerIconUrl}
           fetchLocation={() => fetchExpertLocation(bookingId)}
           pickup={{ lat: null, lng: null, label: "" }}
           drop={{
@@ -84,14 +95,20 @@ type BookingRow = {
   start_otp: string | null;
   deleted_at: string | null;
   price: number | null;
+  service_category_id?: string | null;
+  service_categories?: { slug: string | null } | null;
   experts: ExpertInfo;
 };
+
+/** Categories whose expert travels on a two-wheeler; everything else is a maid. */
+const RIDER_CATEGORY_SLUGS = ["car-bike-wash", "courier"];
+const CAR_BIKE_WASH_CATEGORY_ID = "78fb0c2e-94b5-4951-aa61-b5b4e0052d84";
 
 async function fetchBookingRow(bookingId: string): Promise<BookingRow | null> {
   const { data, error } = await supabase
     .from("bookings")
     .select(
-      "status, assigned_expert_id, start_otp, deleted_at, price, experts:assigned_expert_id ( id, name, phone, photo_url )",
+      "status, assigned_expert_id, start_otp, deleted_at, price, service_category_id, service_categories!bookings_service_category_id_fkey ( slug ), experts:assigned_expert_id ( id, name, phone, photo_url )",
     )
     .eq("id", bookingId)
     .maybeSingle();
@@ -149,6 +166,11 @@ export function ExpertAssignedScreen({
 
   const status = booking?.status ?? currentStatus ?? "confirmed";
   const expert = booking?.experts ?? null;
+  const categorySlug = booking?.service_categories?.slug ?? null;
+  const usesRiderIcon =
+    (categorySlug != null && RIDER_CATEGORY_SLUGS.includes(categorySlug)) ||
+    booking?.service_category_id === CAR_BIKE_WASH_CATEGORY_ID;
+  const expertMarkerIcon = usesRiderIcon ? riderMarkerImage : womanMarkerImage;
 
   // When status reaches expert_assigned and no otp yet, ensure one exists so the customer
   // can already read it aloud without tapping anything.
@@ -329,7 +351,11 @@ export function ExpertAssignedScreen({
         {isArrived && otpBlock}
 
         {isOnWay && bookingId && (
-          <ExpertLiveMap bookingId={bookingId} address={address} />
+          <ExpertLiveMap
+            bookingId={bookingId}
+            address={address}
+            markerIconUrl={expertMarkerIcon}
+          />
         )}
 
         {/* Expert card / waiting states */}

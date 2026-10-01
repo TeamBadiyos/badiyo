@@ -158,7 +158,10 @@ export function ServiceLocationMap({
     }
 
     const icon = {
-      url: expert?.category_slug === "home-cleaning" ? womanMarkerImage : riderMarkerImage,
+      url:
+        expert?.category_slug === "car-bike-wash" || expert?.category_slug === "courier"
+          ? riderMarkerImage
+          : womanMarkerImage,
       scaledSize: new window.google.maps.Size(54, 54),
       anchor: new window.google.maps.Point(27, 52),
     };
