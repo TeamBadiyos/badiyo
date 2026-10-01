@@ -6600,6 +6600,185 @@ export type Database = {
           },
         ]
       }
+      suggestion_remarks: {
+        Row: {
+          created_at: string
+          id: string
+          new_status_id: string | null
+          old_status_id: string | null
+          remark: string
+          staff_id: string | null
+          suggestion_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          new_status_id?: string | null
+          old_status_id?: string | null
+          remark: string
+          staff_id?: string | null
+          suggestion_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          new_status_id?: string | null
+          old_status_id?: string | null
+          remark?: string
+          staff_id?: string | null
+          suggestion_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suggestion_remarks_new_status_id_fkey"
+            columns: ["new_status_id"]
+            isOneToOne: false
+            referencedRelation: "suggestion_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suggestion_remarks_old_status_id_fkey"
+            columns: ["old_status_id"]
+            isOneToOne: false
+            referencedRelation: "suggestion_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suggestion_remarks_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suggestion_remarks_suggestion_id_fkey"
+            columns: ["suggestion_id"]
+            isOneToOne: false
+            referencedRelation: "suggestions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suggestion_statuses: {
+        Row: {
+          active: boolean
+          color: string
+          created_at: string
+          customer_label_en: string
+          customer_label_mr: string
+          id: string
+          is_final: boolean
+          key: string
+          label: string
+          notify_customer: boolean
+          notify_message: string | null
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          color?: string
+          created_at?: string
+          customer_label_en: string
+          customer_label_mr?: string
+          id?: string
+          is_final?: boolean
+          key: string
+          label: string
+          notify_customer?: boolean
+          notify_message?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          color?: string
+          created_at?: string
+          customer_label_en?: string
+          customer_label_mr?: string
+          id?: string
+          is_final?: boolean
+          key?: string
+          label?: string
+          notify_customer?: boolean
+          notify_message?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      suggestions: {
+        Row: {
+          archived: boolean
+          assigned_to: string | null
+          category: string
+          created_at: string
+          created_by: string | null
+          final_at: string | null
+          id: string
+          name: string | null
+          phone: string | null
+          photo_path: string | null
+          priority: string
+          source: string
+          status_id: string | null
+          text: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          archived?: boolean
+          assigned_to?: string | null
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          final_at?: string | null
+          id?: string
+          name?: string | null
+          phone?: string | null
+          photo_path?: string | null
+          priority?: string
+          source?: string
+          status_id?: string | null
+          text: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          archived?: boolean
+          assigned_to?: string | null
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          final_at?: string | null
+          id?: string
+          name?: string | null
+          phone?: string | null
+          photo_path?: string | null
+          priority?: string
+          source?: string
+          status_id?: string | null
+          text?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suggestions_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "staff_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suggestions_status_id_fkey"
+            columns: ["status_id"]
+            isOneToOne: false
+            referencedRelation: "suggestion_statuses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       support_inquiries: {
         Row: {
           contact: string
