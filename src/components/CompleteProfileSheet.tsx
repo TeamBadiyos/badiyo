@@ -111,7 +111,7 @@ export function CompleteProfileSheet({ enabled }: { enabled: boolean }) {
         const authPhone = (u.phone ?? "").replace(/\D/g, "").slice(-10);
         const rowPhone = (data.phone ?? "").replace(/\D/g, "").slice(-10);
         const existingPhone = rowPhone || authPhone;
-        const nameOk = !!data.full_name?.trim();
+        const nameOk = (data.full_name?.trim().length ?? 0) >= 3;
         const phoneOk = /^[6-9]\d{9}$/.test(existingPhone);
         if (nameOk && phoneOk) return;
         // Login-time phone is known but the profile row is missing it — backfill silently.
@@ -171,6 +171,9 @@ export function CompleteProfileSheet({ enabled }: { enabled: boolean }) {
     const mail = email.trim();
     const mobile = phone.replace(/\D/g, "").slice(-10);
     if (!name) return setError("Please enter your name");
+    if (name.length < 3) {
+      return setError("Naam kam se kam 3 letters ka hona chahiye.");
+    }
     if (!/^[6-9]\d{9}$/.test(mobile)) {
       return setError("Please enter a valid 10-digit mobile number");
     }
