@@ -33,7 +33,15 @@ async function fetchExpertLocation(bookingId: string): Promise<RiderLocation | n
   };
 }
 
-function ExpertLiveMap({ bookingId, address }: { bookingId: string; address: SelectedAddress }) {
+function ExpertLiveMap({
+  bookingId,
+  address,
+  markerIconUrl,
+}: {
+  bookingId: string;
+  address: SelectedAddress;
+  markerIconUrl?: string;
+}) {
   const t = useT();
   const { data } = useQuery({
     queryKey: ["expert-live-location", bookingId],
@@ -56,6 +64,7 @@ function ExpertLiveMap({ bookingId, address }: { bookingId: string; address: Sel
           orderId={`booking-${bookingId}`}
           status="IN_TRANSIT"
           refetchMs={15000}
+          markerIconUrl={markerIconUrl}
           fetchLocation={() => fetchExpertLocation(bookingId)}
           pickup={{ lat: null, lng: null, label: "" }}
           drop={{
