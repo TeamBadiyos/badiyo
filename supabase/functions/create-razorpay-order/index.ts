@@ -228,6 +228,7 @@ Deno.serve(async (req) => {
     // The price ALWAYS comes from the exact catalogue item the customer picked.
     // There is no duration-based fallback: a wrong guess would charge the wrong
     // amount for flat-priced services.
+    let couponCategoryId: string | null = null;
     if (!itemId) {
       return json({ error: "item_id is required" }, 400);
     }
@@ -251,6 +252,7 @@ Deno.serve(async (req) => {
       }
 
       const categoryId = svc?.category_id ?? null;
+      couponCategoryId = categoryId;
       if (
         (await isBlocked(supabase, "item", itemId)) ||
         (await isBlocked(supabase, "category", categoryId))
@@ -303,6 +305,7 @@ Deno.serve(async (req) => {
         _code: couponCode,
         _base_amount: price!,
         _duration_minutes: effectiveMinutes,
+        _category_id: couponCategoryId,
       });
       if (quoteErr) {
         console.error("coupon_quote failed", quoteErr);
@@ -349,6 +352,7 @@ Deno.serve(async (req) => {
           _order_id: freeOrderId,
           _base_amount: price!,
           _duration_minutes: effectiveMinutes ?? 0,
+          _category_id: couponCategoryId,
         });
         if (reserveErr) {
           console.error("system_coupon_reserve failed", reserveErr);
@@ -443,6 +447,7 @@ Deno.serve(async (req) => {
         _order_id: order.id,
         _base_amount: price!,
         _duration_minutes: effectiveMinutes ?? 0,
+        _category_id: couponCategoryId,
       });
       if (reserveErr) console.error("system_coupon_reserve failed", reserveErr);
     }
