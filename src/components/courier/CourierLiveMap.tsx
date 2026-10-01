@@ -225,7 +225,7 @@ export function CourierLiveMap({
       map.fitBounds(bounds, 70);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready, riderPos?.lat, riderPos?.lng, riderStale, status]);
+  }, [ready, riderPos?.lat, riderPos?.lng, riderStale, status, markerIconUrl]);
 
   // Faint pickup -> drop route, always visible.
   useEffect(() => {
