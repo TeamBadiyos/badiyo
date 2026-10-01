@@ -1,0 +1,1 @@
+REVOKE ALL ON FUNCTION public.bookings_release_coupon_on_cancel() FROM PUBLIC, anon, authenticated;
