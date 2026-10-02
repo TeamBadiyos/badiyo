@@ -3906,6 +3906,9 @@ export type Database = {
           id: string
           is_busy: boolean
           is_online: boolean
+          jacket_issued: boolean
+          jacket_issued_at: string | null
+          joining_date: string | null
           kyc_aadhaar_url: string | null
           kyc_address_proof_url: string | null
           kyc_pan_url: string | null
@@ -3926,6 +3929,7 @@ export type Database = {
           referred_by_expert_id: string | null
           security_deposit_status: string
           status: string
+          training_progress: Json
           wallet_balance: number
           zone_id: string | null
         }
@@ -3942,6 +3946,9 @@ export type Database = {
           id?: string
           is_busy?: boolean
           is_online?: boolean
+          jacket_issued?: boolean
+          jacket_issued_at?: string | null
+          joining_date?: string | null
           kyc_aadhaar_url?: string | null
           kyc_address_proof_url?: string | null
           kyc_pan_url?: string | null
@@ -3962,6 +3969,7 @@ export type Database = {
           referred_by_expert_id?: string | null
           security_deposit_status?: string
           status?: string
+          training_progress?: Json
           wallet_balance?: number
           zone_id?: string | null
         }
@@ -3978,6 +3986,9 @@ export type Database = {
           id?: string
           is_busy?: boolean
           is_online?: boolean
+          jacket_issued?: boolean
+          jacket_issued_at?: string | null
+          joining_date?: string | null
           kyc_aadhaar_url?: string | null
           kyc_address_proof_url?: string | null
           kyc_pan_url?: string | null
@@ -3998,6 +4009,7 @@ export type Database = {
           referred_by_expert_id?: string | null
           security_deposit_status?: string
           status?: string
+          training_progress?: Json
           wallet_balance?: number
           zone_id?: string | null
         }
@@ -9509,6 +9521,10 @@ export type Database = {
       }
       staff_set_delivery_status: {
         Args: { _merchant_id: string; _reason: string; _status: string }
+        Returns: undefined
+      }
+      staff_set_expert_onboarding: {
+        Args: { _expert_id: string; _payload: Json }
         Returns: undefined
       }
       staff_set_expert_zones: {
