@@ -1075,7 +1075,11 @@ function Index() {
             coupon={appliedCoupon}
             redeemCoins={redeemCoins}
 
-            onBack={() => setPhase("summary")}
+            onBack={() => {
+              // Booking wasn't made — make sure no coupon stays held.
+              void queryClient.invalidateQueries({ queryKey: ["my_coupons"] });
+              setPhase("summary");
+            }}
             onDone={() => {
               setRedeemCoins(false);
               resetAndGoHome();
