@@ -285,6 +285,8 @@ export const mr: Partial<Record<keyof typeof en, string>> = {
 
   // ── Location permission / GPS ────────────────────────────
   "loc.offTitle": "फोनचे लोकेशन सुरू करा",
+  "loc.pinNeeded": "📍 अचूक लोकेशनसाठी टॅप करा, किंवा शोधा / नकाशा दारापर्यंत हलवा",
+  "loc.pinDetecting": "तुमचे लोकेशन शोधत आहोत…",
   "loc.offBody":
     "तुमच्या फोनचे लोकेशन (GPS) बंद आहे. अचूक पत्ता ओळखण्यासाठी ते सुरू करा.",
   "loc.turnOn": "लोकेशन सुरू करा",
