@@ -631,6 +631,7 @@ export type Database = {
           gst_amount: number
           gst_percent: number
           id: string
+          is_training: boolean
           last_rebroadcast_at: string | null
           no_expert_alert_sent: boolean
           on_the_way_at: string | null
@@ -699,6 +700,7 @@ export type Database = {
           gst_amount?: number
           gst_percent?: number
           id?: string
+          is_training?: boolean
           last_rebroadcast_at?: string | null
           no_expert_alert_sent?: boolean
           on_the_way_at?: string | null
@@ -767,6 +769,7 @@ export type Database = {
           gst_amount?: number
           gst_percent?: number
           id?: string
+          is_training?: boolean
           last_rebroadcast_at?: string | null
           no_expert_alert_sent?: boolean
           on_the_way_at?: string | null
@@ -3916,6 +3919,7 @@ export type Database = {
           kyc_status: string
           level: string
           location_updated_at: string | null
+          mode: string
           name: string
           offline_after_job: boolean
           onboarded_by: string | null
@@ -3929,6 +3933,8 @@ export type Database = {
           referred_by_expert_id: string | null
           security_deposit_status: string
           status: string
+          training_completed_at: string | null
+          training_orders_completed: number
           training_progress: Json
           wallet_balance: number
           zone_id: string | null
@@ -3956,6 +3962,7 @@ export type Database = {
           kyc_status?: string
           level?: string
           location_updated_at?: string | null
+          mode?: string
           name: string
           offline_after_job?: boolean
           onboarded_by?: string | null
@@ -3969,6 +3976,8 @@ export type Database = {
           referred_by_expert_id?: string | null
           security_deposit_status?: string
           status?: string
+          training_completed_at?: string | null
+          training_orders_completed?: number
           training_progress?: Json
           wallet_balance?: number
           zone_id?: string | null
@@ -3996,6 +4005,7 @@ export type Database = {
           kyc_status?: string
           level?: string
           location_updated_at?: string | null
+          mode?: string
           name?: string
           offline_after_job?: boolean
           onboarded_by?: string | null
@@ -4009,6 +4019,8 @@ export type Database = {
           referred_by_expert_id?: string | null
           security_deposit_status?: string
           status?: string
+          training_completed_at?: string | null
+          training_orders_completed?: number
           training_progress?: Json
           wallet_balance?: number
           zone_id?: string | null
@@ -7617,6 +7629,10 @@ export type Database = {
       award_referral_milestones: { Args: { _user_id: string }; Returns: number }
       booking_dispatch_refund_job: { Args: never; Returns: undefined }
       booking_dispatch_release_due: { Args: never; Returns: number }
+      booking_expert_mode_ok: {
+        Args: { _booking_id: string; _expert_id: string }
+        Returns: boolean
+      }
       booking_get_expert_location: {
         Args: { p_booking_id: string }
         Returns: Json
@@ -7952,6 +7968,7 @@ export type Database = {
           gst_amount: number
           gst_percent: number
           id: string
+          is_training: boolean
           last_rebroadcast_at: string | null
           no_expert_alert_sent: boolean
           on_the_way_at: string | null
@@ -10147,6 +10164,31 @@ export type Database = {
       system_store_mark_paid: {
         Args: { _payment_id: string; _rzp_order_id: string }
         Returns: boolean
+      }
+      training_create_booking: {
+        Args: {
+          _actor: string
+          _address: Json
+          _expert_id: string
+          _price_option_id: string
+          _scheduled_date: string
+          _scheduled_time_slot: string
+        }
+        Returns: Json
+      }
+      training_delete_bookings: {
+        Args: {
+          _actor: string
+          _expert_id: string
+          _from: string
+          _ids: string[]
+          _to: string
+        }
+        Returns: Json
+      }
+      training_set_expert_mode: {
+        Args: { _actor: string; _expert_id: string; _mode: string }
+        Returns: Json
       }
       verify_commission_parity: {
         Args: never
