@@ -9485,6 +9485,18 @@ export type Database = {
         }
         Returns: string
       }
+      staff_set_booking_location: {
+        Args: {
+          _area: string
+          _booking_id: string
+          _city: string
+          _full_address: string
+          _lat: number
+          _lng: number
+          _pincode: string
+        }
+        Returns: undefined
+      }
       staff_set_booking_refund: {
         Args: {
           _booking_id: string
