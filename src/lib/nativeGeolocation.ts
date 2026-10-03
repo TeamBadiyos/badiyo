@@ -94,6 +94,7 @@ export async function getCurrentCoords(): Promise<Coords> {
       const pos = await Geolocation.getCurrentPosition({
         enableHighAccuracy: true,
         timeout: 8000,
+        maximumAge: 0,
       });
       return { lat: pos.coords.latitude, lng: pos.coords.longitude };
     } catch (e) {
@@ -126,7 +127,7 @@ export async function getCurrentCoords(): Promise<Coords> {
                 )
               : new Error(err.message || "Couldn't get your location."),
           ),
-        { enableHighAccuracy: highAccuracy, timeout },
+        { enableHighAccuracy: highAccuracy, timeout, maximumAge: highAccuracy ? 0 : 60000 },
       );
     });
 

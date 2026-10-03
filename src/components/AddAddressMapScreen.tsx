@@ -112,6 +112,11 @@ export function AddAddressMapScreen({
     (LABELS.find((l) => l === initial?.label) ?? "Home") as (typeof LABELS)[number],
   );
   const [locating, setLocating] = useState(false);
+  // False while the pin still sits on the city default: saving is blocked
+  // until real GPS, a search pick, or a manual drag places it.
+  const [pinTrusted, setPinTrusted] = useState<boolean>(
+    !!(initial?.latitude != null && initial?.longitude != null) || !!initialPoint,
+  );
   const [locHelp, setLocHelp] = useState<LocationHelpKind>(null);
   const [geocoding, setGeocoding] = useState(false);
   const [geocodeFailed, setGeocodeFailed] = useState(false);
@@ -198,6 +203,7 @@ export function AddAddressMapScreen({
         const next = { lat: p.lat, lng: p.lng };
         if (mapRef.current) mapRef.current.panTo(next);
         setCenter(next);
+        setPinTrusted(true);
         setGeocodeFailed(false);
       })
       .catch((e) => {
@@ -238,6 +244,8 @@ export function AddAddressMapScreen({
             return;
           console.info("[address] pin moved to", next);
           setCenter(next);
+          // Customer dragged the map themselves — a deliberate choice.
+          setPinTrusted(true);
         });
       })
       .catch((e) => console.error(e));
@@ -329,6 +337,8 @@ export function AddAddressMapScreen({
         console.info("[address] got coords", c);
         if (mapRef.current) mapRef.current.panTo(c);
         setCenter(c);
+        setPinTrusted(true);
+        setLocHelp(null);
       })
       .catch((err: unknown) => {
         console.error("[address] location failed:", err);
@@ -358,12 +368,28 @@ export function AddAddressMapScreen({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mapReady]);
 
+  // Coming back from phone Settings (location turned on / permission given):
+  // retry automatically while the pin is still on the city default.
+  const pinTrustedRef = useRef(pinTrusted);
+  pinTrustedRef.current = pinTrusted;
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState !== "visible") return;
+      if (pinTrustedRef.current || !autoLocatedRef.current) return;
+      useCurrentLocation(true);
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
 
   // Only the parcel flow needs a hard zone gate; saving/editing a personal
   // address anywhere else stays possible, with just a warning.
   const blockOutsideZone = serviceCheck === "courier";
 
   const canSave =
+    pinTrusted &&
     addressDetails.trim().length > 0 &&
     autoAddress.trim().length > 0 &&
     !geocoding &&
@@ -701,6 +727,16 @@ export function AddAddressMapScreen({
           </div>
 
           {error && <p className="text-xs font-semibold text-red-600">{error}</p>}
+
+          {!pinTrusted && (
+            <button
+              type="button"
+              onClick={() => useCurrentLocation(false)}
+              className="w-full rounded-[14px] border border-primary/40 bg-primary/10 px-4 py-3 text-left text-xs font-semibold text-primary"
+            >
+              {locating ? t("loc.pinDetecting") : t("loc.pinNeeded")}
+            </button>
+          )}
 
           <button
             disabled={!canSave}

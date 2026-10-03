@@ -283,6 +283,8 @@ export const en = {
 
   // ── Location permission / GPS ────────────────────────────
   "loc.offTitle": "Turn on your phone's location",
+  "loc.pinNeeded": "📍 Tap to detect your exact location, or search / move the map to your door",
+  "loc.pinDetecting": "Detecting your location…",
   "loc.offBody":
     "Your phone's location (GPS) is off. Turn it on so we can detect your exact address.",
   "loc.turnOn": "Turn on location",
