@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.booking_expert_mode_ok(uuid, uuid) FROM authenticated;
