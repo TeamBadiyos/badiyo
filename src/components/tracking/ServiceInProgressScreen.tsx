@@ -325,7 +325,7 @@ export function ServiceInProgressScreen({
       const receipt = `ext_${Date.now()}`;
       const { data, error } = await supabase.functions.invoke("create-razorpay-order", {
         body: {
-          service_duration_minutes: opt.duration_minutes,
+          item_id: opt.id,
           currency: "INR",
           receipt,
           purpose: "extension",
