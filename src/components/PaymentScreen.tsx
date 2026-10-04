@@ -109,21 +109,7 @@ export function PaymentScreen({
         }
       }
 
-      // Safety net #2: fall back to device GPS.
-      if (booking_lat == null || booking_lng == null) {
-        console.warn(
-          `[booking] Address ${address.id} has no coords in DB either; falling back to device GPS`,
-        );
-        try {
-          const gps = await getCurrentCoords();
-          booking_lat = gps.lat;
-          booking_lng = gps.lng;
-          coordSource = "gps";
-        } catch (gpsErr) {
-          console.error("[booking] GPS fallback failed:", gpsErr);
-          coordSource = "none";
-        }
-      }
+      // No GPS fallback: the address must carry coords from the trusted map pin.
 
       if (booking_lat == null || booking_lng == null) {
         throw new Error(
