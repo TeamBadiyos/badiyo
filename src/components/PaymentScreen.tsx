@@ -5,7 +5,6 @@ import { supabase } from "@/integrations/supabase/client";
 import type { SelectedService, SelectedSlot } from "./SlotSelectionScreen";
 import type { SelectedAddress } from "./BookingSummaryScreen";
 import { getErrorMessage } from "@/lib/errorMessage";
-import { getCurrentCoords } from "@/lib/nativeGeolocation";
 import { useT } from "@/i18n";
 import { hapticImpact } from "@/lib/haptics";
 import { billBreakdown, useGstPercent } from "@/lib/gst";
