@@ -349,15 +349,19 @@ export function ServiceInProgressScreen({
         customerName: prefill.name,
       });
 
-      const { data: newEnd, error: extErr } = await supabase.rpc("extend_booking", {
+      const { data: extRes, error: extErr } = await supabase.rpc("extend_booking", {
         _booking_id: bookingId,
         _extra_minutes: opt.duration_minutes,
         _razorpay_payment_id: resp.razorpay_payment_id,
       });
       if (extErr) throw new Error(extErr.message);
+      const newEnd =
+        typeof extRes === "string"
+          ? extRes
+          : ((extRes as { service_end_at?: string } | null)?.service_end_at ?? null);
 
       qc.setQueryData<BookingTiming | null>(["booking-timing", bookingId], (prev) =>
-        prev ? { ...prev, service_end_at: (newEnd as string) ?? prev.service_end_at } : prev,
+        prev ? { ...prev, service_end_at: newEnd ?? prev.service_end_at } : prev,
       );
       qc.invalidateQueries({ queryKey: ["booking-timing", bookingId] });
       qc.invalidateQueries({ queryKey: ACTIVE_BOOKING_KEY });
