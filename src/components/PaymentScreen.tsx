@@ -21,6 +21,7 @@ import {
 import { logPaymentFailure } from "@/lib/paymentLog.functions";
 import { toast } from "sonner";
 import { readLangOutsideReact, translateCatalog } from "@/lib/catalogI18n";
+import { formatClockLabel } from "@/lib/serviceHours";
 
 
 type Status = "loading" | "success" | "failed";
@@ -253,7 +254,7 @@ export function PaymentScreen({
               ? `Service ${close} tak hi available hai. Kripya aage ka slot schedule karein.`
               : "Abhi service band hai. Kripya aage ka slot schedule karein.",
           );
-          setStatus("idle");
+          onBack();
           return;
         }
       }

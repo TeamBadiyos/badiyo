@@ -116,6 +116,14 @@ Deno.serve(async (req) => {
           _service_key: serviceKey,
         });
         blocked = !err && canOrder === false;
+        // Instant bookings: the job must also FINISH before closing time.
+        if (!blocked && purpose === "booking") {
+          const { data: inst, error: instErr } = await supabase.rpc("service_instant_allowed", {
+            _service_key: serviceKey,
+            _duration_minutes: effectiveMinutes ?? 60,
+          });
+          blocked = !instErr && inst?.ok === false;
+        }
       }
 
       if (blocked) {
