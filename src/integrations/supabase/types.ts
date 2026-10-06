@@ -662,6 +662,7 @@ export type Database = {
           snapshot_hourly_rate: number | null
           snapshot_hq_share: number | null
           snapshot_partner_payout: number | null
+          staff_note: string | null
           start_otp: string | null
           started_at: string | null
           status: string
@@ -731,6 +732,7 @@ export type Database = {
           snapshot_hourly_rate?: number | null
           snapshot_hq_share?: number | null
           snapshot_partner_payout?: number | null
+          staff_note?: string | null
           start_otp?: string | null
           started_at?: string | null
           status?: string
@@ -800,6 +802,7 @@ export type Database = {
           snapshot_hourly_rate?: number | null
           snapshot_hq_share?: number | null
           snapshot_partner_payout?: number | null
+          staff_note?: string | null
           start_otp?: string | null
           started_at?: string | null
           status?: string
@@ -7999,6 +8002,7 @@ export type Database = {
           snapshot_hourly_rate: number | null
           snapshot_hq_share: number | null
           snapshot_partner_payout: number | null
+          staff_note: string | null
           start_otp: string | null
           started_at: string | null
           status: string
@@ -9512,6 +9516,10 @@ export type Database = {
           _lng: number
           _pincode: string
         }
+        Returns: undefined
+      }
+      staff_set_booking_note: {
+        Args: { _booking_id: string; _note: string }
         Returns: undefined
       }
       staff_set_booking_refund: {
