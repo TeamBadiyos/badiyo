@@ -238,6 +238,27 @@ export function PaymentScreen({
     try {
       const receipt = `bk_${Date.now()}`;
 
+      // Re-check opening hours right before payment: the customer may have
+      // waited on this screen. Instant jobs must finish before closing time.
+      if (slot.mode === "now") {
+        const { data: gate, error: gateErr } = await supabase.rpc(
+          "service_instant_allowed" as never,
+          { _service_key: "clean", _duration_minutes: Number(service.duration_minutes) || 60 } as never,
+        );
+        const g = gate as { ok?: boolean; close_time?: string | null } | null;
+        if (!gateErr && g && g.ok === false) {
+          const close = formatClockLabel(g.close_time) ?? "";
+          toast(
+            close
+              ? `Service ${close} tak hi available hai. Kripya aage ka slot schedule karein.`
+              : "Abhi service band hai. Kripya aage ka slot schedule karein.",
+          );
+          setStatus("idle");
+          return;
+        }
+      }
+
+
       const { data, error } = await supabase.functions.invoke(
         "create-razorpay-order",
         {
