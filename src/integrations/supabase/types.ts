@@ -8978,6 +8978,10 @@ export type Database = {
       service_holiday_notify: { Args: { _phase: string }; Returns: undefined }
       service_hours_autooffline: { Args: never; Returns: undefined }
       service_hours_bypass: { Args: never; Returns: boolean }
+      service_instant_allowed: {
+        Args: { _duration_minutes?: number; _service_key: string }
+        Returns: Json
+      }
       service_next_open: {
         Args: { _flag_id: string; _from: string }
         Returns: string
