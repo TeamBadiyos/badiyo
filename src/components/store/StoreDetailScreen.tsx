@@ -142,7 +142,7 @@ export function StoreDetailScreen({
       <Dialog open={photoOpen} onOpenChange={setPhotoOpen}>
         <DialogContent className="max-w-sm overflow-hidden rounded-[20px] p-3">
           <DialogTitle className="text-base font-bold">{store.store_name}</DialogTitle>
-          <StoreImage path={store.photo_url} variant="store" alt={store.store_name ?? ""} className="aspect-square h-auto w-full !object-contain bg-muted" />
+          <StoreImage path={store.photo_url} variant="store" alt={store.store_name ?? ""} size="full" className="aspect-square h-auto w-full !object-contain bg-muted" />
         </DialogContent>
       </Dialog>
       <CartBar onOpenCart={onOpenCart} disabled={!orderingEnabled} />
