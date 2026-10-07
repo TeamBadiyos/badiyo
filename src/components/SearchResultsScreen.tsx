@@ -16,11 +16,13 @@ export function SearchResultsScreen({
   onBack,
   onBookService,
   onQuickBook,
+  onOpenStore,
 }: {
   query: string;
   onBack: () => void;
   onBookService: (s: import("./SlotSelectionScreen").SelectedService) => void;
   onQuickBook?: (s: import("./SlotSelectionScreen").SelectedService) => void;
+  onOpenStore?: (s: import("@/lib/store").PublicStore) => void;
 }) {
   const { data: services = [], isLoading } = useQuery({
     queryKey: ["segment_services"],
@@ -104,7 +106,7 @@ export function SearchResultsScreen({
               <div className="grid grid-cols-3 gap-2.5">
                 {productHits.slice(0, 6).map((i) => (
                   <div key={i.product.id} className="min-w-0">
-                    <ProductCard product={i.product} store={{ id: i.store.id, name: i.store.store_name }} closed={i.closed} fluid />
+                    <ProductCard product={i.product} store={{ id: i.store.id, name: i.store.store_name }} closed={i.closed} fluid onOpen={onOpenStore ? () => onOpenStore(i.store) : undefined} />
                     <p className="mt-1 truncate text-[10px] font-semibold text-muted-foreground">{i.store.store_name}</p>
                   </div>
                 ))}
@@ -112,7 +114,7 @@ export function SearchResultsScreen({
               {results.length > 0 && <p className="mt-5 text-sm font-bold text-foreground">{t("search.services")}</p>}
             </div>
           )}
-          {allProducts && <ProductGridOverlay title={query} items={productHits} onClose={() => setAllProducts(false)} />}
+          {allProducts && <ProductGridOverlay title={query} items={productHits} onClose={() => setAllProducts(false)} onOpenStore={onOpenStore} />}
           {isLoading || (storeUnlocked && catLoading) ? (
             <p className="py-10 text-center text-sm text-muted-foreground">Loading…</p>
           ) : results.length === 0 && productHits.length === 0 ? (

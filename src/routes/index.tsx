@@ -1280,6 +1280,10 @@ function Index() {
           <SearchResultsScreen
             query={searchQuery}
             onBack={() => setPhase("home")}
+            onOpenStore={(st) => {
+              setPhase("home");
+              storePendingStoreKey(st.id);
+            }}
             onBookService={(s) => {
               setSelectedService(s);
               setPhase("slot");
