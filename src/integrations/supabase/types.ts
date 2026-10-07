@@ -3953,6 +3953,7 @@ export type Database = {
           bank_account_holder_name: string | null
           bank_account_number: string | null
           bank_ifsc: string | null
+          bank_name: string | null
           created_at: string
           current_lat: number | null
           current_lng: number | null
@@ -3996,6 +3997,7 @@ export type Database = {
           bank_account_holder_name?: string | null
           bank_account_number?: string | null
           bank_ifsc?: string | null
+          bank_name?: string | null
           created_at?: string
           current_lat?: number | null
           current_lng?: number | null
@@ -4039,6 +4041,7 @@ export type Database = {
           bank_account_holder_name?: string | null
           bank_account_number?: string | null
           bank_ifsc?: string | null
+          bank_name?: string | null
           created_at?: string
           current_lat?: number | null
           current_lng?: number | null
@@ -4446,6 +4449,7 @@ export type Database = {
           delivery_lng: number | null
           delivery_quote: Json | null
           id: string
+          is_training: boolean
           items_total: number
           merchant_id: string
           merchant_net: number
@@ -4494,6 +4498,7 @@ export type Database = {
           delivery_lng?: number | null
           delivery_quote?: Json | null
           id?: string
+          is_training?: boolean
           items_total?: number
           merchant_id: string
           merchant_net?: number
@@ -4542,6 +4547,7 @@ export type Database = {
           delivery_lng?: number | null
           delivery_quote?: Json | null
           id?: string
+          is_training?: boolean
           items_total?: number
           merchant_id?: string
           merchant_net?: number
