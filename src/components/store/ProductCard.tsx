@@ -89,24 +89,24 @@ export function ProductCard({
       onClick={open}
       onKeyDown={(e) => e.key === "Enter" && open()}
       className={
-        "flex min-h-[200px] shrink-0 cursor-pointer snap-start flex-col rounded-[18px] border border-border bg-card p-2 text-left " +
-        (fluid ? "w-full" : "w-[132px]") +
+        "flex shrink-0 cursor-pointer snap-start flex-col rounded-[16px] border border-border bg-card p-2 text-left " +
+        (fluid ? "w-full" : "w-[140px]") +
         (out ? " opacity-55" : "")
       }
     >
-      <div className="rounded-[14px] bg-primary/5 p-1.5">
-        <StoreImage path={product.photo_url} variant="product" alt={product.name} className="aspect-square h-auto w-full" />
+      <div className="overflow-hidden rounded-[12px] bg-card">
+        <StoreImage path={product.photo_url} variant="product" alt={product.name} className="aspect-square h-auto w-full !object-contain !rounded-[12px]" />
       </div>
-      <p className="mt-2 truncate text-[13px] font-bold leading-tight text-foreground" title={product.name}>
+      <p className="mt-1.5 line-clamp-2 min-h-[2.1rem] text-[13px] font-bold leading-tight text-foreground" title={product.name}>
         {title}
       </p>
-      <p className="mt-0.5 h-4 truncate text-[11px] text-muted-foreground">
+      <p className="truncate text-[11px] leading-tight text-muted-foreground">
         {[size, product.unit].filter(Boolean).join(" · ")}
       </p>
-      <div className="mt-auto pt-1.5 flex items-end justify-between gap-1">
-        <div className="min-w-0">
-          {mrp && <p className="text-[10px] leading-none text-muted-foreground line-through">₹{mrp.toFixed(0)}</p>}
-          <p className="text-sm font-extrabold text-foreground">₹{Number(product.price).toFixed(0)}</p>
+      <div className="mt-1.5 flex items-center justify-between gap-1">
+        <div className="min-w-0 shrink-0">
+          <p className="whitespace-nowrap text-[15px] font-extrabold leading-none text-foreground">₹{Number(product.price).toFixed(0)}</p>
+          {mrp && <p className="mt-0.5 text-[10px] leading-none text-muted-foreground line-through">₹{mrp.toFixed(0)}</p>}
         </div>
         {out ? (
           <span className="shrink-0 rounded-full bg-muted px-2 py-1 text-[9px] font-bold text-muted-foreground">
