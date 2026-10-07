@@ -75,7 +75,7 @@ export function useNearbyCatalog(coords: Coords) {
 function CatalogCard({ item, fluid }: { item: CatalogItem; fluid?: boolean }) {
   const dist = formatDistance(item.km);
   return (
-    <div className={fluid ? "min-w-0" : "w-[124px] shrink-0"}>
+    <div className={fluid ? "min-w-0" : "w-[140px] shrink-0"}>
       <ProductCard
         product={item.product}
         store={{ id: item.store.id, name: item.store.store_name }}
@@ -122,7 +122,7 @@ export function ProductGridOverlay({
             <p className="text-[11px] text-muted-foreground">{t("store.itemsCount", { n: String(items.length) })}</p>
           </div>
         </header>
-        <div className="grid grid-cols-3 gap-2.5">
+        <div className="grid grid-cols-2 gap-3">
           {items.map((i) => (
             <CatalogCard key={i.product.id} item={i} fluid />
           ))}
