@@ -17,6 +17,7 @@ import { Route as ApiPublicHasLoginPinRouteImport } from './routes/api/public/ha
 import { Route as ApiPublicPlacesSearchRouteImport } from './routes/api/public/places-search'
 import { Route as ApiPublicReverseGeocodeRouteImport } from './routes/api/public/reverse-geocode'
 import { Route as ApiPublicServiceImageRouteImport } from './routes/api/public/service-image'
+import { Route as ApiPublicStoreImageRouteImport } from './routes/api/public/store-image'
 import { Route as ApiPublicAdminAlertProcessRouteImport } from './routes/api/public/admin-alert/process'
 import { Route as ApiPublicBookingsProcessRefundsRouteImport } from './routes/api/public/bookings/process-refunds'
 import { Route as ApiPublicBusinessProcessBatchesRouteImport } from './routes/api/public/business/process-batches'
@@ -69,6 +70,11 @@ const ApiPublicReverseGeocodeRoute = ApiPublicReverseGeocodeRouteImport.update({
 const ApiPublicServiceImageRoute = ApiPublicServiceImageRouteImport.update({
   id: '/api/public/service-image',
   path: '/api/public/service-image',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicStoreImageRoute = ApiPublicStoreImageRouteImport.update({
+  id: '/api/public/store-image',
+  path: '/api/public/store-image',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicAdminAlertProcessRoute =
@@ -156,6 +162,7 @@ export interface FileRoutesByFullPath {
   '/api/public/places-search': typeof ApiPublicPlacesSearchRoute
   '/api/public/reverse-geocode': typeof ApiPublicReverseGeocodeRoute
   '/api/public/service-image': typeof ApiPublicServiceImageRoute
+  '/api/public/store-image': typeof ApiPublicStoreImageRoute
   '/api/public/admin-alert/process': typeof ApiPublicAdminAlertProcessRoute
   '/api/public/bookings/process-refunds': typeof ApiPublicBookingsProcessRefundsRoute
   '/api/public/business/process-batches': typeof ApiPublicBusinessProcessBatchesRoute
@@ -179,6 +186,7 @@ export interface FileRoutesByTo {
   '/api/public/places-search': typeof ApiPublicPlacesSearchRoute
   '/api/public/reverse-geocode': typeof ApiPublicReverseGeocodeRoute
   '/api/public/service-image': typeof ApiPublicServiceImageRoute
+  '/api/public/store-image': typeof ApiPublicStoreImageRoute
   '/api/public/admin-alert/process': typeof ApiPublicAdminAlertProcessRoute
   '/api/public/bookings/process-refunds': typeof ApiPublicBookingsProcessRefundsRoute
   '/api/public/business/process-batches': typeof ApiPublicBusinessProcessBatchesRoute
@@ -203,6 +211,7 @@ export interface FileRoutesById {
   '/api/public/places-search': typeof ApiPublicPlacesSearchRoute
   '/api/public/reverse-geocode': typeof ApiPublicReverseGeocodeRoute
   '/api/public/service-image': typeof ApiPublicServiceImageRoute
+  '/api/public/store-image': typeof ApiPublicStoreImageRoute
   '/api/public/admin-alert/process': typeof ApiPublicAdminAlertProcessRoute
   '/api/public/bookings/process-refunds': typeof ApiPublicBookingsProcessRefundsRoute
   '/api/public/business/process-batches': typeof ApiPublicBusinessProcessBatchesRoute
@@ -228,6 +237,7 @@ export interface FileRouteTypes {
     | '/api/public/places-search'
     | '/api/public/reverse-geocode'
     | '/api/public/service-image'
+    | '/api/public/store-image'
     | '/api/public/admin-alert/process'
     | '/api/public/bookings/process-refunds'
     | '/api/public/business/process-batches'
@@ -251,6 +261,7 @@ export interface FileRouteTypes {
     | '/api/public/places-search'
     | '/api/public/reverse-geocode'
     | '/api/public/service-image'
+    | '/api/public/store-image'
     | '/api/public/admin-alert/process'
     | '/api/public/bookings/process-refunds'
     | '/api/public/business/process-batches'
@@ -274,6 +285,7 @@ export interface FileRouteTypes {
     | '/api/public/places-search'
     | '/api/public/reverse-geocode'
     | '/api/public/service-image'
+    | '/api/public/store-image'
     | '/api/public/admin-alert/process'
     | '/api/public/bookings/process-refunds'
     | '/api/public/business/process-batches'
@@ -298,6 +310,7 @@ export interface RootRouteChildren {
   ApiPublicPlacesSearchRoute: typeof ApiPublicPlacesSearchRoute
   ApiPublicReverseGeocodeRoute: typeof ApiPublicReverseGeocodeRoute
   ApiPublicServiceImageRoute: typeof ApiPublicServiceImageRoute
+  ApiPublicStoreImageRoute: typeof ApiPublicStoreImageRoute
   ApiPublicAdminAlertProcessRoute: typeof ApiPublicAdminAlertProcessRoute
   ApiPublicBookingsProcessRefundsRoute: typeof ApiPublicBookingsProcessRefundsRoute
   ApiPublicBusinessProcessBatchesRoute: typeof ApiPublicBusinessProcessBatchesRoute
@@ -369,6 +382,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/service-image'
       fullPath: '/api/public/service-image'
       preLoaderRoute: typeof ApiPublicServiceImageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/store-image': {
+      id: '/api/public/store-image'
+      path: '/api/public/store-image'
+      fullPath: '/api/public/store-image'
+      preLoaderRoute: typeof ApiPublicStoreImageRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/admin-alert/process': {
@@ -474,6 +494,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicPlacesSearchRoute: ApiPublicPlacesSearchRoute,
   ApiPublicReverseGeocodeRoute: ApiPublicReverseGeocodeRoute,
   ApiPublicServiceImageRoute: ApiPublicServiceImageRoute,
+  ApiPublicStoreImageRoute: ApiPublicStoreImageRoute,
   ApiPublicAdminAlertProcessRoute: ApiPublicAdminAlertProcessRoute,
   ApiPublicBookingsProcessRefundsRoute: ApiPublicBookingsProcessRefundsRoute,
   ApiPublicBusinessProcessBatchesRoute: ApiPublicBusinessProcessBatchesRoute,

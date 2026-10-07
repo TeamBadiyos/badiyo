@@ -1,14 +1,12 @@
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { ImageIcon, Store as StoreIcon } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 
 /**
- * Store and product photos live in a private bucket, so every thumbnail is a
- * short-lived signed URL (never getPublicUrl).
+ * Store and product photos load straight from the app's cached image route
+ * (lightweight WebP copies, one-year cache) — no per-photo signed-URL call.
  */
 export function StoreImage({
   path,
-  bucket = "product-images",
   className = "",
   variant = "product",
   alt = "",
@@ -19,33 +17,28 @@ export function StoreImage({
   variant?: "product" | "store";
   alt?: string;
 }) {
-  const { data } = useQuery({
-    queryKey: ["store-image", bucket, path],
-    enabled: Boolean(path),
-    staleTime: 45 * 60_000,
-    queryFn: async () => {
-      const { data } = await supabase.storage.from(bucket).createSignedUrl(path!, 60 * 60);
-      return data?.signedUrl ?? null;
-    },
-  });
+  const [loaded, setLoaded] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const Fallback = variant === "store" ? StoreIcon : ImageIcon;
 
-  if (!path || !data) {
-    const Fallback = variant === "store" ? StoreIcon : ImageIcon;
+  if (!path || failed) {
     return (
-      <div
-        className={`flex items-center justify-center rounded-[18px] bg-muted text-muted-foreground ${className}`}
-      >
+      <div className={`flex items-center justify-center rounded-[18px] bg-muted text-muted-foreground ${className}`}>
         <Fallback className="h-5 w-5" />
       </div>
     );
   }
 
+  const src = `/api/public/store-image?kind=${variant}&path=${encodeURIComponent(path)}`;
   return (
     <img
-      src={data}
+      src={src}
       alt={alt}
       loading="lazy"
-      className={`rounded-[18px] object-cover ${className}`}
+      decoding="async"
+      onLoad={() => setLoaded(true)}
+      onError={() => setFailed(true)}
+      className={`rounded-[18px] object-cover transition-opacity duration-200 ${loaded ? "bg-transparent opacity-100" : "bg-muted opacity-60"} ${className}`}
     />
   );
 }
