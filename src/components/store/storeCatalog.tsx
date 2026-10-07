@@ -83,7 +83,7 @@ function CatalogCard({
 }) {
   const dist = formatDistance(item.km);
   return (
-    <div className={fluid ? "min-w-0" : "w-[140px] shrink-0"}>
+    <div className={fluid ? "min-w-0" : "w-[30vw] max-w-[132px] shrink-0"}>
       <ProductCard
         product={item.product}
         store={{ id: item.store.id, name: item.store.store_name }}

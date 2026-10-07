@@ -90,26 +90,9 @@ function ServiceProductCardBase({
             {unavailableLabel || t("home.unavailableBadge")}
           </span>
         ) : null}
-        <button
-          type="button"
-          disabled={unavailable}
-          onClick={(e) => {
-            e.stopPropagation();
-            if (unavailable) {
-              blocked();
-              return;
-            }
-            onAdd();
-          }}
-          className={`absolute -bottom-2 right-1 rounded-[10px] border border-primary bg-card px-3 py-1 text-[11px] font-extrabold uppercase tracking-[0.02em] text-primary shadow-card-m transition active:scale-[0.96] ${
-            unavailable ? "border-muted-foreground/40 text-muted-foreground" : ""
-          }`}
-        >
-          {t("home.add")}
-        </button>
       </div>
 
-      <p className="mt-3 line-clamp-2 text-[12px] font-bold leading-tight text-foreground">
+      <p className="mt-2 line-clamp-2 text-[12px] font-bold leading-tight text-foreground">
         {service.name}
       </p>
 
