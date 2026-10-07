@@ -157,7 +157,7 @@ export function ProductCard({
         <DrawerContent onClick={stop} className="mx-auto max-h-[92vh] max-w-md rounded-t-[24px]">
           <div className="overflow-y-auto px-5 pb-6 pt-2">
             <div className="rounded-[20px] bg-primary/5 p-4">
-              <StoreImage path={product.photo_url} variant="product" alt={product.name} className="mx-auto aspect-square h-auto w-full max-w-[300px]" />
+              <StoreImage path={product.photo_url} variant="product" alt={product.name} size="full" className="mx-auto aspect-square h-auto w-full max-w-[300px]" />
             </div>
             <DrawerTitle className="mt-4 text-lg font-extrabold leading-snug text-foreground">{product.name}</DrawerTitle>
             {(size || product.unit) && (
