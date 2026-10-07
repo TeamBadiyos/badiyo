@@ -16,6 +16,7 @@ import {
   type StoreCategory,
 } from "@/lib/store";
 import { ProductCard } from "./ProductCard";
+import { StoreImage } from "./StoreImage";
 
 type Coords = { lat: number; lng: number } | null;
 export type CatalogItem = { product: PublicProduct; store: PublicStore; km: number | null; closed: boolean };
@@ -149,11 +150,7 @@ export function StoreCategoryGrid({ coords }: { coords: Coords }) {
               className="flex flex-col items-center gap-1 rounded-[14px] bg-primary/5 p-1.5 text-center active:scale-95"
             >
               <div className="h-14 w-full overflow-hidden rounded-[10px] bg-card">
-                {photo && (
-                  <div className="pointer-events-none h-full w-full scale-[0.55] origin-top">
-                    <ProductCard product={photo} fluid />
-                  </div>
-                )}
+                <StoreImage path={photo?.photo_url ?? null} variant="product" alt={s.category.name} className="h-full w-full" />
               </div>
               <span className="line-clamp-2 text-[10px] font-bold leading-tight text-foreground">
                 {s.category.name}
