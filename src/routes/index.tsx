@@ -1282,7 +1282,7 @@ function Index() {
             onBack={() => setPhase("home")}
             onOpenStore={(st) => {
               setPhase("home");
-              storePendingStoreKey(st.id);
+              void import("@/lib/storeShare").then((m) => m.storePendingStoreKey(st.id));
             }}
             onBookService={(s) => {
               setSelectedService(s);
