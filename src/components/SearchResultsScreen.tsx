@@ -103,11 +103,10 @@ export function SearchResultsScreen({
                   </button>
                 )}
               </div>
-              <div className="grid grid-cols-3 gap-2.5">
+              <div className="grid grid-cols-2 gap-3">
                 {productHits.slice(0, 6).map((i) => (
                   <div key={i.product.id} className="min-w-0">
                     <ProductCard product={i.product} store={{ id: i.store.id, name: i.store.store_name }} closed={i.closed} fluid onOpen={onOpenStore ? () => onOpenStore(i.store) : undefined} />
-                    <p className="mt-1 truncate text-[10px] font-semibold text-muted-foreground">{i.store.store_name}</p>
                   </div>
                 ))}
               </div>
