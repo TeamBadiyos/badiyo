@@ -1,5 +1,6 @@
 import { useBackHandler } from "@/lib/backHandler";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { ArrowLeft, Loader2, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { useT } from "@/i18n";
@@ -26,6 +27,8 @@ export function StoreDetailScreen({
   const t = useT();
   const { data: products = [], isLoading } = useStoreProducts(store.id);
   const closed = !isStoreOpen(store);
+  const [photoOpen, setPhotoOpen] = useState(false);
+  useBackHandler(photoOpen, () => setPhotoOpen(false));
 
   const groups = useMemo(() => {
     const map = new Map<string, PublicProduct[]>();
@@ -74,6 +77,11 @@ export function StoreDetailScreen({
           >
             <ArrowLeft className="h-5 w-5 text-foreground" />
           </button>
+          {store.photo_url && (
+            <button type="button" onClick={() => setPhotoOpen(true)} aria-label="Store photo" className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-border">
+              <StoreImage path={store.photo_url} variant="store" alt={store.store_name ?? ""} className="h-full w-full !rounded-full" />
+            </button>
+          )}
           <div className="min-w-0 flex-1">
             <p className="truncate text-base font-bold text-foreground">
               {store.store_name ?? "—"}
@@ -131,6 +139,12 @@ export function StoreDetailScreen({
         )}
       </div>
 
+      <Dialog open={photoOpen} onOpenChange={setPhotoOpen}>
+        <DialogContent className="max-w-sm overflow-hidden rounded-[20px] p-3">
+          <DialogTitle className="text-base font-bold">{store.store_name}</DialogTitle>
+          <StoreImage path={store.photo_url} variant="store" alt={store.store_name ?? ""} className="aspect-square h-auto w-full !object-contain bg-muted" />
+        </DialogContent>
+      </Dialog>
       <CartBar onOpenCart={onOpenCart} disabled={!orderingEnabled} />
     </main>
   );
