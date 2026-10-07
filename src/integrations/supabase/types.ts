@@ -445,6 +445,53 @@ export type Database = {
           },
         ]
       }
+      booking_expert_handovers: {
+        Row: {
+          booking_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          minutes_worked: number
+          new_expert_id: string
+          previous_expert_id: string
+          previous_expert_payout: number
+          reason: string
+          total_payout: number
+        }
+        Insert: {
+          booking_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          minutes_worked?: number
+          new_expert_id: string
+          previous_expert_id: string
+          previous_expert_payout?: number
+          reason: string
+          total_payout?: number
+        }
+        Update: {
+          booking_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          minutes_worked?: number
+          new_expert_id?: string
+          previous_expert_id?: string
+          previous_expert_payout?: number
+          reason?: string
+          total_payout?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_expert_handovers_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       booking_extensions: {
         Row: {
           approval_status: string
@@ -5367,6 +5414,7 @@ export type Database = {
         Row: {
           amount: number
           batch_id: string
+          bonus_amount: number
           booking_ids: string[]
           created_at: string
           gross_amount: number | null
@@ -5377,15 +5425,23 @@ export type Database = {
           owner_type: string
           paid: boolean
           paid_at: string | null
+          paid_on: string | null
           pan_last4: string | null
+          payment_mode: string | null
+          payment_notes: string | null
+          removed: boolean
+          removed_reason: string | null
           tds_amount: number
           tds_deposited_at: string | null
           tds_rate: number
           tds_status: string
+          utr: string | null
+          wallet_debited: boolean
         }
         Insert: {
           amount?: number
           batch_id: string
+          bonus_amount?: number
           booking_ids?: string[]
           created_at?: string
           gross_amount?: number | null
@@ -5396,15 +5452,23 @@ export type Database = {
           owner_type: string
           paid?: boolean
           paid_at?: string | null
+          paid_on?: string | null
           pan_last4?: string | null
+          payment_mode?: string | null
+          payment_notes?: string | null
+          removed?: boolean
+          removed_reason?: string | null
           tds_amount?: number
           tds_deposited_at?: string | null
           tds_rate?: number
           tds_status?: string
+          utr?: string | null
+          wallet_debited?: boolean
         }
         Update: {
           amount?: number
           batch_id?: string
+          bonus_amount?: number
           booking_ids?: string[]
           created_at?: string
           gross_amount?: number | null
@@ -5415,11 +5479,18 @@ export type Database = {
           owner_type?: string
           paid?: boolean
           paid_at?: string | null
+          paid_on?: string | null
           pan_last4?: string | null
+          payment_mode?: string | null
+          payment_notes?: string | null
+          removed?: boolean
+          removed_reason?: string | null
           tds_amount?: number
           tds_deposited_at?: string | null
           tds_rate?: number
           tds_status?: string
+          utr?: string | null
+          wallet_debited?: boolean
         }
         Relationships: [
           {
@@ -5436,6 +5507,7 @@ export type Database = {
           batch_type: string
           created_at: string
           id: string
+          notes: string | null
           paid_at: string | null
           status: string
           total_amount: number
@@ -5446,6 +5518,7 @@ export type Database = {
           batch_type?: string
           created_at?: string
           id?: string
+          notes?: string | null
           paid_at?: string | null
           status?: string
           total_amount?: number
@@ -5456,6 +5529,7 @@ export type Database = {
           batch_type?: string
           created_at?: string
           id?: string
+          notes?: string | null
           paid_at?: string | null
           status?: string
           total_amount?: number
@@ -5489,6 +5563,10 @@ export type Database = {
         Row: {
           admin_hidden: boolean
           admin_hidden_reason: string | null
+          approval_reason: string | null
+          approval_reviewed_at: string | null
+          approval_reviewed_by: string | null
+          approval_status: string
           category_label: string | null
           created_at: string
           description: string | null
@@ -5507,6 +5585,10 @@ export type Database = {
         Insert: {
           admin_hidden?: boolean
           admin_hidden_reason?: string | null
+          approval_reason?: string | null
+          approval_reviewed_at?: string | null
+          approval_reviewed_by?: string | null
+          approval_status?: string
           category_label?: string | null
           created_at?: string
           description?: string | null
@@ -5525,6 +5607,10 @@ export type Database = {
         Update: {
           admin_hidden?: boolean
           admin_hidden_reason?: string | null
+          approval_reason?: string | null
+          approval_reviewed_at?: string | null
+          approval_reviewed_by?: string | null
+          approval_status?: string
           category_label?: string | null
           created_at?: string
           description?: string | null
@@ -7641,6 +7727,10 @@ export type Database = {
         Returns: Json
       }
       booking_journey_sweeper: { Args: never; Returns: number }
+      booking_total_expert_payout: {
+        Args: { _booking_id: string }
+        Returns: number
+      }
       booking_verify_job_secret: { Args: { _secret: string }; Returns: boolean }
       broadcast_booking_to_experts: {
         Args: { _booking_id: string; _radius?: number }
@@ -8863,6 +8953,10 @@ export type Database = {
         Args: { _decision: string; _extension_id: string }
         Returns: Json
       }
+      payout_batch_recalc_total: {
+        Args: { _batch_id: string }
+        Returns: undefined
+      }
       point_in_polygon: {
         Args: { _lat: number; _lng: number; _poly: Json }
         Returns: boolean
@@ -8975,6 +9069,7 @@ export type Database = {
         Args: { _at?: string; _city?: string; _service_key: string }
         Returns: Json
       }
+      service_extensions_enabled: { Args: never; Returns: boolean }
       service_holiday_notify: { Args: { _phase: string }; Returns: undefined }
       service_hours_autooffline: { Args: never; Returns: undefined }
       service_hours_bypass: { Args: never; Returns: boolean }
@@ -9270,6 +9365,15 @@ export type Database = {
         Args: { _booking_id: string; _payload: Json }
         Returns: undefined
       }
+      staff_edit_payout_item: {
+        Args: {
+          _bonus: number
+          _gross: number
+          _item_id: string
+          _reason: string
+        }
+        Returns: undefined
+      }
       staff_expert_kyc_decision: {
         Args: { _decision: string; _expert_id: string; _reason: string }
         Returns: undefined
@@ -9291,8 +9395,26 @@ export type Database = {
       }
       staff_generate_merchant_payout_batch: { Args: never; Returns: string }
       staff_generate_payout_batch: { Args: never; Returns: string }
+      staff_generate_payout_batch_range: {
+        Args: {
+          _batch_type: string
+          _from: string
+          _notes?: string
+          _to: string
+        }
+        Returns: string
+      }
       staff_generate_subscription_invoices: { Args: never; Returns: Json }
       staff_get_referral_config: { Args: never; Returns: Json }
+      staff_handover_booking_expert: {
+        Args: {
+          _booking_id: string
+          _new_expert_id: string
+          _previous_payout: number
+          _reason: string
+        }
+        Returns: Json
+      }
       staff_insurance_stats: { Args: never; Returns: Json }
       staff_list_bulk_plans: { Args: never; Returns: Json }
       staff_list_notifications: {
@@ -9353,6 +9475,17 @@ export type Database = {
         Args: { _expert_id: string; _order_id: string }
         Returns: Json
       }
+      staff_record_payout_payment: {
+        Args: {
+          _item_id: string
+          _mode?: string
+          _notes?: string
+          _paid: boolean
+          _paid_on?: string
+          _utr?: string
+        }
+        Returns: undefined
+      }
       staff_redraw_zone_boundary: {
         Args: { _boundary: Json; _zone_id: string }
         Returns: undefined
@@ -9374,6 +9507,15 @@ export type Database = {
         Returns: undefined
       }
       staff_require_super_admin: { Args: never; Returns: undefined }
+      staff_reschedule_booking: {
+        Args: {
+          _booking_id: string
+          _date: string
+          _reason?: string
+          _slot: string
+        }
+        Returns: undefined
+      }
       staff_reset_receiver_location: {
         Args: { _reason: string; _receiver_id: string }
         Returns: Json
@@ -9615,6 +9757,10 @@ export type Database = {
       }
       staff_set_partner_zones: {
         Args: { _partner_id: string; _zone_ids: string[] }
+        Returns: undefined
+      }
+      staff_set_payout_item_removed: {
+        Args: { _item_id: string; _reason?: string; _removed: boolean }
         Returns: undefined
       }
       staff_set_plan_active: {
