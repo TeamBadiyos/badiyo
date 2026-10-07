@@ -8576,6 +8576,8 @@ export type Database = {
         Returns: undefined
       }
       credit_referral_signup: { Args: { _txn_id: string }; Returns: number }
+      cron_fast_tick: { Args: never; Returns: undefined }
+      cron_minute_tick: { Args: never; Returns: undefined }
       current_merchant_id: { Args: never; Returns: string }
       customer_cancel_booking_apply: {
         Args: {
