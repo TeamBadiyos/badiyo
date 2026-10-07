@@ -1,3 +1,4 @@
+import { useBackHandler } from "@/lib/backHandler";
 import { ArrowLeft } from "lucide-react";
 import { useT } from "@/i18n";
 import type { PublicStore } from "@/lib/store";
@@ -22,6 +23,7 @@ export function StoreCategoryScreen({
   onOpenCart: () => void;
   orderingEnabled?: boolean;
 }) {
+  useBackHandler(true, () => onBack());
   const t = useT();
   return (
     <main className="min-h-screen w-full bg-background pb-32 momentum-scroll">

@@ -1,3 +1,4 @@
+import { useBackHandler } from "@/lib/backHandler";
 import { useState } from "react";
 import { Minus, Plus, Store as StoreIcon } from "lucide-react";
 import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
@@ -46,6 +47,7 @@ export function ProductCard({
   const cart = useStoreCart();
   const [askSwitch, setAskSwitch] = useState(false);
   const [detail, setDetail] = useState(false);
+  useBackHandler(detail, () => setDetail(false));
   const open = () => (onOpen ? onOpen() : setDetail(true));
   const out = !product.in_stock;
   const { title, size } = splitProductName(product.name);

@@ -1,3 +1,4 @@
+import { useBackHandler } from "@/lib/backHandler";
 /**
  * Cart + checkout for a shop order: items, delivery address, bill and payment.
  * Prices shown here are re-computed by the database when the order is placed.
@@ -71,6 +72,8 @@ export function StoreCartScreen({
   /** Called after a successful order so the app can show the Orders tab. */
   onDone: (orderId?: string) => void;
 }) {
+  // picker registers its own handler
+  useBackHandler(true, () => onBack());
   const t = useT();
   const cart = useStoreCart();
   const queryClient = useQueryClient();
