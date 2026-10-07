@@ -105,7 +105,7 @@ export function ProductCard({
           {[size, product.unit].filter(Boolean).join(" · ")}
         </p>
       )}
-      <div className="mt-1 flex items-end justify-between gap-1">
+      <div className="mt-1 flex flex-wrap items-end justify-between gap-x-1 gap-y-1.5">
         <div className="flex min-w-0 flex-col">
           {mrp && (
             <span className="text-[10px] font-semibold leading-none text-muted-foreground line-through">Rs {mrp.toFixed(0)}</span>
