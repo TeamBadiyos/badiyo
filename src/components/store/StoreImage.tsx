@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { ImageIcon, Store as StoreIcon } from "lucide-react";
-import { getApiBase } from "@/lib/storeImageBase";
 
 /**
  * Store and product photos load straight from the app's cached image route
@@ -30,7 +29,7 @@ export function StoreImage({
     );
   }
 
-  const src = `${getApiBase()}/api/public/store-image?kind=${variant}&path=${encodeURIComponent(path)}`;
+  const src = `/api/public/store-image?kind=${variant}&path=${encodeURIComponent(path)}`;
   return (
     <img
       src={src}
