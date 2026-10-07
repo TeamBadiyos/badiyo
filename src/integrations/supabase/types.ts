@@ -6574,10 +6574,12 @@ export type Database = {
         Row: {
           created_at: string
           detail: string | null
+          dismissed_at: string | null
           event_at: string
           id: string
           kind: string
           notif_key: string
+          read_at: string | null
           target: string
           target_id: string | null
           title: string
@@ -6585,10 +6587,12 @@ export type Database = {
         Insert: {
           created_at?: string
           detail?: string | null
+          dismissed_at?: string | null
           event_at?: string
           id?: string
           kind: string
           notif_key: string
+          read_at?: string | null
           target?: string
           target_id?: string | null
           title: string
@@ -6596,10 +6600,12 @@ export type Database = {
         Update: {
           created_at?: string
           detail?: string | null
+          dismissed_at?: string | null
           event_at?: string
           id?: string
           kind?: string
           notif_key?: string
+          read_at?: string | null
           target?: string
           target_id?: string | null
           title?: string
