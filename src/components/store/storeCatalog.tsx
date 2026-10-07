@@ -72,7 +72,15 @@ export function useNearbyCatalog(coords: Coords) {
   return { items, shelves, loading: isLoading || (ids.length > 0 && lp) };
 }
 
-function CatalogCard({ item, fluid }: { item: CatalogItem; fluid?: boolean }) {
+function CatalogCard({
+  item,
+  fluid,
+  onOpenStore,
+}: {
+  item: CatalogItem;
+  fluid?: boolean;
+  onOpenStore?: (s: PublicStore) => void;
+}) {
   const dist = formatDistance(item.km);
   return (
     <div className={fluid ? "min-w-0" : "w-[140px] shrink-0"}>
@@ -81,6 +89,7 @@ function CatalogCard({ item, fluid }: { item: CatalogItem; fluid?: boolean }) {
         store={{ id: item.store.id, name: item.store.store_name }}
         closed={item.closed}
         fluid={fluid}
+        onOpen={onOpenStore ? () => onOpenStore(item.store) : undefined}
       />
       <p className="mt-1 truncate px-0.5 text-[10px] font-semibold text-muted-foreground">
         {item.store.store_name ?? ""}

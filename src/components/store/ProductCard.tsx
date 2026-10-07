@@ -108,7 +108,7 @@ export function ProductCard({
           <p className="whitespace-nowrap text-[15px] font-extrabold leading-none text-foreground">₹{Number(product.price).toFixed(0)}</p>
           {mrp && <p className="mt-0.5 text-[10px] leading-none text-muted-foreground line-through">₹{mrp.toFixed(0)}</p>}
         </div>
-        {out ? (
+        {onOpen ? null : out ? (
           <span className="shrink-0 rounded-full bg-muted px-2 py-1 text-[9px] font-bold text-muted-foreground">
             {t("store.outOfStock")}
           </span>
