@@ -5574,6 +5574,7 @@ export type Database = {
           hsn_sac_code: string | null
           id: string
           image_url: string | null
+          image_url_2: string | null
           is_active: boolean
           low_stock_threshold: number
           merchant_id: string
@@ -5596,6 +5597,7 @@ export type Database = {
           hsn_sac_code?: string | null
           id?: string
           image_url?: string | null
+          image_url_2?: string | null
           is_active?: boolean
           low_stock_threshold?: number
           merchant_id: string
@@ -5618,6 +5620,7 @@ export type Database = {
           hsn_sac_code?: string | null
           id?: string
           image_url?: string | null
+          image_url_2?: string | null
           is_active?: boolean
           low_stock_threshold?: number
           merchant_id?: string
