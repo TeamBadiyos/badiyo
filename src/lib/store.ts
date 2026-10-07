@@ -49,6 +49,7 @@ export type StoreCategory = {
   name: string;
   slug: string;
   rank: number;
+  icon_url?: string | null;
 };
 
 export async function fetchPublicStores(): Promise<PublicStore[]> {
@@ -93,7 +94,7 @@ export async function fetchStoreProducts(merchantId: string): Promise<PublicProd
 export async function fetchStoreCategories(): Promise<StoreCategory[]> {
   const { data, error } = await supabase
     .from("store_categories")
-    .select("id, name, slug, rank")
+    .select("id, name, slug, rank, icon_url")
     .eq("is_active", true)
     .order("rank", { ascending: true });
   if (error) throw error;
