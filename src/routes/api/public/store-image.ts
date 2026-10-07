@@ -11,7 +11,8 @@ export const Route = createFileRoute("/api/public/store-image")({
     handlers: {
       GET: async ({ request }) => {
         const url = new URL(request.url);
-        const kind = url.searchParams.get("kind") === "store" ? "store" : "product";
+        const k = url.searchParams.get("kind");
+        const kind = k === "store" ? "store" : k === "category" ? "category" : "product";
         const path = (url.searchParams.get("path") ?? "").trim().replace(/^\/+/, "");
         if (!path || path.includes("..") || /^[a-z]+:/i.test(path)) {
           return new Response("Bad path", { status: 400 });
@@ -25,8 +26,21 @@ export const Route = createFileRoute("/api/public/store-image")({
         }
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        const view = kind === "store" ? "public_stores" : "public_products";
-        const { data: row } = await supabaseAdmin.from(view).select("id").eq("photo_url", path).limit(1).maybeSingle();
+        let row: unknown = null;
+        if (kind === "category") {
+          const { data } = await supabaseAdmin
+            .from("store_categories")
+            .select("id")
+            .eq("is_active", true)
+            .eq("icon_url", path)
+            .limit(1)
+            .maybeSingle();
+          row = data;
+        } else {
+          const view = kind === "store" ? "public_stores" : "public_products";
+          const { data } = await supabaseAdmin.from(view).select("id").eq("photo_url", path).limit(1).maybeSingle();
+          row = data;
+        }
         if (!row) return new Response("Not found", { status: 404, headers: { "Cache-Control": "public, max-age=60" } });
 
         const primary = kind === "store" ? "merchant-documents" : "product-images";

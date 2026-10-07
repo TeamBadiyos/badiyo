@@ -14,7 +14,7 @@ export function StoreImage({
   path: string | null;
   bucket?: string;
   className?: string;
-  variant?: "product" | "store";
+  variant?: "product" | "store" | "category";
   alt?: string;
 }) {
   const [loaded, setLoaded] = useState(false);
@@ -29,7 +29,9 @@ export function StoreImage({
     );
   }
 
-  const src = `/api/public/store-image?kind=${variant}&path=${encodeURIComponent(path)}`;
+  const src = /^https?:\/\//i.test(path)
+    ? path
+    : `/api/public/store-image?kind=${variant}&path=${encodeURIComponent(path)}`;
   return (
     <img
       src={src}

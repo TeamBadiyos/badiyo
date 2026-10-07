@@ -165,7 +165,11 @@ export function StoreCategoryGrid({ coords }: { coords: Coords }) {
               className="flex flex-col items-center gap-1 rounded-[14px] bg-primary/5 p-1.5 text-center active:scale-95"
             >
               <div className="h-14 w-full overflow-hidden rounded-[10px] bg-card">
-                <StoreImage path={photo?.photo_url ?? null} variant="product" alt={s.category.name} className="h-full w-full" />
+                {s.category.icon_url ? (
+                  <StoreImage path={s.category.icon_url} variant="category" alt={s.category.name} className="h-full w-full" />
+                ) : (
+                  <StoreImage path={photo?.photo_url ?? null} variant="product" alt={s.category.name} className="h-full w-full" />
+                )}
               </div>
               <span className="line-clamp-2 text-[10px] font-bold leading-tight text-foreground">
                 {s.category.name}
