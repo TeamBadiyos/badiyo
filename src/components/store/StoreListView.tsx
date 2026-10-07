@@ -46,8 +46,8 @@ export function StoreListView({
   const loading = isLoading || (ids.length > 0 && loadingPreviews);
 
   return (
-    <section className="mt-4 pb-36">
-      <div className="mb-4">
+    <section className="mt-3 pb-36">
+      <div className="mb-3">
         <SellOnBadiyosCard />
       </div>
       {loading ? (
@@ -60,9 +60,9 @@ export function StoreListView({
         </div>
       ) : (
         groups.map((g) => (
-          <div key={g.category.id} className="mt-5 first:mt-0">
+          <div key={g.category.id} className="mt-4 first:mt-0">
             <SectionHeading>{g.category.name}</SectionHeading>
-            <ul className="mt-3 space-y-3">
+            <ul className="mt-2 space-y-2.5">
               {g.stores.slice(0, 3).map((r) => (
                 <li key={r.store.id}>
                   <StoreRow store={r.store} km={r.km} products={r.products} onOpen={() => onOpenStore(r.store)} />

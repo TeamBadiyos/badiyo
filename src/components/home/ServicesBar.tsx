@@ -24,7 +24,7 @@ export function ServicesBar({
   return (
     <nav
       aria-label={t("home.servicesBar")}
-      className="-mx-5 mt-4 overflow-x-auto px-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      className="-mx-5 mt-3 overflow-x-auto px-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
       <div className="flex w-max items-center gap-2">
         {tabs.map((t) => {
@@ -35,7 +35,7 @@ export function ServicesBar({
               onClick={() => onSelect(t.id)}
               aria-current={active ? "page" : undefined}
               className={
-                "shrink-0 rounded-full px-4 py-2 text-sm font-bold transition active:scale-[0.98] " +
+                "shrink-0 rounded-full px-4 py-1.5 text-sm font-bold transition active:scale-[0.98] " +
                 (active
                   ? "bg-primary text-primary-foreground"
                   : "border border-border bg-card text-foreground")

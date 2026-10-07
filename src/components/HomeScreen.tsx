@@ -486,7 +486,7 @@ export function HomeScreen({
             e.preventDefault();
             onSearch?.(searchQuery.trim());
           }}
-          className="flex items-center gap-3 rounded-[16px] border border-border bg-card px-4 py-3 shadow-sm"
+          className="flex items-center gap-3 rounded-[14px] border border-border bg-card px-4 py-2.5 shadow-sm"
         >
           <Search className="h-5 w-5 text-muted-foreground" />
           <input
