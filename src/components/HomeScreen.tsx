@@ -36,6 +36,8 @@ import {
 } from "@/lib/storeShare";
 import { StoreListView } from "./store/StoreListView";
 import { StoreShelves } from "./store/storeCatalog";
+import { LiveSearchPanel } from "./home/LiveSearchPanel";
+import { CartBar } from "./store/CartBar";
 import { SellOnBadiyosCard } from "./store/SellOnBadiyosCard";
 // Shop pages (with their address picker and payment sheet) load only when the
 // customer actually opens a shop, a category or the cart.
@@ -500,6 +502,23 @@ export function HomeScreen({
             <Mic className="h-5 w-5 text-muted-foreground" />
           </button>
         </form>
+        {searchQuery.trim().length >= 2 && (
+          <LiveSearchPanel
+            query={searchQuery.trim()}
+            coords={homeCoords}
+            services={services}
+            storeUnlocked={storeUnlocked}
+            onOpenStore={(s) => {
+              setSearchQuery("");
+              setOpenCategory(null);
+              setOpenStore(s);
+            }}
+            onOpenService={(s) => {
+              setSearchQuery("");
+              guardedBookService(toPayload(s, segments.find((g) => g.id === s.segment_id) ?? null));
+            }}
+          />
+        )}
 
 
 
@@ -593,6 +612,7 @@ export function HomeScreen({
         <BrandWatermark />
       </div>
 
+      {storeUnlocked && <CartBar aboveNav onOpenCart={() => setCartOpen(true)} />}
       <BottomNav
         activeKey="home"
         onHome={() => setActiveSegmentId(null)}
