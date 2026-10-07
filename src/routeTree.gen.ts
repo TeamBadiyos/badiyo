@@ -10,35 +10,30 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as StoreSlugRouteImport } from './routes/store.$slug'
 import { Route as InviteCodeRouteImport } from './routes/invite.$code'
-import { Route as ApiPublicServiceImageRouteImport } from './routes/api/public/service-image'
-import { Route as ApiPublicReverseGeocodeRouteImport } from './routes/api/public/reverse-geocode'
-import { Route as ApiPublicPlacesSearchRouteImport } from './routes/api/public/places-search'
-import { Route as ApiPublicHasLoginPinRouteImport } from './routes/api/public/has-login-pin'
+import { Route as StoreSlugRouteImport } from './routes/store.$slug'
 import { Route as ApiPublicGeocodeSearchRouteImport } from './routes/api/public/geocode-search'
-import { Route as ApiPublicWebhooksRazorpayRouteImport } from './routes/api/public/webhooks/razorpay'
-import { Route as ApiPublicTrainingSetExpertModeRouteImport } from './routes/api/public/training/set-expert-mode'
-import { Route as ApiPublicTrainingDeleteBookingsRouteImport } from './routes/api/public/training/delete-bookings'
-import { Route as ApiPublicTrainingCreateBookingRouteImport } from './routes/api/public/training/create-booking'
-import { Route as ApiPublicStoreProcessRefundsRouteImport } from './routes/api/public/store/process-refunds'
-import { Route as ApiPublicPushSendRouteImport } from './routes/api/public/push/send'
-import { Route as ApiPublicProofUploadUrlRouteImport } from './routes/api/public/proof/upload-url'
-import { Route as ApiPublicProofDownloadUrlsRouteImport } from './routes/api/public/proof/download-urls'
-import { Route as ApiPublicProofCleanupRouteImport } from './routes/api/public/proof/cleanup'
-import { Route as ApiPublicCourierProcessRefundsRouteImport } from './routes/api/public/courier/process-refunds'
-import { Route as ApiPublicBusinessProcessBatchesRouteImport } from './routes/api/public/business/process-batches'
-import { Route as ApiPublicBookingsProcessRefundsRouteImport } from './routes/api/public/bookings/process-refunds'
+import { Route as ApiPublicHasLoginPinRouteImport } from './routes/api/public/has-login-pin'
+import { Route as ApiPublicPlacesSearchRouteImport } from './routes/api/public/places-search'
+import { Route as ApiPublicReverseGeocodeRouteImport } from './routes/api/public/reverse-geocode'
+import { Route as ApiPublicServiceImageRouteImport } from './routes/api/public/service-image'
 import { Route as ApiPublicAdminAlertProcessRouteImport } from './routes/api/public/admin-alert/process'
+import { Route as ApiPublicBookingsProcessRefundsRouteImport } from './routes/api/public/bookings/process-refunds'
+import { Route as ApiPublicBusinessProcessBatchesRouteImport } from './routes/api/public/business/process-batches'
+import { Route as ApiPublicCourierProcessRefundsRouteImport } from './routes/api/public/courier/process-refunds'
+import { Route as ApiPublicProofCleanupRouteImport } from './routes/api/public/proof/cleanup'
+import { Route as ApiPublicProofDownloadUrlsRouteImport } from './routes/api/public/proof/download-urls'
+import { Route as ApiPublicProofUploadUrlRouteImport } from './routes/api/public/proof/upload-url'
+import { Route as ApiPublicPushSendRouteImport } from './routes/api/public/push/send'
+import { Route as ApiPublicStoreProcessRefundsRouteImport } from './routes/api/public/store/process-refunds'
+import { Route as ApiPublicTrainingCreateBookingRouteImport } from './routes/api/public/training/create-booking'
+import { Route as ApiPublicTrainingDeleteBookingsRouteImport } from './routes/api/public/training/delete-bookings'
+import { Route as ApiPublicTrainingSetExpertModeRouteImport } from './routes/api/public/training/set-expert-mode'
+import { Route as ApiPublicWebhooksRazorpayRouteImport } from './routes/api/public/webhooks/razorpay'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const StoreSlugRoute = StoreSlugRouteImport.update({
-  id: '/store/$slug',
-  path: '/store/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InviteCodeRoute = InviteCodeRouteImport.update({
@@ -46,24 +41,9 @@ const InviteCodeRoute = InviteCodeRouteImport.update({
   path: '/invite/$code',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicServiceImageRoute = ApiPublicServiceImageRouteImport.update({
-  id: '/api/public/service-image',
-  path: '/api/public/service-image',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicReverseGeocodeRoute = ApiPublicReverseGeocodeRouteImport.update({
-  id: '/api/public/reverse-geocode',
-  path: '/api/public/reverse-geocode',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicPlacesSearchRoute = ApiPublicPlacesSearchRouteImport.update({
-  id: '/api/public/places-search',
-  path: '/api/public/places-search',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicHasLoginPinRoute = ApiPublicHasLoginPinRouteImport.update({
-  id: '/api/public/has-login-pin',
-  path: '/api/public/has-login-pin',
+const StoreSlugRoute = StoreSlugRouteImport.update({
+  id: '/store/$slug',
+  path: '/store/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicGeocodeSearchRoute = ApiPublicGeocodeSearchRouteImport.update({
@@ -71,67 +51,30 @@ const ApiPublicGeocodeSearchRoute = ApiPublicGeocodeSearchRouteImport.update({
   path: '/api/public/geocode-search',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicWebhooksRazorpayRoute =
-  ApiPublicWebhooksRazorpayRouteImport.update({
-    id: '/api/public/webhooks/razorpay',
-    path: '/api/public/webhooks/razorpay',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicTrainingSetExpertModeRoute =
-  ApiPublicTrainingSetExpertModeRouteImport.update({
-    id: '/api/public/training/set-expert-mode',
-    path: '/api/public/training/set-expert-mode',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicTrainingDeleteBookingsRoute =
-  ApiPublicTrainingDeleteBookingsRouteImport.update({
-    id: '/api/public/training/delete-bookings',
-    path: '/api/public/training/delete-bookings',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicTrainingCreateBookingRoute =
-  ApiPublicTrainingCreateBookingRouteImport.update({
-    id: '/api/public/training/create-booking',
-    path: '/api/public/training/create-booking',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicStoreProcessRefundsRoute =
-  ApiPublicStoreProcessRefundsRouteImport.update({
-    id: '/api/public/store/process-refunds',
-    path: '/api/public/store/process-refunds',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicPushSendRoute = ApiPublicPushSendRouteImport.update({
-  id: '/api/public/push/send',
-  path: '/api/public/push/send',
+const ApiPublicHasLoginPinRoute = ApiPublicHasLoginPinRouteImport.update({
+  id: '/api/public/has-login-pin',
+  path: '/api/public/has-login-pin',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicProofUploadUrlRoute = ApiPublicProofUploadUrlRouteImport.update({
-  id: '/api/public/proof/upload-url',
-  path: '/api/public/proof/upload-url',
+const ApiPublicPlacesSearchRoute = ApiPublicPlacesSearchRouteImport.update({
+  id: '/api/public/places-search',
+  path: '/api/public/places-search',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicProofDownloadUrlsRoute =
-  ApiPublicProofDownloadUrlsRouteImport.update({
-    id: '/api/public/proof/download-urls',
-    path: '/api/public/proof/download-urls',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicProofCleanupRoute = ApiPublicProofCleanupRouteImport.update({
-  id: '/api/public/proof/cleanup',
-  path: '/api/public/proof/cleanup',
+const ApiPublicReverseGeocodeRoute = ApiPublicReverseGeocodeRouteImport.update({
+  id: '/api/public/reverse-geocode',
+  path: '/api/public/reverse-geocode',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicCourierProcessRefundsRoute =
-  ApiPublicCourierProcessRefundsRouteImport.update({
-    id: '/api/public/courier/process-refunds',
-    path: '/api/public/courier/process-refunds',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicBusinessProcessBatchesRoute =
-  ApiPublicBusinessProcessBatchesRouteImport.update({
-    id: '/api/public/business/process-batches',
-    path: '/api/public/business/process-batches',
+const ApiPublicServiceImageRoute = ApiPublicServiceImageRouteImport.update({
+  id: '/api/public/service-image',
+  path: '/api/public/service-image',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicAdminAlertProcessRoute =
+  ApiPublicAdminAlertProcessRouteImport.update({
+    id: '/api/public/admin-alert/process',
+    path: '/api/public/admin-alert/process',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicBookingsProcessRefundsRoute =
@@ -140,10 +83,67 @@ const ApiPublicBookingsProcessRefundsRoute =
     path: '/api/public/bookings/process-refunds',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicAdminAlertProcessRoute =
-  ApiPublicAdminAlertProcessRouteImport.update({
-    id: '/api/public/admin-alert/process',
-    path: '/api/public/admin-alert/process',
+const ApiPublicBusinessProcessBatchesRoute =
+  ApiPublicBusinessProcessBatchesRouteImport.update({
+    id: '/api/public/business/process-batches',
+    path: '/api/public/business/process-batches',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicCourierProcessRefundsRoute =
+  ApiPublicCourierProcessRefundsRouteImport.update({
+    id: '/api/public/courier/process-refunds',
+    path: '/api/public/courier/process-refunds',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicProofCleanupRoute = ApiPublicProofCleanupRouteImport.update({
+  id: '/api/public/proof/cleanup',
+  path: '/api/public/proof/cleanup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicProofDownloadUrlsRoute =
+  ApiPublicProofDownloadUrlsRouteImport.update({
+    id: '/api/public/proof/download-urls',
+    path: '/api/public/proof/download-urls',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicProofUploadUrlRoute = ApiPublicProofUploadUrlRouteImport.update({
+  id: '/api/public/proof/upload-url',
+  path: '/api/public/proof/upload-url',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicPushSendRoute = ApiPublicPushSendRouteImport.update({
+  id: '/api/public/push/send',
+  path: '/api/public/push/send',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicStoreProcessRefundsRoute =
+  ApiPublicStoreProcessRefundsRouteImport.update({
+    id: '/api/public/store/process-refunds',
+    path: '/api/public/store/process-refunds',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicTrainingCreateBookingRoute =
+  ApiPublicTrainingCreateBookingRouteImport.update({
+    id: '/api/public/training/create-booking',
+    path: '/api/public/training/create-booking',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicTrainingDeleteBookingsRoute =
+  ApiPublicTrainingDeleteBookingsRouteImport.update({
+    id: '/api/public/training/delete-bookings',
+    path: '/api/public/training/delete-bookings',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicTrainingSetExpertModeRoute =
+  ApiPublicTrainingSetExpertModeRouteImport.update({
+    id: '/api/public/training/set-expert-mode',
+    path: '/api/public/training/set-expert-mode',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicWebhooksRazorpayRoute =
+  ApiPublicWebhooksRazorpayRouteImport.update({
+    id: '/api/public/webhooks/razorpay',
+    path: '/api/public/webhooks/razorpay',
     getParentRoute: () => rootRouteImport,
   } as any)
 
@@ -322,13 +322,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/store/$slug': {
-      id: '/store/$slug'
-      path: '/store/$slug'
-      fullPath: '/store/$slug'
-      preLoaderRoute: typeof StoreSlugRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/invite/$code': {
       id: '/invite/$code'
       path: '/invite/$code'
@@ -336,32 +329,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InviteCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/service-image': {
-      id: '/api/public/service-image'
-      path: '/api/public/service-image'
-      fullPath: '/api/public/service-image'
-      preLoaderRoute: typeof ApiPublicServiceImageRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/reverse-geocode': {
-      id: '/api/public/reverse-geocode'
-      path: '/api/public/reverse-geocode'
-      fullPath: '/api/public/reverse-geocode'
-      preLoaderRoute: typeof ApiPublicReverseGeocodeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/places-search': {
-      id: '/api/public/places-search'
-      path: '/api/public/places-search'
-      fullPath: '/api/public/places-search'
-      preLoaderRoute: typeof ApiPublicPlacesSearchRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/has-login-pin': {
-      id: '/api/public/has-login-pin'
-      path: '/api/public/has-login-pin'
-      fullPath: '/api/public/has-login-pin'
-      preLoaderRoute: typeof ApiPublicHasLoginPinRouteImport
+    '/store/$slug': {
+      id: '/store/$slug'
+      path: '/store/$slug'
+      fullPath: '/store/$slug'
+      preLoaderRoute: typeof StoreSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/geocode-search': {
@@ -371,81 +343,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicGeocodeSearchRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/webhooks/razorpay': {
-      id: '/api/public/webhooks/razorpay'
-      path: '/api/public/webhooks/razorpay'
-      fullPath: '/api/public/webhooks/razorpay'
-      preLoaderRoute: typeof ApiPublicWebhooksRazorpayRouteImport
+    '/api/public/has-login-pin': {
+      id: '/api/public/has-login-pin'
+      path: '/api/public/has-login-pin'
+      fullPath: '/api/public/has-login-pin'
+      preLoaderRoute: typeof ApiPublicHasLoginPinRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/training/set-expert-mode': {
-      id: '/api/public/training/set-expert-mode'
-      path: '/api/public/training/set-expert-mode'
-      fullPath: '/api/public/training/set-expert-mode'
-      preLoaderRoute: typeof ApiPublicTrainingSetExpertModeRouteImport
+    '/api/public/places-search': {
+      id: '/api/public/places-search'
+      path: '/api/public/places-search'
+      fullPath: '/api/public/places-search'
+      preLoaderRoute: typeof ApiPublicPlacesSearchRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/training/delete-bookings': {
-      id: '/api/public/training/delete-bookings'
-      path: '/api/public/training/delete-bookings'
-      fullPath: '/api/public/training/delete-bookings'
-      preLoaderRoute: typeof ApiPublicTrainingDeleteBookingsRouteImport
+    '/api/public/reverse-geocode': {
+      id: '/api/public/reverse-geocode'
+      path: '/api/public/reverse-geocode'
+      fullPath: '/api/public/reverse-geocode'
+      preLoaderRoute: typeof ApiPublicReverseGeocodeRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/training/create-booking': {
-      id: '/api/public/training/create-booking'
-      path: '/api/public/training/create-booking'
-      fullPath: '/api/public/training/create-booking'
-      preLoaderRoute: typeof ApiPublicTrainingCreateBookingRouteImport
+    '/api/public/service-image': {
+      id: '/api/public/service-image'
+      path: '/api/public/service-image'
+      fullPath: '/api/public/service-image'
+      preLoaderRoute: typeof ApiPublicServiceImageRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/store/process-refunds': {
-      id: '/api/public/store/process-refunds'
-      path: '/api/public/store/process-refunds'
-      fullPath: '/api/public/store/process-refunds'
-      preLoaderRoute: typeof ApiPublicStoreProcessRefundsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/push/send': {
-      id: '/api/public/push/send'
-      path: '/api/public/push/send'
-      fullPath: '/api/public/push/send'
-      preLoaderRoute: typeof ApiPublicPushSendRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/proof/upload-url': {
-      id: '/api/public/proof/upload-url'
-      path: '/api/public/proof/upload-url'
-      fullPath: '/api/public/proof/upload-url'
-      preLoaderRoute: typeof ApiPublicProofUploadUrlRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/proof/download-urls': {
-      id: '/api/public/proof/download-urls'
-      path: '/api/public/proof/download-urls'
-      fullPath: '/api/public/proof/download-urls'
-      preLoaderRoute: typeof ApiPublicProofDownloadUrlsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/proof/cleanup': {
-      id: '/api/public/proof/cleanup'
-      path: '/api/public/proof/cleanup'
-      fullPath: '/api/public/proof/cleanup'
-      preLoaderRoute: typeof ApiPublicProofCleanupRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/courier/process-refunds': {
-      id: '/api/public/courier/process-refunds'
-      path: '/api/public/courier/process-refunds'
-      fullPath: '/api/public/courier/process-refunds'
-      preLoaderRoute: typeof ApiPublicCourierProcessRefundsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/business/process-batches': {
-      id: '/api/public/business/process-batches'
-      path: '/api/public/business/process-batches'
-      fullPath: '/api/public/business/process-batches'
-      preLoaderRoute: typeof ApiPublicBusinessProcessBatchesRouteImport
+    '/api/public/admin-alert/process': {
+      id: '/api/public/admin-alert/process'
+      path: '/api/public/admin-alert/process'
+      fullPath: '/api/public/admin-alert/process'
+      preLoaderRoute: typeof ApiPublicAdminAlertProcessRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/bookings/process-refunds': {
@@ -455,11 +385,81 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicBookingsProcessRefundsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/admin-alert/process': {
-      id: '/api/public/admin-alert/process'
-      path: '/api/public/admin-alert/process'
-      fullPath: '/api/public/admin-alert/process'
-      preLoaderRoute: typeof ApiPublicAdminAlertProcessRouteImport
+    '/api/public/business/process-batches': {
+      id: '/api/public/business/process-batches'
+      path: '/api/public/business/process-batches'
+      fullPath: '/api/public/business/process-batches'
+      preLoaderRoute: typeof ApiPublicBusinessProcessBatchesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/courier/process-refunds': {
+      id: '/api/public/courier/process-refunds'
+      path: '/api/public/courier/process-refunds'
+      fullPath: '/api/public/courier/process-refunds'
+      preLoaderRoute: typeof ApiPublicCourierProcessRefundsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/proof/cleanup': {
+      id: '/api/public/proof/cleanup'
+      path: '/api/public/proof/cleanup'
+      fullPath: '/api/public/proof/cleanup'
+      preLoaderRoute: typeof ApiPublicProofCleanupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/proof/download-urls': {
+      id: '/api/public/proof/download-urls'
+      path: '/api/public/proof/download-urls'
+      fullPath: '/api/public/proof/download-urls'
+      preLoaderRoute: typeof ApiPublicProofDownloadUrlsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/proof/upload-url': {
+      id: '/api/public/proof/upload-url'
+      path: '/api/public/proof/upload-url'
+      fullPath: '/api/public/proof/upload-url'
+      preLoaderRoute: typeof ApiPublicProofUploadUrlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/push/send': {
+      id: '/api/public/push/send'
+      path: '/api/public/push/send'
+      fullPath: '/api/public/push/send'
+      preLoaderRoute: typeof ApiPublicPushSendRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/store/process-refunds': {
+      id: '/api/public/store/process-refunds'
+      path: '/api/public/store/process-refunds'
+      fullPath: '/api/public/store/process-refunds'
+      preLoaderRoute: typeof ApiPublicStoreProcessRefundsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/training/create-booking': {
+      id: '/api/public/training/create-booking'
+      path: '/api/public/training/create-booking'
+      fullPath: '/api/public/training/create-booking'
+      preLoaderRoute: typeof ApiPublicTrainingCreateBookingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/training/delete-bookings': {
+      id: '/api/public/training/delete-bookings'
+      path: '/api/public/training/delete-bookings'
+      fullPath: '/api/public/training/delete-bookings'
+      preLoaderRoute: typeof ApiPublicTrainingDeleteBookingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/training/set-expert-mode': {
+      id: '/api/public/training/set-expert-mode'
+      path: '/api/public/training/set-expert-mode'
+      fullPath: '/api/public/training/set-expert-mode'
+      preLoaderRoute: typeof ApiPublicTrainingSetExpertModeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/webhooks/razorpay': {
+      id: '/api/public/webhooks/razorpay'
+      path: '/api/public/webhooks/razorpay'
+      fullPath: '/api/public/webhooks/razorpay'
+      preLoaderRoute: typeof ApiPublicWebhooksRazorpayRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
