@@ -91,10 +91,12 @@ function CatalogCard({
         fluid={fluid}
         onOpen={onOpenStore ? () => onOpenStore(item.store) : undefined}
       />
-      <p className="mt-1 truncate px-0.5 text-[10px] font-semibold text-muted-foreground">
-        {item.store.store_name ?? ""}
-        {dist ? ` • ${dist}` : ""}
-      </p>
+      {!onOpenStore && (
+        <p className="mt-1 truncate px-0.5 text-[10px] font-semibold text-muted-foreground">
+          {item.store.store_name ?? ""}
+          {dist ? ` • ${dist}` : ""}
+        </p>
+      )}
     </div>
   );
 }
