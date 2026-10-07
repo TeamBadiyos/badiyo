@@ -21,10 +21,10 @@ export function SellOnBadiyosCard() {
         <div className="flex shrink-0 items-center gap-1.5">
           <a
             href={sellCallHref()}
-            className="flex h-8 w-8 items-center justify-center rounded-full border border-primary/30 bg-card px-3.5 text-xs font-bold text-primary"
+            aria-label={t("store.sell.call")}
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-primary/30 bg-card text-primary"
           >
             <Phone className="h-3.5 w-3.5" />
-            {t("store.sell.call")}
           </a>
           <a
             href={sellWhatsAppHref()}
@@ -35,7 +35,7 @@ export function SellOnBadiyosCard() {
             <MessageCircle className="h-3.5 w-3.5" />
             {t("store.sell.whatsapp")}
           </a>
-      </div>
+        </div>
     </div>
   );
 }
