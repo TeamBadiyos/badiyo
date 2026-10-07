@@ -1,4 +1,7 @@
+import { useState } from "react";
 import { ChevronRight } from "lucide-react";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { useBackHandler } from "@/lib/backHandler";
 import { useT } from "@/i18n";
 import { StoreImage } from "./StoreImage";
 import { ProductCard } from "./ProductCard";
@@ -18,6 +21,8 @@ export function StoreRow({
   onOpen: () => void;
 }) {
   const t = useT();
+  const [photoOpen, setPhotoOpen] = useState(false);
+  useBackHandler(photoOpen, () => setPhotoOpen(false));
   const closed = !isStoreOpen(store);
   const dist = formatDistance(km);
   const storeRef = { id: store.id, name: store.store_name ?? null };
@@ -28,8 +33,21 @@ export function StoreRow({
       }
     >
       <div className="flex w-full items-center gap-3">
+        <button
+          type="button"
+          onClick={() => (store.photo_url ? setPhotoOpen(true) : onOpen())}
+          aria-label={store.store_name ?? "Store photo"}
+          className="shrink-0 active:scale-95"
+        >
+          <StoreImage path={store.photo_url} variant="store" alt={store.store_name ?? ""} className="h-10 w-10" />
+        </button>
+        <Dialog open={photoOpen} onOpenChange={setPhotoOpen}>
+          <DialogContent className="max-w-[92vw] border-0 bg-transparent p-0 shadow-none">
+            <DialogTitle className="sr-only">{store.store_name ?? "Store"}</DialogTitle>
+            <StoreImage path={store.photo_url} variant="store" alt={store.store_name ?? ""} className="aspect-square w-full" />
+          </DialogContent>
+        </Dialog>
         <button type="button" onClick={onOpen} className="flex min-w-0 flex-1 items-center gap-3 text-left">
-          <StoreImage path={store.photo_url} variant="store" alt={store.store_name ?? ""} className="h-10 w-10 shrink-0" />
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-bold text-foreground">{store.store_name ?? "—"}</p>
             <div className="mt-0.5 flex items-center gap-2">
