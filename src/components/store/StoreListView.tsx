@@ -13,6 +13,7 @@ import {
 import { StoreRow } from "./StoreRow";
 import { SellOnBadiyosCard } from "./SellOnBadiyosCard";
 import { CartBar } from "./CartBar";
+import { StoreCategoryGrid } from "./storeCatalog";
 import { buildStoreGroups, type StoreCategoryGroup } from "./storeGroups";
 
 type Coords = { lat: number; lng: number } | null;
@@ -49,6 +50,9 @@ export function StoreListView({
     <section className="mt-3 pb-36">
       <div className="mb-3">
         <SellOnBadiyosCard />
+      </div>
+      <div className="mb-4">
+        <StoreCategoryGrid coords={coords} />
       </div>
       {loading ? (
         <div className="mt-8 flex justify-center">

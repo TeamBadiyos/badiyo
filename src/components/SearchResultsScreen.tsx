@@ -4,6 +4,11 @@ import { toast } from "sonner";
 import { ServiceProductCard } from "./home/ServiceProductCard";
 import { fetchSegmentServices } from "@/lib/segments";
 import { useT } from "@/i18n";
+import { matchesAllWords, searchWords, useNearbyCatalog, ProductGridOverlay } from "./store/storeCatalog";
+import { ProductCard } from "./store/ProductCard";
+import { useIsInternalTester } from "@/lib/store";
+import { useServiceState } from "@/lib/serviceHours";
+import { useState } from "react";
 import { fetchAvailability, isUnavailable, unavailableReason } from "@/lib/availability";
 
 export function SearchResultsScreen({
@@ -52,11 +57,21 @@ export function SearchResultsScreen({
     task_types: s.task_types ?? [],
   });
 
-  const q = query.trim().toLowerCase();
-  const results = services.filter((s) => {
-    const hay = `${s.duration_label ?? ""} ${s.subtitle ?? ""}`.toLowerCase();
-    return q.length === 0 ? true : hay.includes(q);
-  });
+  const words = searchWords(query);
+  const results = services.filter((s) =>
+    matchesAllWords(`${s.service_name ?? ""} ${s.duration_label ?? ""} ${s.subtitle ?? ""} ${s.description ?? ""}`, words),
+  );
+  const { data: storeState } = useServiceState("store");
+  const { data: isTester = false } = useIsInternalTester();
+  const storeUnlocked = storeState?.status === "live" || isTester;
+  const { items: catalog, loading: catLoading } = useNearbyCatalog(null);
+  const productHits = !storeUnlocked || words.length === 0 ? [] : catalog.filter((i) =>
+    matchesAllWords(
+      `${i.product.name} ${i.product.description ?? ""} ${i.product.unit ?? ""} ${i.product.product_category ?? ""} ${i.store.store_name ?? ""} ${i.store.category_name ?? ""}`,
+      words,
+    ),
+  );
+  const [allProducts, setAllProducts] = useState(false);
 
   return (
     <main className="min-h-screen w-full bg-background pb-10">
@@ -76,18 +91,40 @@ export function SearchResultsScreen({
         </header>
 
         <section className="mt-5">
-          {isLoading ? (
+          {productHits.length > 0 && (
+            <div className="mb-5">
+              <div className="mb-2 flex items-center justify-between">
+                <p className="text-sm font-bold text-foreground">{t("search.products")} ({productHits.length})</p>
+                {productHits.length > 6 && (
+                  <button type="button" onClick={() => setAllProducts(true)} className="text-sm font-bold text-primary">
+                    {t("home.seeAll")} →
+                  </button>
+                )}
+              </div>
+              <div className="grid grid-cols-3 gap-2.5">
+                {productHits.slice(0, 6).map((i) => (
+                  <div key={i.product.id} className="min-w-0">
+                    <ProductCard product={i.product} store={{ id: i.store.id, name: i.store.store_name }} closed={i.closed} fluid />
+                    <p className="mt-1 truncate text-[10px] font-semibold text-muted-foreground">{i.store.store_name}</p>
+                  </div>
+                ))}
+              </div>
+              {results.length > 0 && <p className="mt-5 text-sm font-bold text-foreground">{t("search.services")}</p>}
+            </div>
+          )}
+          {allProducts && <ProductGridOverlay title={query} items={productHits} onClose={() => setAllProducts(false)} />}
+          {isLoading || (storeUnlocked && catLoading) ? (
             <p className="py-10 text-center text-sm text-muted-foreground">Loading…</p>
-          ) : results.length === 0 ? (
+          ) : results.length === 0 && productHits.length === 0 ? (
             <div className="mt-4 flex flex-col items-center justify-center rounded-[18px] border border-dashed border-border bg-card px-6 py-14 text-center">
               <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
                 <Search className="h-7 w-7 text-primary" />
               </div>
               <p className="mt-4 text-base font-bold text-foreground">
-                No services found for "{query}"
+                Kuch nahi mila "{query}"
               </p>
               <p className="mt-1 text-sm text-muted-foreground">
-                Try a different keyword like "cleaning" or "dishes".
+                Dusra word try karein jaise "cleaning", "milk" ya "atta".
               </p>
             </div>
           ) : (
