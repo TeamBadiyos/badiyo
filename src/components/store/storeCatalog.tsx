@@ -106,8 +106,8 @@ export function ProductGridOverlay({
     <div className="fixed inset-0 z-50 overflow-y-auto bg-background momentum-scroll">
       <div className="mx-auto w-full max-w-md px-4 pb-32">
         <header
-          className="bleed-safe-top sticky top-0 z-10 -mx-4 flex items-center gap-3 bg-background px-4 pb-3"
-          style={{ "--bleed-top-extra": "16px" } as React.CSSProperties}
+          className="sticky top-0 z-10 -mx-4 flex items-center gap-3 bg-background px-4 pb-3"
+          style={{ paddingTop: "calc(var(--app-safe-top, 0px) + 12px)" }}
         >
           <button
             type="button"
