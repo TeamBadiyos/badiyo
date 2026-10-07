@@ -83,7 +83,7 @@ function CatalogCard({
 }) {
   const dist = formatDistance(item.km);
   return (
-    <div className={fluid ? "min-w-0" : "w-[140px] shrink-0"}>
+    <div className={fluid ? "min-w-0" : "w-[30vw] max-w-[132px] shrink-0"}>
       <ProductCard
         product={item.product}
         store={{ id: item.store.id, name: item.store.store_name }}
@@ -91,10 +91,12 @@ function CatalogCard({
         fluid={fluid}
         onOpen={onOpenStore ? () => onOpenStore(item.store) : undefined}
       />
-      <p className="mt-1 truncate px-0.5 text-[10px] font-semibold text-muted-foreground">
-        {item.store.store_name ?? ""}
-        {dist ? ` • ${dist}` : ""}
-      </p>
+      {!onOpenStore && (
+        <p className="mt-1 truncate px-0.5 text-[10px] font-semibold text-muted-foreground">
+          {item.store.store_name ?? ""}
+          {dist ? ` • ${dist}` : ""}
+        </p>
+      )}
     </div>
   );
 }

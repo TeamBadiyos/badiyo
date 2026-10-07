@@ -89,24 +89,30 @@ export function ProductCard({
       onClick={open}
       onKeyDown={(e) => e.key === "Enter" && open()}
       className={
-        "flex shrink-0 cursor-pointer snap-start flex-col rounded-[16px] border border-border bg-card p-2 text-left " +
-        (fluid ? "w-full" : "w-[140px]") +
+        "surface-tint flex shrink-0 cursor-pointer snap-start flex-col rounded-[18px] border border-border p-2 text-left shadow-card-m " +
+        (fluid ? "w-full" : "w-[30vw] max-w-[132px]") +
         (out ? " opacity-55" : "")
       }
     >
-      <div className="overflow-hidden rounded-[12px] bg-card">
-        <StoreImage path={product.photo_url} variant="product" alt={product.name} className="aspect-square h-auto w-full !object-contain !rounded-[12px]" />
+      <div className="aspect-square w-full overflow-hidden rounded-[14px] bg-muted">
+        <StoreImage path={product.photo_url} variant="product" alt={product.name} className="h-full w-full !rounded-[14px] !object-cover" />
       </div>
-      <p className="mt-1.5 line-clamp-2 min-h-[2.1rem] text-[13px] font-bold leading-tight text-foreground" title={product.name}>
+      <p className="mt-2 line-clamp-2 text-[12px] font-bold leading-tight text-foreground" title={product.name}>
         {title}
       </p>
-      <p className="truncate text-[11px] leading-tight text-muted-foreground">
-        {[size, product.unit].filter(Boolean).join(" · ")}
-      </p>
-      <div className="mt-1.5 flex items-center justify-between gap-1">
-        <div className="min-w-0 shrink-0">
-          <p className="whitespace-nowrap text-[15px] font-extrabold leading-none text-foreground">₹{Number(product.price).toFixed(0)}</p>
-          {mrp && <p className="mt-0.5 text-[10px] leading-none text-muted-foreground line-through">₹{mrp.toFixed(0)}</p>}
+      {(size || product.unit) && (
+        <p className="truncate text-[10px] leading-tight text-muted-foreground">
+          {[size, product.unit].filter(Boolean).join(" · ")}
+        </p>
+      )}
+      <div className="mt-1 flex items-end justify-between gap-1">
+        <div className="flex min-w-0 flex-col">
+          {mrp && (
+            <span className="text-[10px] font-semibold leading-none text-muted-foreground line-through">Rs {mrp.toFixed(0)}</span>
+          )}
+          <span className="whitespace-nowrap text-[15px] font-bold leading-tight tracking-[-0.02em] text-primary">
+            Rs {Number(product.price).toFixed(0)}
+          </span>
         </div>
         {onOpen ? null : out ? (
           <span className="shrink-0 rounded-full bg-muted px-2 py-1 text-[9px] font-bold text-muted-foreground">
