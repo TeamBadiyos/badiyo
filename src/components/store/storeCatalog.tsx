@@ -72,7 +72,15 @@ export function useNearbyCatalog(coords: Coords) {
   return { items, shelves, loading: isLoading || (ids.length > 0 && lp) };
 }
 
-function CatalogCard({ item, fluid }: { item: CatalogItem; fluid?: boolean }) {
+function CatalogCard({
+  item,
+  fluid,
+  onOpenStore,
+}: {
+  item: CatalogItem;
+  fluid?: boolean;
+  onOpenStore?: (s: PublicStore) => void;
+}) {
   const dist = formatDistance(item.km);
   return (
     <div className={fluid ? "min-w-0" : "w-[140px] shrink-0"}>
@@ -81,6 +89,7 @@ function CatalogCard({ item, fluid }: { item: CatalogItem; fluid?: boolean }) {
         store={{ id: item.store.id, name: item.store.store_name }}
         closed={item.closed}
         fluid={fluid}
+        onOpen={onOpenStore ? () => onOpenStore(item.store) : undefined}
       />
       <p className="mt-1 truncate px-0.5 text-[10px] font-semibold text-muted-foreground">
         {item.store.store_name ?? ""}
@@ -95,10 +104,12 @@ export function ProductGridOverlay({
   title,
   items,
   onClose,
+  onOpenStore,
 }: {
   title: string;
   items: CatalogItem[];
   onClose: () => void;
+  onOpenStore?: (s: PublicStore) => void;
 }) {
   useBackHandler(true, () => onClose());
   const t = useT();
@@ -124,7 +135,7 @@ export function ProductGridOverlay({
         </header>
         <div className="grid grid-cols-2 gap-3">
           {items.map((i) => (
-            <CatalogCard key={i.product.id} item={i} fluid />
+            <CatalogCard key={i.product.id} item={i} fluid onOpenStore={onOpenStore} />
           ))}
         </div>
       </div>
@@ -167,7 +178,15 @@ export function StoreCategoryGrid({ coords }: { coords: Coords }) {
 }
 
 /** Horizontal product rails per category, in Command Center rank order. */
-export function StoreShelves({ coords, max = 10 }: { coords: Coords; max?: number }) {
+export function StoreShelves({
+  coords,
+  max = 10,
+  onOpenStore,
+}: {
+  coords: Coords;
+  max?: number;
+  onOpenStore?: (s: PublicStore) => void;
+}) {
   const t = useT();
   const { shelves } = useNearbyCatalog(coords);
   const [open, setOpen] = useState<CatalogShelf | null>(null);
@@ -185,13 +204,27 @@ export function StoreShelves({ coords, max = 10 }: { coords: Coords; max?: numbe
           <div className="-mx-5 mt-2 overflow-x-auto px-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <div className="flex w-max gap-2.5">
               {s.items.slice(0, max).map((i) => (
-                <CatalogCard key={i.product.id} item={i} />
+                <CatalogCard key={i.product.id} item={i} onOpenStore={onOpenStore} />
               ))}
             </div>
           </div>
         </section>
       ))}
-      {open && <ProductGridOverlay title={open.category.name} items={open.items} onClose={() => setOpen(null)} />}
+      {open && (
+        <ProductGridOverlay
+          title={open.category.name}
+          items={open.items}
+          onClose={() => setOpen(null)}
+          onOpenStore={
+            onOpenStore
+              ? (st) => {
+                  setOpen(null);
+                  onOpenStore(st);
+                }
+              : undefined
+          }
+        />
+      )}
     </>
   );
 }
