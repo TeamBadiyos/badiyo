@@ -35,6 +35,7 @@ import {
   fetchStoreByKey,
 } from "@/lib/storeShare";
 import { StoreListView } from "./store/StoreListView";
+import { StoreShelves } from "./store/storeCatalog";
 import { SellOnBadiyosCard } from "./store/SellOnBadiyosCard";
 // Shop pages (with their address picker and payment sheet) load only when the
 // customer actually opens a shop, a category or the cart.
@@ -563,6 +564,10 @@ export function HomeScreen({
           </div>
         )}
 
+
+        {storeUnlocked && (!activeSegment || activeSegment.display_template === "CATEGORY_FIRST") && (
+          <StoreShelves coords={homeCoords} />
+        )}
 
         {/* Promo banner — high-emphasis solid brand highlight */}
         {promo && (
