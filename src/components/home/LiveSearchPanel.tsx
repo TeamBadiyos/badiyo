@@ -64,7 +64,7 @@ export function LiveSearchPanel({
       {svc.map((s) => (
         <button key={s.id} type="button" className={row} onClick={() => onOpenService(s)}>
           <div className="h-11 w-11 shrink-0 overflow-hidden rounded-[10px] bg-muted">
-            {s.image_url && <img src={sizedImageUrl(s.image_url, 120)} alt="" className="h-full w-full object-cover" />}
+            {s.image_url && <img src={sizedImageUrl(s.image_url, 120) ?? undefined} alt="" className="h-full w-full object-cover" />}
           </div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-bold text-foreground">{s.service_name || s.duration_label}</p>
