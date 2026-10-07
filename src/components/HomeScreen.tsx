@@ -566,7 +566,7 @@ export function HomeScreen({
 
 
         {storeUnlocked && (!activeSegment || activeSegment.display_template === "CATEGORY_FIRST") && (
-          <StoreShelves coords={homeCoords} />
+          <StoreShelves coords={homeCoords} onOpenStore={(s) => setOpenStore(s)} />
         )}
 
         {/* Promo banner — high-emphasis solid brand highlight */}
