@@ -54,3 +54,14 @@ export async function initNativeBackButton() {
     console.error("native back init failed:", e);
   }
 }
+
+import { useEffect, useRef } from "react";
+/** Register a back handler while `active` is true (topmost wins). */
+export function useBackHandler(active: boolean, handler: () => void) {
+  const ref = useRef(handler);
+  ref.current = handler;
+  useEffect(() => {
+    if (!active) return;
+    return pushBackHandler(() => ref.current());
+  }, [active]);
+}

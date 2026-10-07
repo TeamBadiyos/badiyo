@@ -1,3 +1,4 @@
+import { useBackHandler } from "@/lib/backHandler";
 import { useMemo, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { useT } from "@/i18n";
@@ -99,6 +100,7 @@ export function ProductGridOverlay({
   items: CatalogItem[];
   onClose: () => void;
 }) {
+  useBackHandler(true, () => onClose());
   const t = useT();
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-background momentum-scroll">

@@ -1,3 +1,4 @@
+import { useBackHandler } from "@/lib/backHandler";
 // Customer tracking for a shop order — quick-commerce style live flow.
 // Reuses the parcel tracking pieces (live rider map, rider info, delivery code)
 // from the linked delivery job.
@@ -97,6 +98,7 @@ function stepIndex(status: string): number {
 }
 
 export function StoreOrderTrackingScreen({ orderId, onBack }: { orderId: string; onBack: () => void }) {
+  useBackHandler(true, () => onBack());
   const qc = useQueryClient();
   const [billOpen, setBillOpen] = useState(false);
   const { data: order, isLoading } = useQuery({

@@ -1,3 +1,4 @@
+import { useBackHandler } from "@/lib/backHandler";
 import { useMemo } from "react";
 import { ArrowLeft, Loader2, Share2 } from "lucide-react";
 import { toast } from "sonner";
@@ -21,6 +22,7 @@ export function StoreDetailScreen({
   onOpenCart: () => void;
   orderingEnabled?: boolean;
 }) {
+  useBackHandler(true, () => onBack());
   const t = useT();
   const { data: products = [], isLoading } = useStoreProducts(store.id);
   const closed = !isStoreOpen(store);
