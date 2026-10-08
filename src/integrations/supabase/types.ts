@@ -9684,6 +9684,7 @@ export type Database = {
         Args: { _decision: string; _notes?: string; _skill_id: string }
         Returns: undefined
       }
+      staff_delete_coupon: { Args: { _id: string }; Returns: undefined }
       staff_delete_customer_address: {
         Args: { _address_id: string }
         Returns: boolean
