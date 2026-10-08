@@ -240,131 +240,6 @@ export type Database = {
         }
         Relationships: []
       }
-      area_partner_leads: {
-        Row: {
-          area: string
-          created_at: string
-          email: string | null
-          id: string
-          name: string
-          phone: string
-          status: string
-        }
-        Insert: {
-          area: string
-          created_at?: string
-          email?: string | null
-          id?: string
-          name: string
-          phone: string
-          status?: string
-        }
-        Update: {
-          area?: string
-          created_at?: string
-          email?: string | null
-          id?: string
-          name?: string
-          phone?: string
-          status?: string
-        }
-        Relationships: []
-      }
-      area_partners: {
-        Row: {
-          address: string | null
-          bank_account_holder_name: string | null
-          bank_account_number: string | null
-          bank_ifsc: string | null
-          commission_rate: number
-          commission_type: string
-          commission_value: number
-          created_at: string
-          delete_reason: string | null
-          deleted_at: string | null
-          deleted_by: string | null
-          id: string
-          kyc_aadhaar_url: string | null
-          kyc_address_proof_url: string | null
-          kyc_pan_url: string | null
-          kyc_rejection_reason: string | null
-          kyc_status: string
-          name: string
-          pan_encrypted: string | null
-          pan_last4: string | null
-          pan_updated_at: string | null
-          phone: string
-          photo_url: string | null
-          setup_fee_status: string
-          status: string
-          zone_id: string | null
-        }
-        Insert: {
-          address?: string | null
-          bank_account_holder_name?: string | null
-          bank_account_number?: string | null
-          bank_ifsc?: string | null
-          commission_rate?: number
-          commission_type?: string
-          commission_value?: number
-          created_at?: string
-          delete_reason?: string | null
-          deleted_at?: string | null
-          deleted_by?: string | null
-          id?: string
-          kyc_aadhaar_url?: string | null
-          kyc_address_proof_url?: string | null
-          kyc_pan_url?: string | null
-          kyc_rejection_reason?: string | null
-          kyc_status?: string
-          name: string
-          pan_encrypted?: string | null
-          pan_last4?: string | null
-          pan_updated_at?: string | null
-          phone: string
-          photo_url?: string | null
-          setup_fee_status?: string
-          status?: string
-          zone_id?: string | null
-        }
-        Update: {
-          address?: string | null
-          bank_account_holder_name?: string | null
-          bank_account_number?: string | null
-          bank_ifsc?: string | null
-          commission_rate?: number
-          commission_type?: string
-          commission_value?: number
-          created_at?: string
-          delete_reason?: string | null
-          deleted_at?: string | null
-          deleted_by?: string | null
-          id?: string
-          kyc_aadhaar_url?: string | null
-          kyc_address_proof_url?: string | null
-          kyc_pan_url?: string | null
-          kyc_rejection_reason?: string | null
-          kyc_status?: string
-          name?: string
-          pan_encrypted?: string | null
-          pan_last4?: string | null
-          pan_updated_at?: string | null
-          phone?: string
-          photo_url?: string | null
-          setup_fee_status?: string
-          status?: string
-          zone_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "area_partners_zone_id_fkey"
-            columns: ["zone_id"]
-            isOneToOne: false
-            referencedRelation: "zones"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       audit_logs: {
         Row: {
           action: string
@@ -651,7 +526,6 @@ export type Database = {
         Row: {
           address_id: string | null
           arrived_at: string | null
-          assigned_area_partner_id: string | null
           assigned_expert_id: string | null
           booking_lat: number | null
           booking_lng: number | null
@@ -721,7 +595,6 @@ export type Database = {
         Insert: {
           address_id?: string | null
           arrived_at?: string | null
-          assigned_area_partner_id?: string | null
           assigned_expert_id?: string | null
           booking_lat?: number | null
           booking_lng?: number | null
@@ -791,7 +664,6 @@ export type Database = {
         Update: {
           address_id?: string | null
           arrived_at?: string | null
-          assigned_area_partner_id?: string | null
           assigned_expert_id?: string | null
           booking_lat?: number | null
           booking_lng?: number | null
@@ -864,13 +736,6 @@ export type Database = {
             columns: ["address_id"]
             isOneToOne: false
             referencedRelation: "addresses"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bookings_assigned_area_partner_id_fkey"
-            columns: ["assigned_area_partner_id"]
-            isOneToOne: false
-            referencedRelation: "area_partners"
             referencedColumns: ["id"]
           },
           {
@@ -3015,6 +2880,7 @@ export type Database = {
           vehicle_type_id: string
           wallet_amount: number
           weight_kg: number
+          zone_id: string | null
         }
         Insert: {
           arrived_pickup_at?: string | null
@@ -3096,6 +2962,7 @@ export type Database = {
           vehicle_type_id: string
           wallet_amount?: number
           weight_kg?: number
+          zone_id?: string | null
         }
         Update: {
           arrived_pickup_at?: string | null
@@ -3177,6 +3044,7 @@ export type Database = {
           vehicle_type_id?: string
           wallet_amount?: number
           weight_kg?: number
+          zone_id?: string | null
         }
         Relationships: [
           {
@@ -3254,6 +3122,13 @@ export type Database = {
             columns: ["vehicle_type_id"]
             isOneToOne: false
             referencedRelation: "courier_vehicle_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "courier_orders_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "zones"
             referencedColumns: ["id"]
           },
         ]
@@ -3974,6 +3849,7 @@ export type Database = {
           name: string
           offline_after_job: boolean
           onboarded_by: string | null
+          onboarded_by_partner_id: string | null
           pan_encrypted: string | null
           pan_last4: string | null
           pan_updated_at: string | null
@@ -4018,6 +3894,7 @@ export type Database = {
           name: string
           offline_after_job?: boolean
           onboarded_by?: string | null
+          onboarded_by_partner_id?: string | null
           pan_encrypted?: string | null
           pan_last4?: string | null
           pan_updated_at?: string | null
@@ -4062,6 +3939,7 @@ export type Database = {
           name?: string
           offline_after_job?: boolean
           onboarded_by?: string | null
+          onboarded_by_partner_id?: string | null
           pan_encrypted?: string | null
           pan_last4?: string | null
           pan_updated_at?: string | null
@@ -4087,10 +3965,10 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "experts_onboarded_by_fkey"
-            columns: ["onboarded_by"]
+            foreignKeyName: "experts_onboarded_by_partner_id_fkey"
+            columns: ["onboarded_by_partner_id"]
             isOneToOne: false
-            referencedRelation: "area_partners"
+            referencedRelation: "partners"
             referencedColumns: ["id"]
           },
           {
@@ -5028,13 +4906,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "merchants_onboarded_by_fkey"
-            columns: ["onboarded_by"]
-            isOneToOne: false
-            referencedRelation: "area_partners"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "merchants_segment_id_fkey"
             columns: ["segment_id"]
             isOneToOne: false
@@ -5284,6 +5155,385 @@ export type Database = {
         }
         Relationships: []
       }
+      partner_business_lines: {
+        Row: {
+          created_at: string
+          key: string
+          label: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          key: string
+          label: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          key?: string
+          label?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      partner_commission_plans: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          partner_type: string
+          sort_order: number
+          status: string
+          suggested_fee: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          partner_type: string
+          sort_order?: number
+          status?: string
+          suggested_fee?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          partner_type?: string
+          sort_order?: number
+          status?: string
+          suggested_fee?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      partner_payout_batches: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          created_by: string | null
+          delete_reason: string | null
+          deleted_at: string | null
+          id: string
+          notes: string | null
+          paid_at: string | null
+          paid_by: string | null
+          paid_on: string | null
+          paid_reference: string | null
+          period_end: string
+          period_start: string
+          status: string
+          total_gross: number
+          total_net: number
+          total_tds: number
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          delete_reason?: string | null
+          deleted_at?: string | null
+          id?: string
+          notes?: string | null
+          paid_at?: string | null
+          paid_by?: string | null
+          paid_on?: string | null
+          paid_reference?: string | null
+          period_end: string
+          period_start: string
+          status?: string
+          total_gross?: number
+          total_net?: number
+          total_tds?: number
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          delete_reason?: string | null
+          deleted_at?: string | null
+          id?: string
+          notes?: string | null
+          paid_at?: string | null
+          paid_by?: string | null
+          paid_on?: string | null
+          paid_reference?: string | null
+          period_end?: string
+          period_start?: string
+          status?: string
+          total_gross?: number
+          total_net?: number
+          total_tds?: number
+        }
+        Relationships: []
+      }
+      partner_payout_items: {
+        Row: {
+          batch_id: string
+          delete_reason: string | null
+          gross_amount: number
+          id: string
+          is_deleted: boolean
+          net_amount: number
+          partner_id: string
+          tds_amount: number
+          tds_rate: number
+        }
+        Insert: {
+          batch_id: string
+          delete_reason?: string | null
+          gross_amount?: number
+          id?: string
+          is_deleted?: boolean
+          net_amount?: number
+          partner_id: string
+          tds_amount?: number
+          tds_rate?: number
+        }
+        Update: {
+          batch_id?: string
+          delete_reason?: string | null
+          gross_amount?: number
+          id?: string
+          is_deleted?: boolean
+          net_amount?: number
+          partner_id?: string
+          tds_amount?: number
+          tds_rate?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_payout_items_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "partner_payout_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_payout_items_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_payout_lines: {
+        Row: {
+          amount: number
+          base_amount: number
+          batch_id: string
+          business_line: string | null
+          calculated_amount: number
+          commission_pct: number
+          delete_reason: string | null
+          edit_reason: string | null
+          expert_id: string | null
+          id: string
+          is_deleted: boolean
+          item_id: string
+          order_completed_at: string
+          order_id: string
+          order_type: string
+          partner_id: string
+          plan_id: string | null
+          plan_name: string | null
+          program: string
+          service_name: string | null
+        }
+        Insert: {
+          amount: number
+          base_amount: number
+          batch_id: string
+          business_line?: string | null
+          calculated_amount: number
+          commission_pct: number
+          delete_reason?: string | null
+          edit_reason?: string | null
+          expert_id?: string | null
+          id?: string
+          is_deleted?: boolean
+          item_id: string
+          order_completed_at: string
+          order_id: string
+          order_type: string
+          partner_id: string
+          plan_id?: string | null
+          plan_name?: string | null
+          program: string
+          service_name?: string | null
+        }
+        Update: {
+          amount?: number
+          base_amount?: number
+          batch_id?: string
+          business_line?: string | null
+          calculated_amount?: number
+          commission_pct?: number
+          delete_reason?: string | null
+          edit_reason?: string | null
+          expert_id?: string | null
+          id?: string
+          is_deleted?: boolean
+          item_id?: string
+          order_completed_at?: string
+          order_id?: string
+          order_type?: string
+          partner_id?: string
+          plan_id?: string | null
+          plan_name?: string | null
+          program?: string
+          service_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_payout_lines_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "partner_payout_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_payout_lines_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "partner_payout_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_payout_lines_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_plan_lines: {
+        Row: {
+          enabled: boolean
+          line_key: string
+          pct: number
+          plan_id: string
+        }
+        Insert: {
+          enabled?: boolean
+          line_key: string
+          pct?: number
+          plan_id: string
+        }
+        Update: {
+          enabled?: boolean
+          line_key?: string
+          pct?: number
+          plan_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_plan_lines_line_key_fkey"
+            columns: ["line_key"]
+            isOneToOne: false
+            referencedRelation: "partner_business_lines"
+            referencedColumns: ["key"]
+          },
+          {
+            foreignKeyName: "partner_plan_lines_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "partner_commission_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_program_settings: {
+        Row: {
+          city_enabled: boolean
+          city_fee: number
+          city_pct: number
+          gold_fee: number
+          gold_pct: number
+          growth_enabled: boolean
+          id: number
+          master_enabled: boolean
+          platinum_fee: number
+          platinum_pct: number
+          silver_fee: number
+          silver_pct: number
+          updated_at: string
+          updated_by: string | null
+          zone_enabled: boolean
+          zone_fee: number
+          zone_pct: number
+        }
+        Insert: {
+          city_enabled?: boolean
+          city_fee?: number
+          city_pct?: number
+          gold_fee?: number
+          gold_pct?: number
+          growth_enabled?: boolean
+          id?: number
+          master_enabled?: boolean
+          platinum_fee?: number
+          platinum_pct?: number
+          silver_fee?: number
+          silver_pct?: number
+          updated_at?: string
+          updated_by?: string | null
+          zone_enabled?: boolean
+          zone_fee?: number
+          zone_pct?: number
+        }
+        Update: {
+          city_enabled?: boolean
+          city_fee?: number
+          city_pct?: number
+          gold_fee?: number
+          gold_pct?: number
+          growth_enabled?: boolean
+          id?: number
+          master_enabled?: boolean
+          platinum_fee?: number
+          platinum_pct?: number
+          silver_fee?: number
+          silver_pct?: number
+          updated_at?: string
+          updated_by?: string | null
+          zone_enabled?: boolean
+          zone_fee?: number
+          zone_pct?: number
+        }
+        Relationships: []
+      }
+      partner_program_toggle_log: {
+        Row: {
+          changed_at: string
+          changed_by: string | null
+          enabled: boolean
+          id: string
+          program: string
+        }
+        Insert: {
+          changed_at?: string
+          changed_by?: string | null
+          enabled: boolean
+          id?: string
+          program: string
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string | null
+          enabled?: boolean
+          id?: string
+          program?: string
+        }
+        Relationships: []
+      }
       partner_skills: {
         Row: {
           approved_at: string | null
@@ -5332,6 +5582,94 @@ export type Database = {
             columns: ["service_category_id"]
             isOneToOne: false
             referencedRelation: "service_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partners: {
+        Row: {
+          agreement_end: string
+          agreement_start: string
+          auth_user_id: string | null
+          city: string
+          created_at: string
+          fee_collected_at: string | null
+          fee_paid: number
+          growth_plan_id: string | null
+          id: string
+          level: string | null
+          login_email: string | null
+          name: string
+          notes: string | null
+          phone: string
+          plan_id: string | null
+          program: string
+          status: string
+          updated_at: string
+          zone_id: string | null
+        }
+        Insert: {
+          agreement_end: string
+          agreement_start: string
+          auth_user_id?: string | null
+          city: string
+          created_at?: string
+          fee_collected_at?: string | null
+          fee_paid?: number
+          growth_plan_id?: string | null
+          id?: string
+          level?: string | null
+          login_email?: string | null
+          name: string
+          notes?: string | null
+          phone: string
+          plan_id?: string | null
+          program: string
+          status?: string
+          updated_at?: string
+          zone_id?: string | null
+        }
+        Update: {
+          agreement_end?: string
+          agreement_start?: string
+          auth_user_id?: string | null
+          city?: string
+          created_at?: string
+          fee_collected_at?: string | null
+          fee_paid?: number
+          growth_plan_id?: string | null
+          id?: string
+          level?: string | null
+          login_email?: string | null
+          name?: string
+          notes?: string | null
+          phone?: string
+          plan_id?: string | null
+          program?: string
+          status?: string
+          updated_at?: string
+          zone_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partners_growth_plan_id_fkey"
+            columns: ["growth_plan_id"]
+            isOneToOne: false
+            referencedRelation: "partner_commission_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partners_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "partner_commission_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partners_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "zones"
             referencedColumns: ["id"]
           },
         ]
@@ -7495,7 +7833,6 @@ export type Database = {
       }
       zones: {
         Row: {
-          assigned_area_partner_id: string | null
           boundary: Json
           city: string
           created_at: string
@@ -7508,7 +7845,6 @@ export type Database = {
           status: string
         }
         Insert: {
-          assigned_area_partner_id?: string | null
           boundary: Json
           city: string
           created_at?: string
@@ -7521,7 +7857,6 @@ export type Database = {
           status?: string
         }
         Update: {
-          assigned_area_partner_id?: string | null
           boundary?: Json
           city?: string
           created_at?: string
@@ -7534,13 +7869,6 @@ export type Database = {
           status?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "zones_assigned_area_partner_fk"
-            columns: ["assigned_area_partner_id"]
-            isOneToOne: false
-            referencedRelation: "area_partners"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "zones_segment_id_fkey"
             columns: ["segment_id"]
@@ -8049,7 +8377,6 @@ export type Database = {
         Returns: {
           address_id: string | null
           arrived_at: string | null
-          assigned_area_partner_id: string | null
           assigned_expert_id: string | null
           booking_lat: number | null
           booking_lng: number | null
@@ -8422,6 +8749,7 @@ export type Database = {
           vehicle_type_id: string
           wallet_amount: number
           weight_kg: number
+          zone_id: string | null
         }
         SetofOptions: {
           from: "*"
@@ -8966,10 +9294,24 @@ export type Database = {
       offers_caller_role: { Args: { _uid?: string }; Returns: string }
       offers_require_writer: { Args: never; Returns: string }
       pan_key: { Args: never; Returns: string }
+      partner_assert_draft: { Args: { _batch_id: string }; Returns: undefined }
       partner_decide_extension: {
         Args: { _decision: string; _extension_id: string }
         Returns: Json
       }
+      partner_growth_window: {
+        Args: { _expert_id: string }
+        Returns: {
+          win_end: string
+          win_start: string
+        }[]
+      }
+      partner_program_on_at: {
+        Args: { _at: string; _program: string }
+        Returns: boolean
+      }
+      partner_recalc_batch: { Args: { _batch_id: string }; Returns: undefined }
+      partner_require_admin: { Args: never; Returns: string }
       payout_batch_recalc_total: {
         Args: { _batch_id: string }
         Returns: undefined
@@ -9126,14 +9468,6 @@ export type Database = {
       }
       staff_archive_reward_program: {
         Args: { _archived?: boolean; _id: string }
-        Returns: undefined
-      }
-      staff_area_partner_kyc_decision: {
-        Args: { _decision: string; _partner_id: string; _reason: string }
-        Returns: undefined
-      }
-      staff_assign_area_partner: {
-        Args: { _partner_id: string; _zone_id: string }
         Returns: undefined
       }
       staff_assign_business_plans: {
@@ -9480,6 +9814,41 @@ export type Database = {
         Args: { _city?: string; _segment_id?: string }
         Returns: number
       }
+      staff_partner_batch_approve: {
+        Args: { _batch_id: string }
+        Returns: undefined
+      }
+      staff_partner_batch_delete: {
+        Args: { _batch_id: string; _reason: string }
+        Returns: undefined
+      }
+      staff_partner_batch_mark_paid: {
+        Args: { _batch_id: string; _paid_on: string; _reference: string }
+        Returns: undefined
+      }
+      staff_partner_generate_payout: {
+        Args: { _from: string; _notes?: string; _to: string }
+        Returns: string
+      }
+      staff_partner_item_delete: {
+        Args: { _item_id: string; _reason: string }
+        Returns: undefined
+      }
+      staff_partner_line_delete: {
+        Args: { _line_id: string; _reason: string }
+        Returns: undefined
+      }
+      staff_partner_line_edit: {
+        Args: { _amount: number; _line_id: string; _reason: string }
+        Returns: undefined
+      }
+      staff_partner_plan_upsert: { Args: { _p: Json }; Returns: string }
+      staff_partner_toggle: {
+        Args: { _enabled: boolean; _program: string }
+        Returns: undefined
+      }
+      staff_partner_update_settings: { Args: { _p: Json }; Returns: undefined }
+      staff_partner_upsert: { Args: { _p: Json }; Returns: string }
       staff_permanently_delete_user: {
         Args: { _confirm_phone: string; _user_id: string }
         Returns: Json
@@ -9723,6 +10092,10 @@ export type Database = {
         Args: { _merchant_id: string; _reason: string; _status: string }
         Returns: undefined
       }
+      staff_set_expert_growth_partner: {
+        Args: { _expert_id: string; _partner_id: string }
+        Returns: undefined
+      }
       staff_set_expert_onboarding: {
         Args: { _expert_id: string; _payload: Json }
         Returns: undefined
@@ -9770,10 +10143,6 @@ export type Database = {
       }
       staff_set_pan: {
         Args: { _owner_id: string; _owner_type: string; _pan: string }
-        Returns: undefined
-      }
-      staff_set_partner_zones: {
-        Args: { _partner_id: string; _zone_ids: string[] }
         Returns: undefined
       }
       staff_set_payout_item_removed: {
@@ -9846,10 +10215,6 @@ export type Database = {
       staff_set_vehicle_archived: {
         Args: { _archived: boolean; _id: string }
         Returns: boolean
-      }
-      staff_soft_delete_area_partner: {
-        Args: { _partner_id: string; _reason: string }
-        Returns: undefined
       }
       staff_soft_delete_booking: {
         Args: { _booking_id: string; _reason: string }
@@ -9947,7 +10312,6 @@ export type Database = {
         Args: { _payload: Json; _zone_id: string }
         Returns: undefined
       }
-      staff_upsert_area_partner: { Args: { _payload: Json }; Returns: string }
       staff_upsert_business_profile: {
         Args: {
           _auto_qty_enabled: boolean
