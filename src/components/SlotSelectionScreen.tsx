@@ -273,7 +273,7 @@ export function SlotSelectionScreen({
         !slotDisabled(selectedHour)));
 
   return (
-    <main className="min-h-screen w-full bg-background pb-32">
+    <main className="min-h-screen w-full bg-background pb-44">
       <div className="mx-auto w-full max-w-md">
         {/* Media gallery */}
         <div className="relative">
@@ -427,6 +427,13 @@ export function SlotSelectionScreen({
                   if (m === "later" && selectedDay === null) {
                     setSelectedDay(firstOpenDay());
                   }
+                  if (m === "later") {
+                    setTimeout(() => {
+                      document
+                        .getElementById("slot-later-section")
+                        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }, 80);
+                  }
                 }}
 
                 className={`rounded-[10px] px-4 py-2.5 text-sm font-bold transition ${
@@ -456,10 +463,13 @@ export function SlotSelectionScreen({
 
           {mode === "later" && (
             <>
-              <h2 className="mt-5 text-sm font-bold text-foreground">
+              <h2 id="slot-later-section" className="mt-5 scroll-mt-4 text-sm font-bold text-foreground">
                 {t("slot.chooseDay")}
               </h2>
-              <div className="mt-3 -mx-5 overflow-x-auto px-5 momentum-scroll">
+              <div
+                className="mt-3 -mx-5 overflow-x-auto px-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                style={{ overscrollBehaviorX: "contain", overscrollBehaviorY: "auto", touchAction: "pan-x pan-y" }}
+              >
                 <div className="flex gap-2 pb-1">
                   {days.map((d) => {
                     const key = d.key;
