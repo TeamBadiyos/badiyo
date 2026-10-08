@@ -549,6 +549,10 @@ export function SlotSelectionScreen({
                         : t("slot.noSlots")}
                     </p>
                   ) : null}
+                  <div className="mt-4 rounded-[14px] border border-border bg-card p-4 text-sm text-muted-foreground">
+                    <span className="font-bold text-foreground">{t("slot.laterNoteTitle")}</span>{" "}
+                    {t("slot.laterNote")}
+                  </div>
                 </>
               )}
             </>

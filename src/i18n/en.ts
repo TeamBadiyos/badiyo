@@ -251,8 +251,10 @@ export const en = {
   // ── Slot selection ───────────────────────────────────────
   "slot.bookNow": "Book Now",
   "slot.scheduleLater": "Schedule Later",
-  "slot.arriveTitle": "Expert will arrive shortly",
-  "slot.arriveSub": "Within 30 – 45 minutes at your location",
+  "slot.arriveTitle": "Flexible Arrival Time",
+  "slot.arriveSub": "Aapke Expert ko location aur availability ke hisaab se pahunchne mein 30–60 mins lag sakte hain.",
+  "slot.laterNoteTitle": "Please Note:",
+  "slot.laterNote": "Aapka selected time preferred service start time hai. Location, availability aur previous bookings ke hisaab se Expert ko pahunchne mein 30–60 mins extra lag sakte hain.",
   "slot.chooseDay": "Choose a day",
   "slot.chooseTime": "Choose a time",
   "slot.noSlots": "No time slots left for today. Please pick another day.",
