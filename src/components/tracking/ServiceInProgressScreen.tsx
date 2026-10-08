@@ -316,8 +316,23 @@ export function ServiceInProgressScreen({
   const [busyOptionId, setBusyOptionId] = useState<string | null>(null);
   const [extError, setExtError] = useState<string | null>(null);
 
+  const { data: extensionsOn = false, refetch: refetchExtOn } = useQuery({
+    queryKey: ["service-extensions-enabled"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("service_extensions_enabled");
+      if (error) return false;
+      return data === true;
+    },
+    staleTime: 30_000,
+  });
+
   async function buyExtension(opt: CatalogueItem) {
     if (!bookingId) return;
+    const fresh = await refetchExtOn();
+    if (fresh.data !== true) {
+      setExtError("Service extend abhi band hai. Koi payment nahi liya gaya.");
+      return;
+    }
     setBusyOptionId(opt.id);
     setExtError(null);
     let extOrderId: string | null = null;
@@ -537,18 +552,28 @@ export function ServiceInProgressScreen({
           </div>
 
           {canExtend && (
-            <button
-              type="button"
-              onClick={() => {
-                void hapticImpact("medium");
-                setSheetOpen(true);
-              }}
-              className="mt-6 flex w-full items-center justify-center gap-2 rounded-full px-4 py-3.5 text-sm font-bold text-white active:scale-[0.99]"
-              style={{ backgroundColor: TONE_HEX[tone] }}
-            >
-              <Plus className="h-4 w-4" />
-              Extend Service
-            </button>
+            <>
+              <button
+                type="button"
+                disabled={!extensionsOn}
+                onClick={async () => {
+                  void hapticImpact("medium");
+                  const fresh = await refetchExtOn();
+                  if (fresh.data !== true) return;
+                  setSheetOpen(true);
+                }}
+                className="mt-6 flex w-full items-center justify-center gap-2 rounded-full px-4 py-3.5 text-sm font-bold text-white active:scale-[0.99] disabled:opacity-40 disabled:grayscale"
+                style={{ backgroundColor: TONE_HEX[tone] }}
+              >
+                <Plus className="h-4 w-4" />
+                Extend Service
+              </button>
+              {!extensionsOn && (
+                <p className="mt-2 text-center text-xs text-muted-foreground">
+                  Service extend abhi band hai.
+                </p>
+              )}
+            </>
           )}
         </section>
 
