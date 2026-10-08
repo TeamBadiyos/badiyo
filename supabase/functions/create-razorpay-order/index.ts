@@ -237,6 +237,13 @@ Deno.serve(async (req) => {
     // There is no duration-based fallback: a wrong guess would charge the wrong
     // amount for flat-priced services.
     let couponCategoryId: string | null = null;
+    // Extensions can be switched off by ops: never open Razorpay in that case.
+    if (purpose === "extension") {
+      const { data: extOn, error: extOnErr } = await supabase.rpc("service_extensions_enabled");
+      if (extOnErr || extOn !== true) {
+        return json({ error: "EXTENSIONS_DISABLED" }, 403);
+      }
+    }
     if (!itemId) {
       return json({ error: "item_id is required" }, 400);
     }
