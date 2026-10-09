@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, ChevronDown, Clock, X } from "lucide-react";
 import {
   getAllHourSlots,
@@ -212,7 +212,37 @@ export function SlotSelectionScreen({
     const next = formatNextOpen(cleanState.next_open_at ?? cleanState.resume_at);
     return next ? t("serviceState.closedBanner", { time: next }) : t("serviceState.closedNow");
   };
-  const nowBlocked = cleanState != null && !cleanState.can_order;
+  const { data: instantEnabled = true } = useQuery({
+    queryKey: ["instant-booking-enabled"],
+    queryFn: fetchInstantBookingEnabled,
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+  });
+  const instantPaused = instantEnabled === false;
+  const instantPausedMsg =
+    lang === "mr"
+      ? "सध्या जास्त मागणीमुळे इन्स्टंट बुकिंग पूर्ण भरले आहेत. कृपया पुढील वेळ निवडा."
+      : "Instant bookings are currently full due to high demand. Please pick a scheduled slot.";
+  const fullyBookedLabel = lang === "mr" ? "पूर्ण भरले" : "Fully Booked";
+
+  const { data: fullSlots } = useQuery({
+    queryKey: ["fully-booked-slots", days[0]?.key, days[days.length - 1]?.key],
+    queryFn: () => fetchFullyBookedSlots("clean", days[0].key, days[days.length - 1].key),
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+  });
+  const isFull = (hour: number): boolean =>
+    selectedDay !== null && (fullSlots?.has(`${selectedDay}|${hour}`) ?? false);
+
+  // Book Now paused by ops: jump to Schedule Later automatically.
+  useEffect(() => {
+    if (instantPaused && mode === "now") {
+      setMode("later");
+      setSelectedDay((d) => d ?? firstOpenDayRef.current());
+    }
+  }, [instantPaused, mode]);
+
+  const nowBlocked = (cleanState != null && !cleanState.can_order) || instantPaused;
 
   // Per-day slot availability from the server (holidays, weekly off, window fit).
   const { data: dayAllowed } = useQuery({
