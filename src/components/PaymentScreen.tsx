@@ -275,7 +275,7 @@ export function PaymentScreen({
           }
         } else {
           const day = new Date(slot.day).toISOString().slice(0, 10);
-          const hour = Number(slot.hour);
+          const hour = Number(slot.slotId);
           const { data: full, error: fullErr } = await supabase.rpc(
             "list_fully_booked_slots" as never,
             { _service_key: "clean", _from: day, _to: day } as never,
