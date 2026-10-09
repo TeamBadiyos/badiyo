@@ -6817,6 +6817,39 @@ export type Database = {
           },
         ]
       }
+      service_slot_overrides: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          reason: string | null
+          service_key: string
+          slot_date: string
+          start_hour: number
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          reason?: string | null
+          service_key?: string
+          slot_date: string
+          start_hour: number
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          reason?: string | null
+          service_key?: string
+          slot_date?: string
+          start_hour?: number
+          status?: string
+        }
+        Relationships: []
+      }
       services: {
         Row: {
           category_id: string
@@ -9115,6 +9148,7 @@ export type Database = {
         Args: { lat1: number; lat2: number; lng1: number; lng2: number }
         Returns: number
       }
+      instant_booking_enabled: { Args: never; Returns: boolean }
       is_active_staff: {
         Args: { _roles: string[]; _uid: string }
         Returns: boolean
@@ -9134,6 +9168,13 @@ export type Database = {
         Returns: boolean
       }
       link_referral: { Args: { _code: string }; Returns: undefined }
+      list_fully_booked_slots: {
+        Args: { _from: string; _service_key: string; _to: string }
+        Returns: {
+          slot_date: string
+          start_hour: number
+        }[]
+      }
       merchant_advance_order: {
         Args: { _new_status: string; _order_id: string }
         Returns: undefined
@@ -9454,6 +9495,10 @@ export type Database = {
         Returns: Json
       }
       set_login_pin: { Args: { p_pin: string }; Returns: undefined }
+      slot_is_fully_booked: {
+        Args: { _date: string; _service_key: string; _slot: string }
+        Returns: boolean
+      }
       slot_start_ist: {
         Args: { _date: string; _slot: string }
         Returns: string
@@ -10200,6 +10245,16 @@ export type Database = {
           _status: string
         }
         Returns: Json
+      }
+      staff_set_slot_full: {
+        Args: {
+          _date: string
+          _full: boolean
+          _reason?: string
+          _service_key?: string
+          _start_hour: number
+        }
+        Returns: undefined
       }
       staff_set_staff_user_zones: {
         Args: { _staff_user_id: string; _zone_ids: string[] }
