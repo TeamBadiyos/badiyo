@@ -266,6 +266,7 @@ export function SlotSelectionScreen({
 
   const slotDisabled = (hour: number): boolean => {
     if (durationBlocks(hour)) return true;
+    if (isFull(hour)) return true;
     if (dayAllowed?.get(hour) === false) return true;
     return false;
   };
@@ -282,10 +283,23 @@ export function SlotSelectionScreen({
   /** First upcoming day that still has at least one bookable hour. */
   const firstOpenDay = (): string => {
     const found = days.find((d) =>
-      allSlots.some((s) => isHourBookable(d.key, s.hour) && !durationBlocks(s.hour)),
+      allSlots.some(
+        (s) =>
+          isHourBookable(d.key, s.hour) &&
+          !durationBlocks(s.hour) &&
+          !(fullSlots?.has(`${d.key}|${s.hour}`) ?? false),
+      ),
     );
     return (found ?? days[0]).key;
   };
+  const firstOpenDayRef = useRef(firstOpenDay);
+  firstOpenDayRef.current = firstOpenDay;
+
+  // Drop a selection that became Fully Booked.
+  useEffect(() => {
+    if (selectedHour !== null && isFull(selectedHour)) setSelectedHour(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fullSlots, selectedDay, selectedHour]);
 
   const visibleSlots = useMemo(() => {
     if (!selectedDay) return allSlots;
