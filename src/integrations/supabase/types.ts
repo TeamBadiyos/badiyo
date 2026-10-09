@@ -3987,6 +3987,140 @@ export type Database = {
           },
         ]
       }
+      gateway_settlement_items: {
+        Row: {
+          amount: number
+          created_at: string
+          credit: number
+          debit: number
+          description: string | null
+          entity_id: string | null
+          fee: number
+          id: string
+          order_id: string | null
+          settlement_id: string
+          tax: number
+          txn_at: string | null
+          type: string | null
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          credit?: number
+          debit?: number
+          description?: string | null
+          entity_id?: string | null
+          fee?: number
+          id: string
+          order_id?: string | null
+          settlement_id: string
+          tax?: number
+          txn_at?: string | null
+          type?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          credit?: number
+          debit?: number
+          description?: string | null
+          entity_id?: string | null
+          fee?: number
+          id?: string
+          order_id?: string | null
+          settlement_id?: string
+          tax?: number
+          txn_at?: string | null
+          type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gateway_settlement_items_settlement_id_fkey"
+            columns: ["settlement_id"]
+            isOneToOne: false
+            referencedRelation: "gateway_settlements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gateway_settlements: {
+        Row: {
+          amount: number
+          bank_reconciled: boolean
+          bank_reconciled_at: string | null
+          bank_reconciled_by: string | null
+          bank_reference_note: string | null
+          created_at: string
+          fees: number
+          gross_amount: number
+          id: string
+          settled_at: string | null
+          status: string | null
+          synced_at: string
+          tax: number
+          utr: string | null
+        }
+        Insert: {
+          amount?: number
+          bank_reconciled?: boolean
+          bank_reconciled_at?: string | null
+          bank_reconciled_by?: string | null
+          bank_reference_note?: string | null
+          created_at?: string
+          fees?: number
+          gross_amount?: number
+          id: string
+          settled_at?: string | null
+          status?: string | null
+          synced_at?: string
+          tax?: number
+          utr?: string | null
+        }
+        Update: {
+          amount?: number
+          bank_reconciled?: boolean
+          bank_reconciled_at?: string | null
+          bank_reconciled_by?: string | null
+          bank_reference_note?: string | null
+          created_at?: string
+          fees?: number
+          gross_amount?: number
+          id?: string
+          settled_at?: string | null
+          status?: string | null
+          synced_at?: string
+          tax?: number
+          utr?: string | null
+        }
+        Relationships: []
+      }
+      gateway_sync_log: {
+        Row: {
+          created_at: string
+          error: string | null
+          id: string
+          ok: boolean
+          settlements_synced: number
+          trigger: string
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          ok: boolean
+          settlements_synced?: number
+          trigger: string
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          ok?: boolean
+          settlements_synced?: number
+          trigger?: string
+        }
+        Relationships: []
+      }
       homepage_sections: {
         Row: {
           city_id: string | null
@@ -9047,6 +9181,10 @@ export type Database = {
       }
       evaluate_zone_capacity: { Args: { _booking_id: string }; Returns: Json }
       expand_stale_broadcasts: { Args: never; Returns: number }
+      expert_active_booking_count: {
+        Args: { _exclude?: string; _expert_id: string }
+        Returns: number
+      }
       expert_ensure_booking_codes: {
         Args: { _booking_id: string }
         Returns: {
