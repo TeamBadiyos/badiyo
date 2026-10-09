@@ -235,7 +235,7 @@ export function BookingSummaryScreen({
               <p className="text-sm font-bold text-foreground">Use Badiyos coins</p>
               <p className="mt-0.5 text-xs text-muted-foreground">
                 {coinBalance} coins uplabdh hain (₹{coinBalance})
-                {redeemCoins && coinsApplied > 0 ? ` · using ${coinsApplied}` : ""}
+                {redeemCoins && coinsApplied > 0 ? ` · ${coinsApplied} use ho rahe hain` : ""}
               </p>
             </div>
             <Switch
