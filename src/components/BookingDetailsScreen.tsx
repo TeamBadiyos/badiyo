@@ -260,27 +260,15 @@ export function BookingDetailsScreen({
 
 
 
-        {/* Rating (if any) */}
-        {booking.rating ? (
-          <section className="mt-3 rounded-[18px] border border-border bg-card p-4 shadow-sm">
-            <h3 className="text-sm font-bold text-foreground">Your rating</h3>
-            <div className="mt-2 flex items-center gap-1">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Star
-                  key={i}
-                  className={`h-5 w-5 ${
-                    i < (booking.rating ?? 0)
-                      ? "fill-primary text-primary"
-                      : "text-muted-foreground/40"
-                  }`}
-                />
-              ))}
-            </div>
-            {booking.review_text && (
-              <p className="mt-2 text-sm text-muted-foreground">{booking.review_text}</p>
-            )}
-          </section>
-        ) : null}
+        {/* Rating — always available for completed bookings */}
+        {status === "completed" && (
+          <RatingSection
+            bookingId={booking.id}
+            initialRating={booking.rating}
+            initialText={booking.review_text}
+            onSaved={() => qc.invalidateQueries({ queryKey: ["my-bookings"] })}
+          />
+        )}
 
         {error && (
           <p className="mt-3 text-center text-xs text-destructive">{error}</p>
@@ -360,6 +348,108 @@ export function BookingDetailsScreen({
         saving={saving}
       />
     </main>
+  );
+}
+
+function RatingSection({
+  bookingId,
+  initialRating,
+  initialText,
+  onSaved,
+}: {
+  bookingId: string;
+  initialRating: number | null;
+  initialText: string | null;
+  onSaved: () => void;
+}) {
+  const [savedRating, setSavedRating] = useState(initialRating ?? 0);
+  const [savedText, setSavedText] = useState(initialText ?? "");
+  const [editing, setEditing] = useState(!initialRating);
+  const [rating, setRating] = useState(initialRating ?? 0);
+  const [text, setText] = useState(initialText ?? "");
+  const [busy, setBusy] = useState(false);
+
+  async function save() {
+    if (!rating) {
+      toast.error("Kripya star select karein.");
+      return;
+    }
+    setBusy(true);
+    const { error } = await supabase.rpc("submit_booking_review", {
+      _booking_id: bookingId,
+      _rating: rating,
+      _review: text.trim(),
+    });
+    setBusy(false);
+    if (error) {
+      toast.error("Rating save nahi ho payi. Dobara try karein.");
+      return;
+    }
+    setSavedRating(rating);
+    setSavedText(text.trim());
+    setEditing(false);
+    toast.success("Shukriya! Aapki rating save ho gayi.");
+    onSaved();
+  }
+
+  return (
+    <section className="mt-3 rounded-[18px] border border-border bg-card p-4 shadow-sm">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-bold text-foreground">
+          {editing && !savedRating ? "Service ko rate karein" : "Your rating"}
+        </h3>
+        {!editing && (
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            className="text-xs font-semibold text-primary"
+          >
+            Edit
+          </button>
+        )}
+      </div>
+      <div className="mt-2 flex items-center gap-1">
+        {[1, 2, 3, 4, 5].map((n) => (
+          <button
+            key={n}
+            type="button"
+            disabled={!editing}
+            onClick={() => setRating(n)}
+            aria-label={`Rate ${n} star${n > 1 ? "s" : ""}`}
+            className="p-0.5"
+          >
+            <Star
+              className={`${editing ? "h-8 w-8" : "h-5 w-5"} ${
+                n <= (editing ? rating : savedRating)
+                  ? "fill-primary text-primary"
+                  : "text-muted-foreground/40"
+              }`}
+            />
+          </button>
+        ))}
+      </div>
+      {editing ? (
+        <>
+          <textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="Apna experience batayein (optional)"
+            rows={3}
+            className="mt-3 w-full resize-none rounded-[12px] border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+          />
+          <button
+            type="button"
+            onClick={save}
+            disabled={busy}
+            className="mt-3 w-full rounded-[14px] bg-primary px-4 py-3 text-sm font-bold text-primary-foreground disabled:opacity-60"
+          >
+            {busy ? "Saving…" : "Submit Rating"}
+          </button>
+        </>
+      ) : (
+        savedText && <p className="mt-2 text-sm text-muted-foreground">{savedText}</p>
+      )}
+    </section>
   );
 }
 
