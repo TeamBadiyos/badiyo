@@ -6520,6 +6520,36 @@ export type Database = {
           },
         ]
       }
+      service_daily_capacity: {
+        Row: {
+          cap_date: string
+          capacity: number
+          created_at: string
+          id: string
+          service_key: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          cap_date: string
+          capacity: number
+          created_at?: string
+          id?: string
+          service_key?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          cap_date?: string
+          capacity?: number
+          created_at?: string
+          id?: string
+          service_key?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       service_flags: {
         Row: {
           city: string
@@ -9495,10 +9525,31 @@ export type Database = {
         Returns: Json
       }
       set_login_pin: { Args: { p_pin: string }; Returns: undefined }
-      slot_is_fully_booked: {
-        Args: { _date: string; _service_key: string; _slot: string }
-        Returns: boolean
+      slot_busy_by_hour: {
+        Args: { _date: string; _service_key: string }
+        Returns: {
+          busy: number
+          start_hour: number
+        }[]
       }
+      slot_capacity_for: {
+        Args: { _date: string; _service_key: string }
+        Returns: number
+      }
+      slot_is_fully_booked:
+        | {
+            Args: { _date: string; _service_key: string; _slot: string }
+            Returns: boolean
+          }
+        | {
+            Args: {
+              _date: string
+              _duration_minutes: number
+              _service_key: string
+              _slot: string
+            }
+            Returns: boolean
+          }
       slot_start_ist: {
         Args: { _date: string; _slot: string }
         Returns: string
@@ -10132,6 +10183,10 @@ export type Database = {
       }
       staff_set_coupon_categories: {
         Args: { _category_ids: string[]; _id: string }
+        Returns: undefined
+      }
+      staff_set_daily_capacity: {
+        Args: { _capacity: number; _date: string; _service_key?: string }
         Returns: undefined
       }
       staff_set_delivery_status: {
