@@ -385,82 +385,6 @@ export function SlotSelectionScreen({
             </p>
           )}
 
-          {/* Details */}
-          {hasDetails && (
-            <section className="mt-5 overflow-hidden rounded-[18px] border border-border bg-card shadow-card-m">
-              <button
-                onClick={() => setDetailsOpen((v) => !v)}
-                className="flex w-full items-center justify-between px-4 py-3.5 text-left"
-              >
-                <span className="text-sm font-bold text-foreground">
-                  {t("product.details")}
-                </span>
-                <ChevronDown
-                  className={`h-4 w-4 text-muted-foreground transition-transform ${
-                    detailsOpen ? "rotate-180" : ""
-                  }`}
-                />
-              </button>
-              {detailsOpen && (
-                <div className="border-t border-border">
-                  {taskTypes.length > 0 ? (
-                    <div className="flex flex-col">
-                      {taskTypes.map((tt) => {
-                        const open = openTaskIds.includes(tt.id);
-                        return (
-                          <div
-                            key={tt.id}
-                            className="border-b border-border last:border-b-0"
-                          >
-                            <button
-                              onClick={() => {
-                                void hapticSelection();
-                                setOpenTaskIds((prev) =>
-                                  prev.includes(tt.id)
-                                    ? prev.filter((x) => x !== tt.id)
-                                    : [...prev, tt.id],
-                                );
-                              }}
-                              className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left"
-                            >
-                              <span className="text-sm font-bold text-foreground">
-                                {tt.name}
-                              </span>
-                              <ChevronDown
-                                className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${
-                                  open ? "rotate-180" : ""
-                                }`}
-                              />
-                            </button>
-                            {open && (
-                              <div className="px-4 pb-4">
-                                <IncExcLists
-                                  inclusions={tt.inclusions}
-                                  exclusions={tt.exclusions}
-                                  includedLabel={t("product.included")}
-                                  notIncludedLabel={t("product.notIncluded")}
-                                />
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div className="px-4 py-4">
-                      <IncExcLists
-                        inclusions={inclusions}
-                        exclusions={exclusions}
-                        includedLabel={t("product.included")}
-                        notIncludedLabel={t("product.notIncluded")}
-                      />
-                    </div>
-                  )}
-                </div>
-              )}
-
-            </section>
-          )}
 
           {/* Slot picker */}
           <div className="mt-5 grid grid-cols-2 gap-2 rounded-[14px] border border-border bg-card p-1">
@@ -624,6 +548,82 @@ export function SlotSelectionScreen({
                 </>
               )}
             </>
+          )}
+          {/* Details */}
+          {hasDetails && (
+            <section className="mt-5 overflow-hidden rounded-[18px] border border-border bg-card shadow-card-m">
+              <button
+                onClick={() => setDetailsOpen((v) => !v)}
+                className="flex w-full items-center justify-between px-4 py-3.5 text-left"
+              >
+                <span className="text-sm font-bold text-foreground">
+                  {t("product.details")}
+                </span>
+                <ChevronDown
+                  className={`h-4 w-4 text-muted-foreground transition-transform ${
+                    detailsOpen ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+              {detailsOpen && (
+                <div className="border-t border-border">
+                  {taskTypes.length > 0 ? (
+                    <div className="flex flex-col">
+                      {taskTypes.map((tt) => {
+                        const open = openTaskIds.includes(tt.id);
+                        return (
+                          <div
+                            key={tt.id}
+                            className="border-b border-border last:border-b-0"
+                          >
+                            <button
+                              onClick={() => {
+                                void hapticSelection();
+                                setOpenTaskIds((prev) =>
+                                  prev.includes(tt.id)
+                                    ? prev.filter((x) => x !== tt.id)
+                                    : [...prev, tt.id],
+                                );
+                              }}
+                              className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left"
+                            >
+                              <span className="text-sm font-bold text-foreground">
+                                {tt.name}
+                              </span>
+                              <ChevronDown
+                                className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${
+                                  open ? "rotate-180" : ""
+                                }`}
+                              />
+                            </button>
+                            {open && (
+                              <div className="px-4 pb-4">
+                                <IncExcLists
+                                  inclusions={tt.inclusions}
+                                  exclusions={tt.exclusions}
+                                  includedLabel={t("product.included")}
+                                  notIncludedLabel={t("product.notIncluded")}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="px-4 py-4">
+                      <IncExcLists
+                        inclusions={inclusions}
+                        exclusions={exclusions}
+                        includedLabel={t("product.included")}
+                        notIncludedLabel={t("product.notIncluded")}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+
+            </section>
           )}
         </div>
       </div>
