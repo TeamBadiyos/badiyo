@@ -59,8 +59,8 @@ export function CancelBookingButton({
     : (paid ?? 0) <= 0
       ? "Nothing was charged for this booking, so there is no refund."
       : fee && fee > 0
-        ? `A ₹${fee} cancellation fee applies. ₹${refundable} will be refunded to your original payment method in 5-7 working days.`
-        : `₹${refundable} will be refunded to your original payment method in 5-7 working days.`;
+        ? `₹${fee} cancellation fee lagegi. ₹${refundable} aapke account mein 5–7 working days mein refund ho jayenge.`
+        : `₹${refundable} aapke account mein 5–7 working days mein refund ho jayenge.`;
 
 
   const handleConfirm = async () => {

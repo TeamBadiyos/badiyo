@@ -268,7 +268,7 @@ export function PaymentScreen({
             toast(
               lang === "mr"
                 ? "सध्या इन्स्टंट बुकिंग पूर्ण भरले आहेत. कृपया पुढील वेळ निवडा."
-                : "Instant bookings are currently full due to high demand. Please pick a scheduled slot.",
+                : "High demand ki wajah se Book Now abhi band hai. Kripya aage ka time schedule karein.",
             );
             onBack();
             return;
@@ -451,7 +451,7 @@ export function PaymentScreen({
       if (error) {
         console.error("Failed to fetch booking:", error);
         setBookingLoadError(
-          "Booking saved, but there was an issue loading details - check My Bookings",
+          "Booking save ho gayi hai, par details load nahi ho payi — 'My Bookings' mein dekhein.",
         );
         return;
       }

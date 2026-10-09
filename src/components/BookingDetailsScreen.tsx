@@ -14,20 +14,20 @@ function refundLine(b: BookingRow): { label: string; note: string } | null {
   if (!status || status === "none") return null;
   const amount = Number(b.refund_amount ?? 0);
   if (status === "not_applicable") {
-    return { label: "No refund applicable", note: "Nothing was charged for this booking." };
+    return { label: "No refund applicable", note: "Is booking ke liye koi charge nahi kata tha." };
   }
   if (status === "refunded") {
-    return { label: `Rs ${amount} refunded`, note: "Credited to your original payment method." };
+    return { label: `Rs ${amount} refunded`, note: "Aapke original payment account mein bhej diya gaya hai." };
   }
   if (status === "processing" || status === "pending") {
     return {
       label: `Rs ${amount} refund in progress`,
-      note: "It reaches your original payment method in 5-7 working days.",
+      note: "Aapke account mein 5–7 working days mein refund aa jayega.",
     };
   }
   return {
     label: `Rs ${amount} refund pending`,
-    note: "We hit an issue with this refund. Our team is on it — contact support if it isn't resolved soon.",
+    note: "Refund mein thodi dikkat aayi hai. Hamari team check kar rahi hai — jaldi na aaye toh support se sampark karein.",
   };
 }
 
