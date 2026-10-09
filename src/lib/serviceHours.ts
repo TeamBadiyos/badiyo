@@ -56,6 +56,31 @@ export async function fetchSlotAllowed(
   return Boolean((data as { ok?: boolean } | null)?.ok);
 }
 
+/** Is "Book Now" (instant) open? Fail-open on error. */
+export async function fetchInstantBookingEnabled(): Promise<boolean> {
+  const { data, error } = await supabase.rpc("instant_booking_enabled" as never);
+  if (error) return true;
+  return data !== false;
+}
+
+/** Set of "YYYY-MM-DD|hour" keys marked Fully Booked. Empty on error. */
+export async function fetchFullyBookedSlots(
+  serviceKey: string,
+  from: string,
+  to: string,
+): Promise<Set<string>> {
+  const { data, error } = await supabase.rpc(
+    "list_fully_booked_slots" as never,
+    { _service_key: serviceKey, _from: from, _to: to } as never,
+  );
+  if (error || !Array.isArray(data)) return new Set();
+  return new Set(
+    (data as { slot_date: string; start_hour: number }[]).map(
+      (r) => `${String(r.slot_date).slice(0, 10)}|${Number(r.start_hour)}`,
+    ),
+  );
+}
+
 /** "Notify me" for a Coming Soon service. Returns false when already on the list. */
 export async function notifyMeForService(serviceKey: string): Promise<"added" | "duplicate" | "error"> {
   const { data, error } = await supabase.rpc("customer_notify_me", {

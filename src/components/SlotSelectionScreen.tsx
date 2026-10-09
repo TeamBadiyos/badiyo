@@ -13,6 +13,8 @@ import { toast } from "sonner";
 import {
   durationFitsNow,
   fetchSlotAllowed,
+  fetchInstantBookingEnabled,
+  fetchFullyBookedSlots,
   formatClockLabel,
   formatDurationLabel,
   formatNextOpen,
