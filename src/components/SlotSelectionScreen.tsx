@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, ChevronDown, Clock, X } from "lucide-react";
 import {
   getAllHourSlots,
@@ -13,6 +13,8 @@ import { toast } from "sonner";
 import {
   durationFitsNow,
   fetchSlotAllowed,
+  fetchInstantBookingEnabled,
+  fetchFullyBookedSlots,
   formatClockLabel,
   formatDurationLabel,
   formatNextOpen,
@@ -210,7 +212,37 @@ export function SlotSelectionScreen({
     const next = formatNextOpen(cleanState.next_open_at ?? cleanState.resume_at);
     return next ? t("serviceState.closedBanner", { time: next }) : t("serviceState.closedNow");
   };
-  const nowBlocked = cleanState != null && !cleanState.can_order;
+  const { data: instantEnabled = true } = useQuery({
+    queryKey: ["instant-booking-enabled"],
+    queryFn: fetchInstantBookingEnabled,
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+  });
+  const instantPaused = instantEnabled === false;
+  const instantPausedMsg =
+    lang === "mr"
+      ? "सध्या जास्त मागणीमुळे इन्स्टंट बुकिंग पूर्ण भरले आहेत. कृपया पुढील वेळ निवडा."
+      : "Instant bookings are currently full due to high demand. Please pick a scheduled slot.";
+  const fullyBookedLabel = lang === "mr" ? "पूर्ण भरले" : "Fully Booked";
+
+  const { data: fullSlots } = useQuery({
+    queryKey: ["fully-booked-slots", days[0]?.key, days[days.length - 1]?.key],
+    queryFn: () => fetchFullyBookedSlots("clean", days[0].key, days[days.length - 1].key),
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+  });
+  const isFull = (hour: number): boolean =>
+    selectedDay !== null && (fullSlots?.has(`${selectedDay}|${hour}`) ?? false);
+
+  // Book Now paused by ops: jump to Schedule Later automatically.
+  useEffect(() => {
+    if (instantPaused && mode === "now") {
+      setMode("later");
+      setSelectedDay((d) => d ?? firstOpenDayRef.current());
+    }
+  }, [instantPaused, mode]);
+
+  const nowBlocked = (cleanState != null && !cleanState.can_order) || instantPaused;
 
   // Per-day slot availability from the server (holidays, weekly off, window fit).
   const { data: dayAllowed } = useQuery({
@@ -234,6 +266,7 @@ export function SlotSelectionScreen({
 
   const slotDisabled = (hour: number): boolean => {
     if (durationBlocks(hour)) return true;
+    if (isFull(hour)) return true;
     if (dayAllowed?.get(hour) === false) return true;
     return false;
   };
@@ -250,10 +283,23 @@ export function SlotSelectionScreen({
   /** First upcoming day that still has at least one bookable hour. */
   const firstOpenDay = (): string => {
     const found = days.find((d) =>
-      allSlots.some((s) => isHourBookable(d.key, s.hour) && !durationBlocks(s.hour)),
+      allSlots.some(
+        (s) =>
+          isHourBookable(d.key, s.hour) &&
+          !durationBlocks(s.hour) &&
+          !(fullSlots?.has(`${d.key}|${s.hour}`) ?? false),
+      ),
     );
     return (found ?? days[0]).key;
   };
+  const firstOpenDayRef = useRef(firstOpenDay);
+  firstOpenDayRef.current = firstOpenDay;
+
+  // Drop a selection that became Fully Booked.
+  useEffect(() => {
+    if (selectedHour !== null && isFull(selectedHour)) setSelectedHour(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fullSlots, selectedDay, selectedHour]);
 
   const visibleSlots = useMemo(() => {
     if (!selectedDay) return allSlots;
@@ -421,6 +467,7 @@ export function SlotSelectionScreen({
             {(["now", "later"] as Mode[]).map((m) => (
               <button
                 key={m}
+                disabled={m === "now" && instantPaused}
                 onClick={() => {
                   void hapticSelection();
                   setMode(m);
@@ -436,7 +483,7 @@ export function SlotSelectionScreen({
                   }
                 }}
 
-                className={`rounded-[10px] px-4 py-2.5 text-sm font-bold transition ${
+                className={`rounded-[10px] px-4 py-2.5 text-sm font-bold transition disabled:opacity-40 ${
                   mode === m
                     ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground"
@@ -446,6 +493,11 @@ export function SlotSelectionScreen({
               </button>
             ))}
           </div>
+          {instantPaused && (
+            <p className="mt-3 rounded-[14px] border border-border bg-muted px-4 py-3 text-sm font-semibold text-foreground">
+              {instantPausedMsg}
+            </p>
+          )}
 
           {mode === "now" && (
             <div className="mt-5 flex items-start gap-4 rounded-[18px] border border-border bg-card p-5">
@@ -517,7 +569,8 @@ export function SlotSelectionScreen({
                   <div className="mt-3 grid grid-cols-3 gap-2">
                     {visibleSlots.map((slot) => {
                       const active = selectedHour === slot.hour;
-                      const tooLong = durationBlocks(slot.hour);
+                      const full = isFull(slot.hour);
+                      const tooLong = !full && durationBlocks(slot.hour);
                       const disabled = slotDisabled(slot.hour);
                       return (
                         <button
@@ -537,7 +590,7 @@ export function SlotSelectionScreen({
                             }
                             setSelectedHour(slot.hour);
                           }}
-                          className={`rounded-[14px] border px-3 py-3 text-sm font-semibold transition ${
+                          className={`relative rounded-[14px] border px-3 py-3 text-sm font-semibold transition ${
                             disabled
                               ? "border-border bg-muted text-muted-foreground/50"
                               : active
@@ -545,6 +598,11 @@ export function SlotSelectionScreen({
                                 : "border-border bg-card text-foreground"
                           }`}
                         >
+                          {full && (
+                            <span className="absolute -top-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-destructive px-1.5 py-0.5 text-[9px] font-bold leading-none text-destructive-foreground">
+                              {fullyBookedLabel}
+                            </span>
+                          )}
                           {slot.label}
                         </button>
                       );
