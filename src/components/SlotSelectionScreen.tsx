@@ -222,8 +222,8 @@ export function SlotSelectionScreen({
   const instantPausedMsg =
     lang === "mr"
       ? "सध्या जास्त मागणीमुळे इन्स्टंट बुकिंग पूर्ण भरले आहेत. कृपया पुढील वेळ निवडा."
-      : "Instant bookings are currently full due to high demand. Please pick a scheduled slot.";
-  const fullyBookedLabel = lang === "mr" ? "पूर्ण भरले" : "Fully Booked";
+      : "High demand ki wajah se Book Now abhi band hai. Kripya aage ka time schedule karein.";
+  const fullyBookedLabel = lang === "mr" ? "पूर्ण भरले" : "Full";
 
   const { data: fullSlots } = useQuery({
     queryKey: ["fully-booked-slots", days[0]?.key, days[days.length - 1]?.key],
