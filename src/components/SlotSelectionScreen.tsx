@@ -467,6 +467,7 @@ export function SlotSelectionScreen({
             {(["now", "later"] as Mode[]).map((m) => (
               <button
                 key={m}
+                disabled={m === "now" && instantPaused}
                 onClick={() => {
                   void hapticSelection();
                   setMode(m);
@@ -482,7 +483,7 @@ export function SlotSelectionScreen({
                   }
                 }}
 
-                className={`rounded-[10px] px-4 py-2.5 text-sm font-bold transition ${
+                className={`rounded-[10px] px-4 py-2.5 text-sm font-bold transition disabled:opacity-40 ${
                   mode === m
                     ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground"
@@ -492,6 +493,11 @@ export function SlotSelectionScreen({
               </button>
             ))}
           </div>
+          {instantPaused && (
+            <p className="mt-3 rounded-[14px] border border-border bg-muted px-4 py-3 text-sm font-semibold text-foreground">
+              {instantPausedMsg}
+            </p>
+          )}
 
           {mode === "now" && (
             <div className="mt-5 flex items-start gap-4 rounded-[18px] border border-border bg-card p-5">
@@ -563,7 +569,8 @@ export function SlotSelectionScreen({
                   <div className="mt-3 grid grid-cols-3 gap-2">
                     {visibleSlots.map((slot) => {
                       const active = selectedHour === slot.hour;
-                      const tooLong = durationBlocks(slot.hour);
+                      const full = isFull(slot.hour);
+                      const tooLong = !full && durationBlocks(slot.hour);
                       const disabled = slotDisabled(slot.hour);
                       return (
                         <button
@@ -583,7 +590,7 @@ export function SlotSelectionScreen({
                             }
                             setSelectedHour(slot.hour);
                           }}
-                          className={`rounded-[14px] border px-3 py-3 text-sm font-semibold transition ${
+                          className={`relative rounded-[14px] border px-3 py-3 text-sm font-semibold transition ${
                             disabled
                               ? "border-border bg-muted text-muted-foreground/50"
                               : active
@@ -591,6 +598,11 @@ export function SlotSelectionScreen({
                                 : "border-border bg-card text-foreground"
                           }`}
                         >
+                          {full && (
+                            <span className="absolute -top-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-destructive px-1.5 py-0.5 text-[9px] font-bold leading-none text-destructive-foreground">
+                              {fullyBookedLabel}
+                            </span>
+                          )}
                           {slot.label}
                         </button>
                       );
