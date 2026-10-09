@@ -259,6 +259,39 @@ export function PaymentScreen({
         }
       }
 
+      // Final gate right before Razorpay: Book Now paused / slot Fully Booked.
+      {
+        const lang = readLangOutsideReact();
+        if (slot.mode === "now") {
+          const { data: on, error: onErr } = await supabase.rpc("instant_booking_enabled" as never);
+          if (!onErr && on === false) {
+            toast(
+              lang === "mr"
+                ? "सध्या इन्स्टंट बुकिंग पूर्ण भरले आहेत. कृपया पुढील वेळ निवडा."
+                : "Instant bookings are currently full due to high demand. Please pick a scheduled slot.",
+            );
+            onBack();
+            return;
+          }
+        } else {
+          const day = new Date(slot.day).toISOString().slice(0, 10);
+          const hour = Number(slot.hour);
+          const { data: full, error: fullErr } = await supabase.rpc(
+            "list_fully_booked_slots" as never,
+            { _service_key: "clean", _from: day, _to: day } as never,
+          );
+          const rows = (full as { start_hour: number }[] | null) ?? [];
+          if (!fullErr && Number.isFinite(hour) && rows.some((r) => Number(r.start_hour) === hour)) {
+            toast(
+              lang === "mr"
+                ? "हा स्लॉट पूर्ण भरला आहे. कृपया दुसरा स्लॉट निवडा."
+                : "This slot is fully booked. Please select another slot.",
+            );
+            onBack();
+            return;
+          }
+        }
+      }
 
       const { data, error } = await supabase.functions.invoke(
         "create-razorpay-order",
