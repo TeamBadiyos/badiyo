@@ -4803,6 +4803,45 @@ export type Database = {
           },
         ]
       }
+      merchant_store_visits: {
+        Row: {
+          id: string
+          merchant_id: string
+          session_id: string | null
+          user_id: string | null
+          visited_at: string
+        }
+        Insert: {
+          id?: string
+          merchant_id: string
+          session_id?: string | null
+          user_id?: string | null
+          visited_at?: string
+        }
+        Update: {
+          id?: string
+          merchant_id?: string
+          session_id?: string | null
+          user_id?: string | null
+          visited_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merchant_store_visits_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "merchant_store_visits_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "public_stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       merchant_subscription_invoices: {
         Row: {
           amount: number
@@ -9309,6 +9348,10 @@ export type Database = {
       }
       get_expert_id_for_auth: { Args: { _auth_uid: string }; Returns: string }
       get_gst_percent: { Args: never; Returns: number }
+      get_merchant_store_analytics: {
+        Args: { _days?: number; _merchant_id: string }
+        Returns: Json
+      }
       get_ops_flag: { Args: { _key: string }; Returns: boolean }
       get_ops_num: { Args: { _default: number; _key: string }; Returns: number }
       has_login_pin: { Args: { p_phone: string }; Returns: boolean }
@@ -9548,6 +9591,10 @@ export type Database = {
           _razorpay_payment_id: string
         }
         Returns: string
+      }
+      record_merchant_store_visit: {
+        Args: { _merchant_id: string; _session_id?: string }
+        Returns: boolean
       }
       referral_phone10: { Args: { _phone: string }; Returns: string }
       register_device_token: {
