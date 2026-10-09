@@ -10,6 +10,7 @@ import {
 } from "@/lib/backHandler";
 import { useEdgeSwipeBack } from "@/lib/useEdgeSwipeBack";
 import { initStatusBar } from "@/lib/statusBar";
+import { NoInternetScreen } from "@/components/utility/NoInternetScreen";
 
 import { BadiyoLogo } from "@/components/BadiyoLogo";
 import type { NotServiceableLocation } from "@/components/NotServiceableScreen";
@@ -159,10 +160,7 @@ const StoreOrderTrackingScreen = lazyNamed(
   () => import("@/components/store/StoreOrderTrackingScreen"),
   "StoreOrderTrackingScreen",
 );
-const NoInternetScreen = lazyNamed(
-  () => import("@/components/utility/NoInternetScreen"),
-  "NoInternetScreen",
-);
+// Static import: this screen must render while offline, when lazy chunks can't download.
 const ForceUpdateScreen = lazyNamed(
   () => import("@/components/utility/ForceUpdateScreen"),
   "ForceUpdateScreen",
