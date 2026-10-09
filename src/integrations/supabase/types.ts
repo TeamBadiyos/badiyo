@@ -10359,6 +10359,10 @@ export type Database = {
           tds_total: number
         }[]
       }
+      staff_transfer_completed_work: {
+        Args: { _booking_id: string; _new_expert_id: string; _reason: string }
+        Returns: Json
+      }
       staff_undo_service_focus: { Args: { _undo_token: string }; Returns: Json }
       staff_update_booking_status: {
         Args: { _booking_id: string; _new_status: string; _note?: string }
