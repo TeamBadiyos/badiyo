@@ -116,6 +116,22 @@ Deno.serve(async (req) => {
           _service_key: serviceKey,
         });
         blocked = !err && canOrder === false;
+        // Book Now switched off in Command Center: never take the payment.
+        if (!blocked && purpose === "booking") {
+          const { data: instOn, error: instOnErr } = await supabase.rpc("instant_booking_enabled");
+          if (!instOnErr && instOn === false) {
+            return json(
+              {
+                error: "SERVICE_CLOSED",
+                reason_code: "instant_paused",
+                message_en:
+                  "High demand ki wajah se Book Now abhi band hai. Kripya aage ka time schedule karein.",
+                message_mr: "सध्या इन्स्टंट बुकिंग पूर्ण भरले आहेत. कृपया पुढील वेळ निवडा.",
+              },
+              409,
+            );
+          }
+        }
         // Instant bookings: the job must also FINISH before closing time.
         if (!blocked && purpose === "booking") {
           const { data: inst, error: instErr } = await supabase.rpc("service_instant_allowed", {
