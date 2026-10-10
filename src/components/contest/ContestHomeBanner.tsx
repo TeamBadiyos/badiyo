@@ -42,7 +42,7 @@ export function ContestHomeBanner({ onOpen }: { onOpen?: () => void }) {
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-bold text-foreground">{s.title}</p>
           <p className="truncate text-xs text-muted-foreground">
-            {s.my ? `You are enrolled - Entry ${s.my.entryNo}` : top ? `Win ${top.name}` : "Enroll free"}
+            {top ? `Win ${top.name}` : "Enroll free"}
           </p>
         </div>
         {s.my ? (
