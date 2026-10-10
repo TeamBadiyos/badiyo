@@ -4406,6 +4406,44 @@ export type Database = {
           },
         ]
       }
+      lucky_draw_tickets: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          id: string
+          referred_user_id: string | null
+          ticket_no: string
+          ticket_type: string
+          user_id: string
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          id?: string
+          referred_user_id?: string | null
+          ticket_no: string
+          ticket_type?: string
+          user_id: string
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          id?: string
+          referred_user_id?: string | null
+          ticket_no?: string
+          ticket_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lucky_draw_tickets_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "lucky_draw_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lucky_draw_winners: {
         Row: {
           campaign_id: string
@@ -4416,6 +4454,7 @@ export type Database = {
           prize_type: string
           rank: number | null
           referrals: number | null
+          ticket_no: string | null
           user_id: string
         }
         Insert: {
@@ -4427,6 +4466,7 @@ export type Database = {
           prize_type: string
           rank?: number | null
           referrals?: number | null
+          ticket_no?: string | null
           user_id: string
         }
         Update: {
@@ -4438,6 +4478,7 @@ export type Database = {
           prize_type?: string
           rank?: number | null
           referrals?: number | null
+          ticket_no?: string | null
           user_id?: string
         }
         Relationships: [
@@ -9636,6 +9677,10 @@ export type Database = {
           referrals: number
           user_id: string
         }[]
+      }
+      lucky_draw_sync_tickets: {
+        Args: { _campaign_id: string }
+        Returns: number
       }
       merchant_advance_order: {
         Args: { _new_status: string; _order_id: string }
