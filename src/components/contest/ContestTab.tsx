@@ -169,6 +169,23 @@ export function ContestTab() {
 
       <TopCard s={s} />
 
+      {s.my && s.my.tickets.length > 0 && (
+        <>
+          <h3 className="mt-7 text-base font-bold text-foreground">Your Tickets ({s.my.tickets.length})</h3>
+          <p className="mt-1 text-xs font-semibold text-primary">Invite a friend, get 1 more ticket</p>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            {s.my.tickets.map((t) => (
+              <div key={t.ticketNo} className="rounded-[14px] border border-dashed border-primary/50 bg-primary/5 p-3">
+                <p className="text-sm font-extrabold tracking-wide text-foreground">{t.ticketNo}</p>
+                <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                  {t.type === "base" ? "Signup" : `Bonus${t.friendName ? ` · ${t.friendName}` : ""}`}
+                </p>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
       {s.winnersPublished && s.winners.length > 0 && (
         <>
           <h3 className="mt-7 text-base font-bold text-foreground">Winners</h3>
@@ -176,7 +193,10 @@ export function ContestTab() {
             {s.winners.map((w, i) => (
               <div key={i} className="flex items-center gap-3 rounded-[14px] border border-border bg-card p-3">
                 <Trophy className="h-4 w-4 text-primary" />
-                <span className="flex-1 text-sm font-semibold text-foreground">{w.name}</span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-foreground">{w.name}</p>
+                  {w.ticketNo && <p className="text-xs text-muted-foreground">Ticket {w.ticketNo}</p>}
+                </div>
                 {w.prize && <span className="text-xs text-muted-foreground">{w.prize}</span>}
               </div>
             ))}

@@ -30,8 +30,15 @@ export type LdStatus = {
   topRanks: number;
   prizes: LdPrize[];
   winnersPublished: boolean;
-  winners: { name: string; prize: string | null; rank: number | null }[];
-  my: { entryNo: string; entries: number; referrals: number; won: boolean; wonPrize: string | null } | null;
+  winners: { name: string; prize: string | null; rank: number | null; ticketNo: string | null }[];
+  my: {
+    entryNo: string;
+    entries: number;
+    referrals: number;
+    won: boolean;
+    wonPrize: string | null;
+    tickets: { ticketNo: string; type: "base" | "referral"; friendName: string | null; createdAt: string | null }[];
+  } | null;
 };
 
 const num = (v: any): number | null => (v === null || v === undefined || v === "" || isNaN(Number(v)) ? null : Number(v));
@@ -91,6 +98,7 @@ export async function fetchLuckyDrawStatus(): Promise<LdStatus | null> {
           name: maskName(w.display_name ?? w.name),
           prize: str(w.prize_name) ?? str(w.prize),
           rank: num(w.rank),
+          ticketNo: str(w.ticket_no),
         }))
       : [],
     my: myRaw && (myRaw.entry_no || myRaw.enrolled)
@@ -100,6 +108,20 @@ export async function fetchLuckyDrawStatus(): Promise<LdStatus | null> {
           referrals: num(myRaw.referrals) ?? 0,
           won: Boolean(myRaw.won ?? myRaw.is_winner ?? myWin),
           wonPrize: typeof myWin === "string" ? myWin : str(myWin?.prize_name) ?? null,
+          tickets: (() => {
+            const raw: Any[] = Array.isArray(myRaw.tickets) ? myRaw.tickets : [];
+            const t = raw
+              .filter((x) => str(x?.ticket_no))
+              .map((x) => ({
+                ticketNo: String(x.ticket_no),
+                type: (x.type === "referral" ? "referral" : "base") as "base" | "referral",
+                friendName: x.friend_name ? maskName(x.friend_name).split(" ")[0] : null,
+                createdAt: str(x.created_at),
+              }));
+            if (!t.length && myRaw.entry_no)
+              t.push({ ticketNo: String(myRaw.entry_no), type: "base", friendName: null, createdAt: null });
+            return t;
+          })(),
         }
       : null,
   };
