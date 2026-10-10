@@ -7234,6 +7234,7 @@ export type Database = {
           service_key: string
           slot_date: string
           start_hour: number
+          start_minute: number
           status: string
         }
         Insert: {
@@ -7244,6 +7245,7 @@ export type Database = {
           service_key?: string
           slot_date: string
           start_hour: number
+          start_minute?: number
           status?: string
         }
         Update: {
@@ -7254,6 +7256,7 @@ export type Database = {
           service_key?: string
           slot_date?: string
           start_hour?: number
+          start_minute?: number
           status?: string
         }
         Relationships: []
@@ -9595,6 +9598,7 @@ export type Database = {
         Returns: {
           slot_date: string
           start_hour: number
+          start_minute: number
         }[]
       }
       lucky_draw_audit: {
@@ -9939,6 +9943,13 @@ export type Database = {
         Returns: Json
       }
       set_login_pin: { Args: { p_pin: string }; Returns: undefined }
+      slot_busy_by_half: {
+        Args: { _date: string; _service_key: string }
+        Returns: {
+          busy: number
+          start_min: number
+        }[]
+      }
       slot_busy_by_hour: {
         Args: { _date: string; _service_key: string }
         Returns: {
@@ -9968,6 +9979,7 @@ export type Database = {
         Args: { _date: string; _slot: string }
         Returns: string
       }
+      slot_step: { Args: never; Returns: number }
       staff_accept_booking: {
         Args: { _booking_id: string }
         Returns: undefined
@@ -10751,6 +10763,7 @@ export type Database = {
           _reason?: string
           _service_key?: string
           _start_hour: number
+          _start_minute?: number
         }
         Returns: undefined
       }
