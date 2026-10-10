@@ -305,7 +305,7 @@ function Index() {
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
   const [redeemCoins, setRedeemCoins] = useState(false);
 
-  const [rewardsTab, setRewardsTab] = useState<"rewards" | "contest">("rewards");
+  const [rewardsTab, setRewardsTab] = useState<"rewards" | "contest">("contest");
   const [notServiceable, setNotServiceable] = useState<NotServiceableLocation | null>(null);
   const [activeBookingId, setActiveBookingId] = useState<string | null>(null);
   const [activeBookingStatus, setActiveBookingStatus] = useState<string | null>(null);
@@ -927,7 +927,7 @@ function Index() {
               setPhase("address");
             }}
             onOpenProfile={() => setPhase("profile")}
-            onOpenRewards={() => { setRewardsTab("rewards"); setPhase("rewards"); }}
+            onOpenRewards={() => { setRewardsTab("contest"); setPhase("rewards"); }}
             onOpenContest={() => { setRewardsTab("contest"); setPhase("rewards"); }}
             onOpenOrders={() => setPhase("orders")}
             onOpenStoreOrder={(id) => {
@@ -1301,7 +1301,7 @@ function Index() {
         <div className="animate-fade-slide-in">
           <OrdersScreen
             onOpenHome={() => setPhase("home")}
-            onOpenRewards={() => setPhase("rewards")}
+            onOpenRewards={() => { setRewardsTab("contest"); setPhase("rewards"); }}
             onOpenCourier={() => setPhase("courier")}
             onOpenContactParcels={openContactParcels}
             onOpenStoreOrder={(id) => {
@@ -1361,7 +1361,7 @@ function Index() {
           <RewardsScreen
             initialTab={rewardsTab}
             onOpenHome={() => setPhase("home")}
-            onOpenRewards={() => setPhase("rewards")}
+            onOpenRewards={() => { setRewardsTab("contest"); setPhase("rewards"); }}
             onOpenReferrals={() => setPhase("referrals")}
             onOpenBookings={() => setPhase("orders")}
             onOpenCourier={() => setPhase("courier")}

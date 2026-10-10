@@ -26,7 +26,7 @@ export function ContestHomeBanner({ onOpen }: { onOpen?: () => void }) {
     if (s?.my) setPopup(false);
   }, [s?.my]);
 
-  if (!s) return null;
+  if (!s || s.my) return null;
   const top = s.prizes.find((p) => p.type !== "leaderboard") ?? s.prizes[0];
 
   return (
@@ -42,7 +42,7 @@ export function ContestHomeBanner({ onOpen }: { onOpen?: () => void }) {
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-bold text-foreground">{s.title}</p>
           <p className="truncate text-xs text-muted-foreground">
-            {s.my ? `You are enrolled - Entry ${s.my.entryNo}` : top ? `Win ${top.name}` : "Enroll free"}
+            {top ? `Win ${top.name}` : "Enroll free"}
           </p>
         </div>
         {s.my ? (
