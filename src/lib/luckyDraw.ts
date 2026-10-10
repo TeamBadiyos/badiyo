@@ -206,9 +206,8 @@ export async function shareReferralInvite(imageUrl?: string | null): Promise<voi
       } else if (!fsAvailable) {
         console.warn("[invite] Filesystem plugin missing in installed app — update APK");
       }
-      // Older app build: put the banner link on top so WhatsApp shows a photo preview.
-      const fallbackText = imageUrl ? `${imageUrl}\n\n${text}` : text;
-      await Share.share({ text: fallbackText, dialogTitle: "Share badiyos" });
+      // Older app build: no image attach support — send clean message only.
+      await Share.share({ text, dialogTitle: "Share badiyos" });
       return;
     }
   } catch {
