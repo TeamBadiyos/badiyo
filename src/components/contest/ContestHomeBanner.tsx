@@ -50,7 +50,7 @@ export function ContestHomeBanner({ onOpen }: { onOpen?: () => void }) {
             role="button"
             onClick={(e) => {
               e.stopPropagation();
-              void shareReferralInvite();
+              void shareReferralInvite(s.banner ?? s.prizes[0]?.photo);
             }}
             className="shrink-0 rounded-full bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground"
           >
