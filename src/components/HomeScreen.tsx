@@ -8,6 +8,7 @@ import { BadiyoLogo } from "./BadiyoLogo";
 import { BottomNav } from "./BottomNav";
 import { LocationPickerSheet, type SavedAddress } from "./LocationPickerSheet";
 import { ServicesBar } from "./home/ServicesBar";
+import { ContestHomeBanner } from "./contest/ContestHomeBanner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAvatarUrl } from "@/lib/useAvatarUrl";
 import {
@@ -187,6 +188,7 @@ export function HomeScreen({
   onQuickBook,
   onOpenProfile,
   onOpenRewards,
+  onOpenContest,
   onOpenOrders,
   onOpenStoreOrder,
   onSearch,
@@ -197,6 +199,7 @@ export function HomeScreen({
   onQuickBook?: (service: BookServicePayload) => void;
   onOpenProfile?: () => void;
   onOpenRewards?: () => void;
+  onOpenContest?: () => void;
   onOpenOrders?: () => void;
   onOpenStoreOrder?: (orderId: string) => void;
   onSearch?: (query: string) => void;
@@ -528,6 +531,7 @@ export function HomeScreen({
           activeSegmentId={activeSegmentId}
           onSelect={setActiveSegmentId}
         />
+        <ContestHomeBanner onOpen={onOpenContest} />
 
         {activeSegment ? (
         <SegmentView

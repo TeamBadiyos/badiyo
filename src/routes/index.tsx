@@ -305,7 +305,7 @@ function Index() {
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
   const [redeemCoins, setRedeemCoins] = useState(false);
 
-  const [rewardsTab, setRewardsTab] = useState<"rewards" | "offers">("rewards");
+  const [rewardsTab, setRewardsTab] = useState<"rewards" | "contest">("rewards");
   const [notServiceable, setNotServiceable] = useState<NotServiceableLocation | null>(null);
   const [activeBookingId, setActiveBookingId] = useState<string | null>(null);
   const [activeBookingStatus, setActiveBookingStatus] = useState<string | null>(null);
@@ -499,6 +499,7 @@ function Index() {
       "my-bookings": "my-bookings",
       rewards: "rewards",
       offers: "rewards",
+      contest: "rewards",
       referrals: "referrals",
       wallet: "wallet",
       profile: "profile",
@@ -515,7 +516,7 @@ function Index() {
           parcelsFromRef.current = "home";
           _setParcelsFrom("home");
         }
-        if (route === "offers") setRewardsTab("offers");
+        if (route === "contest") setRewardsTab("contest");
         else if (route === "rewards") setRewardsTab("rewards");
         setPhase(phase);
         return;
@@ -926,7 +927,8 @@ function Index() {
               setPhase("address");
             }}
             onOpenProfile={() => setPhase("profile")}
-            onOpenRewards={() => setPhase("rewards")}
+            onOpenRewards={() => { setRewardsTab("rewards"); setPhase("rewards"); }}
+            onOpenContest={() => { setRewardsTab("contest"); setPhase("rewards"); }}
             onOpenOrders={() => setPhase("orders")}
             onOpenStoreOrder={(id) => {
               setStoreOrderId(id);
