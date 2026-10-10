@@ -4591,6 +4591,7 @@ export type Database = {
       merchant_order_items: {
         Row: {
           id: string
+          is_mrp_snapshot: boolean
           order_id: string
           price_snapshot: number
           product_id: string
@@ -4599,6 +4600,7 @@ export type Database = {
         }
         Insert: {
           id?: string
+          is_mrp_snapshot?: boolean
           order_id: string
           price_snapshot: number
           product_id: string
@@ -4607,6 +4609,7 @@ export type Database = {
         }
         Update: {
           id?: string
+          is_mrp_snapshot?: boolean
           order_id?: string
           price_snapshot?: number
           product_id?: string
@@ -4651,6 +4654,7 @@ export type Database = {
           cancel_reason: string | null
           cancelled_at: string | null
           commission_amount: number | null
+          commission_breakdown: Json | null
           commission_gst_amount: number
           commission_gst_pct: number
           commission_pct: number
@@ -4700,6 +4704,7 @@ export type Database = {
           cancel_reason?: string | null
           cancelled_at?: string | null
           commission_amount?: number | null
+          commission_breakdown?: Json | null
           commission_gst_amount?: number
           commission_gst_pct?: number
           commission_pct?: number
@@ -4749,6 +4754,7 @@ export type Database = {
           cancel_reason?: string | null
           cancelled_at?: string | null
           commission_amount?: number | null
+          commission_breakdown?: Json | null
           commission_gst_amount?: number
           commission_gst_pct?: number
           commission_pct?: number
@@ -5113,6 +5119,7 @@ export type Database = {
           bank_account_number: string | null
           bank_ifsc: string | null
           city: string | null
+          commission_mode: string
           commission_type: string
           commission_value: number
           country: string | null
@@ -5133,8 +5140,10 @@ export type Database = {
           is_gst_registered: boolean | null
           latitude: number | null
           longitude: number | null
+          mrp_commission_pct: number
           onboarded_by: string | null
           onboarding_step: number
+          other_commission_pct: number
           owner_name: string | null
           pan: string | null
           phone: string
@@ -5168,6 +5177,7 @@ export type Database = {
           bank_account_number?: string | null
           bank_ifsc?: string | null
           city?: string | null
+          commission_mode?: string
           commission_type?: string
           commission_value?: number
           country?: string | null
@@ -5188,8 +5198,10 @@ export type Database = {
           is_gst_registered?: boolean | null
           latitude?: number | null
           longitude?: number | null
+          mrp_commission_pct?: number
           onboarded_by?: string | null
           onboarding_step?: number
+          other_commission_pct?: number
           owner_name?: string | null
           pan?: string | null
           phone: string
@@ -5223,6 +5235,7 @@ export type Database = {
           bank_account_number?: string | null
           bank_ifsc?: string | null
           city?: string | null
+          commission_mode?: string
           commission_type?: string
           commission_value?: number
           country?: string | null
@@ -5243,8 +5256,10 @@ export type Database = {
           is_gst_registered?: boolean | null
           latitude?: number | null
           longitude?: number | null
+          mrp_commission_pct?: number
           onboarded_by?: string | null
           onboarding_step?: number
+          other_commission_pct?: number
           owner_name?: string | null
           pan?: string | null
           phone?: string
@@ -6298,6 +6313,7 @@ export type Database = {
           image_url: string | null
           image_url_2: string | null
           is_active: boolean
+          is_mrp: boolean
           low_stock_threshold: number
           merchant_id: string
           name: string
@@ -6321,6 +6337,7 @@ export type Database = {
           image_url?: string | null
           image_url_2?: string | null
           is_active?: boolean
+          is_mrp?: boolean
           low_stock_threshold?: number
           merchant_id: string
           name: string
@@ -6344,6 +6361,7 @@ export type Database = {
           image_url?: string | null
           image_url_2?: string | null
           is_active?: boolean
+          is_mrp?: boolean
           low_stock_threshold?: number
           merchant_id?: string
           name?: string
@@ -10676,6 +10694,15 @@ export type Database = {
         Args: { _merchant_id: string; _pct: number }
         Returns: Json
       }
+      staff_set_merchant_commission_mode: {
+        Args: {
+          _merchant_id: string
+          _mode: string
+          _mrp_pct: number
+          _other_pct: number
+        }
+        Returns: Json
+      }
       staff_set_merchant_fee_tier: {
         Args: { _fee_tier_id: string; _merchant_id: string }
         Returns: undefined
@@ -11109,10 +11136,19 @@ export type Database = {
         Args: { _order_id: string; _reason?: string }
         Returns: Json
       }
-      store_commission_snapshot: {
-        Args: { _items_total: number; _merchant_id: string }
-        Returns: Json
-      }
+      store_commission_snapshot:
+        | {
+            Args: { _items_total: number; _merchant_id: string }
+            Returns: Json
+          }
+        | {
+            Args: {
+              _items_total: number
+              _merchant_id: string
+              _mrp_total: number
+            }
+            Returns: Json
+          }
       store_confirm_payment: {
         Args: { _order_id: string; _payment_id: string; _rzp_order_id: string }
         Returns: Json
