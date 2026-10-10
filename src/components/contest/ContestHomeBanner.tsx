@@ -26,7 +26,7 @@ export function ContestHomeBanner({ onOpen }: { onOpen?: () => void }) {
     if (s?.my) setPopup(false);
   }, [s?.my]);
 
-  if (!s) return null;
+  if (!s || s.my) return null;
   const top = s.prizes.find((p) => p.type !== "leaderboard") ?? s.prizes[0];
 
   return (

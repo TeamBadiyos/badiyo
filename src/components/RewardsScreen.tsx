@@ -20,7 +20,7 @@ function formatDate(iso: string): string {
 }
 
 export function RewardsScreen({
-  initialTab = "rewards",
+  initialTab = "contest",
   onOpenHome,
   onOpenRewards,
   onOpenReferrals,
