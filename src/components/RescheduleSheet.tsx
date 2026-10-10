@@ -9,7 +9,7 @@ import {
   formatClockLabel,
   formatDurationLabel,
   slotFitsWindow,
-  slotStartHour,
+  slotStartMinutes,
   useServiceState,
 } from "@/lib/serviceHours";
 
@@ -35,7 +35,7 @@ export function RescheduleSheet({
   const allSlots = useMemo(getAllHourSlots, []);
   const [selectedDay, setSelectedDay] = useState<string | null>(initialDate);
   const [selectedHour, setSelectedHour] = useState<number | null>(() =>
-    initialSlot ? slotStartHour(initialSlot) : null,
+    initialSlot ? slotStartMinutes(initialSlot) : null,
   );
   const { data: cleanState } = useServiceState("clean", open);
   const duration = durationMinutes && durationMinutes > 0 ? durationMinutes : 60;
@@ -45,7 +45,7 @@ export function RescheduleSheet({
 
   const visibleSlots = useMemo(() => {
     if (!selectedDay) return allSlots;
-    return allSlots.filter((s) => isHourBookable(selectedDay, s.hour));
+    return allSlots.filter((s) => isHourBookable(selectedDay, s.mins));
   }, [selectedDay, allSlots]);
 
   if (!open) return null;
@@ -109,11 +109,11 @@ export function RescheduleSheet({
         ) : (
           <div className="mt-2 grid grid-cols-3 gap-2">
             {visibleSlots.map((slot) => {
-              const active = selectedHour === slot.hour;
-              const blocked = tooLong(slot.hour);
+              const active = selectedHour === slot.mins;
+              const blocked = tooLong(slot.mins);
               return (
                 <button
-                  key={slot.hour}
+                  key={slot.mins}
                   onClick={() => {
                     if (blocked) {
                       setSelectedHour(null);
@@ -129,7 +129,7 @@ export function RescheduleSheet({
                       return;
                     }
                     setTooLongMsg(null);
-                    setSelectedHour(slot.hour);
+                    setSelectedHour(slot.mins);
                   }}
                   className={`rounded-[14px] border px-3 py-2.5 text-sm font-semibold transition ${
                     blocked
@@ -154,7 +154,7 @@ export function RescheduleSheet({
           disabled={!canContinue || saving}
           onClick={() => {
             if (!selectedDay || selectedHour === null) return;
-            const s = allSlots.find((x) => x.hour === selectedHour)!;
+            const s = allSlots.find((x) => x.mins === selectedHour)!;
             onConfirm(selectedDay, s.range);
           }}
           className={`mt-6 w-full rounded-[14px] px-4 py-3.5 text-sm font-bold transition ${

@@ -275,13 +275,17 @@ export function PaymentScreen({
           }
         } else {
           const day = new Date(slot.day).toISOString().slice(0, 10);
-          const hour = Number(slot.slotId);
+          const mins = Number(slot.slotId); // minutes since midnight
           const { data: full, error: fullErr } = await supabase.rpc(
             "list_fully_booked_slots" as never,
             { _service_key: "clean", _from: day, _to: day } as never,
           );
-          const rows = (full as { start_hour: number }[] | null) ?? [];
-          if (!fullErr && Number.isFinite(hour) && rows.some((r) => Number(r.start_hour) === hour)) {
+          const rows = (full as { start_hour: number; start_minute?: number }[] | null) ?? [];
+          if (
+            !fullErr &&
+            Number.isFinite(mins) &&
+            rows.some((r) => Number(r.start_hour) * 60 + Number(r.start_minute ?? 0) === mins)
+          ) {
             toast(
               lang === "mr"
                 ? "हा स्लॉट पूर्ण भरला आहे. कृपया दुसरा स्लॉट निवडा."

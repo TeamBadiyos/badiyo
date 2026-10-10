@@ -73,7 +73,7 @@ export type SelectedSlot =
   | {
       mode: "later";
       day: string;
-      slotId: number; // hour in 24h
+      slotId: number; // start time, minutes since midnight (e.g. 630 = 10:30 AM)
       slotLabel: string;
       slotRange: string;
     };
@@ -253,7 +253,7 @@ export function SlotSelectionScreen({
       const entries = await Promise.all(
         allSlots.map(
           async (s) =>
-            [s.hour, await fetchSlotAllowed("clean", selectedDay!, s.range, durationMinutes)] as const,
+            [s.mins, await fetchSlotAllowed("clean", selectedDay!, s.range, durationMinutes)] as const,
         ),
       );
       return new Map(entries);
@@ -285,9 +285,9 @@ export function SlotSelectionScreen({
     const found = days.find((d) =>
       allSlots.some(
         (s) =>
-          isHourBookable(d.key, s.hour) &&
-          !durationBlocks(s.hour) &&
-          !(fullSlots?.has(`${d.key}|${s.hour}`) ?? false),
+          isHourBookable(d.key, s.mins) &&
+          !durationBlocks(s.mins) &&
+          !(fullSlots?.has(`${d.key}|${s.mins}`) ?? false),
       ),
     );
     return (found ?? days[0]).key;
@@ -303,12 +303,12 @@ export function SlotSelectionScreen({
 
   const visibleSlots = useMemo(() => {
     if (!selectedDay) return allSlots;
-    return allSlots.filter((s) => isHourBookable(selectedDay, s.hour));
+    return allSlots.filter((s) => isHourBookable(selectedDay, s.mins));
   }, [selectedDay, allSlots]);
 
 
   const allDayBlocked =
-    selectedDay !== null && visibleSlots.every((s) => slotDisabled(s.hour));
+    selectedDay !== null && visibleSlots.every((s) => slotDisabled(s.mins));
 
   const canContinue =
     !durationMissing &&
@@ -492,13 +492,13 @@ export function SlotSelectionScreen({
                 <>
                   <div className="mt-3 grid grid-cols-3 gap-2">
                     {visibleSlots.map((slot) => {
-                      const active = selectedHour === slot.hour;
-                      const full = isFull(slot.hour);
-                      const tooLong = !full && durationBlocks(slot.hour);
-                      const disabled = slotDisabled(slot.hour);
+                      const active = selectedHour === slot.mins;
+                      const full = isFull(slot.mins);
+                      const tooLong = !full && durationBlocks(slot.mins);
+                      const disabled = slotDisabled(slot.mins);
                       return (
                         <button
-                          key={slot.hour}
+                          key={slot.mins}
                           disabled={disabled && !tooLong}
                           onClick={() => {
                             void hapticSelection();
@@ -512,7 +512,7 @@ export function SlotSelectionScreen({
                               );
                               return;
                             }
-                            setSelectedHour(slot.hour);
+                            setSelectedHour(slot.mins);
                           }}
                           className={`relative rounded-[14px] border px-3 py-3 text-sm font-semibold transition ${
                             disabled
@@ -660,8 +660,8 @@ export function SlotSelectionScreen({
                 }
                 onContinue({ mode: "now" });
               } else if (selectedDay && selectedHour !== null) {
-                const s = allSlots.find((x) => x.hour === selectedHour)!;
-                if (durationBlocks(s.hour)) {
+                const s = allSlots.find((x) => x.mins === selectedHour)!;
+                if (durationBlocks(s.mins)) {
                   setTooLongMsg(
                     t("slot.tooLongSlot", {
                       duration: durationLabel,

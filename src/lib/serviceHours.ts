@@ -63,7 +63,7 @@ export async function fetchInstantBookingEnabled(): Promise<boolean> {
   return data !== false;
 }
 
-/** Set of "YYYY-MM-DD|hour" keys marked Fully Booked. Empty on error. */
+/** Set of "YYYY-MM-DD|minutesOfDay" keys marked Fully Booked. Empty on error. */
 export async function fetchFullyBookedSlots(
   serviceKey: string,
   from: string,
@@ -75,8 +75,9 @@ export async function fetchFullyBookedSlots(
   );
   if (error || !Array.isArray(data)) return new Set();
   return new Set(
-    (data as { slot_date: string; start_hour: number }[]).map(
-      (r) => `${String(r.slot_date).slice(0, 10)}|${Number(r.start_hour)}`,
+    (data as { slot_date: string; start_hour: number; start_minute?: number }[]).map(
+      (r) =>
+        `${String(r.slot_date).slice(0, 10)}|${Number(r.start_hour) * 60 + Number(r.start_minute ?? 0)}`,
     ),
   );
 }
@@ -110,8 +111,8 @@ export function formatNextOpen(iso: string | null | undefined): string | null {
   return `${day} ${time}`;
 }
 
-/** Parse "9:00 AM – 10:00 AM" / "10:00 AM - 12:00 PM" style range → start hour (24h). */
-export function slotStartHour(range: string): number | null {
+/** Parse "10:30 AM – 11:30 AM" style range → start time in minutes since midnight. */
+export function slotStartMinutes(range: string): number | null {
   const m = range.match(/(\d{1,2})(?::(\d{2}))?\s*(AM|PM)/i);
   if (!m) return null;
   let h = parseInt(m[1], 10);
@@ -119,20 +120,25 @@ export function slotStartHour(range: string): number | null {
   if (meridiem === "AM") {
     if (h === 12) h = 0;
   } else if (h !== 12) h += 12;
-  return h;
+  return h * 60 + (m[2] ? parseInt(m[2], 10) : 0);
 }
 
-/** Local check against a fetched state: does a slot starting at `hour` fit the open window? */
+/** Start hour (24h) of a slot range. */
+export function slotStartHour(range: string): number | null {
+  const m = slotStartMinutes(range);
+  return m == null ? null : Math.floor(m / 60);
+}
+
+/** Local check: does a slot starting at `startMins` (minutes since midnight) fit the open window? */
 export function slotFitsWindow(
   state: ServiceState | null | undefined,
-  hour: number,
+  startMins: number,
   durationMinutes: number,
 ): boolean {
-  if (!state || state.open_time == null || state.close_time == null) return true; // fail-open
-  const openH = parseInt(state.open_time.slice(0, 2), 10);
-  const closeH = parseInt(state.close_time.slice(0, 2), 10);
-  const endHour = hour + durationMinutes / 60;
-  return hour >= openH && endHour <= closeH + 1e-9;
+  const open = timeToMinutes(state?.open_time);
+  const close = timeToMinutes(state?.close_time);
+  if (open == null || close == null) return true; // fail-open
+  return startMins >= open && startMins + durationMinutes <= close;
 }
 
 /** "19:00:00" -> minutes since midnight. Null when unparsable. */
