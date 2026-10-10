@@ -144,7 +144,7 @@ export async function enrolLuckyDraw(): Promise<string> {
 }
 
 /** Reuses the existing referral invite message. */
-export async function shareReferralInvite(): Promise<void> {
+export async function shareReferralInvite(imageUrl?: string | null): Promise<void> {
   const { data: auth } = await supabase.auth.getUser();
   const uid = auth.user?.id;
   let code = "";
@@ -166,10 +166,41 @@ export async function shareReferralInvite(): Promise<void> {
     "",
     "*Badiyos — हर घर का अपना साथी।* 💚",
   ].join("\n");
+  // Fetch the contest banner (image + caption share).
+  let blob: Blob | null = null;
+  if (imageUrl) {
+    try {
+      const res = await fetch(imageUrl);
+      if (res.ok) blob = await res.blob();
+    } catch {
+      blob = null;
+    }
+  }
   try {
     const { Capacitor } = await import("@capacitor/core");
     if (Capacitor.isNativePlatform()) {
       const { Share } = await import("@capacitor/share");
+      if (blob) {
+        try {
+          const { Filesystem, Directory } = await import("@capacitor/filesystem");
+          const b64 = await new Promise<string>((resolve, reject) => {
+            const r = new FileReader();
+            r.onload = () => resolve(String(r.result).split(",")[1] ?? "");
+            r.onerror = reject;
+            r.readAsDataURL(blob as Blob);
+          });
+          const ext = blob.type.includes("png") ? "png" : "jpg";
+          const saved = await Filesystem.writeFile({
+            path: `badiyos-contest.${ext}`,
+            data: b64,
+            directory: Directory.Cache,
+          });
+          await Share.share({ text, files: [saved.uri], dialogTitle: "Share badiyos" });
+          return;
+        } catch {
+          /* fall back to text-only */
+        }
+      }
       await Share.share({ text, dialogTitle: "Share badiyos" });
       return;
     }
@@ -178,6 +209,15 @@ export async function shareReferralInvite(): Promise<void> {
   }
   if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
     try {
+      if (blob) {
+        const file = new File([blob], blob.type.includes("png") ? "badiyos-contest.png" : "badiyos-contest.jpg", {
+          type: blob.type || "image/jpeg",
+        });
+        if (navigator.canShare?.({ files: [file] })) {
+          await navigator.share({ text, files: [file] });
+          return;
+        }
+      }
       await navigator.share({ text });
       return;
     } catch {

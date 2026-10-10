@@ -56,7 +56,7 @@ function TopCard({ s }: { s: LdStatus }) {
             <p className="mt-0.5 text-xs text-muted-foreground">Total entries: {s.my.entries}</p>
             <button
               type="button"
-              onClick={() => void shareReferralInvite()}
+              onClick={() => void shareReferralInvite(s.banner ?? s.prizes[0]?.photo)}
               className="mt-3 w-full rounded-[12px] bg-primary py-2.5 text-sm font-bold text-primary-foreground active:scale-[0.98]"
             >
               Invite Friends
