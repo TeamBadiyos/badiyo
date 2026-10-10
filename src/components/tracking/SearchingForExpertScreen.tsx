@@ -153,8 +153,9 @@ export function SearchingForExpertScreen({
         </div>
 
         {slot?.mode === "later" && status === "confirmed" && (() => {
-          const h = slot.slotId - 1;
-          const disp = `${h % 12 === 0 ? 12 : h % 12}:00 ${h >= 12 ? "PM" : "AM"}`;
+          const t0 = slot.slotId - 60;
+          const h = Math.floor(t0 / 60);
+          const disp = `${h % 12 === 0 ? 12 : h % 12}:${String(t0 % 60).padStart(2, "0")} ${h >= 12 ? "PM" : "AM"}`;
           return (
             <div className="mt-5 rounded-[18px] border border-primary/30 bg-primary/10 p-4 text-sm font-semibold text-foreground">
               {t("journey.heldConfirmed", { time: `${slot.day}, ${disp}` })}

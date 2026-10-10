@@ -9,7 +9,7 @@ import {
   formatClockLabel,
   formatDurationLabel,
   slotFitsWindow,
-  slotStartHour,
+  slotStartMinutes,
   useServiceState,
 } from "@/lib/serviceHours";
 
@@ -35,7 +35,7 @@ export function RescheduleSheet({
   const allSlots = useMemo(getAllHourSlots, []);
   const [selectedDay, setSelectedDay] = useState<string | null>(initialDate);
   const [selectedHour, setSelectedHour] = useState<number | null>(() =>
-    initialSlot ? slotStartHour(initialSlot) : null,
+    initialSlot ? slotStartMinutes(initialSlot) : null,
   );
   const { data: cleanState } = useServiceState("clean", open);
   const duration = durationMinutes && durationMinutes > 0 ? durationMinutes : 60;

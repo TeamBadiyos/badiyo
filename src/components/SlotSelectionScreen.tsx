@@ -73,7 +73,7 @@ export type SelectedSlot =
   | {
       mode: "later";
       day: string;
-      slotId: number; // hour in 24h
+      slotId: number; // start time, minutes since midnight (e.g. 630 = 10:30 AM)
       slotLabel: string;
       slotRange: string;
     };
