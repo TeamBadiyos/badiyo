@@ -170,9 +170,11 @@ export async function shareReferralInvite(imageUrl?: string | null): Promise<voi
   let blob: Blob | null = null;
   if (imageUrl) {
     try {
-      const res = await fetch(imageUrl);
+      const res = await fetch(imageUrl, { cache: "force-cache" });
       if (res.ok) blob = await res.blob();
-    } catch {
+      else console.warn("[invite] image fetch failed", res.status);
+    } catch (e) {
+      console.warn("[invite] image fetch error", e);
       blob = null;
     }
   }
@@ -180,7 +182,8 @@ export async function shareReferralInvite(imageUrl?: string | null): Promise<voi
     const { Capacitor } = await import("@capacitor/core");
     if (Capacitor.isNativePlatform()) {
       const { Share } = await import("@capacitor/share");
-      if (blob) {
+      const fsAvailable = Capacitor.isPluginAvailable("Filesystem");
+      if (blob && fsAvailable) {
         try {
           const { Filesystem, Directory } = await import("@capacitor/filesystem");
           const b64 = await new Promise<string>((resolve, reject) => {
@@ -189,19 +192,23 @@ export async function shareReferralInvite(imageUrl?: string | null): Promise<voi
             r.onerror = reject;
             r.readAsDataURL(blob as Blob);
           });
-          const ext = blob.type.includes("png") ? "png" : "jpg";
+          const ext = blob.type.includes("png") ? "png" : blob.type.includes("webp") ? "webp" : "jpg";
           const saved = await Filesystem.writeFile({
-            path: `badiyos-contest.${ext}`,
+            path: `badiyos-contest-${Date.now()}.${ext}`,
             data: b64,
             directory: Directory.Cache,
           });
           await Share.share({ text, files: [saved.uri], dialogTitle: "Share badiyos" });
           return;
-        } catch {
-          /* fall back to text-only */
+        } catch (e) {
+          console.warn("[invite] native image share failed", e);
         }
+      } else if (!fsAvailable) {
+        console.warn("[invite] Filesystem plugin missing in installed app — update APK");
       }
-      await Share.share({ text, dialogTitle: "Share badiyos" });
+      // Older app build: put the banner link on top so WhatsApp shows a photo preview.
+      const fallbackText = imageUrl ? `${imageUrl}\n\n${text}` : text;
+      await Share.share({ text: fallbackText, dialogTitle: "Share badiyos" });
       return;
     }
   } catch {
