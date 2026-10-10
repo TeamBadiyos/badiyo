@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { usePullToRefresh, PullToRefreshIndicator } from "@/lib/usePullToRefresh";
 import { Coins, Gift, Sparkles } from "lucide-react";
 import { fetchCustomerRewards, formatRewardValue } from "@/lib/rewards";
-import { OffersList } from "./OffersList";
+import { ContestTab } from "./contest/ContestTab";
 import { BottomNav } from "./BottomNav";
 import { fetchCourierEnabled } from "./courier/courierData";
 
@@ -27,7 +27,7 @@ export function RewardsScreen({
   onOpenBookings,
   onOpenCourier,
 }: {
-  initialTab?: "rewards" | "offers";
+  initialTab?: "rewards" | "contest";
   onOpenHome: () => void;
   onOpenRewards: () => void;
   onOpenReferrals: () => void;
@@ -39,7 +39,7 @@ export function RewardsScreen({
     queryFn: () => fetchCourierEnabled(),
     staleTime: 5 * 60_000,
   });
-  const [tab, setTab] = useState<"rewards" | "offers">(initialTab);
+  const [tab, setTab] = useState<"rewards" | "contest">(initialTab);
   useEffect(() => {
     setTab(initialTab);
   }, [initialTab]);
@@ -55,6 +55,7 @@ export function RewardsScreen({
       queryClient.refetchQueries({ queryKey: ["customer_rewards"] }),
       queryClient.refetchQueries({ queryKey: ["my_coupons"] }),
       queryClient.refetchQueries({ queryKey: ["campaign_offers"] }),
+      queryClient.refetchQueries({ queryKey: ["lucky_draw_status"] }),
     ]);
   });
 
@@ -71,7 +72,7 @@ export function RewardsScreen({
 
         {/* Tabs */}
         <div className="mt-4 flex rounded-[14px] border border-border bg-card p-1">
-          {(["rewards", "offers"] as const).map((k) => (
+          {(["rewards", "contest"] as const).map((k) => (
             <button
               key={k}
               type="button"
@@ -80,12 +81,12 @@ export function RewardsScreen({
                 tab === k ? "bg-primary text-primary-foreground" : "text-muted-foreground"
               }`}
             >
-              {k === "rewards" ? "Rewards" : "Offers"}
+              {k === "rewards" ? "Rewards" : "Contest"}
             </button>
           ))}
         </div>
 
-        {tab === "offers" && <OffersList />}
+        {tab === "contest" && <ContestTab />}
 
         {tab === "rewards" && (
           <>
