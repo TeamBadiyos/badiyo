@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { buildReferralShareMessage } from "@/lib/referrals";
+import { buildPlayStoreInviteUrl } from "@/lib/referrals";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type Any = Record<string, any>;
@@ -152,7 +152,20 @@ export async function shareReferralInvite(): Promise<void> {
     const { data } = await supabase.from("users").select("referral_code").eq("id", uid).maybeSingle();
     code = data?.referral_code ?? "";
   }
-  const text = buildReferralShareMessage(code);
+  const text = [
+    "*इस दिवाली, आपके घर आ सकता है ₹50,000 का Robot Floor Cleaner Free!* 🤩",
+    "",
+    "*Badiyos की ओर से दिवाली का खास तोहफ़ा! 100 से ज़्यादा शानदार इनाम!* 🎁",
+    "",
+    "भाग लेना बेहद आसान है:",
+    "✅ Badiyos ऐप डाउनलोड करें",
+    "✅ कॉन्टेस्ट में अपना नाम दर्ज करें",
+    "",
+    "*अभी Badiyos ऐप डाउनलोड करें और कॉन्टेस्ट में शामिल हों!* 📲",
+    buildPlayStoreInviteUrl(code),
+    "",
+    "*Badiyos — हर घर का अपना साथी।* 💚",
+  ].join("\n");
   try {
     const { Capacitor } = await import("@capacitor/core");
     if (Capacitor.isNativePlatform()) {
