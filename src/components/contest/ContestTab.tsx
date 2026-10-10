@@ -186,7 +186,7 @@ export function ContestTab() {
 
       {draw.length > 0 && (
         <>
-          <h3 className="mt-7 text-base font-bold text-foreground">Prizes</h3>
+          <h3 className="mt-7 text-base font-bold text-foreground">Lucky Draw Prizes</h3>
           <div className="mt-3 grid grid-cols-2 gap-3">
             {draw.map((p) => (
               <div key={p.id} className="overflow-hidden rounded-[14px] border border-border bg-card">
@@ -227,6 +227,12 @@ export function ContestTab() {
                     {p.rankTo && p.rankTo !== p.rankFrom ? ` - ${p.rankTo}` : ""}
                   </p>
                   <p className="truncate text-sm font-semibold text-foreground">{p.name}</p>
+                  {(p.value !== null || (p.quantity ?? 0) > 1) && (
+                    <p className="text-xs text-muted-foreground">
+                      {p.value !== null ? `Worth Rs ${p.value}` : ""}
+                      {(p.quantity ?? 0) > 1 ? ` · ${p.quantity} winners` : ""}
+                    </p>
+                  )}
                 </div>
               </div>
             ))}
