@@ -10,24 +10,54 @@ export function ContestHomeBanner({ onOpen }: { onOpen?: () => void }) {
   const { enrol, busy } = useEnrol();
   const [popup, setPopup] = useState(false);
 
+  // Alternate-day popup: once every 2 calendar days, for enrolled and non-enrolled.
   useEffect(() => {
-    if (!s || s.my) return;
-    const today = new Date().toDateString();
+    if (!s) return;
+    const day = Math.floor((Date.now() + 5.5 * 3600_000) / 86400_000); // IST day number
     try {
-      if (localStorage.getItem(POPUP_KEY) === today) return;
-      localStorage.setItem(POPUP_KEY, today);
+      const last = Number(localStorage.getItem(POPUP_KEY + "_day") ?? "-99");
+      if (day - last < 2) return;
+      localStorage.setItem(POPUP_KEY + "_day", String(day));
     } catch {
       /* ignore */
     }
     setPopup(true);
   }, [s]);
 
-  useEffect(() => {
-    if (s?.my) setPopup(false);
-  }, [s?.my]);
-
-  if (!s || s.my) return null;
+  if (!s) return null;
   const top = s.prizes.find((p) => p.type !== "leaderboard") ?? s.prizes[0];
+  const my = s.my as { entryNo?: string } | null | undefined;
+
+  if (my) {
+    if (!popup) return null;
+    return (
+      <div className="fixed inset-0 z-[80] flex items-center justify-center bg-foreground/50 p-6" onClick={() => setPopup(false)}>
+        <div className="w-full max-w-sm overflow-hidden rounded-[20px] bg-card shadow-xl" onClick={(e) => e.stopPropagation()}>
+          {(s.banner || top?.photo) && (
+            <img src={s.banner ?? top?.photo ?? ""} alt={s.title} className="aspect-[4/3] w-full object-cover" />
+          )}
+          <div className="p-4 text-center">
+            <p className="text-base font-extrabold text-foreground">Aap enrolled hain! 🎉</p>
+            {my.entryNo && <p className="mt-1 text-sm font-semibold text-primary">Entry {my.entryNo}</p>}
+            <p className="mt-2 text-sm text-muted-foreground">Doston ko invite karein aur jeetne ke mauke badhayein!</p>
+            <button
+              type="button"
+              onClick={() => {
+                setPopup(false);
+                void shareReferralInvite(s.banner ?? top?.photo);
+              }}
+              className="mt-4 w-full rounded-[12px] bg-primary py-2.5 text-sm font-bold text-primary-foreground"
+            >
+              Invite Friends
+            </button>
+            <button type="button" onClick={() => setPopup(false)} className="mt-2 w-full py-2 text-sm font-semibold text-muted-foreground">
+              Later
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
