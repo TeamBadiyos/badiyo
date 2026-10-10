@@ -4252,6 +4252,211 @@ export type Database = {
           },
         ]
       }
+      lucky_draw_campaigns: {
+        Row: {
+          banner_url: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          draw_executed_at: string | null
+          draw_seed: string | null
+          end_at: string
+          enrolment_target: number
+          entry_counter: number
+          id: string
+          is_active: boolean
+          leaderboard_rewards_enabled: boolean
+          leaderboard_top_ranks: number
+          referral_bonus_enabled: boolean
+          show_enrolled_count: boolean
+          show_leaderboard: boolean
+          start_at: string
+          title: string
+          updated_at: string
+          winners_published: boolean
+        }
+        Insert: {
+          banner_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          draw_executed_at?: string | null
+          draw_seed?: string | null
+          end_at: string
+          enrolment_target?: number
+          entry_counter?: number
+          id?: string
+          is_active?: boolean
+          leaderboard_rewards_enabled?: boolean
+          leaderboard_top_ranks?: number
+          referral_bonus_enabled?: boolean
+          show_enrolled_count?: boolean
+          show_leaderboard?: boolean
+          start_at: string
+          title: string
+          updated_at?: string
+          winners_published?: boolean
+        }
+        Update: {
+          banner_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          draw_executed_at?: string | null
+          draw_seed?: string | null
+          end_at?: string
+          enrolment_target?: number
+          entry_counter?: number
+          id?: string
+          is_active?: boolean
+          leaderboard_rewards_enabled?: boolean
+          leaderboard_top_ranks?: number
+          referral_bonus_enabled?: boolean
+          show_enrolled_count?: boolean
+          show_leaderboard?: boolean
+          start_at?: string
+          title?: string
+          updated_at?: string
+          winners_published?: boolean
+        }
+        Relationships: []
+      }
+      lucky_draw_enrolments: {
+        Row: {
+          campaign_id: string
+          enrolled_at: string
+          entry_no: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          campaign_id: string
+          enrolled_at?: string
+          entry_no: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          campaign_id?: string
+          enrolled_at?: string
+          entry_no?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lucky_draw_enrolments_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "lucky_draw_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lucky_draw_prizes: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          id: string
+          name: string
+          photo_url: string | null
+          prize_type: string
+          quantity: number
+          rank_from: number | null
+          rank_to: number | null
+          sort_no: number
+          updated_at: string
+          value_inr: number
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          id?: string
+          name: string
+          photo_url?: string | null
+          prize_type: string
+          quantity?: number
+          rank_from?: number | null
+          rank_to?: number | null
+          sort_no?: number
+          updated_at?: string
+          value_inr?: number
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          photo_url?: string | null
+          prize_type?: string
+          quantity?: number
+          rank_from?: number | null
+          rank_to?: number | null
+          sort_no?: number
+          updated_at?: string
+          value_inr?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lucky_draw_prizes_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "lucky_draw_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lucky_draw_winners: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          entries: number | null
+          id: string
+          prize_id: string | null
+          prize_type: string
+          rank: number | null
+          referrals: number | null
+          user_id: string
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          entries?: number | null
+          id?: string
+          prize_id?: string | null
+          prize_type: string
+          rank?: number | null
+          referrals?: number | null
+          user_id: string
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          entries?: number | null
+          id?: string
+          prize_id?: string | null
+          prize_type?: string
+          rank?: number | null
+          referrals?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lucky_draw_winners_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "lucky_draw_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lucky_draw_winners_prize_id_fkey"
+            columns: ["prize_id"]
+            isOneToOne: false
+            referencedRelation: "lucky_draw_prizes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       marketing_campaigns: {
         Row: {
           audience: string
@@ -9165,6 +9370,12 @@ export type Database = {
         Returns: boolean
       }
       customer_list_devices: { Args: never; Returns: Json }
+      customer_lucky_draw_enrol: { Args: never; Returns: Json }
+      customer_lucky_draw_leaderboard: {
+        Args: { _limit?: number }
+        Returns: Json
+      }
+      customer_lucky_draw_status: { Args: never; Returns: Json }
       customer_notify_me: { Args: { _service_key: string }; Returns: Json }
       customer_register_device: {
         Args: { _device_id: string; _device_label?: string }
@@ -9384,6 +9595,24 @@ export type Database = {
         Returns: {
           slot_date: string
           start_hour: number
+        }[]
+      }
+      lucky_draw_audit: {
+        Args: { _action: string; _after: Json; _before: Json; _id: string }
+        Returns: undefined
+      }
+      lucky_draw_display_name: { Args: { _full: string }; Returns: string }
+      lucky_draw_standings: {
+        Args: { _campaign_id: string; _cutoff?: string }
+        Returns: {
+          enrolled_at: string
+          entries: number
+          entry_no: string
+          full_name: string
+          phone: string
+          rank: number
+          referrals: number
+          user_id: string
         }[]
       }
       merchant_advance_order: {
@@ -10067,6 +10296,35 @@ export type Database = {
         }[]
       }
       staff_list_unassigned_business_trips: { Args: never; Returns: Json }
+      staff_lucky_draw_delete_campaign: {
+        Args: { _id: string }
+        Returns: undefined
+      }
+      staff_lucky_draw_delete_prize: {
+        Args: { _id: string }
+        Returns: undefined
+      }
+      staff_lucky_draw_overview: {
+        Args: { _campaign_id: string }
+        Returns: Json
+      }
+      staff_lucky_draw_publish: {
+        Args: { _campaign_id: string; _published: boolean }
+        Returns: undefined
+      }
+      staff_lucky_draw_reset: {
+        Args: { _campaign_id: string; _reason: string }
+        Returns: undefined
+      }
+      staff_lucky_draw_run: { Args: { _campaign_id: string }; Returns: Json }
+      staff_lucky_draw_save_campaign: {
+        Args: { _id: string; _payload: Json }
+        Returns: string
+      }
+      staff_lucky_draw_save_prize: {
+        Args: { _campaign_id: string; _id: string; _payload: Json }
+        Returns: string
+      }
       staff_mark_all_notifications_read: { Args: never; Returns: undefined }
       staff_mark_notification_read: {
         Args: { _id: string; _read?: boolean }
