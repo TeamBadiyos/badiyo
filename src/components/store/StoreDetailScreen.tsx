@@ -32,6 +32,22 @@ export function StoreDetailScreen({
   const [photoOpen, setPhotoOpen] = useState(false);
   useBackHandler(photoOpen, () => setPhotoOpen(false));
 
+  // Store analytics: one visit per store open (server de-dupes within 15 min).
+  // Guest visits are tracked via device id; signed-in users are linked automatically.
+  useEffect(() => {
+    void (async () => {
+      try {
+        const sessionId = await getDeviceId();
+        await supabase.rpc("record_merchant_store_visit", {
+          _merchant_id: store.id,
+          _session_id: sessionId,
+        });
+      } catch {
+        /* analytics must never break the store page */
+      }
+    })();
+  }, [store.id]);
+
   const groups = useMemo(() => {
     const map = new Map<string, PublicProduct[]>();
     for (const p of products) {
