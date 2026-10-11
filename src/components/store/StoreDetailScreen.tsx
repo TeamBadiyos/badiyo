@@ -1,9 +1,11 @@
 import { useBackHandler } from "@/lib/backHandler";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { ArrowLeft, Loader2, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { useT } from "@/i18n";
+import { supabase } from "@/integrations/supabase/client";
+import { getDeviceId } from "@/lib/deviceId";
 import { StoreImage } from "./StoreImage";
 import { StoreRating } from "./StoreRating";
 import { ProductCard } from "./ProductCard";
