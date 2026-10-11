@@ -1,9 +1,11 @@
 import { useBackHandler } from "@/lib/backHandler";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { ArrowLeft, Loader2, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { useT } from "@/i18n";
+import { supabase } from "@/integrations/supabase/client";
+import { getDeviceId } from "@/lib/deviceId";
 import { StoreImage } from "./StoreImage";
 import { StoreRating } from "./StoreRating";
 import { ProductCard } from "./ProductCard";
@@ -29,6 +31,22 @@ export function StoreDetailScreen({
   const closed = !isStoreOpen(store);
   const [photoOpen, setPhotoOpen] = useState(false);
   useBackHandler(photoOpen, () => setPhotoOpen(false));
+
+  // Store analytics: one visit per store open (server de-dupes within 15 min).
+  // Guest visits are tracked via device id; signed-in users are linked automatically.
+  useEffect(() => {
+    void (async () => {
+      try {
+        const sessionId = await getDeviceId();
+        await supabase.rpc("record_merchant_store_visit", {
+          _merchant_id: store.id,
+          _session_id: sessionId,
+        });
+      } catch {
+        /* analytics must never break the store page */
+      }
+    })();
+  }, [store.id]);
 
   const groups = useMemo(() => {
     const map = new Map<string, PublicProduct[]>();
