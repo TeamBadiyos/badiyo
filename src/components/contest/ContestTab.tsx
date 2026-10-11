@@ -204,79 +204,109 @@ export function ContestTab() {
         </>
       )}
 
-      {draw.length > 0 && (
-        <>
-          <h3 className="mt-7 text-base font-bold text-foreground">Lucky Draw Prizes</h3>
-          <div className="mt-3 grid grid-cols-2 gap-3">
-            {draw.map((p) => (
-              <div key={p.id} className="overflow-hidden rounded-[14px] border border-border bg-card">
-                {p.photo ? (
-                  <img src={p.photo} alt={p.name} loading="lazy" className="aspect-square w-full object-cover" />
-                ) : (
-                  <div className="flex aspect-square items-center justify-center bg-muted">
-                    <Gift className="h-8 w-8 text-muted-foreground" />
-                  </div>
-                )}
-                <div className="p-2.5">
-                  <p className="line-clamp-2 text-sm font-bold text-foreground">{p.name}</p>
-                  {p.value !== null && <p className="text-xs font-semibold text-primary">Worth Rs {p.value}</p>}
-                  {p.quantity !== null && <p className="text-xs text-muted-foreground">Qty: {p.quantity}</p>}
-                </div>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
+      {/* OFFER 1 — LUCKY DRAW */}
+      <section className="mt-7 rounded-[18px] border-2 border-primary/30 bg-primary/5 p-4">
+        <span className="inline-block rounded-full bg-primary px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-primary-foreground">Offer 1</span>
+        <h3 className="mt-2 flex items-center gap-2 text-lg font-extrabold text-foreground"><Gift className="h-5 w-5 text-primary" /> Lucky Draw</h3>
+        <p className="text-xs text-muted-foreground">Har ticket ek chance — random draw se winners chune jayenge.</p>
 
-      {s.leaderboardRewards && lb.length > 0 && (
-        <>
-          <h3 className="mt-7 text-base font-bold text-foreground">Leaderboard Prizes</h3>
-          <div className="mt-3 space-y-2">
-            {lb.map((p) => (
-              <div key={p.id} className="flex items-center gap-3 rounded-[14px] border border-border bg-card p-3">
-                {p.photo ? (
-                  <img src={p.photo} alt={p.name} loading="lazy" className="h-12 w-12 rounded-[10px] object-cover" />
-                ) : (
-                  <div className="flex h-12 w-12 items-center justify-center rounded-[10px] bg-muted">
-                    <Gift className="h-5 w-5 text-muted-foreground" />
-                  </div>
-                )}
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-bold text-primary">
-                    Rank {p.rankFrom ?? "?"}
-                    {p.rankTo && p.rankTo !== p.rankFrom ? ` - ${p.rankTo}` : ""}
-                  </p>
-                  <p className="truncate text-sm font-semibold text-foreground">{p.name}</p>
-                  {(p.value !== null || (p.quantity ?? 0) > 1) && (
-                    <p className="text-xs text-muted-foreground">
-                      {p.value !== null ? `Worth Rs ${p.value}` : ""}
-                      {(p.quantity ?? 0) > 1 ? ` · ${p.quantity} winners` : ""}
-                    </p>
+        {draw.length > 0 && (
+          <>
+            <h4 className="mt-4 text-sm font-bold text-foreground">Lucky Draw Prizes</h4>
+            <div className="mt-2 grid grid-cols-2 gap-3">
+              {draw.map((p) => (
+                <div key={p.id} className="overflow-hidden rounded-[14px] border border-border bg-card">
+                  {p.photo ? (
+                    <img src={p.photo} alt={p.name} loading="lazy" className="aspect-square w-full object-cover" />
+                  ) : (
+                    <div className="flex aspect-square items-center justify-center bg-muted">
+                      <Gift className="h-8 w-8 text-muted-foreground" />
+                    </div>
                   )}
+                  <div className="p-2.5">
+                    <p className="line-clamp-2 text-sm font-bold text-foreground">{p.name}</p>
+                    {p.value !== null && <p className="text-xs font-semibold text-primary">Worth Rs {p.value}</p>}
+                    {p.quantity !== null && <p className="text-xs text-muted-foreground">Qty: {p.quantity}</p>}
+                  </div>
                 </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        <h4 className="mt-5 text-sm font-bold text-foreground">How it works</h4>
+        <ol className="mt-2 space-y-2 text-sm text-muted-foreground">
+          <li className="flex gap-2"><Gift className="h-4 w-4 shrink-0 text-primary" /> Enroll karte hi 1 ticket free milta hai.</li>
+          <li className="flex gap-2"><Users className="h-4 w-4 shrink-0 text-primary" /> Har dost ke enroll karne par 1 extra ticket — zyada tickets, zyada chances.</li>
+          <li className="flex gap-2"><Trophy className="h-4 w-4 shrink-0 text-primary" /> {s.drawAt ? `${formatLdDate(s.drawAt)} ko` : "Tay date par"} random draw hoga, winners yahin dikhenge.</li>
+        </ol>
+
+        <h4 className="mt-5 text-sm font-bold text-foreground">Rules &amp; Terms</h4>
+        <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-muted-foreground">
+          <li>Entry bilkul free hai.</li>
+          <li>Ek mobile number par sirf ek entry.</li>
+          <li>Dost tabhi count hoga jab wo app download, login aur enroll kare.</li>
+          <li>Prize par tax, agar laage, kanoon ke hisaab se.</li>
+          <li>Google is contest ka sponsor nahi hai.</li>
+        </ul>
+      </section>
+
+      {/* OFFER 2 — LEADERBOARD */}
+      {(s.leaderboardRewards && lb.length > 0) || s.showLeaderboard ? (
+        <section className="mt-6 rounded-[18px] border-2 border-border bg-card p-4">
+          <span className="inline-block rounded-full bg-foreground px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-background">Offer 2</span>
+          <h3 className="mt-2 flex items-center gap-2 text-lg font-extrabold text-foreground"><Trophy className="h-5 w-5 text-primary" /> Referral Leaderboard</h3>
+          <p className="text-xs text-muted-foreground">Sabse zyada dost invite karo — top rank par guaranteed inaam.</p>
+
+          {s.leaderboardRewards && lb.length > 0 && (
+            <>
+              <h4 className="mt-4 text-sm font-bold text-foreground">Leaderboard Prizes</h4>
+              <div className="mt-2 space-y-2">
+                {lb.map((p) => (
+                  <div key={p.id} className="flex items-center gap-3 rounded-[14px] border border-border bg-background p-3">
+                    {p.photo ? (
+                      <img src={p.photo} alt={p.name} loading="lazy" className="h-12 w-12 rounded-[10px] object-cover" />
+                    ) : (
+                      <div className="flex h-12 w-12 items-center justify-center rounded-[10px] bg-muted">
+                        <Gift className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-bold text-primary">
+                        Rank {p.rankFrom ?? "?"}
+                        {p.rankTo && p.rankTo !== p.rankFrom ? ` - ${p.rankTo}` : ""}
+                      </p>
+                      <p className="truncate text-sm font-semibold text-foreground">{p.name}</p>
+                      {(p.value !== null || (p.quantity ?? 0) > 1) && (
+                        <p className="text-xs text-muted-foreground">
+                          {p.value !== null ? `Worth Rs ${p.value}` : ""}
+                          {(p.quantity ?? 0) > 1 ? ` · ${p.quantity} winners` : ""}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </>
-      )}
+            </>
+          )}
 
-      {s.showLeaderboard && <Leaderboard s={s} />}
+          <h4 className="mt-5 text-sm font-bold text-foreground">How it works</h4>
+          <ol className="mt-2 space-y-2 text-sm text-muted-foreground">
+            <li className="flex gap-2"><Users className="h-4 w-4 shrink-0 text-primary" /> Jitne zyada dost enroll karwaoge, utni upar rank.</li>
+            <li className="flex gap-2"><Trophy className="h-4 w-4 shrink-0 text-primary" /> Top ranks ko bina draw ke guaranteed prize milega.</li>
+            <li className="flex gap-2"><Gift className="h-4 w-4 shrink-0 text-primary" /> Lucky Draw aur Leaderboard dono ke prize ek saath jeet sakte ho.</li>
+          </ol>
 
-      <h3 className="mt-7 text-base font-bold text-foreground">How it works</h3>
-      <ol className="mt-3 space-y-2 text-sm text-muted-foreground">
-        <li className="flex gap-2"><Gift className="h-4 w-4 shrink-0 text-primary" /> Enroll for free with one tap.</li>
-        <li className="flex gap-2"><Users className="h-4 w-4 shrink-0 text-primary" /> Invite friends to get more entries and climb the leaderboard.</li>
-        <li className="flex gap-2"><Trophy className="h-4 w-4 shrink-0 text-primary" /> Winners are announced here after the draw.</li>
-      </ol>
+          <h4 className="mt-5 text-sm font-bold text-foreground">Rules &amp; Terms</h4>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-muted-foreground">
+            <li>Sirf verified dost (download + login + enroll) count honge.</li>
+            <li>Barabar referrals par jisne pehle score kiya, wo upar.</li>
+            <li>Contest khatam hone par final leaderboard lock ho jayega.</li>
+          </ul>
 
-      <h3 className="mt-7 text-base font-bold text-foreground">Terms &amp; Conditions</h3>
-      <ul className="mt-3 list-disc space-y-1 pl-5 text-xs text-muted-foreground">
-        <li>Entry is completely free.</li>
-        <li>Only one entry per mobile number.</li>
-        <li>A friend counts only after they download the app, log in and enroll.</li>
-        <li>Taxes on prizes, if any, apply as per law.</li>
-        <li>Google is not a sponsor of this contest.</li>
-      </ul>
+          {s.showLeaderboard && <Leaderboard s={s} />}
+        </section>
+      ) : null}
     </div>
   );
 }
