@@ -79,6 +79,7 @@ export function toPaymentError(err: unknown): RazorpayPaymentError {
 
 type WebRazorpayOptions = {
   key: string;
+  webview_intent?: boolean;
   order_id: string;
   amount: number;
   currency: string;
@@ -204,6 +205,9 @@ function openWeb(opts: RazorpayCheckoutOptions): Promise<RazorpaySuccess> {
         description: opts.description,
         prefill: buildPrefill(opts),
         theme: { color: "#00B97A" },
+        // Inside the Android app WebView Razorpay hides UPI unless this is set;
+        // the WebView then launches upi:// links into GPay/PhonePe/Paytm.
+        webview_intent: true,
         handler: (resp) => {
           settled = true;
           resolve(resp);
