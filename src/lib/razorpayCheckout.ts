@@ -79,6 +79,7 @@ export function toPaymentError(err: unknown): RazorpayPaymentError {
 
 type WebRazorpayOptions = {
   key: string;
+  webview_intent?: boolean;
   order_id: string;
   amount: number;
   currency: string;
