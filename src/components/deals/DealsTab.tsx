@@ -166,7 +166,6 @@ function DealCard({ offer, mine, focus }: { offer: EventOffer; mine: MyRedemptio
         <p className="relative mt-4 text-2xl font-black tracking-tight">{offer.success_title || "Redeemed!"}</p>
         {offer.success_message && <p className="relative mt-1 text-sm font-semibold opacity-90">{offer.success_message}</p>}
         <p className="relative mt-3 text-xs font-bold uppercase tracking-widest opacity-80">Redeemed at {fmtTime(latest!.redeemed_at)}</p>
-        <div className="relative mt-3 flex justify-center"><LiveClock now={now} light /></div>
         <button disabled={busy} onClick={onUndo} className="relative mt-4 rounded-full border-2 border-primary-foreground/70 px-5 py-2 text-sm font-extrabold">Undo ({undoLeft})</button>
       </div>
     );
@@ -183,7 +182,6 @@ function DealCard({ offer, mine, focus }: { offer: EventOffer; mine: MyRedemptio
         {!grey && <div className="deal-shimmer pointer-events-none absolute inset-0" />}
         <div className="relative flex items-center justify-between">
           <span className={`rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-widest ${grey ? "bg-background text-muted-foreground" : "bg-primary-foreground/20"}`}>badiyos deal</span>
-          <LiveClock now={now} light={!grey} />
         </div>
         <div className="relative mt-4 flex items-center gap-4">
           {offer.image_url ? (
