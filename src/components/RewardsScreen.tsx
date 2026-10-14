@@ -4,6 +4,7 @@ import { usePullToRefresh, PullToRefreshIndicator } from "@/lib/usePullToRefresh
 import { Coins, Gift, Sparkles } from "lucide-react";
 import { fetchCustomerRewards, formatRewardValue } from "@/lib/rewards";
 import { ContestTab } from "./contest/ContestTab";
+import { DealsTab, useDeals } from "./deals/DealsTab";
 import { BottomNav } from "./BottomNav";
 import { fetchCourierEnabled } from "./courier/courierData";
 
@@ -26,8 +27,10 @@ export function RewardsScreen({
   onOpenReferrals,
   onOpenBookings,
   onOpenCourier,
+  focusDealId,
 }: {
-  initialTab?: "rewards" | "contest";
+  initialTab?: "rewards" | "contest" | "deals";
+  focusDealId?: string | null;
   onOpenHome: () => void;
   onOpenRewards: () => void;
   onOpenReferrals: () => void;
@@ -39,10 +42,12 @@ export function RewardsScreen({
     queryFn: () => fetchCourierEnabled(),
     staleTime: 5 * 60_000,
   });
-  const [tab, setTab] = useState<"rewards" | "contest">(initialTab);
+  const [tab, setTab] = useState<"rewards" | "contest" | "deals">(initialTab);
   useEffect(() => {
     setTab(initialTab);
   }, [initialTab]);
+  const { offers: dealOffers } = useDeals();
+  const dealsLive = (dealOffers.data ?? []).length > 0;
   const { data, isLoading } = useQuery({
     queryKey: ["customer_rewards"],
     queryFn: fetchCustomerRewards,
@@ -72,21 +77,23 @@ export function RewardsScreen({
 
         {/* Tabs */}
         <div className="mt-4 flex rounded-[14px] border border-border bg-card p-1">
-          {(["rewards", "contest"] as const).map((k) => (
+          {(["rewards", "contest", "deals"] as const).map((k) => (
             <button
               key={k}
               type="button"
               onClick={() => setTab(k)}
-              className={`flex-1 rounded-[11px] py-2 text-sm font-bold capitalize transition ${
+              className={`relative flex-1 rounded-[11px] py-2 text-sm font-bold capitalize transition ${
                 tab === k ? "bg-primary text-primary-foreground" : "text-muted-foreground"
               }`}
             >
-              {k === "rewards" ? "Rewards" : "Contest"}
+              {k === "rewards" ? "Rewards" : k === "contest" ? "Contest" : "Deals"}
+              {k === "deals" && dealsLive && <span className="absolute right-3 top-1.5 h-2 w-2 rounded-full bg-destructive" />}
             </button>
           ))}
         </div>
 
         {tab === "contest" && <ContestTab />}
+        {tab === "deals" && <DealsTab focusId={focusDealId} />}
 
         {tab === "rewards" && (
           <>

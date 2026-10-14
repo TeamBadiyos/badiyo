@@ -305,7 +305,8 @@ function Index() {
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
   const [redeemCoins, setRedeemCoins] = useState(false);
 
-  const [rewardsTab, setRewardsTab] = useState<"rewards" | "contest">("contest");
+  const [rewardsTab, setRewardsTab] = useState<"rewards" | "contest" | "deals">("contest");
+  const [focusDealId, setFocusDealId] = useState<string | null>(null);
   const [notServiceable, setNotServiceable] = useState<NotServiceableLocation | null>(null);
   const [activeBookingId, setActiveBookingId] = useState<string | null>(null);
   const [activeBookingStatus, setActiveBookingStatus] = useState<string | null>(null);
@@ -929,6 +930,7 @@ function Index() {
             onOpenProfile={() => setPhase("profile")}
             onOpenRewards={() => { setRewardsTab("contest"); setPhase("rewards"); }}
             onOpenContest={() => { setRewardsTab("contest"); setPhase("rewards"); }}
+            onOpenDeal={(id) => { setFocusDealId(id); setRewardsTab("deals"); setPhase("rewards"); }}
             onOpenOrders={() => setPhase("orders")}
             onOpenStoreOrder={(id) => {
               setStoreOrderId(id);
@@ -1360,6 +1362,7 @@ function Index() {
         <div className="animate-fade-slide-in">
           <RewardsScreen
             initialTab={rewardsTab}
+            focusDealId={focusDealId}
             onOpenHome={() => setPhase("home")}
             onOpenRewards={() => { setRewardsTab("contest"); setPhase("rewards"); }}
             onOpenReferrals={() => setPhase("referrals")}
