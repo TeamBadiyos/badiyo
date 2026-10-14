@@ -86,6 +86,16 @@ export const Route = createFileRoute("/api/public/webhooks/razorpay")({
           return new Response("ok-refund");
         }
 
+        if (event === "payment.failed") {
+          const fe = payload.payload?.payment?.entity ?? {};
+          if (fe.notes?.purpose === "event_offer" && fe.order_id) {
+            const { supabaseAdmin: admin } = await import("@/integrations/supabase/client.server");
+            await admin.rpc("system_mark_offer_payment_failed" as never, { _razorpay_order_id: fe.order_id } as never);
+            return new Response("ok-offer-failed");
+          }
+          return new Response("ignored");
+        }
+
         if (event !== "payment.captured" && event !== "order.paid") {
           return new Response("ignored");
         }
@@ -97,6 +107,17 @@ export const Route = createFileRoute("/api/public/webhooks/razorpay")({
         // Extension top-ups and tips are not bookings; the safety net must skip
         // them, otherwise every one raises a false "lost booking" alert.
         const purpose = entity.notes?.purpose;
+        if (purpose === "event_offer") {
+          if (!orderId || !paymentId) return new Response("ignored-offer");
+          const { supabaseAdmin: admin } = await import("@/integrations/supabase/client.server");
+          const { data, error } = await admin.rpc("system_mark_offer_paid" as never, {
+            _razorpay_order_id: orderId,
+            _payment_id: paymentId,
+            _amount: typeof entity.amount === "number" ? entity.amount : null, // paise
+          } as never);
+          if (error) return new Response("error-offer", { status: 500 });
+          return new Response((data as { ok?: boolean })?.ok ? "ok-offer" : "offer-not-marked");
+        }
         if (purpose === "extension" || purpose === "tip") {
           return new Response(`ignored-${purpose}`);
         }
