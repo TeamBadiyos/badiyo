@@ -4,6 +4,8 @@ import {
   createOfferPayment,
   fetchLiveOffers,
   fetchMyRedemptions,
+  fetchOfferRemaining,
+  OfferApiError,
   redeemOffer,
   undoRedemption,
   verifyOfferPayment,
@@ -44,6 +46,7 @@ export function DealsTab({ focusId }: { focusId?: string | null }) {
   useEffect(() => {
     qc.invalidateQueries({ queryKey: ["event_offers"] });
     qc.invalidateQueries({ queryKey: ["event_redemptions_mine"] });
+    qc.invalidateQueries({ queryKey: ["offer_remaining"] });
   }, [qc]);
 
   if (offers.isLoading || mine.isLoading) return <p className="mt-8 text-center text-sm text-muted-foreground">Loading…</p>;
@@ -182,6 +185,7 @@ function DealCard({ offer, mine, focus }: { offer: EventOffer; mine: MyRedemptio
           <p className="mt-1 text-base font-extrabold text-primary">
             {free ? "FREE" : (<>{offer.mrp ? <span className="mr-1 text-sm text-muted-foreground line-through">₹{offer.mrp}</span> : null}₹{offer.price}</>)}
           </p>
+          {typeof remaining.data === "number" && <p className="text-xs font-bold text-destructive">Sirf {remaining.data} bache!</p>}
         </div>
       </div>
       {offer.rules_text && (
@@ -206,7 +210,7 @@ function DealCard({ offer, mine, focus }: { offer: EventOffer; mine: MyRedemptio
         {local?.retry && (
           <div className="mt-2 flex items-center justify-between rounded-[12px] bg-destructive/10 px-3 py-2">
             <span className="text-xs font-bold text-destructive">{local.msg}</span>
-            <button className="text-xs font-bold text-primary" onClick={() => { setLocal(null); refresh(); qc.invalidateQueries({ queryKey: ["event_offers"] }); }}>Retry</button>
+            <button className="text-xs font-bold text-primary" onClick={() => { setLocal(null); refresh(); qc.invalidateQueries({ queryKey: ["event_offers"] }); }}>{local.refreshLabel ? "Refresh" : "Retry"}</button>
           </div>
         )}
         {!grey && <p className="mt-2 text-center text-[11px] text-muted-foreground">Swipe sirf counter pe karwayein</p>}
