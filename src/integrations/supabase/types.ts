@@ -9633,6 +9633,7 @@ export type Database = {
         Returns: number
       }
       instant_booking_enabled: { Args: never; Returns: boolean }
+      instant_free_expert_count: { Args: never; Returns: number }
       is_active_staff: {
         Args: { _roles: string[]; _uid: string }
         Returns: boolean
@@ -9952,6 +9953,7 @@ export type Database = {
         Args: { _expert_id: string }
         Returns: undefined
       }
+      reward_effective_ts: { Args: never; Returns: string }
       reward_gates_pass: {
         Args: {
           _condition: Json
@@ -9961,6 +9963,11 @@ export type Database = {
         }
         Returns: boolean
       }
+      reward_slot_start: {
+        Args: { _date: string; _slot: string }
+        Returns: string
+      }
+      run_expert_referral_reward_job: { Args: never; Returns: number }
       run_reward_period_jobs: {
         Args: { _force_period_start?: string }
         Returns: number
@@ -10268,6 +10275,10 @@ export type Database = {
       staff_decide_partner_skill: {
         Args: { _decision: string; _notes?: string; _skill_id: string }
         Returns: undefined
+      }
+      staff_decide_pending_reward: {
+        Args: { _approve: boolean; _ledger_id: string; _reason?: string }
+        Returns: boolean
       }
       staff_delete_coupon: { Args: { _id: string }; Returns: undefined }
       staff_delete_customer_address: {
