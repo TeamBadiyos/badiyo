@@ -65,7 +65,7 @@ export function DealsTab({ focusId }: { focusId?: string | null }) {
   );
 }
 
-type Local = { kind: "error"; msg: string; retry?: boolean } | null;
+type Local = { kind: "error"; msg: string; retry?: boolean; refreshLabel?: boolean } | null;
 
 function DealCard({ offer, mine, focus }: { offer: EventOffer; mine: MyRedemption[]; focus: boolean }) {
   const qc = useQueryClient();
@@ -75,7 +75,12 @@ function DealCard({ offer, mine, focus }: { offer: EventOffer; mine: MyRedemptio
   const [pinOpen, setPinOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [local, setLocal] = useState<Local>(null);
-  const refresh = () => qc.invalidateQueries({ queryKey: ["event_redemptions_mine"] });
+  const remaining = useQuery({ queryKey: ["offer_remaining", offer.id], queryFn: () => fetchOfferRemaining(offer.id), staleTime: 0 });
+  const refresh = () =>
+    Promise.all([
+      qc.invalidateQueries({ queryKey: ["event_redemptions_mine"] }),
+      qc.invalidateQueries({ queryKey: ["offer_remaining", offer.id] }),
+    ]);
 
   useEffect(() => {
     if (focus) ref.current?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -120,12 +125,30 @@ function DealCard({ offer, mine, focus }: { offer: EventOffer; mine: MyRedemptio
   const onPay = async () => {
     setBusy(true); setLocal(null);
     try {
-      const p = await createOfferPayment(offer.id);
-      const res = await payWithRazorpay({ key: p.keyId, order_id: p.orderId, amount: p.amountPaise, currency: p.currency, name: "Badiyos", description: offer.title });
-      await verifyOfferPayment(res);
-    } catch (e: any) {
-      const code = e?.code as string | undefined;
-      setLocal({ kind: "error", msg: code && ERR[code] ? ERR[code] : "Payment nahi hua, dobara try karein", retry: true });
+      let p;
+      try {
+        p = await createOfferPayment(offer.id);
+      } catch (e: any) {
+        if (e instanceof OfferApiError && e.kind === "code" && e.code) {
+          setLocal({ kind: "error", msg: ERR[e.code] ?? "Ye offer abhi available nahi hai" });
+        } else {
+          setLocal({ kind: "error", msg: "Payment shuru nahi hua, dobara try karein", retry: true });
+        }
+        return;
+      }
+      if (p.alreadyPaid) return; // refresh shows Paid ✓ + slider
+      let res;
+      try {
+        res = await payWithRazorpay({ key: p.keyId, order_id: p.razorpayOrderId, amount: p.amountPaise, currency: p.currency, name: "Badiyos", description: offer.title });
+      } catch {
+        setLocal({ kind: "error", msg: "Payment nahi hua, dobara try karein", retry: true });
+        return;
+      }
+      try {
+        await verifyOfferPayment(res);
+      } catch {
+        setLocal({ kind: "error", msg: "Payment verify nahi hua. Agar paise kat gaye hain to thodi der mein apne aap update ho jaayega", retry: true, refreshLabel: true });
+      }
     } finally { setBusy(false); await refresh(); }
   };
 
