@@ -74,7 +74,6 @@ function DealCard({ offer, mine, focus }: { offer: EventOffer; mine: MyRedemptio
   const qc = useQueryClient();
   const now = useNow();
   const ref = useRef<HTMLDivElement>(null);
-  const [rulesOpen, setRulesOpen] = useState(false);
   const [pinOpen, setPinOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [local, setLocal] = useState<Local>(null);
@@ -161,59 +160,99 @@ function DealCard({ offer, mine, focus }: { offer: EventOffer; mine: MyRedemptio
   // ---------- render ----------
   if (success && undoLeft > 0) {
     return (
-      <div ref={ref} className="rounded-[20px] bg-primary p-5 text-center text-primary-foreground shadow-lg">
-        <div className="text-6xl">✓</div>
-        <p className="mt-2 text-lg font-extrabold">{offer.success_title || "Redeemed!"}</p>
-        {offer.success_message && <p className="mt-1 text-sm opacity-90">{offer.success_message}</p>}
-        <p className="mt-2 text-xs opacity-80">{fmtTime(latest!.redeemed_at)}</p>
-        <LiveClock now={now} light />
-        <button disabled={busy} onClick={onUndo} className="mt-3 rounded-full border border-primary-foreground/60 px-4 py-1.5 text-sm font-bold">Undo ({undoLeft})</button>
+      <div ref={ref} className="relative overflow-hidden rounded-[24px] bg-gradient-to-br from-primary-light via-primary to-primary-dark p-6 text-center text-primary-foreground shadow-xl">
+        <div className="deal-shimmer pointer-events-none absolute inset-0" />
+        <div className="relative mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-primary-foreground text-5xl font-black text-primary shadow-lg">✓</div>
+        <p className="relative mt-4 text-2xl font-black tracking-tight">{offer.success_title || "Redeemed!"}</p>
+        {offer.success_message && <p className="relative mt-1 text-sm font-semibold opacity-90">{offer.success_message}</p>}
+        <p className="relative mt-3 text-xs font-bold uppercase tracking-widest opacity-80">Redeemed at {fmtTime(latest!.redeemed_at)}</p>
+        <div className="relative mt-3 flex justify-center"><LiveClock now={now} light /></div>
+        <button disabled={busy} onClick={onUndo} className="relative mt-4 rounded-full border-2 border-primary-foreground/70 px-5 py-2 text-sm font-extrabold">Undo ({undoLeft})</button>
       </div>
     );
   }
 
   const grey = (finalUsed || used) ? `Already used ✓ at ${fmtTime(latest?.redeemed_at)}` : local?.kind === "error" && !local.retry ? local.msg : null;
+  const rules = (offer.rules_text ?? "").split(/\n+/).map((s) => s.replace(/^[\s•\-*\d.)]+/, "").trim()).filter(Boolean);
+  const off = !free && offer.mrp && Number(offer.mrp) > Number(offer.price) ? Math.round((1 - Number(offer.price) / Number(offer.mrp)) * 100) : 0;
 
   return (
-    <div ref={ref} className={`relative overflow-hidden rounded-[20px] border p-4 ${grey ? "border-border bg-muted" : "border-primary/40 bg-card"} ${focus ? "ring-2 ring-primary" : ""}`}>
-      {!grey && <div className="deal-shimmer pointer-events-none absolute inset-0" />}
-      <div className="relative flex gap-3">
-        {offer.image_url ? <img src={offer.image_url} alt="" className="h-16 w-16 rounded-[12px] object-cover" /> : <div className="text-4xl">{offer.emoji || "🎁"}</div>}
-        <div className="min-w-0 flex-1">
-          <p className="font-extrabold text-foreground">{offer.title}</p>
-          {offer.description && <p className="text-sm text-muted-foreground">{offer.description}</p>}
-          <p className="mt-1 text-base font-extrabold text-primary">
-            {free ? "FREE" : (<>{offer.mrp ? <span className="mr-1 text-sm text-muted-foreground line-through">₹{offer.mrp}</span> : null}₹{offer.price}</>)}
-          </p>
-          {typeof remaining.data === "number" && <p className="text-xs font-bold text-destructive">Sirf {remaining.data} bache!</p>}
+    <div ref={ref} className={`overflow-hidden rounded-[24px] border bg-card shadow-lg ${grey ? "border-border" : "border-primary/30"} ${focus ? "ring-2 ring-primary" : ""}`}>
+      {/* Hero band */}
+      <div className={`relative overflow-hidden px-5 pb-5 pt-4 ${grey ? "bg-muted" : "bg-gradient-to-br from-primary-light via-primary to-primary-dark text-primary-foreground"}`}>
+        {!grey && <div className="deal-shimmer pointer-events-none absolute inset-0" />}
+        <div className="relative flex items-center justify-between">
+          <span className={`rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-widest ${grey ? "bg-background text-muted-foreground" : "bg-primary-foreground/20"}`}>badiyos deal</span>
+          <LiveClock now={now} light={!grey} />
+        </div>
+        <div className="relative mt-4 flex items-center gap-4">
+          {offer.image_url ? (
+            <img src={offer.image_url} alt="" className="h-20 w-20 shrink-0 rounded-[18px] object-cover shadow-md" />
+          ) : (
+            <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-[18px] bg-card text-5xl shadow-md">{offer.emoji || "🎁"}</div>
+          )}
+          <div className="min-w-0 flex-1">
+            <p className={`text-xl font-black leading-tight tracking-tight ${grey ? "text-foreground" : ""}`}>{offer.title}</p>
+            <div className="mt-2 flex flex-wrap items-baseline gap-2">
+              {free ? (
+                <span className={`rounded-[10px] px-3 py-0.5 text-lg font-black ${grey ? "bg-background text-primary" : "bg-primary-foreground text-primary"}`}>FREE</span>
+              ) : (
+                <>
+                  <span className="text-2xl font-black">₹{offer.price}</span>
+                  {offer.mrp ? <span className="text-sm font-semibold line-through opacity-70">₹{offer.mrp}</span> : null}
+                  {off > 0 && <span className="rounded-full bg-primary-foreground px-2 py-0.5 text-[11px] font-black text-primary">{off}% OFF</span>}
+                </>
+              )}
+            </div>
+          </div>
         </div>
       </div>
-      {offer.rules_text && (
-        <button className="relative mt-2 text-xs font-bold text-primary" onClick={() => setRulesOpen((v) => !v)}>{rulesOpen ? "Rules ▲" : "Rules ▼"}</button>
-      )}
-      {rulesOpen && <p className="relative mt-1 whitespace-pre-line text-xs text-muted-foreground">{offer.rules_text}</p>}
-      <div className="relative"><LiveClock now={now} /></div>
 
-      <div className="relative mt-3">
-        {grey ? (
-          <p className="rounded-full bg-background py-3 text-center text-sm font-bold text-muted-foreground">{grey}</p>
-        ) : !free && !isPaid ? (
-          <button disabled={busy} onClick={onPay} className="w-full rounded-full bg-primary py-3 text-sm font-extrabold text-primary-foreground disabled:opacity-60">
-            {busy ? "…" : `Pay ₹${offer.price}`}
-          </button>
-        ) : (
-          <>
-            {isPaid && <p className="mb-2 text-center text-sm font-bold text-primary">Paid ✓ — counter pe swipe karwao</p>}
-            <SwipeSlider label={offer.button_text || "Swipe to redeem"} disabled={busy} onDone={onSwiped} />
-          </>
+      <div className="p-5">
+        {offer.description && <p className="text-[15px] leading-relaxed text-foreground">{offer.description}</p>}
+        {typeof remaining.data === "number" && (
+          <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-destructive/10 px-3 py-1 text-xs font-extrabold text-destructive">
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-destructive" /> Sirf {remaining.data} bache — jaldi karein!
+          </p>
         )}
-        {local?.retry && (
-          <div className="mt-2 flex items-center justify-between rounded-[12px] bg-destructive/10 px-3 py-2">
-            <span className="text-xs font-bold text-destructive">{local.msg}</span>
-            <button className="text-xs font-bold text-primary" onClick={() => { setLocal(null); refresh(); qc.invalidateQueries({ queryKey: ["event_offers"] }); }}>{local.refreshLabel ? "Refresh" : "Retry"}</button>
+
+        {rules.length > 0 && (
+          <div className="mt-4 rounded-[16px] border border-primary/20 bg-primary/5 p-4">
+            <p className="text-[11px] font-black uppercase tracking-widest text-primary">Rules</p>
+            <ul className="mt-2 space-y-2">
+              {rules.map((r, i) => (
+                <li key={i} className="flex gap-2.5 text-sm text-foreground">
+                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-[11px] font-black text-primary-foreground">{i + 1}</span>
+                  <span className="leading-snug">{r}</span>
+                </li>
+              ))}
+            </ul>
           </div>
         )}
-        {!grey && <p className="mt-2 text-center text-[11px] text-muted-foreground">Swipe sirf counter pe karwayein</p>}
+
+        <div className="mt-5">
+          {grey ? (
+            <div className="rounded-[16px] border-2 border-dashed border-primary/40 bg-primary/5 py-3.5 text-center">
+              <p className="text-sm font-black text-primary">{grey}</p>
+            </div>
+          ) : !free && !isPaid ? (
+            <button disabled={busy} onClick={onPay} className="w-full rounded-full bg-primary py-4 text-base font-black text-primary-foreground shadow-lg disabled:opacity-60">
+              {busy ? "…" : `Pay ₹${offer.price}`}
+            </button>
+          ) : (
+            <>
+              {isPaid && <p className="mb-2 text-center text-sm font-bold text-primary">Paid ✓ — counter pe swipe karwao</p>}
+              <SwipeSlider label={offer.button_text || "Swipe to redeem"} disabled={busy} onDone={onSwiped} />
+            </>
+          )}
+          {local?.retry && (
+            <div className="mt-2 flex items-center justify-between rounded-[12px] bg-destructive/10 px-3 py-2">
+              <span className="text-xs font-bold text-destructive">{local.msg}</span>
+              <button className="text-xs font-bold text-primary" onClick={() => { setLocal(null); refresh(); qc.invalidateQueries({ queryKey: ["event_offers"] }); }}>{local.refreshLabel ? "Refresh" : "Retry"}</button>
+            </div>
+          )}
+          {!grey && <p className="mt-3 text-center text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">🔒 Swipe sirf counter pe karwayein</p>}
+        </div>
       </div>
       {pinOpen && <PinPad busy={busy} onClose={() => setPinOpen(false)} onSubmit={doRedeem} />}
     </div>
@@ -222,7 +261,11 @@ function DealCard({ offer, mine, focus }: { offer: EventOffer; mine: MyRedemptio
 
 function LiveClock({ now, light }: { now: number; light?: boolean }) {
   const t = new Date(now).toLocaleTimeString("en-GB", { hour12: false, timeZone: "Asia/Kolkata" });
-  return <p className={`mt-2 text-center font-mono text-sm font-bold tabular-nums ${light ? "" : "text-foreground"}`}>🔴 LIVE {t}</p>;
+  return (
+    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-mono text-xs font-bold tabular-nums ${light ? "bg-primary-foreground/20" : "bg-background text-foreground"}`}>
+      <span className="h-2 w-2 animate-pulse rounded-full bg-destructive" /> LIVE {t}
+    </span>
+  );
 }
 
 function SwipeSlider({ label, disabled, onDone }: { label: string; disabled?: boolean; onDone: () => void }) {
