@@ -9825,6 +9825,7 @@ export type Database = {
         Args: { _days?: number; _merchant_id: string }
         Returns: Json
       }
+      get_offer_remaining: { Args: { p_offer_id: string }; Returns: number }
       get_ops_flag: { Args: { _key: string }; Returns: boolean }
       get_ops_num: { Args: { _default: number; _key: string }; Returns: number }
       has_login_pin: { Args: { p_phone: string }; Returns: boolean }
