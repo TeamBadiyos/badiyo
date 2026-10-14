@@ -74,7 +74,6 @@ function DealCard({ offer, mine, focus }: { offer: EventOffer; mine: MyRedemptio
   const qc = useQueryClient();
   const now = useNow();
   const ref = useRef<HTMLDivElement>(null);
-  const [rulesOpen, setRulesOpen] = useState(false);
   const [pinOpen, setPinOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [local, setLocal] = useState<Local>(null);
