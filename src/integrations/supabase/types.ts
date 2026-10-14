@@ -11548,7 +11548,8 @@ export type Database = {
       }
       system_mark_offer_paid: {
         Args: {
-          _amount: number
+          _amount?: number
+          _amount_paise?: number
           _payment_id: string
           _razorpay_order_id: string
         }
