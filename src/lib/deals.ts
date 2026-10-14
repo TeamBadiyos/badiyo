@@ -100,29 +100,52 @@ export async function undoRedemption(id: string): Promise<{ ok: boolean; error?:
 
 const API = "https://badiyos.com/api/public/offers";
 
-async function authed(path: string, body: unknown) {
+/** kind: "server" = 500/non-JSON/network; "code" = {ok:false,error}. */
+export class OfferApiError extends Error {
+  kind: "server" | "code";
+  code?: string;
+  constructor(kind: "server" | "code", code?: string) {
+    super(code || kind);
+    this.kind = kind;
+    this.code = code;
+  }
+}
+
+async function authed(path: string, body: unknown): Promise<any> {
   const { data } = await supabase.auth.getSession();
   const token = data.session?.access_token;
-  if (!token) throw new Error("NOT_AUTHENTICATED");
-  const res = await fetch(`${API}/${path}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-    body: JSON.stringify(body),
-  });
-  const json = await res.json().catch(() => ({}));
-  if (!res.ok || json?.ok === false) {
-    throw Object.assign(new Error(json?.error || `HTTP_${res.status}`), { code: json?.error });
+  if (!token) throw new OfferApiError("code", "NOT_AUTHENTICATED");
+  let res: Response;
+  try {
+    res = await fetch(`${API}/${path}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify(body),
+    });
+  } catch {
+    throw new OfferApiError("server");
   }
+  let json: any;
+  try { json = await res.json(); } catch { throw new OfferApiError("server"); }
+  if (json && json.ok === false && typeof json.error === "string") throw new OfferApiError("code", json.error);
+  if (!res.ok || !json || json.ok !== true) throw new OfferApiError("server");
   return json;
 }
 
-export async function createOfferPayment(offerId: string) {
+export type CreatePaymentResult =
+  | { alreadyPaid: true; id: string }
+  | { alreadyPaid: false; redemptionId: string; razorpayOrderId: string; amountPaise: number; currency: string; keyId: string };
+
+export async function createOfferPayment(offerId: string): Promise<CreatePaymentResult> {
   const j = await authed("create-payment", { offer_id: offerId, device_key: getDeviceKey() });
+  if (j.already_paid === true) return { alreadyPaid: true, id: j.id };
   return {
-    orderId: (j.order_id ?? j.razorpay_order_id) as string,
-    amountPaise: Number(j.amount), // already paise
-    keyId: (j.key_id ?? j.key) as string,
-    currency: (j.currency ?? "INR") as string,
+    alreadyPaid: false,
+    redemptionId: j.redemption_id,
+    razorpayOrderId: j.razorpay_order_id,
+    amountPaise: j.amount, // already paise — never multiply
+    currency: j.currency,
+    keyId: j.key_id,
   };
 }
 
@@ -130,6 +153,16 @@ export async function verifyOfferPayment(r: {
   razorpay_order_id: string;
   razorpay_payment_id: string;
   razorpay_signature: string;
-}) {
-  return authed("verify-payment", r);
+}): Promise<{ ok: true; id: string; status: string; duplicate?: boolean }> {
+  return authed("verify-payment", {
+    razorpay_order_id: r.razorpay_order_id,
+    razorpay_payment_id: r.razorpay_payment_id,
+    razorpay_signature: r.razorpay_signature,
+  });
+}
+
+export async function fetchOfferRemaining(offerId: string): Promise<number | null> {
+  const { data, error } = await (supabase as any).rpc("get_offer_remaining", { p_offer_id: offerId });
+  if (error) return null;
+  return typeof data === "number" ? data : null;
 }

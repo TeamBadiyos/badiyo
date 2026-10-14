@@ -4,6 +4,8 @@ import {
   createOfferPayment,
   fetchLiveOffers,
   fetchMyRedemptions,
+  fetchOfferRemaining,
+  OfferApiError,
   redeemOffer,
   undoRedemption,
   verifyOfferPayment,
@@ -44,6 +46,7 @@ export function DealsTab({ focusId }: { focusId?: string | null }) {
   useEffect(() => {
     qc.invalidateQueries({ queryKey: ["event_offers"] });
     qc.invalidateQueries({ queryKey: ["event_redemptions_mine"] });
+    qc.invalidateQueries({ queryKey: ["offer_remaining"] });
   }, [qc]);
 
   if (offers.isLoading || mine.isLoading) return <p className="mt-8 text-center text-sm text-muted-foreground">Loading…</p>;
@@ -65,7 +68,7 @@ export function DealsTab({ focusId }: { focusId?: string | null }) {
   );
 }
 
-type Local = { kind: "error"; msg: string; retry?: boolean } | null;
+type Local = { kind: "error"; msg: string; retry?: boolean; refreshLabel?: boolean } | null;
 
 function DealCard({ offer, mine, focus }: { offer: EventOffer; mine: MyRedemption[]; focus: boolean }) {
   const qc = useQueryClient();
@@ -75,7 +78,12 @@ function DealCard({ offer, mine, focus }: { offer: EventOffer; mine: MyRedemptio
   const [pinOpen, setPinOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [local, setLocal] = useState<Local>(null);
-  const refresh = () => qc.invalidateQueries({ queryKey: ["event_redemptions_mine"] });
+  const remaining = useQuery({ queryKey: ["offer_remaining", offer.id], queryFn: () => fetchOfferRemaining(offer.id), staleTime: 0 });
+  const refresh = () =>
+    Promise.all([
+      qc.invalidateQueries({ queryKey: ["event_redemptions_mine"] }),
+      qc.invalidateQueries({ queryKey: ["offer_remaining", offer.id] }),
+    ]);
 
   useEffect(() => {
     if (focus) ref.current?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -120,12 +128,30 @@ function DealCard({ offer, mine, focus }: { offer: EventOffer; mine: MyRedemptio
   const onPay = async () => {
     setBusy(true); setLocal(null);
     try {
-      const p = await createOfferPayment(offer.id);
-      const res = await payWithRazorpay({ key: p.keyId, order_id: p.orderId, amount: p.amountPaise, currency: p.currency, name: "Badiyos", description: offer.title });
-      await verifyOfferPayment(res);
-    } catch (e: any) {
-      const code = e?.code as string | undefined;
-      setLocal({ kind: "error", msg: code && ERR[code] ? ERR[code] : "Payment nahi hua, dobara try karein", retry: true });
+      let p;
+      try {
+        p = await createOfferPayment(offer.id);
+      } catch (e: any) {
+        if (e instanceof OfferApiError && e.kind === "code" && e.code) {
+          setLocal({ kind: "error", msg: ERR[e.code] ?? "Ye offer abhi available nahi hai" });
+        } else {
+          setLocal({ kind: "error", msg: "Payment shuru nahi hua, dobara try karein", retry: true });
+        }
+        return;
+      }
+      if (p.alreadyPaid) return; // refresh shows Paid ✓ + slider
+      let res;
+      try {
+        res = await payWithRazorpay({ key: p.keyId, order_id: p.razorpayOrderId, amount: p.amountPaise, currency: p.currency, name: "Badiyos", description: offer.title });
+      } catch {
+        setLocal({ kind: "error", msg: "Payment nahi hua, dobara try karein", retry: true });
+        return;
+      }
+      try {
+        await verifyOfferPayment(res);
+      } catch {
+        setLocal({ kind: "error", msg: "Payment verify nahi hua. Agar paise kat gaye hain to thodi der mein apne aap update ho jaayega", retry: true, refreshLabel: true });
+      }
     } finally { setBusy(false); await refresh(); }
   };
 
@@ -159,6 +185,7 @@ function DealCard({ offer, mine, focus }: { offer: EventOffer; mine: MyRedemptio
           <p className="mt-1 text-base font-extrabold text-primary">
             {free ? "FREE" : (<>{offer.mrp ? <span className="mr-1 text-sm text-muted-foreground line-through">₹{offer.mrp}</span> : null}₹{offer.price}</>)}
           </p>
+          {typeof remaining.data === "number" && <p className="text-xs font-bold text-destructive">Sirf {remaining.data} bache!</p>}
         </div>
       </div>
       {offer.rules_text && (
@@ -183,7 +210,7 @@ function DealCard({ offer, mine, focus }: { offer: EventOffer; mine: MyRedemptio
         {local?.retry && (
           <div className="mt-2 flex items-center justify-between rounded-[12px] bg-destructive/10 px-3 py-2">
             <span className="text-xs font-bold text-destructive">{local.msg}</span>
-            <button className="text-xs font-bold text-primary" onClick={() => { setLocal(null); refresh(); qc.invalidateQueries({ queryKey: ["event_offers"] }); }}>Retry</button>
+            <button className="text-xs font-bold text-primary" onClick={() => { setLocal(null); refresh(); qc.invalidateQueries({ queryKey: ["event_offers"] }); }}>{local.refreshLabel ? "Refresh" : "Retry"}</button>
           </div>
         )}
         {!grey && <p className="mt-2 text-center text-[11px] text-muted-foreground">Swipe sirf counter pe karwayein</p>}
