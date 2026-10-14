@@ -3730,6 +3730,180 @@ export type Database = {
           },
         ]
       }
+      event_offers: {
+        Row: {
+          audience: string
+          button_text: string
+          card_color: string | null
+          city_ids: string[] | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          emoji: string | null
+          ends_at: string
+          id: string
+          image_url: string | null
+          is_active: boolean
+          mrp: number | null
+          new_users_since: string | null
+          payment_hold_minutes: number
+          per_device_limit: number | null
+          per_user_limit: number
+          price: number
+          require_staff_pin: boolean
+          rules_text: string | null
+          show_as_home_banner: boolean
+          show_remaining: boolean
+          sort_order: number
+          staff_pin_hash: string | null
+          starts_at: string
+          success_message: string | null
+          success_title: string | null
+          title: string
+          total_stock: number | null
+          undo_seconds: number
+          unredeemed_refund_policy: string
+          updated_at: string
+        }
+        Insert: {
+          audience?: string
+          button_text?: string
+          card_color?: string | null
+          city_ids?: string[] | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          emoji?: string | null
+          ends_at?: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          mrp?: number | null
+          new_users_since?: string | null
+          payment_hold_minutes?: number
+          per_device_limit?: number | null
+          per_user_limit?: number
+          price?: number
+          require_staff_pin?: boolean
+          rules_text?: string | null
+          show_as_home_banner?: boolean
+          show_remaining?: boolean
+          sort_order?: number
+          staff_pin_hash?: string | null
+          starts_at?: string
+          success_message?: string | null
+          success_title?: string | null
+          title: string
+          total_stock?: number | null
+          undo_seconds?: number
+          unredeemed_refund_policy?: string
+          updated_at?: string
+        }
+        Update: {
+          audience?: string
+          button_text?: string
+          card_color?: string | null
+          city_ids?: string[] | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          emoji?: string | null
+          ends_at?: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          mrp?: number | null
+          new_users_since?: string | null
+          payment_hold_minutes?: number
+          per_device_limit?: number | null
+          per_user_limit?: number
+          price?: number
+          require_staff_pin?: boolean
+          rules_text?: string | null
+          show_as_home_banner?: boolean
+          show_remaining?: boolean
+          sort_order?: number
+          staff_pin_hash?: string | null
+          starts_at?: string
+          success_message?: string | null
+          success_title?: string | null
+          title?: string
+          total_stock?: number | null
+          undo_seconds?: number
+          unredeemed_refund_policy?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      event_redemptions: {
+        Row: {
+          amount: number
+          created_at: string
+          device_key: string | null
+          id: string
+          offer_id: string
+          paid_at: string | null
+          razorpay_order_id: string | null
+          razorpay_payment_id: string | null
+          razorpay_refund_id: string | null
+          redeemed_at: string | null
+          refunded_at: string | null
+          status: string
+          undo_deadline: string | null
+          undone_at: string | null
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          device_key?: string | null
+          id?: string
+          offer_id: string
+          paid_at?: string | null
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          razorpay_refund_id?: string | null
+          redeemed_at?: string | null
+          refunded_at?: string | null
+          status: string
+          undo_deadline?: string | null
+          undone_at?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          device_key?: string | null
+          id?: string
+          offer_id?: string
+          paid_at?: string | null
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          razorpay_refund_id?: string | null
+          redeemed_at?: string | null
+          refunded_at?: string | null
+          status?: string
+          undo_deadline?: string | null
+          undone_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_redemptions_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "event_offers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_redemptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       expert_holiday_notices: {
         Row: {
           created_at: string
@@ -3840,6 +4014,7 @@ export type Database = {
           joining_date: string | null
           kyc_aadhaar_url: string | null
           kyc_address_proof_url: string | null
+          kyc_bank_proof_url: string | null
           kyc_pan_url: string | null
           kyc_rejection_reason: string | null
           kyc_status: string
@@ -3885,6 +4060,7 @@ export type Database = {
           joining_date?: string | null
           kyc_aadhaar_url?: string | null
           kyc_address_proof_url?: string | null
+          kyc_bank_proof_url?: string | null
           kyc_pan_url?: string | null
           kyc_rejection_reason?: string | null
           kyc_status?: string
@@ -3930,6 +4106,7 @@ export type Database = {
           joining_date?: string | null
           kyc_aadhaar_url?: string | null
           kyc_address_proof_url?: string | null
+          kyc_bank_proof_url?: string | null
           kyc_pan_url?: string | null
           kyc_rejection_reason?: string | null
           kyc_status?: string
@@ -8870,6 +9047,10 @@ export type Database = {
         }
         Returns: string
       }
+      campaign_audience_match: {
+        Args: { _audience: string; _targets: string[]; _uid: string }
+        Returns: boolean
+      }
       check_booking_capacity: { Args: { _booking_id: string }; Returns: Json }
       check_serviceability: {
         Args: { _lat: number; _lng: number; _segment_id?: string }
@@ -9426,6 +9607,7 @@ export type Database = {
         }
         Returns: Json
       }
+      customer_completed_orders: { Args: { _user_id: string }; Returns: number }
       customer_delete_account: { Args: never; Returns: undefined }
       customer_delete_address: {
         Args: { p_address_id: string }
@@ -9492,6 +9674,23 @@ export type Database = {
         Returns: number
       }
       evaluate_zone_capacity: { Args: { _booking_id: string }; Returns: Json }
+      event_offer_audit: {
+        Args: { _action: string; _after: Json; _before: Json; _id: string }
+        Returns: undefined
+      }
+      event_offer_check: {
+        Args: {
+          _device: string
+          _exclude: string
+          _o: Database["public"]["Tables"]["event_offers"]["Row"]
+          _uid: string
+        }
+        Returns: string
+      }
+      event_redemption_effective_status: {
+        Args: { _status: string; _undo_deadline: string }
+        Returns: string
+      }
       expand_stale_broadcasts: { Args: never; Returns: number }
       expert_active_booking_count: {
         Args: { _exclude?: string; _expert_id: string }
@@ -9546,6 +9745,7 @@ export type Database = {
         Args: { _booking_id: string; _otp: string }
         Returns: string
       }
+      expire_event_payments: { Args: { _offer_id: string }; Returns: number }
       expire_stale_online_experts: { Args: never; Returns: number }
       extend_booking: {
         Args: {
@@ -9639,12 +9839,17 @@ export type Database = {
         Returns: boolean
       }
       is_internal_tester: { Args: never; Returns: boolean }
+      is_offer_finance_user: { Args: never; Returns: boolean }
       is_public_product_image: {
         Args: { _object_name: string }
         Returns: boolean
       }
       is_public_service_image: {
         Args: { object_name: string }
+        Returns: boolean
+      }
+      is_redemption_counted: {
+        Args: { _created_at: string; _hold_minutes: number; _status: string }
         Returns: boolean
       }
       is_super_admin_user: { Args: never; Returns: boolean }
@@ -9893,6 +10098,10 @@ export type Database = {
         Args: { _merchant_id: string; _session_id?: string }
         Returns: boolean
       }
+      redeem_event_offer: {
+        Args: { p_device_key: string; p_offer_id: string; p_staff_pin?: string }
+        Returns: Json
+      }
       referral_phone10: { Args: { _phone: string }; Returns: string }
       register_device_token: {
         Args: { p_fcm_token: string; p_platform: string }
@@ -10013,6 +10222,10 @@ export type Database = {
         Returns: Json
       }
       set_login_pin: { Args: { p_pin: string }; Returns: undefined }
+      set_offer_staff_pin: {
+        Args: { p_offer_id: string; p_pin: string }
+        Returns: undefined
+      }
       slot_busy_by_half: {
         Args: { _date: string; _service_key: string }
         Returns: {
@@ -10439,6 +10652,14 @@ export type Database = {
       staff_notify_waitlist_area: {
         Args: { _city?: string; _segment_id?: string }
         Returns: number
+      }
+      staff_offer_refundable: {
+        Args: { _offer_id: string }
+        Returns: {
+          amount: number
+          id: string
+          razorpay_payment_id: string
+        }[]
       }
       staff_partner_batch_approve: {
         Args: { _batch_id: string }
@@ -11062,6 +11283,7 @@ export type Database = {
         }
         Returns: string
       }
+      staff_upsert_event_offer: { Args: { _p: Json }; Returns: string }
       staff_upsert_expert: { Args: { _payload: Json }; Returns: string }
       staff_upsert_fee_tier: { Args: { _payload: Json }; Returns: string }
       staff_upsert_homepage_section: {
@@ -11174,6 +11396,10 @@ export type Database = {
         Returns: string
       }
       staff_zone_ids: { Args: { _auth_user_id: string }; Returns: string[] }
+      start_offer_payment: {
+        Args: { p_device_key: string; p_offer_id: string }
+        Returns: Json
+      }
       start_service: { Args: { _booking_id: string }; Returns: string }
       store_attach_payment: {
         Args: { _order_id: string; _rzp_order_id: string }
@@ -11320,6 +11546,22 @@ export type Database = {
         Args: { _event_id: string }
         Returns: undefined
       }
+      system_mark_offer_paid: {
+        Args: {
+          _amount: number
+          _payment_id: string
+          _razorpay_order_id: string
+        }
+        Returns: Json
+      }
+      system_mark_offer_payment_failed: {
+        Args: { _razorpay_order_id: string }
+        Returns: undefined
+      }
+      system_mark_offer_refunded: {
+        Args: { _redemption_id: string; _refund_id: string }
+        Returns: undefined
+      }
       system_mark_waitlist_whatsapp: {
         Args: { _event_id: string }
         Returns: undefined
@@ -11363,6 +11605,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      system_set_offer_order: {
+        Args: { _order_id: string; _redemption_id: string }
+        Returns: undefined
+      }
       system_store_mark_paid: {
         Args: { _payment_id: string; _rzp_order_id: string }
         Returns: boolean
@@ -11390,6 +11636,10 @@ export type Database = {
       }
       training_set_expert_mode: {
         Args: { _actor: string; _expert_id: string; _mode: string }
+        Returns: Json
+      }
+      undo_event_redemption: {
+        Args: { p_redemption_id: string }
         Returns: Json
       }
       verify_commission_parity: {
