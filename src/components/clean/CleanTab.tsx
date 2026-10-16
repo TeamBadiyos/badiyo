@@ -6,7 +6,7 @@ import maidHero from "@/assets/clean-maid-hero.jpg";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthUserId } from "@/lib/authUser";
-import { pick, useBookNowAllowed, useServiceContent, useServiceHours, type BannerKey, type CleanServiceKey, type ContentCard, type ServiceContent } from "@/lib/serviceSettings";
+import { pick, useBookNowAllowed, useNextFreeSlot, useServiceContent, useServiceHours, type BannerKey, type CleanServiceKey, type ContentCard, type ServiceContent } from "@/lib/serviceSettings";
 import { useLanguage } from "@/i18n";
 import { formatNextOpen } from "@/lib/serviceHours";
 import type { SegmentService, ServiceCategory } from "@/lib/segments";
@@ -24,13 +24,13 @@ import washCombo from "@/assets/wash-combo.jpg";
 const T = {
   en: {
     refer: "Refer & Earn", referSub: "Invite friends, earn coins on their first booking",
-    closedShort: "Closed now", opens: "Opens", available: "Available now", maid: "Maid", wash: "Car & Bike Wash", maidDoes: "What the maid does", whatIncluded: "What is included?", today: "today", tomorrow: "tomorrow",
+    closedShort: "Closed now", opens: "Opens", available: "Available now", maid: "Maid", wash: "Car & Bike Wash", washCard: "Car Wash", maidDoes: "What the maid does", whatIncluded: "What is included?", today: "today", tomorrow: "tomorrow",
     maidHero: "Maid for Your Everyday Needs", washHero: "A Wash for Every Ride", button: "Book Now",
     maidCards: ["Daily Cleaning", "Kitchen Help", "Deep Cleaning"],
   },
   mr: {
     refer: "रेफर करा आणि कमवा", referSub: "मित्रांना बोलवा, त्यांच्या पहिल्या बुकिंगवर कॉइन्स मिळवा",
-    closedShort: "सध्या बंद", opens: "उघडेल", available: "आता उपलब्ध", maid: "मावशी", wash: "कार आणि बाईक वॉश", maidDoes: "मावशी काय करेल", whatIncluded: "यात काय समाविष्ट आहे?", today: "आज", tomorrow: "उद्या",
+    closedShort: "सध्या बंद", opens: "उघडेल", available: "आता उपलब्ध", maid: "मावशी", wash: "कार आणि बाईक वॉश", washCard: "कार वॉश", maidDoes: "मावशी काय करेल", whatIncluded: "यात काय समाविष्ट आहे?", today: "आज", tomorrow: "उद्या",
     maidHero: "रोजच्या घरकामासाठी मावशी", washHero: "प्रत्येक गाडीसाठी वॉश", button: "बुक करा",
     maidCards: ["रोजची स्वच्छता", "किचन मदत", "सखोल स्वच्छता"],
   },
@@ -138,13 +138,14 @@ export function CleanTab({
   });
   const bannerKey = pickBanner(maidState, maidContent, bookNow?.allowed !== false);
   const banner = bannerKey === "campaign" ? maidContent?.campaign : maidContent?.banners?.[bannerKey];
+  const { data: freeSlot } = useNextFreeSlot("clean", maidState, bannerKey === "open_busy");
   const nextAt = formatNextOpen(maidState?.next_open_at ?? maidState?.resume_at);
   const dayWord = !nextAt || !/[a-z]/i.test(nextAt.replace(/AM|PM/g, "")) ? s.today : nextAt.startsWith("tomorrow") ? s.tomorrow : nextAt.split(" ").slice(0, 2).join(" ");
   const vars = {
     greeting: greeting(lang), name: firstName ?? "",
     open_time: maidState?.open_time ? fmtTime(maidState.open_time) : (nextAt?.split(" ").slice(-2).join(" ") ?? ""),
     day: dayWord,
-    next_slot: nextAt ?? "",
+    next_slot: freeSlot ? (freeSlot.day === "today" ? freeSlot.label : `${s.tomorrow} ${freeSlot.label}`) : (nextAt ?? ""),
   };
   const bTitle = fill(pick(lang, banner?.title, banner?.title_mr), vars) || s.maidHero;
   const bSub = fill(pick(lang, banner?.subline, banner?.subline_mr), vars);
@@ -167,9 +168,9 @@ export function CleanTab({
 
       <div className="relative -mx-5 -mt-8 rounded-t-[28px] bg-background px-5 pt-6">
         <div className="grid grid-cols-2 gap-3 pt-6">
-          <ServiceCard title={s.maid} status={statusLine(maidState)} closed={closed} icon={<Sparkles className="h-4 w-4" />} img={maidContent?.hero?.image_url || maidHero} onClick={() => openBooking(false)} />
+          <ServiceCard title={pick(lang, maidContent?.hero?.card_title, maidContent?.hero?.card_title_mr) || s.maid} status={statusLine(maidState)} closed={closed} icon={<Sparkles className="h-4 w-4" />} img={maidContent?.hero?.image_url || maidHero} onClick={() => openBooking(false)} />
           {washOptions.length > 0 && (
-            <ServiceCard title={s.wash} status={statusLine(washState)} closed={washState != null && !washState.can_order} icon={<Car className="h-4 w-4" />} img={washContent?.hero?.image_url || washCar} onClick={() => openBooking(true)} />
+            <ServiceCard title={pick(lang, washContent?.hero?.card_title, washContent?.hero?.card_title_mr) || s.washCard} status={statusLine(washState)} closed={washState != null && !washState.can_order} icon={<Car className="h-4 w-4" />} img={washContent?.hero?.image_url || washCar} onClick={() => openBooking(true)} />
           )}
         </div>
 
@@ -276,11 +277,13 @@ function fill(text: string, vars: Record<string, string>): string {
 
 function ServiceCard({ title, status, closed, icon, img, onClick }: { title: string; status: string; closed: boolean; icon: ReactNode; img: string; onClick: () => void }) {
   return (
-    <button onClick={onClick} className="relative flex min-h-[112px] flex-col justify-end rounded-[18px] bg-card p-3 pr-[42%] text-left shadow-soft transition active:scale-[0.98]">
-      <img src={img} alt="" loading="lazy" className={`pointer-events-none absolute -top-7 right-1 h-[130px] w-[44%] rounded-[14px] object-cover object-top ${closed ? "grayscale" : ""}`} />
-      <span className="mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">{icon}</span>
-      <span className="flex items-center text-sm font-extrabold text-foreground">{title}<ChevronRight className="h-4 w-4 shrink-0" /></span>
-      <span className={`mt-0.5 text-[11px] font-semibold ${closed ? "text-muted-foreground" : "text-primary"}`}>{status}</span>
+    <button onClick={onClick} className="relative flex min-h-[104px] flex-col justify-end rounded-[18px] bg-card p-3 text-left shadow-soft transition active:scale-[0.98]">
+      <img src={img} alt="" loading="lazy" className={`pointer-events-none absolute bottom-0 right-1 h-[125%] w-[45%] object-contain object-right-bottom ${closed ? "grayscale" : ""}`} />
+      <div className="relative w-[55%] min-w-0">
+        <span className="mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">{icon}</span>
+        <span className="flex min-w-0 items-center text-sm font-extrabold text-foreground"><span className="truncate">{title}</span><ChevronRight className="h-4 w-4 shrink-0" /></span>
+        <span className={`mt-0.5 block truncate text-[11px] font-semibold ${closed ? "text-muted-foreground" : "text-primary"}`}>{status}</span>
+      </div>
     </button>
   );
 }

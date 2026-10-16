@@ -547,6 +547,7 @@ export function HomeScreen({
           <button
             onClick={() => setLocationSheetOpen(true)}
             className="min-w-0 flex-1 text-left"
+            style={tab === "clean" ? { textShadow: "0 1px 4px color-mix(in oklab, var(--foreground) 45%, transparent)" } : undefined}
           >
             <span className={`flex items-center gap-1 text-[17px] font-extrabold leading-tight ${tab === "clean" ? "text-primary-foreground" : "text-foreground"}`}>
               <MapPin className={`h-4 w-4 shrink-0 ${tab === "clean" ? "text-primary-foreground" : "text-primary"}`} />
@@ -560,14 +561,14 @@ export function HomeScreen({
           <button
             onClick={onOpenWallet}
             aria-label={t("home.walletAria")}
-            className="flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-primary/10 px-3 text-sm font-extrabold text-primary"
+            className={`flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3 text-sm font-extrabold text-primary ${tab === "clean" ? "bg-card shadow-soft" : "bg-primary/10"}`}
           >
             <WalletIcon className="h-4 w-4" />₹{coinBalance ?? 0}
           </button>
           <button
             onClick={onOpenProfile}
             aria-label={t("common.profile")}
-            className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10"
+            className={`flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full ${tab === "clean" ? "bg-card shadow-soft" : "bg-primary/10"}`}
           >
             {avatarUrl ? (
               <img src={avatarUrl} alt={t("common.profile")} className="h-full w-full object-cover" decoding="async" />
