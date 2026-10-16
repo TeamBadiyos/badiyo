@@ -462,7 +462,6 @@ function Index() {
   const isAtRootPhase = useCallback((p: Phase) => {
     return (
       p === "home" ||
-      p === "login" ||
       p === "otp-verify" ||
       p === "pin-login" ||
       p === "pin-set" ||
@@ -837,6 +836,7 @@ function Index() {
       {phase === "login" && (
         <div className="animate-fade-slide-in">
           <LoginScreen
+            onBack={historyRef.current.length > 0 ? () => goBack(false) : undefined}
             onOtpSent={(p) => {
               setPendingPhone(p);
               setPhase("otp-verify");
