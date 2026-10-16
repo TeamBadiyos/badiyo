@@ -2451,6 +2451,38 @@ export type Database = {
         }
         Relationships: []
       }
+      city_boundaries: {
+        Row: {
+          city_id: string
+          geom: unknown
+          saved_by: string | null
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          city_id: string
+          geom: unknown
+          saved_by?: string | null
+          source?: string
+          updated_at?: string
+        }
+        Update: {
+          city_id?: string
+          geom?: unknown
+          saved_by?: string | null
+          source?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "city_boundaries_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: true
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       city_interest_leads: {
         Row: {
           city: string
@@ -11089,45 +11121,127 @@ export type Database = {
         }
         Relationships: []
       }
+      zone_draft_cells: {
+        Row: {
+          city_id: string
+          colour: string
+          created_at: string
+          geom: unknown
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          city_id: string
+          colour?: string
+          created_at?: string
+          geom: unknown
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          city_id?: string
+          colour?: string
+          created_at?: string
+          geom?: unknown
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "zone_draft_cells_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      zone_draft_history: {
+        Row: {
+          actor: string | null
+          city_id: string
+          created_at: string
+          id: number
+          op: string
+          snapshot: Json
+        }
+        Insert: {
+          actor?: string | null
+          city_id: string
+          created_at?: string
+          id?: number
+          op: string
+          snapshot: Json
+        }
+        Update: {
+          actor?: string | null
+          city_id?: string
+          created_at?: string
+          id?: number
+          op?: string
+          snapshot?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "zone_draft_history_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       zones: {
         Row: {
           boundary: Json
           city: string
           city_id: string | null
+          colour: string | null
           created_at: string
           delete_reason: string | null
           deleted_at: string | null
           deleted_by: string | null
+          geom: unknown
           id: string
           name: string
           segment_id: string
           status: string
+          version: number
         }
         Insert: {
           boundary: Json
           city: string
           city_id?: string | null
+          colour?: string | null
           created_at?: string
           delete_reason?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
+          geom?: unknown
           id?: string
           name: string
           segment_id: string
           status?: string
+          version?: number
         }
         Update: {
           boundary?: Json
           city?: string
           city_id?: string | null
+          colour?: string | null
           created_at?: string
           delete_reason?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
+          geom?: unknown
           id?: string
           name?: string
           segment_id?: string
           status?: string
+          version?: number
         }
         Relationships: [
           {
@@ -15101,6 +15215,53 @@ export type Database = {
         Returns: Json
       }
       zone_delete_impact: { Args: { _zone_id: string }; Returns: Json }
+      zone_lookup: { Args: { _lat: number; _lng: number }; Returns: Json }
+      zv2_assert_no_overlap: { Args: { _city: string }; Returns: undefined }
+      zv2_clean: { Args: { _g: unknown }; Returns: unknown }
+      zv2_from_jsonb: { Args: { _b: Json }; Returns: unknown }
+      zv2_merge: { Args: { _a: string; _b: string }; Returns: Json }
+      zv2_move_point: {
+        Args: {
+          _city: string
+          _lat: number
+          _lng: number
+          _old_lat: number
+          _old_lng: number
+        }
+        Returns: Json
+      }
+      zv2_normalize: { Args: { _city: string }; Returns: number }
+      zv2_require: {
+        Args: { _city: string; _super?: boolean }
+        Returns: undefined
+      }
+      zv2_save_boundary: {
+        Args: {
+          _city: string
+          _geojson: Json
+          _reset: boolean
+          _source: string
+        }
+        Returns: Json
+      }
+      zv2_set_cell_geom: {
+        Args: { _cell: string; _geojson: Json }
+        Returns: Json
+      }
+      zv2_snapshot: { Args: { _city: string; _op: string }; Returns: undefined }
+      zv2_split: { Args: { _cell: string; _line: Json }; Returns: Json }
+      zv2_state: { Args: { _city: string }; Returns: Json }
+      zv2_switchover_apply: {
+        Args: { _city: string; _mapping: Json }
+        Returns: Json
+      }
+      zv2_switchover_preview: { Args: { _city: string }; Returns: Json }
+      zv2_to_jsonb: { Args: { _g: unknown }; Returns: Json }
+      zv2_undo: { Args: { _city: string }; Returns: Json }
+      zv2_update_cell: {
+        Args: { _cell: string; _colour: string; _name: string }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never
