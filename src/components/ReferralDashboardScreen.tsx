@@ -16,6 +16,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { ReferralCodeInput } from "@/components/ReferralCodeInput";
 import { fetchReferralProgress } from "@/lib/coupons";
 import { toast } from "sonner";
+import { useLanguage } from "@/i18n";
+import { readLangOutsideReact } from "@/lib/catalogI18n";
 
 
 import { buildPlayStoreInviteUrl, buildReferralShareMessage } from "@/lib/referrals";
@@ -47,19 +49,20 @@ type ReferralConfigRow = {
   booking_reward_coins: number | null;
 };
 
-const STATUS_META: Record<string, { label: string; className: string }> = {
-  pending: { label: "Pending", className: "bg-muted text-muted-foreground" },
-  registered: { label: "Joined", className: "bg-blue-100 text-blue-700" },
+const L = (en: string, mr: string) => (readLangOutsideReact() === "mr" ? mr : en);
+const statusMetaMap = (): Record<string, { label: string; className: string }> => ({
+  pending: { label: L("Pending", "बाकी"), className: "bg-muted text-muted-foreground" },
+  registered: { label: L("Joined", "जॉइन झाले"), className: "bg-blue-100 text-blue-700" },
   first_booking_completed: {
-    label: "First Booking",
+    label: L("First Booking", "पहिले बुकिंग"),
     className: "bg-orange-100 text-orange-700",
   },
   reward_credited: {
-    label: "Fully Rewarded",
+    label: L("Fully Rewarded", "पूर्ण रिवॉर्ड"),
     className: "bg-primary/15 text-primary",
   },
-  reversed: { label: "Reversed", className: "bg-muted text-muted-foreground" },
-};
+  reversed: { label: L("Reversed", "परत घेतले"), className: "bg-muted text-muted-foreground" },
+});
 
 function txnEarned(t: Txn) {
   const staged =
@@ -69,7 +72,7 @@ function txnEarned(t: Txn) {
 
 function statusMeta(status: string) {
   return (
-    STATUS_META[status] ?? {
+    statusMetaMap()[status] ?? {
       label: status.replace(/_/g, " "),
       className: "bg-muted text-muted-foreground",
     }
@@ -111,7 +114,7 @@ async function fetchAll() {
 function friendLabel(t: Txn) {
   const name = t.referred_name?.trim();
   if (name) return name;
-  return "Friend";
+  return L("Friend", "मित्र");
 }
 
 function initialsFor(t: Txn) {
@@ -149,7 +152,7 @@ function QrModal({ url, onClose }: { url: string; onClose: () => void }) {
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center">
       <div className="mx-auto w-full max-w-md rounded-t-[24px] bg-card p-6 pb-[calc(var(--app-safe-bottom)+24px)] sm:rounded-[24px] sm:pb-8">
         <div className="flex items-center justify-between">
-          <h3 className="text-base font-extrabold text-foreground">Your invite QR</h3>
+          <h3 className="text-base font-extrabold text-foreground">{L("Your invite QR", "तुमचा आमंत्रण QR")}</h3>
           <button
             aria-label="Close"
             onClick={onClose}
@@ -170,6 +173,8 @@ function QrModal({ url, onClose }: { url: string; onClose: () => void }) {
 }
 
 export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
+  const { lang } = useLanguage();
+  const tr = (en: string, mr: string) => (lang === "mr" ? mr : en);
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["referral-dashboard"],
     queryFn: fetchAll,
@@ -246,7 +251,7 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
       if (Capacitor.isNativePlatform()) {
         const { Share } = await import("@capacitor/share");
         // Only `text` — passing `url` too makes the link appear twice.
-        await Share.share({ text: shareText, dialogTitle: "Share badiyos" });
+        await Share.share({ text: shareText, dialogTitle: tr("Share badiyos", "badiyos शेअर करा") });
         return;
       }
     } catch {
@@ -265,9 +270,9 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
 
     try {
       await navigator.clipboard.writeText(shareText);
-      toast.success("Invite link copied to clipboard");
+      toast.success(tr("Invite link copied to clipboard", "आमंत्रण लिंक कॉपी झाली"));
     } catch {
-      toast.error("Could not share or copy the link");
+      toast.error(tr("Could not share or copy the link", "लिंक शेअर किंवा कॉपी करता आली नाही"));
     }
   }
 
@@ -284,14 +289,14 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
           >
             <ArrowLeft className="h-5 w-5 text-foreground" />
           </button>
-          <h1 className="text-base font-bold text-foreground">Refer & Earn</h1>
+          <h1 className="text-base font-bold text-foreground">{tr("Refer & Earn", "रेफर करा आणि कमवा")}</h1>
         </div>
 
         {isLoading ? (
-          <div className="py-16 text-center text-sm text-muted-foreground">Loading…</div>
+          <div className="py-16 text-center text-sm text-muted-foreground">{tr("Loading…", "लोड होत आहे…")}</div>
         ) : error ? (
           <div className="py-16 text-center text-sm text-destructive">
-            Could not load referral data
+            {tr("Could not load referral data", "रेफरल माहिती लोड झाली नाही")}
           </div>
         ) : (
           <>
@@ -303,11 +308,10 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
                 </div>
                 <div className="min-w-0">
                   <p className="text-base font-extrabold leading-snug text-foreground">
-                    You&apos;ve helped {familiesHelped}{" "}
-                    {familiesHelped === 1 ? "family" : "families"} discover badiyos
+                    {tr(`You've helped ${familiesHelped} ${familiesHelped === 1 ? "family" : "families"} discover badiyos`, `तुम्ही ${familiesHelped} कुटुंबांना badiyos ची ओळख करून दिली`)}
                   </p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Keep sharing to earn more rewards
+                    {tr("Keep sharing to earn more rewards", "आणखी रिवॉर्ड्ससाठी शेअर करत रहा")}
                   </p>
                 </div>
               </div>
@@ -315,20 +319,20 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
 
             {/* Stat grid */}
             <section className="mt-4 grid grid-cols-2 gap-3">
-              <StatCard label="Total Rewards Earned" value={`₹${totalRewards}`} />
-              <StatCard label="Wallet Balance" value={`₹${walletBalance}`} />
-              <StatCard label="Families Referred" value={String(totalReferred)} />
-              <StatCard label="Successful Referrals" value={String(successful.length)} />
+              <StatCard label={tr("Total Rewards Earned", "एकूण मिळालेले रिवॉर्ड्स")} value={`₹${totalRewards}`} />
+              <StatCard label={tr("Wallet Balance", "वॉलेट शिल्लक")} value={`₹${walletBalance}`} />
+              <StatCard label={tr("Families Referred", "रेफर केलेली कुटुंबे")} value={String(totalReferred)} />
+              <StatCard label={tr("Successful Referrals", "यशस्वी रेफरल्स")} value={String(successful.length)} />
             </section>
 
             {/* How rewards work */}
             <section className="mt-4 rounded-[18px] border border-border bg-card p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h2 className="text-sm font-bold text-foreground">
-                  Earn ₹{totalPerReferral} in badiyos Wallet per friend
+                  {tr(`Earn ₹${totalPerReferral} in badiyos Wallet per friend`, `प्रत्येक मित्रामागे badiyos वॉलेटमध्ये ₹${totalPerReferral} कमवा`)}
                 </h2>
                 <span className="rounded-full bg-primary/15 px-2.5 py-1 text-[11px] font-extrabold text-primary">
-                  Added to your badiyos Wallet
+                  {tr("Added to your badiyos Wallet", "तुमच्या badiyos वॉलेटमध्ये जमा")}
                 </span>
               </div>
               <div className="mt-3 space-y-2">
@@ -340,7 +344,7 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
                     <span className="font-bold text-foreground">
                       ₹{signupReward}
                     </span>{" "}
-                    as soon as your friend joins badiyos with your code.
+                    {tr("as soon as your friend joins badiyos with your code.", "तुमचा मित्र तुमच्या कोडने badiyos जॉइन करताच.")}
                   </p>
                 </div>
                 <div className="flex items-start gap-3">
@@ -351,20 +355,19 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
                     <span className="font-bold text-foreground">
                       ₹{bookingReward}
                     </span>{" "}
-                    when they complete their first booking.
+                    {tr("when they complete their first booking.", "त्यांचे पहिले बुकिंग पूर्ण झाल्यावर.")}
                   </p>
                 </div>
               </div>
               <p className="mt-3 rounded-[12px] bg-muted/60 p-3 text-xs text-muted-foreground">
-                <span className="font-bold text-foreground">Rewards go to your badiyos Wallet.</span>{" "}
-                That is ₹{totalPerReferral} per friend. Use your wallet balance
-                at checkout to pay less on any booking.
+                <span className="font-bold text-foreground">{tr("Rewards go to your badiyos Wallet.", "रिवॉर्ड्स तुमच्या badiyos वॉलेटमध्ये जमा होतात.")}</span>{" "}
+                {tr(`That is ₹${totalPerReferral} per friend. Use your wallet balance at checkout to pay less on any booking.`, `म्हणजे प्रत्येक मित्रामागे ₹${totalPerReferral}. चेकआउटवर वॉलेट शिल्लक वापरून कोणत्याही बुकिंगवर कमी पैसे भरा.`)}
               </p>
             </section>
 
             {/* Apply a friend's code */}
             <section className="mt-6">
-              <h2 className="text-sm font-bold text-foreground">Enter a friend&apos;s code</h2>
+              <h2 className="text-sm font-bold text-foreground">{tr("Enter a friend's code", "मित्राचा कोड टाका")}</h2>
               <ReferralCodeInput
                 className="mt-3"
                 alreadyReferred={!!user?.referred_by}
@@ -374,7 +377,7 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
 
             {/* Referral code */}
             <section className="mt-6">
-              <h2 className="text-sm font-bold text-foreground">Your referral code</h2>
+              <h2 className="text-sm font-bold text-foreground">{tr("Your referral code", "तुमचा रेफरल कोड")}</h2>
               <div className="mt-3 flex items-center gap-3 rounded-[18px] border border-dashed border-primary/50 bg-primary/5 p-4">
                 <div className="flex-1 truncate text-2xl font-extrabold tracking-wider text-primary">
                   {code || "—"}
@@ -386,11 +389,11 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
                 >
                   {copied === "code" ? (
                     <>
-                      <Check className="h-4 w-4" /> Copied
+                      <Check className="h-4 w-4" /> {tr("Copied", "कॉपी झाले")}
                     </>
                   ) : (
                     <>
-                      <Copy className="h-4 w-4" /> Copy
+                      <Copy className="h-4 w-4" /> {tr("Copy", "कॉपी")}
                     </>
                   )}
                 </button>
@@ -399,7 +402,7 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
 
             {/* Share options */}
             <section className="mt-6">
-              <h2 className="text-sm font-bold text-foreground">Share with friends</h2>
+              <h2 className="text-sm font-bold text-foreground">{tr("Share with friends", "मित्रांसोबत शेअर करा")}</h2>
               <div className="mt-3 grid grid-cols-4 gap-2">
                 <ShareBtn
                   icon={<MessageCircle className="h-5 w-5" />}
@@ -414,12 +417,12 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
                       <Link2 className="h-5 w-5" />
                     )
                   }
-                  label={copied === "link" ? "Copied" : "Copy Link"}
+                  label={copied === "link" ? tr("Copied", "कॉपी झाले") : tr("Copy Link", "लिंक कॉपी")}
                   onClick={() => copyText(inviteUrl, "link")}
                 />
                 <ShareBtn
                   icon={<Share2 className="h-5 w-5" />}
-                  label="Share"
+                  label={tr("Share", "शेअर")}
                   onClick={nativeShare}
                 />
                 <ShareBtn
@@ -433,9 +436,9 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
             {/* Referral progress */}
             <section className="mt-6 grid grid-cols-3 gap-2">
               {[
-                { label: "Invited", value: invitedCount },
-                { label: "Joined", value: joinedCount },
-                { label: "Qualified", value: qualifiedCount },
+                { label: tr("Invited", "आमंत्रित"), value: invitedCount },
+                { label: tr("Joined", "जॉइन झाले"), value: joinedCount },
+                { label: tr("Qualified", "पात्र"), value: qualifiedCount },
               ].map((s) => (
                 <div
                   key={s.label}
@@ -449,21 +452,20 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
               ))}
             </section>
             <p className="mt-2 text-[11px] text-muted-foreground">
-              You get ₹{signupReward} when a friend joins, and ₹{bookingReward} more
-              once they complete their first booking.
+              {tr(`You get ₹${signupReward} when a friend joins, and ₹${bookingReward} more once they complete their first booking.`, `मित्र जॉइन झाल्यावर ₹${signupReward} आणि त्यांचे पहिले बुकिंग पूर्ण झाल्यावर आणखी ₹${bookingReward} मिळतील.`)}
             </p>
 
 
             {/* Referral history */}
             <section className="mt-8">
-              <h2 className="text-sm font-bold text-foreground">Referral History</h2>
+              <h2 className="text-sm font-bold text-foreground">{tr("Referral History", "रेफरल इतिहास")}</h2>
               {transactions.length === 0 ? (
                 <div className="mt-3 rounded-[18px] border border-dashed border-border bg-card p-6 text-center">
                   <p className="text-sm font-semibold text-foreground">
-                    No referrals yet
+                    {tr("No referrals yet", "अजून रेफरल नाहीत")}
                   </p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Start sharing your code!
+                    {tr("Start sharing your code!", "तुमचा कोड शेअर करायला सुरुवात करा!")}
                   </p>
                 </div>
               ) : (
@@ -489,9 +491,9 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
                             {friendLabel(t)}
                           </div>
                           <div className="text-[11px] text-muted-foreground">
-                            {date} · ₹{earned} earned
+                            {date} · ₹{earned} {tr("earned", "मिळाले")}
                             {pending > 0 && t.status !== "reversed"
-                              ? ` · ${pending} after first booking`
+                              ? tr(` · ₹${pending} after first booking`, ` · पहिल्या बुकिंगनंतर ₹${pending}`)
                               : ""}
                           </div>
                         </div>

@@ -1127,7 +1127,7 @@ function Index() {
             address={selectedAddress}
             coupon={appliedCoupon}
             redeemCoins={redeemCoins}
-
+            note={expertNote}
             onBack={() => {
               // Booking wasn't made — make sure no coupon stays held.
               void queryClient.invalidateQueries({ queryKey: ["my_coupons"] });

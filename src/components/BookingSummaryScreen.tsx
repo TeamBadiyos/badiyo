@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ArrowLeft, ChevronRight, Droplets, MapPin, Package, Tag, Wallet, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Switch } from "@/components/ui/switch";
-import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { CancellationPolicySheet } from "@/components/CancellationPolicySheet";
 import type { SelectedService, SelectedSlot } from "@/lib/bookingTypes";
 import { useLanguage } from "@/i18n";
 import { hapticImpact } from "@/lib/haptics";
@@ -10,7 +10,6 @@ import { billBreakdown } from "@/lib/gst";
 import { useBookingGstPercent, useServiceContent } from "@/lib/serviceSettings";
 import type { AppliedCoupon } from "@/lib/coupons";
 import { fetchMyCoinBalance } from "@/lib/coins";
-import { useBackHandler } from "@/lib/backHandler";
 
 export type SelectedAddress = {
   id: string;
@@ -32,11 +31,6 @@ const TXT = {
     walletLine: "badiyos Wallet", total: "Total", policy: "Cancellation policy", pay: "Pay ₹{n}", payWallet: "Pay with wallet",
     maidNote: "Our expert brings basic supplies. Please keep a broom, mop and bucket ready if you prefer your own.",
     washNote: "Please keep a water supply and a plug point ready, and the vehicle parked. Our expert will not drive the vehicle.",
-    policyBody: [
-      "Free cancellation until the expert is assigned.",
-      "Once the expert is on the way, a cancellation fee may apply.",
-      "Refunds go back to your original payment method in 5–7 working days; badiyos Wallet amounts return to your wallet instantly.",
-    ],
     home: "Home Maid", wash: "Car Wash",
   },
   mr: {
@@ -47,11 +41,6 @@ const TXT = {
     walletLine: "badiyos वॉलेट", total: "एकूण", policy: "रद्द करण्याचे धोरण", pay: "₹{n} भरा", payWallet: "वॉलेटने भरा",
     maidNote: "आमचा एक्सपर्ट मूलभूत साहित्य आणतो. स्वतःचे हवे असल्यास झाडू, पोछा व बादली तयार ठेवा.",
     washNote: "कृपया पाणी व प्लग पॉइंट तयार ठेवा आणि वाहन पार्क केलेले असावे. आमचा एक्सपर्ट वाहन चालवणार नाही.",
-    policyBody: [
-      "एक्सपर्ट नेमला जाईपर्यंत मोफत रद्द करता येते.",
-      "एक्सपर्ट निघाल्यानंतर रद्द केल्यास शुल्क लागू शकते.",
-      "परतावा मूळ पेमेंट पद्धतीत ५–७ कामकाजाच्या दिवसांत येतो; badiyos वॉलेटची रक्कम लगेच वॉलेटमध्ये परत येते.",
-    ],
     home: "होम मेड", wash: "कार वॉश",
   },
 };
@@ -90,7 +79,6 @@ export function BookingSummaryScreen({
   const isWash = slot.serviceKey === "wash";
   const { data: content } = useServiceContent(isWash ? "wash" : "clean");
   const [policyOpen, setPolicyOpen] = useState(false);
-  useBackHandler(policyOpen, () => setPolicyOpen(false));
 
   const gstPercent = useBookingGstPercent(service.id);
   const price = Number(service.price);
@@ -192,9 +180,10 @@ export function BookingSummaryScreen({
         {/* 5. Note */}
         <section className="mt-3 rounded-[16px] bg-card p-4 shadow-soft">
           <label htmlFor="expert-note" className="text-sm font-extrabold text-foreground">{s.noteLabel}</label>
-          <textarea id="expert-note" value={note} maxLength={200} rows={2} placeholder={s.notePh}
-            onChange={(e) => onNoteChange?.(e.target.value)}
+          <textarea id="expert-note" value={note} maxLength={300} rows={2} placeholder={s.notePh}
+            onChange={(e) => onNoteChange?.(e.target.value.slice(0, 300))}
             className="mt-2 w-full resize-none rounded-[12px] border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary" />
+          <p className="text-right text-[11px] text-muted-foreground">{note.length}/300</p>
           <div className="mt-2 flex items-start gap-2.5 rounded-[12px] bg-surface-soft p-3">
             <NoteIcon className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
             <p className="text-xs font-semibold text-foreground">{ccNote}</p>
@@ -233,14 +222,7 @@ export function BookingSummaryScreen({
         </div>
       </div>
 
-      <Sheet open={policyOpen} onOpenChange={setPolicyOpen}>
-        <SheetContent side="bottom" className="rounded-t-[24px] px-5 pb-6 safe-bottom">
-          <SheetTitle className="mt-2 text-lg font-extrabold text-foreground">{s.policy}</SheetTitle>
-          <ul className="mt-3 space-y-2 text-sm text-foreground">
-            {s.policyBody.map((x, i) => <li key={i} className="flex gap-2"><span className="text-primary">•</span>{x}</li>)}
-          </ul>
-        </SheetContent>
-      </Sheet>
+      <CancellationPolicySheet open={policyOpen} onClose={() => setPolicyOpen(false)} serviceKey={isWash ? "wash" : "clean"} />
     </main>
   );
 }

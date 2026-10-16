@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Bell, Loader2, MapPin } from "lucide-react";
 import { useLanguage } from "@/i18n";
-import { getCurrentCoords } from "@/lib/nativeGeolocation";
+import { getCurrentCoords, LocationPermissionError } from "@/lib/nativeGeolocation";
+import { LocationDeniedScreen } from "@/components/utility/LocationDeniedScreen";
 
 export const FIRST_OPEN_KEY = "badiyos.firstOpenDone.v1";
 
@@ -50,6 +51,7 @@ export function FirstOpenScreen({ onDone }: { onDone: () => void }) {
   const { lang } = useLanguage();
   const c = COPY[lang];
   const [busy, setBusy] = useState(false);
+  const [denied, setDenied] = useState(false);
 
   const finish = () => {
     try {
@@ -62,10 +64,12 @@ export function FirstOpenScreen({ onDone }: { onDone: () => void }) {
 
   const allow = async () => {
     setBusy(true);
-    await getCurrentCoords().catch(() => null);
+    let refused = false;
+    await getCurrentCoords().catch((e) => { refused = e instanceof LocationPermissionError; });
     await askNotifications();
     setBusy(false);
-    finish();
+    if (refused) setDenied(true);
+    else finish();
   };
 
   const Row = ({ icon, title, sub }: { icon: React.ReactNode; title: string; sub: string }) => (
@@ -79,6 +83,8 @@ export function FirstOpenScreen({ onDone }: { onDone: () => void }) {
       </div>
     </div>
   );
+
+  if (denied) return <LocationDeniedScreen onEnterManually={finish} />;
 
   return (
     <div className="fixed inset-0 z-[60] flex flex-col bg-background px-6 pb-[calc(var(--app-safe-bottom)+24px)] pt-[calc(var(--app-safe-top,0px)+48px)]">

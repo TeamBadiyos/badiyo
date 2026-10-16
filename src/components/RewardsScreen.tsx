@@ -6,6 +6,7 @@ import { fetchCustomerRewards, formatRewardValue } from "@/lib/rewards";
 import { ContestTab } from "./contest/ContestTab";
 import { DealsTab, useDeals } from "./deals/DealsTab";
 import { BottomNav } from "./BottomNav";
+import { useLanguage } from "@/i18n";
 import { fetchCourierEnabled } from "./courier/courierData";
 
 function formatDate(iso: string): string {
@@ -37,6 +38,8 @@ export function RewardsScreen({
   onOpenBookings: () => void;
   onOpenCourier?: () => void;
 }) {
+    const { lang: __lang } = useLanguage();
+  const tr = (en: string, mr: string) => (__lang === "mr" ? mr : en);
   const { data: courierEnabled = false } = useQuery({
     queryKey: ["courier_enabled"],
     queryFn: () => fetchCourierEnabled(),
@@ -73,7 +76,7 @@ export function RewardsScreen({
     <main className="min-h-screen w-full bg-background pb-28 momentum-scroll">
       <PullToRefreshIndicator pull={pull} refreshing={refreshing} />
       <div className="mx-auto w-full max-w-md px-5 pt-6">
-        <h1 className="text-lg font-bold text-foreground">Rewards</h1>
+        <h1 className="text-lg font-bold text-foreground">{tr("Rewards", "रिवॉर्ड्स")}</h1>
 
         {/* Tabs */}
         <div className="mt-4 flex rounded-[14px] border border-border bg-card p-1">
@@ -86,7 +89,7 @@ export function RewardsScreen({
                 tab === k ? "bg-primary text-primary-foreground" : "text-muted-foreground"
               }`}
             >
-              {k === "rewards" ? "Rewards" : k === "contest" ? "Contest" : "Deals"}
+              {k === "rewards" ? tr("Rewards", "रिवॉर्ड्स") : k === "contest" ? tr("Contest", "स्पर्धा") : tr("Deals", "डील्स")}
               {k === "deals" && dealsLive && <span className="absolute right-3 top-1.5 h-2 w-2 rounded-full bg-destructive" />}
             </button>
           ))}
@@ -98,7 +101,7 @@ export function RewardsScreen({
         {tab === "rewards" && (
           <>
         {/* Referral first */}
-        <h2 className="mt-6 text-base font-bold text-foreground">Refer &amp; Earn</h2>
+        <h2 className="mt-6 text-base font-bold text-foreground">{tr("Refer & Earn", "रेफर करा आणि कमवा")}</h2>
         <button
           type="button"
           onClick={onOpenReferrals}
@@ -108,13 +111,12 @@ export function RewardsScreen({
             <Gift className="h-5 w-5 text-primary" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-bold text-foreground">Invite friends, earn badiyos Wallet money</p>
+            <p className="text-sm font-bold text-foreground">{tr("Invite friends, earn badiyos Wallet money", "मित्रांना बोलवा, badiyos वॉलेटमध्ये पैसे मिळवा")}</p>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              Share your code and get money in your badiyos Wallet when a friend joins, plus more once they
-              complete their first booking.
+              {tr("Share your code and get money in your badiyos Wallet when a friend joins, plus more once they complete their first booking.", "तुमचा कोड शेअर करा — मित्र जॉइन झाल्यावर badiyos वॉलेटमध्ये पैसे मिळवा, आणि त्यांच्या पहिल्या बुकिंगनंतर आणखी.")}
             </p>
             <span className="mt-2 inline-block text-xs font-bold text-primary">
-              Share your code →
+              {tr("Share your code →", "तुमचा कोड शेअर करा →")}
             </span>
           </div>
         </button>
@@ -124,16 +126,16 @@ export function RewardsScreen({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-primary/80">
-                Total earned in badiyos Wallet
+                {tr("Total earned in badiyos Wallet", "badiyos वॉलेटमध्ये एकूण कमाई")}
               </p>
               <p className="mt-2 text-3xl font-extrabold text-foreground">
                 ₹{isLoading ? "—" : coins}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Added to your badiyos Wallet
+                {tr("Added to your badiyos Wallet", "तुमच्या badiyos वॉलेटमध्ये जमा")}
               </p>
               <p className="mt-0.5 text-xs text-muted-foreground">
-                Includes referral rewards and bonuses credited to you.
+                {tr("Includes referral rewards and bonuses credited to you.", "रेफरल रिवॉर्ड्स आणि तुम्हाला मिळालेले बोनस यांचा समावेश.")}
               </p>
             </div>
             <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm">
@@ -155,10 +157,10 @@ export function RewardsScreen({
         </section>
 
         {/* Active offers */}
-        <h2 className="mt-8 text-base font-bold text-foreground">Ways to earn</h2>
+        <h2 className="mt-8 text-base font-bold text-foreground">{tr("Ways to earn", "कमावण्याचे मार्ग")}</h2>
         <div className="mt-4 space-y-3">
           {isLoading && (
-            <p className="text-sm text-muted-foreground">Loading…</p>
+            <p className="text-sm text-muted-foreground">{tr("Loading…", "लोड होत आहे…")}</p>
           )}
 
           {programs.map((p) => {
@@ -190,7 +192,7 @@ export function RewardsScreen({
                   </div>
                   {p.valid_until && (
                     <p className="mt-0.5 text-xs text-muted-foreground">
-                      Valid till {formatDate(p.valid_until)}
+                      {tr("Valid till", "पर्यंत वैध:")} {formatDate(p.valid_until)}
                     </p>
                   )}
                   {p.progress && p.progress.total > 1 && (
@@ -202,7 +204,7 @@ export function RewardsScreen({
                         />
                       </div>
                       <p className="mt-1 text-xs font-medium text-muted-foreground">
-                        {p.progress.current}/{p.progress.total} completed
+                        {p.progress.current}/{p.progress.total} {tr("completed", "पूर्ण")}
                       </p>
                     </div>
                   )}
@@ -213,11 +215,11 @@ export function RewardsScreen({
         </div>
 
         {/* History */}
-        <h2 className="mt-8 text-base font-bold text-foreground">Reward history</h2>
+        <h2 className="mt-8 text-base font-bold text-foreground">{tr("Reward history", "रिवॉर्ड इतिहास")}</h2>
         <div className="mt-4 space-y-3">
           {!isLoading && ledger.length === 0 && (
             <p className="rounded-[18px] border border-border bg-card p-4 text-xs text-muted-foreground">
-              No rewards yet. Complete bookings and refer friends to start earning.
+              {tr("No rewards yet. Complete bookings and refer friends to start earning.", "अजून रिवॉर्ड्स नाहीत. कमाई सुरू करण्यासाठी बुकिंग पूर्ण करा आणि मित्रांना रेफर करा.")}
             </p>
           )}
           {ledger.map((l) => {
@@ -232,7 +234,7 @@ export function RewardsScreen({
                     <p
                       className={`truncate text-sm font-bold ${reversed ? "text-muted-foreground line-through" : "text-foreground"}`}
                     >
-                      {l.program_name ?? "Reward"}
+                      {l.program_name ?? tr("Reward", "रिवॉर्ड")}
                     </p>
                     <p className="mt-0.5 text-xs text-muted-foreground">
                       {formatDate(l.credited_at)}
@@ -246,7 +248,7 @@ export function RewardsScreen({
                     </span>
                     {reversed && (
                       <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-destructive">
-                        Reversed
+                        {tr("Reversed", "परत घेतले")}
                       </span>
                     )}
                   </div>

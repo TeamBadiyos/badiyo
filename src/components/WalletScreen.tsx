@@ -22,7 +22,23 @@ async function fetchTransactions(): Promise<WalletTx[]> {
     .eq("user_id", uid)
     .order("created_at", { ascending: false });
   if (error) throw error;
-  return (data ?? []) as WalletTx[];
+  // New wallet ledger (refunds to wallet, wallet payments).
+  const { data: led } = await supabase
+    .from("customer_wallet_ledger")
+    .select("id, amount, type, ref_type, reason, created_at")
+    .eq("user_id", uid)
+    .order("created_at", { ascending: false });
+  const ledger: WalletTx[] = ((led ?? []) as { id: string; amount: number; type: string; ref_type: string | null; reason: string | null; created_at: string }[]).map((r) => ({
+    id: `l_${r.id}`,
+    amount: Math.abs(Number(r.amount)),
+    type: Number(r.amount) >= 0 ? "credit" : "debit",
+    description:
+      r.type === "refund" && r.ref_type === "booking" ? "Booking refund · to badiyos Wallet"
+      : r.type === "payment" && r.ref_type === "booking" ? "Paid for booking"
+      : r.reason || r.type,
+    created_at: r.created_at,
+  }));
+  return [...((data ?? []) as WalletTx[]), ...ledger].sort((a, b) => b.created_at.localeCompare(a.created_at));
 }
 
 function formatDate(iso: string): string {
