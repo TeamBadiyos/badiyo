@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useBackHandler } from "@/lib/backHandler";
 import { isImageLoaded } from "@/lib/serviceSettings";
 import { localSrc } from "@/lib/imageStore";
 import { Check, Droplets, MapPin, Package, X } from "lucide-react";
@@ -133,6 +134,7 @@ export function CardDetailsSheet({ items, index, onIndex, details, lang, heading
   heading: string; bookLabel: string; onClose: () => void; onBook: (item: DetailItem) => void;
 }) {
   const item = index != null ? items[index] : null;
+  useBackHandler(!!item, () => onClose());
   const mr = lang === "mr";
   const t = (en?: string | null, m?: string | null, fb = "") => ((mr && m?.trim() ? m : en)?.trim() || fb);
   const incTitle = t(details?.included_title, details?.included_title_mr, mr ? "एक्सपर्ट हे करेल" : "The expert will do");
