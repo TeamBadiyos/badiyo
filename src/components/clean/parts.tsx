@@ -1,4 +1,6 @@
-import { MapPin } from "lucide-react";
+import { Check, Droplets, MapPin, Package, X } from "lucide-react";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import type { ContentDetails } from "@/lib/serviceSettings";
 import type { SegmentService } from "@/lib/segments";
 
 export function AddressLine({ text, changeLabel, addLabel, onChange }: { text: string | null; changeLabel: string; addLabel: string; onChange: () => void }) {
@@ -118,5 +120,62 @@ export function OptionImageCard({ name, imageUrl, price, original, active, onCli
         </p>
       </div>
     </button>
+  );
+}
+
+export type DetailItem = { title: string; image: string; included: string[]; notIncluded: string[]; optionId: string | null };
+
+export function CardDetailsSheet({ items, index, onIndex, details, lang, heading, bookLabel, onClose, onBook }: {
+  items: DetailItem[]; index: number | null; onIndex: (i: number) => void; details?: ContentDetails | null; lang: string;
+  heading: string; bookLabel: string; onClose: () => void; onBook: (item: DetailItem) => void;
+}) {
+  const item = index != null ? items[index] : null;
+  const mr = lang === "mr";
+  const t = (en?: string | null, m?: string | null, fb = "") => ((mr && m?.trim() ? m : en)?.trim() || fb);
+  const incTitle = t(details?.included_title, details?.included_title_mr, mr ? "एक्सपर्ट हे करेल" : "The expert will do");
+  const excTitle = t(details?.excluded_title, details?.excluded_title_mr, mr ? "यात समाविष्ट नाही" : "Not included");
+  const note = t(details?.note, details?.note_mr);
+  const NoteIcon = details?.note_icon === "water" ? Droplets : Package;
+  return (
+    <Sheet open={!!item} onOpenChange={(o) => !o && onClose()}>
+      <SheetContent side="bottom" className="max-h-[90dvh] overflow-y-auto rounded-t-[24px] px-5 pb-6 safe-bottom">
+        {item && (
+          <>
+            <SheetTitle className="mt-2 text-xl font-extrabold text-foreground">{heading}</SheetTitle>
+            {items.length > 1 && (
+              <div className="-mx-5 mt-3 flex gap-2 overflow-x-auto px-5 pb-1">
+                {items.map((it, i) => (
+                  <button key={i} onClick={() => onIndex(i)} className={`flex shrink-0 items-center gap-2 rounded-full border-2 py-1 pl-1 pr-3 text-xs font-bold ${i === index ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-foreground"}`}>
+                    <img src={it.image} alt="" className="h-7 w-7 rounded-full object-cover" />
+                    {it.title}
+                  </button>
+                ))}
+              </div>
+            )}
+            <img src={item.image} alt={item.title} className="mt-3 aspect-[4/3] w-full rounded-[18px] bg-muted object-cover" />
+            <p className="mt-3 text-lg font-extrabold text-foreground">{item.title}</p>
+            {item.included.length > 0 && (
+              <div className="mt-3">
+                <p className="text-sm font-extrabold text-foreground">{incTitle}</p>
+                <ul className="mt-1.5 space-y-1.5">{item.included.map((x, i) => <li key={i} className="flex gap-2 text-sm text-foreground"><Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />{x}</li>)}</ul>
+              </div>
+            )}
+            {item.notIncluded.length > 0 && (
+              <div className="mt-3">
+                <p className="text-sm font-extrabold text-foreground">{excTitle}</p>
+                <ul className="mt-1.5 space-y-1.5">{item.notIncluded.map((x, i) => <li key={i} className="flex gap-2 text-sm text-muted-foreground"><X className="mt-0.5 h-4 w-4 shrink-0 text-warning" />{x}</li>)}</ul>
+              </div>
+            )}
+            {note && (
+              <div className="mt-4 flex items-start gap-3 rounded-[14px] bg-surface-soft p-3">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary"><NoteIcon className="h-4 w-4" /></span>
+                <p className="text-sm font-semibold text-foreground">{note}</p>
+              </div>
+            )}
+            <button onClick={() => onBook(item)} className="mt-5 w-full rounded-[16px] bg-primary py-4 text-base font-extrabold text-primary-foreground">{bookLabel}</button>
+          </>
+        )}
+      </SheetContent>
+    </Sheet>
   );
 }
