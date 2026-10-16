@@ -275,9 +275,8 @@ function ServiceCard({ title, status, closed, img, onClick }: { title: string; s
       <div className="relative w-[46%] min-w-0">
         <span className="break-words text-[20px] font-extrabold leading-[1.12] tracking-tight text-foreground">
           {title}
-          <span className="whitespace-nowrap">
-            <ChevronRight className="ml-0.5 inline h-4 w-4 -translate-y-px align-middle text-foreground" />
-          </span>
+          {"\u00A0"}
+          <span className="whitespace-nowrap text-[18px] font-bold text-foreground">›</span>
         </span>
         <span className={`mt-1 flex items-center gap-1 whitespace-nowrap text-[11px] font-semibold leading-none ${closed ? "text-muted-foreground" : "text-primary"}`}>
           {!closed && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-current" />}
