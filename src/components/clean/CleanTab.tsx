@@ -270,10 +270,10 @@ function fill(text: string, vars: Record<string, string>): string {
 
 function ServiceCard({ title, status, closed, img, onClick }: { title: string; status: string; closed: boolean; img: string; onClick: () => void }) {
   return (
-    <button onClick={onClick} className="relative flex h-[96px] flex-col justify-end overflow-visible rounded-[18px] bg-card p-2.5 text-left shadow-soft transition active:scale-[0.98]">
+    <button onClick={onClick} className="relative flex min-h-[96px] flex-col justify-end overflow-visible rounded-[18px] bg-card p-2.5 text-left shadow-soft transition active:scale-[0.98]">
       {img && <FadeImg src={img} className="pointer-events-none absolute bottom-0 right-0 h-[135%] w-auto max-w-none object-contain object-bottom" />}
       <div className="relative w-[46%] min-w-0">
-        <span className="line-clamp-2 text-[20px] font-extrabold leading-[1.12] tracking-tight text-foreground">
+        <span className="break-words text-[20px] font-extrabold leading-[1.12] tracking-tight text-foreground">
           {title}
           <span className="whitespace-nowrap">
             <ChevronRight className="ml-0.5 inline h-4 w-4 -translate-y-px align-middle text-foreground" />
