@@ -539,6 +539,7 @@ function CheckoutStep({
   onBooked: (id: string) => void;
 }) {
   const c = useParcelCopy();
+  const t = useT();
   const qc = useQueryClient();
   const [couponOpen, setCouponOpen] = useState(false);
   const [confirmed, setConfirmed] = useState(true);
@@ -657,7 +658,7 @@ function CheckoutStep({
     } catch (e) {
       invalidateWallet(qc);
       const pe = toPaymentError(e);
-      if (pe.category === "cancelled") toast(c.pay.replace("₹{n}", "").trim() + " ✕");
+      if (pe.category === "cancelled") toast(t("payment.cancelledToast"));
       else toast.error(courierErrorMessage(e, c.priceError));
     } finally {
       setPaying(false);
