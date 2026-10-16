@@ -79,7 +79,7 @@ export function useBookingGstPercent(priceOptionId: string | null | undefined): 
 export type ContentCard = { title?: string; title_mr?: string; image_url?: string | null; included?: string[]; not_included?: string[]; included_mr?: string[]; not_included_mr?: string[]; price_option_id?: string | null };
 export type ContentOption = { name?: string; name_mr?: string; price?: number; original_price?: number | null; image_url?: string | null; price_option_id: string };
 export type ServiceContent = {
-  hero?: { heading?: string | null; heading_mr?: string | null; subline?: string | null; subline_mr?: string | null; button?: string | null; button_mr?: string | null; image_url?: string | null; bg_color?: string | null };
+  hero?: { heading?: string | null; heading_mr?: string | null; subline?: string | null; subline_mr?: string | null; button?: string | null; button_mr?: string | null; image_url?: string | null; bg_color?: string | null; card_title?: string | null; card_title_mr?: string | null };
   cards?: ContentCard[];
   options?: ContentOption[];
   banners?: Partial<Record<BannerKey, ContentBanner>>;
@@ -104,6 +104,30 @@ export function useServiceContent(key: CleanServiceKey) {
       const { data, error } = await rpc("app_service_content", { _service_key: key, _city_id: cityId });
       if (error || !data) return null;
       return data as ServiceContent;
+    },
+  });
+}
+
+/** Next free half-hour today (≥45 min notice) or tomorrow's first; null if none. */
+export function useNextFreeSlot(key: CleanServiceKey, state: ServiceState | null | undefined, enabled: boolean) {
+  const cityId = useCustomerCityId();
+  return useQuery({
+    queryKey: ["app-next-free-slot", key, cityId, state?.open_time, state?.close_time],
+    enabled,
+    staleTime: 60_000,
+    queryFn: async (): Promise<{ day: "today" | "tomorrow"; label: string } | null> => {
+      const { getNext7DayOptions, getAllHourSlots, isHourBookable } = await import("@/lib/hourSlots");
+      const toMin = (t?: string | null) => { if (!t) return null; const [h, m] = t.split(":").map(Number); return Number.isFinite(h) ? h * 60 + (m || 0) : null; };
+      const open = toMin(state?.open_time) ?? 600;
+      const close = toMin(state?.close_time);
+      const end = close != null ? close - 60 : 18 * 60;
+      const [today, tomorrow] = getNext7DayOptions();
+      const full = await fetchAppFullySlots(key, today.key, tomorrow.key);
+      for (const [i, d] of [today, tomorrow].entries()) {
+        const slot = getAllHourSlots(open, end).find((x) => !full.has(`${d.key}|${x.mins}`) && isHourBookable(d.key, x.mins));
+        if (slot) return { day: i === 0 ? "today" : "tomorrow", label: slot.label };
+      }
+      return null;
     },
   });
 }
