@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { isImageLoaded } from "@/lib/serviceSettings";
 import { Check, Droplets, MapPin, Package, X } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import type { ContentDetails } from "@/lib/serviceSettings";
@@ -100,7 +102,7 @@ export function HeroCard({ heading, subline, button, imageUrl, bgColor, onClick 
 export function ContentCardTile({ title, imageUrl, price, onClick }: { title: string; imageUrl: string; price?: number | null; onClick: () => void }) {
   return (
     <button onClick={onClick} className="overflow-hidden rounded-[16px] border border-border bg-card text-left active:scale-[0.98]">
-      <img src={imageUrl} alt={title} loading="lazy" width={500} height={500} className="aspect-square w-full bg-muted object-cover" />
+      <div className="aspect-square w-full bg-muted">{imageUrl && <FadeImg src={imageUrl} alt={title} width={500} height={500} className="h-full w-full object-cover" />}</div>
       <div className="p-2">
         <p className="truncate text-xs font-bold text-foreground">{title}</p>
         {price != null && <p className="text-sm font-extrabold text-primary">₹{price}</p>}
@@ -112,7 +114,7 @@ export function ContentCardTile({ title, imageUrl, price, onClick }: { title: st
 export function OptionImageCard({ name, imageUrl, price, original, active, onClick }: { name: string; imageUrl: string; price: number; original?: number | null; active: boolean; onClick: () => void }) {
   return (
     <button onClick={onClick} className={`overflow-hidden rounded-[16px] border-2 text-left ${active ? "border-primary bg-primary/5" : "border-border bg-card"}`}>
-      <img src={imageUrl} alt={name} loading="lazy" width={500} height={500} className="aspect-square w-full bg-muted object-cover" />
+      <div className="aspect-square w-full bg-muted">{imageUrl && <FadeImg src={imageUrl} alt={name} width={500} height={500} className="h-full w-full object-cover" />}</div>
       <div className="p-2">
         <p className="truncate text-xs font-bold text-foreground">{name}</p>
         <p className="text-base font-extrabold text-foreground">₹{price}
@@ -177,5 +179,14 @@ export function CardDetailsSheet({ items, index, onIndex, details, lang, heading
         )}
       </SheetContent>
     </Sheet>
+  );
+}
+
+/** Image that fades in once loaded; instant if already preloaded. */
+export function FadeImg({ src, alt = "", className = "", width, height }: { src: string; alt?: string; className?: string; width?: number; height?: number }) {
+  const [ok, setOk] = useState(() => isImageLoaded(src));
+  return (
+    <img src={src} alt={alt} width={width} height={height} decoding="async" onLoad={() => setOk(true)}
+      className={`${className} transition-opacity duration-300 ${ok ? "opacity-100" : "opacity-0"}`} />
   );
 }

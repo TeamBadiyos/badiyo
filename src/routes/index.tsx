@@ -691,6 +691,8 @@ function Index() {
     // Home content is public config data — warm it during the splash so Home
     // paints from cache the moment the user finishes logging in.
     void prefetchHomeData(queryClient);
+    // Clean tab content + photos load during the splash (max ~2 s).
+    const cleanReady = import("@/lib/serviceSettings").then((m) => m.prefetchCleanTab(queryClient, 2000)).catch(() => {});
 
     // Update prompt: hard block below the minimum supported build, a
     // dismissible nudge (snoozed 24h) when a newer build is on the Play Store.
@@ -719,10 +721,12 @@ function Index() {
       const elapsed = Date.now() - bootStartedAt;
       const wait = Math.max(0, SPLASH_MIN_MS - elapsed);
       setTimeout(() => {
-        if (cancelled) return;
-        setPhase("splash-out");
-        // Guests land on the tabs; login is asked only when an action needs it.
-        setTimeout(() => !cancelled && setPhase("home"), 220);
+        void cleanReady.then(() => {
+          if (cancelled) return;
+          setPhase("splash-out");
+          // Guests land on the tabs; login is asked only when an action needs it.
+          setTimeout(() => !cancelled && setPhase("home"), 220);
+        });
       }, wait);
     };
 
@@ -735,7 +739,7 @@ function Index() {
       if (data.session?.user && !data.session.user.is_anonymous) {
         settled = true;
         clearTimeout(splashCap);
-        enterAppAfterAuth("home");
+        void cleanReady.then(() => { if (!cancelled) enterAppAfterAuth("home"); });
         // Account housekeeping is not needed to draw Home, so it waits until
         // the screen is up instead of sharing the first seconds of bandwidth.
         runWhenIdle(() => {
