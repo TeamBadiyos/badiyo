@@ -246,6 +246,7 @@ export function CleanTab({
         options={draftOptions}
         initialOptionId={draft?.optionId}
         isAuto={draft?.auto}
+        serviceKey={draft?.auto ? "wash" : "clean"}
         addressLine={addressLine}
         onChangeAddress={changeAddress}
         onClose={close}
@@ -257,6 +258,7 @@ export function CleanTab({
         <CleanScheduleScreen
           options={draftOptions}
           isAuto={draft.auto}
+          serviceKey={draft.auto ? "wash" : "clean"}
           addressLine={addressLine}
           draft={{ optionId: draft.optionId, day: draft.day, slotMins: draft.slotMins }}
           onDraftChange={(d) => setDraft((p) => (p ? { ...p, ...d } : p))}
