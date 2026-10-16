@@ -374,8 +374,8 @@ function Index() {
   const enterAppAfterAuth = useCallback(
     (fallbackPhase: Phase = "home") => {
       signedInRef.current = true;
-      const pending = afterLoginRef.current;
-      afterLoginRef.current = null;
+      const pending = fallbackPhase === "home" ? afterLoginRef.current : null;
+      if (pending) afterLoginRef.current = null;
       // After the PIN step we still finish on "home"; a remembered screen
       // (e.g. Wallet tapped as a guest) opens instead of Home.
       setPhase(fallbackPhase === "home" && pending ? pending : fallbackPhase);
