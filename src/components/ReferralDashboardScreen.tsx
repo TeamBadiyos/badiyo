@@ -315,8 +315,8 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
 
             {/* Stat grid */}
             <section className="mt-4 grid grid-cols-2 gap-3">
-              <StatCard label="Total Rewards Earned" value={`Rs ${totalRewards}`} />
-              <StatCard label="Wallet Balance" value={`${walletBalance} coins (Rs ${walletBalance})`} />
+              <StatCard label="Total Rewards Earned" value={`₹${totalRewards}`} />
+              <StatCard label="Wallet Balance" value={`${walletBalance} coins (₹${walletBalance})`} />
               <StatCard label="Families Referred" value={String(totalReferred)} />
               <StatCard label="Successful Referrals" value={String(successful.length)} />
             </section>
@@ -328,7 +328,7 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
                   Earn {totalPerReferral} coins per friend
                 </h2>
                 <span className="rounded-full bg-primary/15 px-2.5 py-1 text-[11px] font-extrabold text-primary">
-                  1 coin = Rs 1
+                  1 coin = ₹1
                 </span>
               </div>
               <div className="mt-3 space-y-2">
@@ -356,8 +356,8 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
                 </div>
               </div>
               <p className="mt-3 rounded-[12px] bg-muted/60 p-3 text-xs text-muted-foreground">
-                <span className="font-bold text-foreground">1 Badiyos coin = Rs 1.</span>{" "}
-                So {totalPerReferral} coins are worth Rs {totalPerReferral}. Use your coins
+                <span className="font-bold text-foreground">1 Badiyos coin = ₹1.</span>{" "}
+                So {totalPerReferral} coins are worth ₹{totalPerReferral}. Use your coins
                 at checkout to pay less on any booking.
               </p>
             </section>

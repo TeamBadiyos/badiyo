@@ -58,7 +58,7 @@ export function LiveSearchPanel({
             <p className="truncate text-sm font-bold text-foreground">{i.product.name}</p>
             <p className="truncate text-[11px] text-muted-foreground">{i.store.store_name}</p>
           </div>
-          <span className="shrink-0 text-sm font-bold text-primary">Rs {Number(i.product.price).toFixed(0)}</span>
+          <span className="shrink-0 text-sm font-bold text-primary">₹{Number(i.product.price).toFixed(0)}</span>
         </button>
       ))}
       {svc.map((s) => (
@@ -70,7 +70,7 @@ export function LiveSearchPanel({
             <p className="truncate text-sm font-bold text-foreground">{s.service_name || s.duration_label}</p>
             <p className="truncate text-[11px] text-muted-foreground">{s.duration_label}</p>
           </div>
-          <span className="shrink-0 text-sm font-bold text-primary">Rs {Number(s.price).toFixed(0)}</span>
+          <span className="shrink-0 text-sm font-bold text-primary">₹{Number(s.price).toFixed(0)}</span>
         </button>
       ))}
     </div>

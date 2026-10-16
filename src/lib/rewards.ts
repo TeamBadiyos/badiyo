@@ -163,7 +163,7 @@ export async function fetchCustomerRewards(): Promise<RewardsSnapshot> {
 
 export function formatRewardValue(type: string, value: number): string {
   if (type === "coins") return `${value} coins`;
-  if (type === "cash" || type === "wallet_credit") return `Rs ${value}`;
+  if (type === "cash" || type === "wallet_credit") return `₹${value}`;
   if (type === "discount_percent") return `${value}% off`;
   if (type === "free_booking") return "Free booking";
   return `${value} ${type.replace(/_/g, " ")}`;

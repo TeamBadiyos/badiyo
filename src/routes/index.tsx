@@ -1,4 +1,4 @@
-import { LOGIN_REQUIRED_EVENT } from "@/lib/authGate";
+import { LOGIN_REQUIRED_EVENT, ensureSignedIn } from "@/lib/authGate";
 import { createFileRoute } from "@tanstack/react-router";
 import { Suspense, lazy, useCallback, useEffect, useRef, useState, type ComponentType } from "react";
 import { useQueryClient } from "@tanstack/react-query";

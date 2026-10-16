@@ -15,7 +15,7 @@ export const mr: Partial<Record<keyof typeof en, string>> = {
   "common.total": "एकूण",
   "common.address": "पत्ता",
   "common.when": "कधी",
-  "common.rupees": "रु. {amount}",
+  "common.rupees": "₹{amount}",
   "common.profile": "प्रोफाइल",
   "common.loading": "लोड होत आहे…",
 
@@ -326,10 +326,11 @@ export const mr: Partial<Record<keyof typeof en, string>> = {
     "कृपया फोनच्या सेटिंग्जमधून badiyos साठी लोकेशन सुरू करा.",
 
   // ── Booking summary ──────────────────────────────────────
-  "summary.title": "बुकिंग सारांश",
+  "summary.title": "चेकआउट",
   "summary.priceDetails": "किंमत तपशील",
   "summary.servicePrice": "सेवेची किंमत",
   "summary.gst": "जीएसटी ({percent}%)",
+  "summary.payAmount": "₹{amount} भरा",
   "summary.proceedToPay": "पैसे भरा",
   "summary.now": "आत्ता",
   "summary.nowSub": "एक्सपर्ट 30 – 45 मिनिटांत पोहोचेल",

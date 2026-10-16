@@ -108,10 +108,10 @@ export function ProductCard({
       <div className="mt-1 flex flex-wrap items-end justify-between gap-x-1 gap-y-1.5">
         <div className="flex min-w-0 flex-col">
           {mrp && (
-            <span className="text-[10px] font-semibold leading-none text-muted-foreground line-through">Rs {mrp.toFixed(0)}</span>
+            <span className="text-[10px] font-semibold leading-none text-muted-foreground line-through">₹{mrp.toFixed(0)}</span>
           )}
           <span className="whitespace-nowrap text-[15px] font-bold leading-tight tracking-[-0.02em] text-primary">
-            Rs {Number(product.price).toFixed(0)}
+            ₹{Number(product.price).toFixed(0)}
           </span>
         </div>
         {onOpen ? null : out ? (
