@@ -12,7 +12,7 @@ import {
 import { useStoreCart } from "@/lib/storeCart";
 import { ActiveOrdersStrip } from "@/components/home/ActiveOrdersStrip";
 import { getAuthUser } from "@/lib/authUser";
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { usePullToRefresh, PullToRefreshIndicator } from "@/lib/usePullToRefresh";
