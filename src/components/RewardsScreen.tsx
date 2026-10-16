@@ -108,10 +108,10 @@ export function RewardsScreen({
             <Gift className="h-5 w-5 text-primary" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-bold text-foreground">Invite friends, earn coins</p>
+            <p className="text-sm font-bold text-foreground">Invite friends, earn badiyos Wallet money</p>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              Share your code and get coins when a friend joins, plus more once they
-              complete their first booking. 1 coin = ₹1.
+              Share your code and get money in your badiyos Wallet when a friend joins, plus more once they
+              complete their first booking.
             </p>
             <span className="mt-2 inline-block text-xs font-bold text-primary">
               Share your code →
@@ -124,16 +124,16 @@ export function RewardsScreen({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-primary/80">
-                Total Coins Earned
+                Total earned in badiyos Wallet
               </p>
               <p className="mt-2 text-3xl font-extrabold text-foreground">
-                {isLoading ? "—" : coins}
+                ₹{isLoading ? "—" : coins}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Worth ₹{isLoading ? "—" : coins} • 1 coin = ₹1
+                Added to your badiyos Wallet
               </p>
               <p className="mt-0.5 text-xs text-muted-foreground">
-                Includes referral coins and rewards credited to you.
+                Includes referral rewards and bonuses credited to you.
               </p>
             </div>
             <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm">

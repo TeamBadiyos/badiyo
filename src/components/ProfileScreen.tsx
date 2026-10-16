@@ -99,7 +99,7 @@ export function ProfileScreen({
       items: [
         { key: "bookings", label: "My Bookings", desc: "View past and upcoming services", icon: CalendarCheck, onClick: onOpenBookings },
         ...(onOpenOrders ? [{ key: "orders", label: t("profile.orders"), desc: t("profile.ordersDesc"), icon: Package, onClick: onOpenOrders }] : []),
-        { key: "wallet", label: "Wallet", desc: "Badiyos coins & transactions", icon: WalletIcon, onClick: onOpenWallet },
+        { key: "wallet", label: "Wallet", desc: "badiyos Wallet balance & transactions", icon: WalletIcon, onClick: onOpenWallet },
         { key: "referrals", label: "Refer & Earn", desc: "Invite friends and earn rewards", icon: Gift, onClick: onOpenReferrals },
         { key: "partner", label: t("profile.partner"), desc: t("profile.partnerDesc"), icon: Store, onClick: () => { window.location.href = sellWhatsAppHref(); } },
       ],

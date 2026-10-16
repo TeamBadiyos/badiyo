@@ -18,7 +18,7 @@ import { FadeImg } from "./parts";
 
 const T = {
   en: {
-    refer: "Refer & Earn", referSub: "Invite friends, earn coins on their first booking",
+    refer: "Refer & Earn", referSub: "Invite friends, earn badiyos Wallet money on their first booking",
     closedShort: "Closed now", opens: "Opens", available: "Open now", maid: "Maid", wash: "Car & Bike Wash", washCard: "Car Wash", maidDoes: "What the maid does", whatIncluded: "What is included?", today: "today", tomorrow: "tomorrow",
     maidHero: "Maid for Your Everyday Needs", washHero: "A Wash for Every Ride", button: "Book Now",
     maidCards: ["Daily Cleaning", "Kitchen Help", "Deep Cleaning"],
