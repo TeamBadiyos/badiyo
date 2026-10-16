@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import { Car, ChevronRight, Gift, Sparkles } from "lucide-react";
-import type { ReactNode } from "react";
+import { ChevronRight, Gift } from "lucide-react";
 import type { ServiceState } from "@/lib/serviceHours";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,7 +17,7 @@ import { FadeImg } from "./parts";
 const T = {
   en: {
     refer: "Refer & Earn", referSub: "Invite friends, earn coins on their first booking",
-    closedShort: "Closed now", opens: "Opens", available: "Available now", maid: "Maid", wash: "Car & Bike Wash", washCard: "Car Wash", maidDoes: "What the maid does", whatIncluded: "What is included?", today: "today", tomorrow: "tomorrow",
+    closedShort: "Closed now", opens: "Opens", available: "Open now", maid: "Maid", wash: "Car & Bike Wash", washCard: "Car Wash", maidDoes: "What the maid does", whatIncluded: "What is included?", today: "today", tomorrow: "tomorrow",
     maidHero: "Maid for Your Everyday Needs", washHero: "A Wash for Every Ride", button: "Book Now",
     maidCards: ["Daily Cleaning", "Kitchen Help", "Deep Cleaning"],
   },
@@ -146,7 +145,7 @@ export function CleanTab({
   useEffect(() => { onHeroTone?.(tone); }, [tone, onHeroTone]);
   const statusLine = (st: typeof maidState) => {
     if (!st || st.can_order) return s.available;
-    const n = formatNextOpen(st.next_open_at ?? st.resume_at);
+    const n = shortOpenTime(st.next_open_at ?? st.resume_at);
     return n ? `${s.opens} ${n}` : s.closedShort;
   };
 
@@ -163,9 +162,9 @@ export function CleanTab({
       <div className="relative -mx-5 -mt-8 rounded-t-[28px] bg-background px-5 pt-3">
         {loading ? <CleanSkeleton /> : (<>
         <div className="grid grid-cols-2 gap-3 pt-[34px]">
-          <ServiceCard title={pick(lang, maidContent?.hero?.card_title, maidContent?.hero?.card_title_mr) || s.maid} status={statusLine(maidState)} closed={closed} icon={<Sparkles className="h-5 w-5" />} img={maidContent?.hero?.image_url || ""} onClick={() => openBooking(false)} />
+          <ServiceCard title={pick(lang, maidContent?.hero?.card_title, maidContent?.hero?.card_title_mr) || s.maid} status={statusLine(maidState)} closed={closed} img={maidContent?.hero?.image_url || ""} onClick={() => openBooking(false)} />
           {washOptions.length > 0 && (
-            <ServiceCard title={pick(lang, washContent?.hero?.card_title, washContent?.hero?.card_title_mr) || s.washCard} status={statusLine(washState)} closed={washState != null && !washState.can_order} icon={<Car className="h-5 w-5" />} img={washContent?.hero?.image_url || ""} onClick={() => openBooking(true)} />
+            <ServiceCard title={pick(lang, washContent?.hero?.card_title, washContent?.hero?.card_title_mr) || s.washCard} status={statusLine(washState)} closed={washState != null && !washState.can_order} img={washContent?.hero?.image_url || ""} onClick={() => openBooking(true)} />
           )}
         </div>
 
@@ -269,26 +268,31 @@ function fill(text: string, vars: Record<string, string>): string {
     .trim();
 }
 
-function ServiceCard({ title, status, closed, icon, img, onClick }: { title: string; status: string; closed: boolean; icon: ReactNode; img: string; onClick: () => void }) {
-  const sp = status.indexOf(" ");
-  const l1 = sp > 0 ? status.slice(0, sp) : status;
-  const l2 = sp > 0 ? status.slice(sp + 1) : "";
+function ServiceCard({ title, status, closed, img, onClick }: { title: string; status: string; closed: boolean; img: string; onClick: () => void }) {
   return (
     <button onClick={onClick} className="relative flex h-[96px] flex-col justify-end overflow-visible rounded-[18px] bg-card p-2.5 text-left shadow-soft transition active:scale-[0.98]">
       {img && <FadeImg src={img} className="pointer-events-none absolute bottom-0 right-0 h-[135%] w-auto max-w-none object-contain object-bottom" />}
-      <div className="relative w-[44%] min-w-0">
-        <span className="mb-1 flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">{icon}</span>
-        <span className="flex min-w-0 items-center gap-0.5">
-          <span className="truncate text-[13px] font-extrabold tracking-tight text-foreground">{title}</span>
-          <ChevronRight className="h-4 w-4 shrink-0 text-foreground" />
+      <div className="relative w-[46%] min-w-0">
+        <span className="line-clamp-2 text-[20px] font-extrabold leading-[1.12] tracking-tight text-foreground">
+          {title}
+          <span className="whitespace-nowrap">
+            <ChevronRight className="ml-0.5 inline h-4 w-4 -translate-y-px align-middle text-foreground" />
+          </span>
         </span>
-        <span className={`mt-0.5 block text-[11px] leading-tight font-semibold ${closed ? "text-muted-foreground" : "text-primary"}`}>
-          <span className="block whitespace-nowrap">{l1}</span>
-          {l2 && <span className="block whitespace-nowrap">{l2}</span>}
+        <span className={`mt-1 flex items-center gap-1 whitespace-nowrap text-[11px] font-semibold leading-none ${closed ? "text-muted-foreground" : "text-primary"}`}>
+          {!closed && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-current" />}
+          <span>{status}</span>
         </span>
       </div>
     </button>
   );
+}
+
+/** "9:00 AM" -> "9 AM"; keeps minutes when they aren't :00. */
+function shortOpenTime(iso: string | null | undefined): string | null {
+  const n = formatNextOpen(iso);
+  if (!n) return null;
+  return n.replace(/\b(\d{1,2}):00\b/g, "$1");
 }
 
 function dayLabel(iso: string | null | undefined, banner: string, lang: string): string {
