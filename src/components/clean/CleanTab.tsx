@@ -171,7 +171,7 @@ export function CleanTab({
       </section>
 
       <div className="relative -mx-5 -mt-8 rounded-t-[28px] bg-background px-5 pt-3">
-        <div className="grid grid-cols-2 gap-3 pt-[46px]">
+        <div className="grid grid-cols-2 gap-3 pt-[34px]">
           <ServiceCard title={pick(lang, maidContent?.hero?.card_title, maidContent?.hero?.card_title_mr) || s.maid} status={statusLine(maidState)} closed={closed} icon={<Sparkles className="h-5 w-5" />} img={maidContent?.hero?.image_url || maidHero} onClick={() => openBooking(false)} />
           {washOptions.length > 0 && (
             <ServiceCard title={pick(lang, washContent?.hero?.card_title, washContent?.hero?.card_title_mr) || s.washCard} status={statusLine(washState)} closed={washState != null && !washState.can_order} icon={<Car className="h-5 w-5" />} img={washContent?.hero?.image_url || washCar} onClick={() => openBooking(true)} />
