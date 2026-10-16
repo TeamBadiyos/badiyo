@@ -38,9 +38,9 @@ export function RewardsScreen({
   onOpenBookings: () => void;
   onOpenCourier?: () => void;
 }) {
-  const { data: courierEnabled
-  const { lang: __lang } = useLanguage();
-  const tr = (en: string, mr: string) => (__lang === "mr" ? mr : en); = false } = useQuery({
+    const { lang: __lang } = useLanguage();
+  const tr = (en: string, mr: string) => (__lang === "mr" ? mr : en);
+  const { data: courierEnabled = false } = useQuery({
     queryKey: ["courier_enabled"],
     queryFn: () => fetchCourierEnabled(),
     staleTime: 5 * 60_000,
