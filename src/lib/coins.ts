@@ -1,13 +1,9 @@
 import { supabase } from "@/integrations/supabase/client";
 
-/** Current customer coin balance (1 coin = ₹1 off a booking). */
+/** Current badiyos Wallet total (cash + bonus), from the new wallet summary. */
 export async function fetchMyCoinBalance(): Promise<number> {
-  const { data, error } = await supabase.rpc("my_coin_balance");
-  if (error) {
-    console.error("my_coin_balance failed", error);
-    return 0;
-  }
-  const n = Number(data);
+  const { fetchWalletSummary } = await import("@/lib/wallet");
+  const n = (await fetchWalletSummary()).balance;
   return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
 }
 
