@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { useCustomerCityId } from "@/lib/customerCity";
 import { ensureSignedIn } from "@/lib/authGate";
+import { useBackHandler } from "@/lib/backHandler";
 import { useLanguage } from "@/i18n";
 import { getAllHourSlots, getNext7DayOptions, isHourBookable } from "@/lib/hourSlots";
 import { notifyMeForService, slotFitsWindow, timeToMinutes } from "@/lib/serviceHours";
@@ -49,6 +50,7 @@ export function CleanScheduleScreen({
   onBack: () => void;
   onContinue: (option: SegmentService, slot: SelectedSlot) => void;
 }) {
+  useBackHandler(true, () => onBack());
   const { lang } = useLanguage();
   const s = lang === "mr" ? CL.mr : CL.en;
   const cityId = useCustomerCityId();
