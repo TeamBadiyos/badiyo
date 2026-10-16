@@ -490,3 +490,13 @@ select,
 @utility shadow-soft {
   box-shadow: 0 8px 24px -14px color-mix(in oklab, var(--foreground) 28%, transparent);
 }
+
+/* ---- Clean tab hero banners (time-of-day skies) ---- */
+:root {
+  --hero-title: oklch(0.88 0.17 92);
+  --hero-night: linear-gradient(180deg, oklch(0.22 0.06 270), oklch(0.32 0.08 275));
+  --hero-morning: linear-gradient(180deg, oklch(0.55 0.12 40), oklch(0.78 0.12 70));
+  --hero-day: linear-gradient(180deg, oklch(0.55 0.14 160), oklch(0.7 0.14 165));
+  --hero-holiday: linear-gradient(180deg, oklch(0.4 0.12 20), oklch(0.55 0.14 40));
+}
+@utility text-hero-title { color: var(--hero-title); }
