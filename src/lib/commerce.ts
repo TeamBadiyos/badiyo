@@ -153,3 +153,36 @@ export function formatOpensAt(iso: string | null, lang: string): string | null {
 
 export const formatKm = (km: number | null | undefined) =>
   km == null ? null : km < 1 ? `${Math.round(km * 1000)} m` : `${Number(km).toFixed(1)} km`;
+
+export type CommerceSearch = {
+  stores: CommerceStore[];
+  item_groups: { store: CommerceStore; items: CommerceItem[] }[];
+};
+
+/** Stores + items of one tab matching the text (public; no login needed). */
+export function useCommerceSearch(
+  service: CommerceService,
+  cityId: string | null,
+  q: string,
+  coords: { lat: number; lng: number } | null,
+) {
+  const text = q.trim();
+  return useQuery({
+    queryKey: ["commerce_search", service, cityId, text.toLowerCase(), coords?.lat ?? null, coords?.lng ?? null],
+    enabled: text.length >= 2,
+    queryFn: async (): Promise<CommerceSearch> => {
+      const { data, error } = await supabase.rpc("app_commerce_search" as never, {
+        _service_key: service,
+        _city_id: cityId,
+        _q: text,
+        _lat: coords?.lat ?? null,
+        _lng: coords?.lng ?? null,
+      } as never);
+      if (error) throw error;
+      const d = (data ?? {}) as Partial<CommerceSearch>;
+      return { stores: d.stores ?? [], item_groups: d.item_groups ?? [] };
+    },
+    staleTime: 30_000,
+    placeholderData: (prev) => prev,
+  });
+}
