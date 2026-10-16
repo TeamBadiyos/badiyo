@@ -794,6 +794,7 @@ export type Database = {
           coupon_id: string | null
           created_at: string | null
           current_search_radius_km: number | null
+          customer_note: string | null
           delete_reason: string | null
           deleted_at: string | null
           deleted_by: string | null
@@ -821,10 +822,12 @@ export type Database = {
           razorpay_payment_id: string | null
           refund_amount: number | null
           refund_attempts: number
+          refund_destination: string | null
           refund_error: string | null
           refund_id: string | null
           refund_next_attempt_at: string | null
           refund_status: string | null
+          refund_wallet_amount: number | null
           reminder_sent: boolean
           review_text: string | null
           scheduled_date: string | null
@@ -866,6 +869,7 @@ export type Database = {
           coupon_id?: string | null
           created_at?: string | null
           current_search_radius_km?: number | null
+          customer_note?: string | null
           delete_reason?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
@@ -893,10 +897,12 @@ export type Database = {
           razorpay_payment_id?: string | null
           refund_amount?: number | null
           refund_attempts?: number
+          refund_destination?: string | null
           refund_error?: string | null
           refund_id?: string | null
           refund_next_attempt_at?: string | null
           refund_status?: string | null
+          refund_wallet_amount?: number | null
           reminder_sent?: boolean
           review_text?: string | null
           scheduled_date?: string | null
@@ -938,6 +944,7 @@ export type Database = {
           coupon_id?: string | null
           created_at?: string | null
           current_search_radius_km?: number | null
+          customer_note?: string | null
           delete_reason?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
@@ -965,10 +972,12 @@ export type Database = {
           razorpay_payment_id?: string | null
           refund_amount?: number | null
           refund_attempts?: number
+          refund_destination?: string | null
           refund_error?: string | null
           refund_id?: string | null
           refund_next_attempt_at?: string | null
           refund_status?: string | null
+          refund_wallet_amount?: number | null
           reminder_sent?: boolean
           review_text?: string | null
           scheduled_date?: string | null
@@ -4020,6 +4029,7 @@ export type Database = {
           invoice_id: string
           note_date: string
           reason: string | null
+          refund_destination: string | null
           sgst: number
           taxable_value: number
           total: number
@@ -4036,6 +4046,7 @@ export type Database = {
           invoice_id: string
           note_date?: string
           reason?: string | null
+          refund_destination?: string | null
           sgst?: number
           taxable_value?: number
           total?: number
@@ -4052,6 +4063,7 @@ export type Database = {
           invoice_id?: string
           note_date?: string
           reason?: string | null
+          refund_destination?: string | null
           sgst?: number
           taxable_value?: number
           total?: number
@@ -11486,12 +11498,22 @@ export type Database = {
         Args: { _city_id: string; _price_option_id: string }
         Returns: Json
       }
+      app_cancel_booking: {
+        Args: { _booking_id: string; _destination?: string }
+        Returns: Json
+      }
+      app_cancel_quote: { Args: { _booking_id: string }; Returns: Json }
+      app_cancellation_policy: {
+        Args: { _city_id?: string; _service_key: string }
+        Returns: Json
+      }
       app_city_for_location: {
         Args: { _lat: number; _lng: number }
         Returns: string
       }
       app_city_price_options: { Args: { _city_id: string }; Returns: Json }
       app_clean_media: { Args: { _city?: string }; Returns: Json }
+      app_create_booking_wallet: { Args: { _payload: Json }; Returns: Json }
       app_expert_application_agreements: { Args: never; Returns: Json }
       app_expert_application_get: { Args: never; Returns: Json }
       app_expert_application_save: {
@@ -11534,6 +11556,17 @@ export type Database = {
         Args: { _booking_id: string }
         Returns: number
       }
+      booking_cancel_core: {
+        Args: {
+          _actor: string
+          _actor_uid: string
+          _booking_id: string
+          _destination: string
+          _mode: string
+          _reason: string
+        }
+        Returns: Json
+      }
       booking_capacity_group: {
         Args: { _category_id: string; _label: string }
         Returns: string
@@ -11548,8 +11581,13 @@ export type Database = {
         Args: { p_booking_id: string }
         Returns: Json
       }
+      booking_group_of: { Args: { _booking_id: string }; Returns: string }
       booking_gst_percent: { Args: { _category_id: string }; Returns: number }
       booking_journey_sweeper: { Args: never; Returns: number }
+      booking_refund_split: {
+        Args: { _booking_id: string; _mode?: string }
+        Returns: Json
+      }
       booking_total_expert_payout: {
         Args: { _booking_id: string }
         Returns: number
@@ -11916,6 +11954,7 @@ export type Database = {
           coupon_id: string | null
           created_at: string | null
           current_search_radius_km: number | null
+          customer_note: string | null
           delete_reason: string | null
           deleted_at: string | null
           deleted_by: string | null
@@ -11943,10 +11982,12 @@ export type Database = {
           razorpay_payment_id: string | null
           refund_amount: number | null
           refund_attempts: number
+          refund_destination: string | null
           refund_error: string | null
           refund_id: string | null
           refund_next_attempt_at: string | null
           refund_status: string | null
+          refund_wallet_amount: number | null
           reminder_sent: boolean
           review_text: string | null
           scheduled_date: string | null
@@ -12530,6 +12571,7 @@ export type Database = {
         Returns: Json
       }
       customer_wallet_start_topup: { Args: { _amount: number }; Returns: Json }
+      default_cancel_policy: { Args: never; Returns: Json }
       default_city_id: { Args: never; Returns: string }
       demand_waiting_count: { Args: { _city: string }; Returns: number }
       dispatch_limit_minutes: {
@@ -12589,6 +12631,7 @@ export type Database = {
         }[]
       }
       expert_has_push_device: { Args: { _expert_id: string }; Returns: boolean }
+      expert_job_details: { Args: { _booking_id: string }; Returns: Json }
       expert_mark_arrived: { Args: { p_booking_id: string }; Returns: string }
       expert_mark_on_the_way: {
         Args: { p_booking_id: string }
@@ -13630,6 +13673,15 @@ export type Database = {
       staff_cancel_booking: {
         Args: { _booking_id: string; _reason: string }
         Returns: undefined
+      }
+      staff_cancel_booking_v2: {
+        Args: {
+          _apply_fee?: boolean
+          _booking_id: string
+          _destination?: string
+          _reason: string
+        }
+        Returns: Json
       }
       staff_cancel_store_order_apply: {
         Args: {
