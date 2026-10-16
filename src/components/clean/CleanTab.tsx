@@ -1,3 +1,4 @@
+import { localSrc } from "@/lib/imageStore";
 import { useEffect, useState } from "react";
 import { ChevronRight, Gift } from "lucide-react";
 import type { ServiceState } from "@/lib/serviceHours";
@@ -156,7 +157,7 @@ export function CleanTab({
     <div>
       <section
         className="bleed-safe-top relative -mx-5 flex min-h-[35vh] flex-col items-center justify-center overflow-hidden px-6 pb-14 text-center"
-        style={{ "--bleed-top-extra": "72px", background: heroImg ? `center/cover no-repeat url("${heroImg}"), ${slab.sky}` : slab.sky } as React.CSSProperties}
+        style={{ "--bleed-top-extra": "72px", background: heroImg ? `center/cover no-repeat url("${localSrc(heroImg)}"), ${slab.sky}` : slab.sky } as React.CSSProperties}
       >
         <h1 className={`text-2xl font-extrabold leading-tight ${tone === "light" ? "text-hero-title hero-shadow" : "text-hero-title-dark"}`}>{bTitle}</h1>
         {bSub && <p className={`mt-1.5 text-sm font-semibold ${tone === "light" ? "text-primary-foreground hero-shadow" : "text-hero-title-dark opacity-80"}`}>{bSub}</p>}
@@ -165,9 +166,9 @@ export function CleanTab({
       <div className="relative -mx-5 -mt-8 rounded-t-[28px] bg-background px-5 pt-3">
         {loading ? <CleanSkeleton /> : (<>
         <div className="grid grid-cols-2 gap-3 pt-[34px]">
-          <ServiceCard title={pick(lang, maidContent?.hero?.card_title, maidContent?.hero?.card_title_mr) || s.maid} status={statusLine(maidState)} closed={closed} img={maidContent?.hero?.image_url || ""} onClick={() => openBooking(false)} />
+          <ServiceCard title={pick(lang, maidContent?.hero?.card_title, maidContent?.hero?.card_title_mr) || s.maid} status={statusLine(maidState)} closed={!maidState || closed} img={maidContent?.hero?.image_url || ""} onClick={() => openBooking(false)} />
           {washOptions.length > 0 && (
-            <ServiceCard title={pick(lang, washContent?.hero?.card_title, washContent?.hero?.card_title_mr) || s.washCard} status={statusLine(washState)} closed={washState != null && !washState.can_order} img={washContent?.hero?.image_url || ""} onClick={() => openBooking(true)} />
+            <ServiceCard title={pick(lang, washContent?.hero?.card_title, washContent?.hero?.card_title_mr) || s.washCard} status={statusLine(washState)} closed={!washState || !washState.can_order} img={washContent?.hero?.image_url || ""} onClick={() => openBooking(true)} />
           )}
         </div>
 

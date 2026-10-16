@@ -692,7 +692,7 @@ function Index() {
     // paints from cache the moment the user finishes logging in.
     void prefetchHomeData(queryClient);
     // Clean tab content + photos load during the splash (max ~2 s).
-    const cleanReady = import("@/lib/serviceSettings").then((m) => m.prefetchCleanTab(queryClient, 2000)).catch(() => {});
+    const cleanReady = import("@/lib/serviceSettings").then((m) => m.prefetchCleanTab(queryClient, 1500)).catch(() => {});
 
     // Update prompt: hard block below the minimum supported build, a
     // dismissible nudge (snoozed 24h) when a newer build is on the Play Store.
