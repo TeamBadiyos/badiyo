@@ -8,6 +8,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { haversineKm } from "@/lib/addressSearch";
+import { useCustomerCityId } from "@/lib/customerCity";
+import { useLanguage } from "@/i18n";
 
 export type PublicStore = {
   id: string;
@@ -91,14 +93,23 @@ export async function fetchStoreProducts(merchantId: string): Promise<PublicProd
   return (data ?? []) as PublicProduct[];
 }
 
-export async function fetchStoreCategories(): Promise<StoreCategory[]> {
-  const { data, error } = await supabase
-    .from("store_categories")
-    .select("id, name, slug, rank, icon_url")
-    .eq("is_active", true)
-    .order("rank", { ascending: true });
+type AppCategoryRow = { id: string; name: string; name_mr?: string | null; image_path?: string | null; icon_url?: string | null; is_other?: boolean };
+
+/** Live categories (only those with live shops/items), from `app_categories`, in Command Center order with "Other" last. */
+export async function fetchAppCategories(kind: "store_type" | "food", cityId: string | null, lang: string): Promise<StoreCategory[]> {
+  const { data, error } = await supabase.rpc("app_categories" as never, { _kind: kind, _city_id: cityId } as never);
   if (error) throw error;
-  return (data ?? []) as StoreCategory[];
+  return ((data ?? []) as AppCategoryRow[]).map((c, i) => ({
+    id: c.id,
+    name: (lang === "mr" && c.name_mr) || c.name,
+    slug: c.id,
+    rank: i,
+    icon_url: c.icon_url || c.image_path || null,
+  }));
+}
+
+export async function fetchStoreCategories(cityId: string | null = null, lang = "en"): Promise<StoreCategory[]> {
+  return fetchAppCategories("store_type", cityId, lang);
 }
 
 /** True when the signed-in phone number is on the internal testers list. */
@@ -141,9 +152,21 @@ export function sellWhatsAppHref(): string {
 }
 
 export function useStoreCategories() {
+  const cityId = useCustomerCityId();
+  const { lang } = useLanguage();
   return useQuery({
-    queryKey: ["store_categories"],
-    queryFn: fetchStoreCategories,
+    queryKey: ["store_categories", cityId, lang],
+    queryFn: () => fetchStoreCategories(cityId, lang),
+    staleTime: 10 * 60_000,
+  });
+}
+
+export function useFoodCategories() {
+  const cityId = useCustomerCityId();
+  const { lang } = useLanguage();
+  return useQuery({
+    queryKey: ["food_categories", cityId, lang],
+    queryFn: () => fetchAppCategories("food", cityId, lang),
     staleTime: 10 * 60_000,
   });
 }

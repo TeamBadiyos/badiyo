@@ -1138,6 +1138,7 @@ function Index() {
               setPhase("home");
             }}
             onDone={() => {
+              void queryClient.invalidateQueries({ queryKey: ["wallet"] }); void queryClient.invalidateQueries({ queryKey: ["my_coin_balance"] });
               setRedeemCoins(false);
               setExpertNote("");
               resetAndGoHome();
