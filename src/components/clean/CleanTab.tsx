@@ -288,11 +288,11 @@ function ServiceCard({ title, status, closed, img, onClick }: { title: string; s
   );
 }
 
-/** "9:00 AM" -> "9 AM"; keeps minutes when they aren't :00. */
+/** "tomorrow 9:00 AM" -> "9 AM"; keeps minutes when they aren't :00. */
 function shortOpenTime(iso: string | null | undefined): string | null {
   const n = formatNextOpen(iso);
   if (!n) return null;
-  return n.replace(/\b(\d{1,2}):00\b/g, "$1");
+  return n.replace(/\b(\d{1,2}):00\b/g, "$1").split(" ").slice(-2).join(" ");
 }
 
 function dayLabel(iso: string | null | undefined, banner: string, lang: string): string {
