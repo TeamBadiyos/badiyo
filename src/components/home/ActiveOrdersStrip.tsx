@@ -61,12 +61,12 @@ async function fetchActive(): Promise<ActiveItem[]> {
       id: r.id,
       title: "Cleaning",
       status: BOOKING_LABEL[r.status] ?? pretty(r.status),
-      createdAt: r.created_at,
+      createdAt: r.created_at ?? "",
     });
   for (const r of c.data ?? []) {
     if (COURIER_PAST_STATUSES.includes(String(r.status).toUpperCase())) continue;
     if (r.payment_status && r.payment_status !== "paid") continue;
-    out.push({ key: `c-${r.id}`, kind: "parcel", id: r.id, title: "Parcel", status: pretty(r.status), createdAt: r.created_at });
+    out.push({ key: `c-${r.id}`, kind: "parcel", id: r.id, title: "Parcel", status: pretty(r.status), createdAt: r.created_at ?? "" });
   }
   for (const o of s.filter(isStoreOrderActive))
     out.push({
