@@ -10642,6 +10642,7 @@ export type Database = {
           full_name: string | null
           id: string
           notification_preferences: Json
+          offer_notifications: boolean
           phone: string | null
           pin_hash: string | null
           preferred_language: string
@@ -10660,6 +10661,7 @@ export type Database = {
           full_name?: string | null
           id: string
           notification_preferences?: Json
+          offer_notifications?: boolean
           phone?: string | null
           pin_hash?: string | null
           preferred_language?: string
@@ -10678,6 +10680,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           notification_preferences?: Json
+          offer_notifications?: boolean
           phone?: string | null
           pin_hash?: string | null
           preferred_language?: string
@@ -11068,6 +11071,33 @@ export type Database = {
           starts_at?: string | null
           updated_at?: string
           validity_days?: number
+        }
+        Relationships: []
+      }
+      wallet_expiry_reminders: {
+        Row: {
+          amount: number
+          created_at: string
+          days_before: number
+          expires_on: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          days_before: number
+          expires_on: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          days_before?: number
+          expires_on?: string
+          id?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -11618,6 +11648,7 @@ export type Database = {
         Args: { _city_id: string; _service_key: string }
         Returns: Json
       }
+      app_set_offer_notifications: { Args: { _on: boolean }; Returns: Json }
       app_svc_key: { Args: { _k: string }; Returns: string }
       app_wallet_history: {
         Args: { _before?: string; _limit?: number }
@@ -14776,6 +14807,10 @@ export type Database = {
         Returns: boolean
       }
       staff_set_view_city: { Args: { _city_id: string }; Returns: undefined }
+      staff_set_wallet_bonus_days: {
+        Args: { _days: number }
+        Returns: undefined
+      }
       staff_slot_band_summary:
         | { Args: { _date: string; _service_key: string }; Returns: Json }
         | {
@@ -15445,6 +15480,16 @@ export type Database = {
         Args: { p_phone: string; p_pin: string }
         Returns: Json
       }
+      wallet_bonus_days: { Args: never; Returns: number }
+      wallet_bonus_lots: {
+        Args: { _uid: string }
+        Returns: {
+          credited_at: string
+          expires_at: string
+          ledger_id: string
+          remaining: number
+        }[]
+      }
       wallet_expire_bonuses: { Args: never; Returns: number }
       wallet_post: {
         Args: {
@@ -15469,6 +15514,7 @@ export type Database = {
         }
         Returns: number
       }
+      wallet_send_expiry_reminders: { Args: never; Returns: number }
       wallet_spend: {
         Args: {
           _amount: number
