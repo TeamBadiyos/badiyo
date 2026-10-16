@@ -63,3 +63,9 @@ drop table if exists public.courier_vehicle_courier_types, public.courier_vehicl
 - [ ] Active order strip swipeable for several orders
 - [ ] "{N} people waiting" count — needs a server count function (DB changes not possible from this session)
 - [ ] CC "Hide sections with too few items" setting — needs a DB setting row + Command Center switch
+
+- [x] Structured address form + Confirm this location
+- [x] Swipeable active order strip
+- [x] Guests can open Parcel (price) and Rewards/Contest
+- [x] One cart at a time across Clean + Store
+- [ ] Single shared checkout page for Clean/Store/Parcel (open)
