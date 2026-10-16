@@ -14276,6 +14276,10 @@ export type Database = {
         Args: { _id: string }
         Returns: undefined
       }
+      staff_delivery_gst_check: {
+        Args: { _from: string; _to: string }
+        Returns: Json
+      }
       staff_demand_top_names: {
         Args: { _city?: string; _service?: string }
         Returns: Json
