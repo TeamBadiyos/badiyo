@@ -110,7 +110,7 @@ export function CardDetailsSheet({ items, index, onIndex, details, lang, heading
                 ))}
               </div>
             )}
-            <img src={item.image} alt={item.title} className="mt-3 aspect-[4/3] w-full rounded-[18px] bg-muted object-cover" />
+            <img src={item.image} alt={item.title} className="mt-3 aspect-[16/10] w-full rounded-[18px] bg-muted object-cover object-center" />
             <p className="mt-3 text-lg font-extrabold text-foreground">{item.title}</p>
             {item.included.length > 0 && (
               <div className="mt-3">

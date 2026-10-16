@@ -10,7 +10,7 @@ type Pref = { key: "booking" | "promos" | "referrals"; label: string; desc: stri
 const PREFS: Pref[] = [
   { key: "booking", label: "Booking updates", desc: "Confirmations, reminders and status changes" },
   { key: "promos", label: "Promotions & offers", desc: "Deals and seasonal discounts" },
-  { key: "referrals", label: "Referral updates", desc: "When friends join and earn you coins" },
+  { key: "referrals", label: "Referral updates", desc: "When friends join and add money to your badiyos Wallet" },
 ];
 
 const DEFAULTS = { booking: true, promos: true, referrals: true };

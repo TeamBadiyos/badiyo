@@ -316,7 +316,7 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
             {/* Stat grid */}
             <section className="mt-4 grid grid-cols-2 gap-3">
               <StatCard label="Total Rewards Earned" value={`₹${totalRewards}`} />
-              <StatCard label="Wallet Balance" value={`${walletBalance} coins (₹${walletBalance})`} />
+              <StatCard label="Wallet Balance" value={`₹${walletBalance}`} />
               <StatCard label="Families Referred" value={String(totalReferred)} />
               <StatCard label="Successful Referrals" value={String(successful.length)} />
             </section>
@@ -325,10 +325,10 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
             <section className="mt-4 rounded-[18px] border border-border bg-card p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h2 className="text-sm font-bold text-foreground">
-                  Earn {totalPerReferral} coins per friend
+                  Earn ₹{totalPerReferral} in badiyos Wallet per friend
                 </h2>
                 <span className="rounded-full bg-primary/15 px-2.5 py-1 text-[11px] font-extrabold text-primary">
-                  1 coin = ₹1
+                  Added to your badiyos Wallet
                 </span>
               </div>
               <div className="mt-3 space-y-2">
@@ -338,7 +338,7 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
                   </span>
                   <p className="text-xs text-muted-foreground">
                     <span className="font-bold text-foreground">
-                      {signupReward} coins
+                      ₹{signupReward}
                     </span>{" "}
                     as soon as your friend joins badiyos with your code.
                   </p>
@@ -349,15 +349,15 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
                   </span>
                   <p className="text-xs text-muted-foreground">
                     <span className="font-bold text-foreground">
-                      {bookingReward} coins
+                      ₹{bookingReward}
                     </span>{" "}
                     when they complete their first booking.
                   </p>
                 </div>
               </div>
               <p className="mt-3 rounded-[12px] bg-muted/60 p-3 text-xs text-muted-foreground">
-                <span className="font-bold text-foreground">1 Badiyos coin = ₹1.</span>{" "}
-                So {totalPerReferral} coins are worth ₹{totalPerReferral}. Use your coins
+                <span className="font-bold text-foreground">Rewards go to your badiyos Wallet.</span>{" "}
+                That is ₹{totalPerReferral} per friend. Use your wallet balance
                 at checkout to pay less on any booking.
               </p>
             </section>
@@ -449,7 +449,7 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
               ))}
             </section>
             <p className="mt-2 text-[11px] text-muted-foreground">
-              You get {signupReward} coins when a friend joins, and {bookingReward} more
+              You get ₹{signupReward} when a friend joins, and ₹{bookingReward} more
               once they complete their first booking.
             </p>
 
@@ -489,7 +489,7 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
                             {friendLabel(t)}
                           </div>
                           <div className="text-[11px] text-muted-foreground">
-                            {date} · {earned} coins earned
+                            {date} · ₹{earned} earned
                             {pending > 0 && t.status !== "reversed"
                               ? ` · ${pending} after first booking`
                               : ""}
