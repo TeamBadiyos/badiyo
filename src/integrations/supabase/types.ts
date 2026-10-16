@@ -11606,6 +11606,7 @@ export type Database = {
         Args: { _city_id?: string; _service_key: string }
         Returns: Json
       }
+      app_catalog_url: { Args: { _p: string }; Returns: string }
       app_categories: {
         Args: { _city_id?: string; _kind: string }
         Returns: Json
@@ -11616,6 +11617,16 @@ export type Database = {
       }
       app_city_price_options: { Args: { _city_id: string }; Returns: Json }
       app_clean_media: { Args: { _city?: string }; Returns: Json }
+      app_commerce_home: {
+        Args: {
+          _category_id?: string
+          _city_id: string
+          _lat?: number
+          _lng?: number
+          _service_key: string
+        }
+        Returns: Json
+      }
       app_create_booking_wallet: { Args: { _payload: Json }; Returns: Json }
       app_expert_application_agreements: { Args: never; Returns: Json }
       app_expert_application_get: { Args: never; Returns: Json }
@@ -11633,6 +11644,8 @@ export type Database = {
         }
         Returns: Json
       }
+      app_item_card: { Args: { _p: string }; Returns: Json }
+      app_item_live: { Args: { _p: string }; Returns: boolean }
       app_list_banners: {
         Args: { _city_id: string; _tab: string }
         Returns: Json
@@ -11640,6 +11653,7 @@ export type Database = {
       app_merchant_issue_signup_agreement: { Args: never; Returns: string }
       app_my_agreements: { Args: never; Returns: Json }
       app_ops_value: { Args: { _city: string; _key: string }; Returns: string }
+      app_order_again: { Args: { _service_key: string }; Returns: Json }
       app_service_content: {
         Args: { _city_id: string; _service_key: string }
         Returns: Json
@@ -11649,6 +11663,17 @@ export type Database = {
         Returns: Json
       }
       app_set_offer_notifications: { Args: { _on: boolean }; Returns: Json }
+      app_store_card: {
+        Args: { _lat: number; _lng: number; _m: string }
+        Returns: Json
+      }
+      app_store_is_open: {
+        Args: { _at?: string; _m: string }
+        Returns: boolean
+      }
+      app_store_live: { Args: { _m: string }; Returns: boolean }
+      app_store_next_open: { Args: { _m: string }; Returns: string }
+      app_store_page: { Args: { _store_id: string }; Returns: Json }
       app_svc_key: { Args: { _k: string }; Returns: string }
       app_wallet_history: {
         Args: { _before?: string; _limit?: number }
