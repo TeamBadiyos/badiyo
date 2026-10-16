@@ -10,6 +10,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useStoreCart } from "@/lib/storeCart";
+import { getCoordsIfPermitted } from "@/lib/nativeGeolocation";
 import { ActiveOrdersStrip } from "@/components/home/ActiveOrdersStrip";
 import { getAuthUser } from "@/lib/authUser";
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
@@ -65,7 +66,7 @@ const CommerceStoreScreen = lazy(() =>
   import("./commerce/CommerceStoreScreen").then((m) => ({ default: m.CommerceStoreScreen })),
 );
 const StoreCartScreen = lazy(() =>
-  import("./store/StoreCartScreen").then((m) => ({ default: m.StoreCartScreen })),
+  import("./commerce/CommerceCheckoutScreen").then((m) => ({ default: m.CommerceCheckoutScreen })),
 );
 
 import type { TranslationKey } from "@/i18n/en";
@@ -280,7 +281,7 @@ export function HomeScreen({
     queryFn: async (): Promise<{ lat: number; lng: number } | null> => {
       const { data: userData } = await getAuthUser();
       const uid = userData.user?.id;
-      if (!uid) return null;
+      if (!uid) return getCoordsIfPermitted();
       const { data } = await supabase
         .from("addresses")
         .select("latitude, longitude")
@@ -290,7 +291,7 @@ export function HomeScreen({
         .order("created_at", { ascending: false })
         .limit(1);
       const row = data?.[0];
-      if (!row?.latitude || !row?.longitude) return null;
+      if (!row?.latitude || !row?.longitude) return getCoordsIfPermitted();
       return { lat: Number(row.latitude), lng: Number(row.longitude) };
     },
   });
@@ -378,7 +379,7 @@ export function HomeScreen({
     queryFn: async (): Promise<SavedAddress | null> => {
       const { data: userData } = await getAuthUser();
       const uid = userData.user?.id;
-      if (!uid) return null;
+      if (!uid) return getCoordsIfPermitted();
       const { data } = await supabase
         .from("addresses")
         .select("id, label, full_address, area, city, is_default")

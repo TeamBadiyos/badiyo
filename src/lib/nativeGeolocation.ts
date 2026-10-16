@@ -189,3 +189,33 @@ export async function openLocationSettings(): Promise<boolean> {
     return false;
   }
 }
+
+/**
+ * Device coordinates ONLY when location permission is already granted.
+ * Never shows a permission prompt; returns null otherwise.
+ */
+export async function getCoordsIfPermitted(): Promise<Coords | null> {
+  if (typeof window === "undefined") return null;
+  try {
+    const { Capacitor } = await import("@capacitor/core");
+    if (Capacitor.isNativePlatform()) {
+      const { Geolocation } = await import("@capacitor/geolocation");
+      const st = (await Geolocation.checkPermissions()).location;
+      if (st !== "granted") return null;
+      const p = await Geolocation.getCurrentPosition({ enableHighAccuracy: false, timeout: 8000, maximumAge: 300_000 });
+      return { lat: p.coords.latitude, lng: p.coords.longitude };
+    }
+    if (!navigator.geolocation || !navigator.permissions?.query) return null;
+    const st = await navigator.permissions.query({ name: "geolocation" as PermissionName });
+    if (st.state !== "granted") return null;
+    return await new Promise<Coords | null>((resolve) =>
+      navigator.geolocation.getCurrentPosition(
+        (p) => resolve({ lat: p.coords.latitude, lng: p.coords.longitude }),
+        () => resolve(null),
+        { enableHighAccuracy: false, timeout: 8000, maximumAge: 300_000 },
+      ),
+    );
+  } catch {
+    return null;
+  }
+}
