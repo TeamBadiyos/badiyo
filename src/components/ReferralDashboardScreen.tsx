@@ -50,7 +50,7 @@ type ReferralConfigRow = {
 };
 
 const L = (en: string, mr: string) => (readLangOutsideReact() === "mr" ? mr : en);
-const STATUS_META: Record<string, { label: string; className: string }> = {
+const statusMetaMap = (): Record<string, { label: string; className: string }> => ({
   pending: { label: L("Pending", "बाकी"), className: "bg-muted text-muted-foreground" },
   registered: { label: L("Joined", "जॉइन झाले"), className: "bg-blue-100 text-blue-700" },
   first_booking_completed: {
@@ -62,7 +62,7 @@ const STATUS_META: Record<string, { label: string; className: string }> = {
     className: "bg-primary/15 text-primary",
   },
   reversed: { label: L("Reversed", "परत घेतले"), className: "bg-muted text-muted-foreground" },
-};
+});
 
 function txnEarned(t: Txn) {
   const staged =
@@ -72,7 +72,7 @@ function txnEarned(t: Txn) {
 
 function statusMeta(status: string) {
   return (
-    STATUS_META[status] ?? {
+    statusMetaMap()[status] ?? {
       label: status.replace(/_/g, " "),
       className: "bg-muted text-muted-foreground",
     }
