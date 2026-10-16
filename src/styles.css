@@ -505,3 +505,13 @@ select,
 @utility text-hero-title { color: var(--hero-title); }
 @utility text-hero-title-dark { color: var(--hero-title-dark); }
 @utility hero-shadow { text-shadow: 0 2px 8px color-mix(in oklab, var(--hero-title-dark) 55%, transparent); }
+
+/* Soft green glow pulse for the main Maid / Car Wash cards. */
+@keyframes service-glow {
+  0%, 100% { box-shadow: 0 0 0 1px color-mix(in oklab, var(--primary) 25%, transparent), 0 6px 18px -6px color-mix(in oklab, var(--primary) 35%, transparent); }
+  50% { box-shadow: 0 0 0 1.5px color-mix(in oklab, var(--primary) 55%, transparent), 0 8px 28px -4px color-mix(in oklab, var(--primary) 60%, transparent); }
+}
+@utility service-glow {
+  background: linear-gradient(160deg, var(--card) 55%, color-mix(in oklab, var(--primary) 12%, var(--card)));
+  animation: service-glow 2.6s ease-in-out infinite;
+}
