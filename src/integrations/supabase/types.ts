@@ -4239,6 +4239,7 @@ export type Database = {
           invoice_no: string
           lines: Json
           merchant_goods: Json | null
+          payments: Json | null
           place_of_supply: string | null
           pos_state_code: string | null
           ref_code: string | null
@@ -4266,6 +4267,7 @@ export type Database = {
           invoice_no: string
           lines?: Json
           merchant_goods?: Json | null
+          payments?: Json | null
           place_of_supply?: string | null
           pos_state_code?: string | null
           ref_code?: string | null
@@ -4293,6 +4295,7 @@ export type Database = {
           invoice_no?: string
           lines?: Json
           merchant_goods?: Json | null
+          payments?: Json | null
           place_of_supply?: string | null
           pos_state_code?: string | null
           ref_code?: string | null
