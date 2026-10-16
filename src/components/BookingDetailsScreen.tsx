@@ -6,7 +6,8 @@ import type { BookingRow } from "./MyBookingsScreen";
 import { supabase } from "@/integrations/supabase/client";
 import { RescheduleSheet } from "./RescheduleSheet";
 import { getErrorMessage } from "@/lib/errorMessage";
-import { cancelBooking } from "@/lib/bookingCancel.functions";
+import { CancelRefundDialog, refundDestinationLabel } from "./CancelRefundDialog";
+import { CancellationPolicySheet } from "./CancellationPolicySheet";
 import { readLangOutsideReact, translateCatalog, translateStatus } from "@/lib/catalogI18n";
 
 function refundLine(b: BookingRow): { label: string; note: string } | null {
@@ -70,7 +71,9 @@ export function BookingDetailsScreen({
   const [scheduledDate, setScheduledDate] = useState(booking.scheduled_date);
   const [scheduledSlot, setScheduledSlot] = useState(booking.scheduled_time_slot);
   const [confirmingCancel, setConfirmingCancel] = useState(false);
-  const [cancelling, setCancelling] = useState(false);
+  const [policyOpen, setPolicyOpen] = useState(false);
+  const lang = readLangOutsideReact();
+  const serviceKey = /wash/i.test(booking.service_label ?? "") ? "wash" : "clean";
   const [rescheduleOpen, setRescheduleOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -85,35 +88,6 @@ export function BookingDetailsScreen({
 
   const canCancel = status === "confirmed";
   const canReschedule = status === "confirmed" && booking.slot_type === "scheduled";
-
-  async function handleCancel() {
-    setCancelling(true);
-    setError(null);
-    try {
-      // Goes through the server so the gateway refund actually happens.
-      const result = await cancelBooking({ data: { bookingId: booking.id } });
-      await qc.invalidateQueries({ queryKey: ["my-bookings"] });
-      setStatus("cancelled");
-      setConfirmingCancel(false);
-      if (result.refund_status === "processing") {
-        toast.success(
-          `Booking cancel ho gayi. ₹${result.refund_amount} ka refund 5-7 din me aa jayega.`,
-        );
-      } else if (result.refund_status === "pending") {
-        toast.warning(
-          "Booking cancelled. Your refund could not be started yet — we are retrying it and will update you shortly.",
-        );
-      } else {
-        toast.success("Booking cancelled.");
-      }
-      onBack();
-    } catch (e) {
-      setError(await getErrorMessage(e));
-    } finally {
-      setCancelling(false);
-    }
-  }
-
 
   async function handleReschedule(date: string, slotLabel: string) {
     setSaving(true);
@@ -254,6 +228,11 @@ export function BookingDetailsScreen({
               )}
               <p className="mt-1 text-sm font-semibold text-foreground">{refund.label}</p>
               <p className="mt-0.5 text-xs text-muted-foreground">{refund.note}</p>
+              {refundDestinationLabel(booking.refund_destination, lang) && (
+                <p className="mt-1 text-xs font-bold text-foreground">
+                  {lang === "mr" ? "परतावा येथे: " : "Refund to: "}{refundDestinationLabel(booking.refund_destination, lang)}
+                </p>
+              )}
             </section>
           );
         })()}
@@ -295,47 +274,29 @@ export function BookingDetailsScreen({
           </div>
         )}
 
+        <button type="button" onClick={() => setPolicyOpen(true)} className="mt-4 block w-full text-center text-sm font-bold text-primary">
+          {lang === "mr" ? "रद्द करण्याचे धोरण ›" : "Cancellation policy ›"}
+        </button>
+
         {/* Booking id */}
         <p className="mt-4 text-center text-[11px] text-muted-foreground">
           Booking ID: {booking.id.slice(0, 8).toUpperCase()}
         </p>
       </div>
 
-      {/* Cancel confirmation dialog */}
-      {confirmingCancel && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-6">
-          <div className="w-full max-w-sm rounded-[18px] bg-card p-5 shadow-xl">
-            <div className="flex items-start justify-between">
-              <h2 className="text-base font-bold text-foreground">Cancel booking?</h2>
-              <button
-                onClick={() => setConfirmingCancel(false)}
-                aria-label="Close"
-                className="flex h-7 w-7 items-center justify-center rounded-full bg-muted"
-              >
-                <X className="h-4 w-4 text-foreground" />
-              </button>
-            </div>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Are you sure you want to cancel this booking? This cannot be undone.
-            </p>
-            <div className="mt-5 flex gap-2">
-              <button
-                onClick={() => setConfirmingCancel(false)}
-                className="flex-1 rounded-[14px] border border-border bg-card px-4 py-3 text-sm font-bold text-foreground"
-              >
-                Keep booking
-              </button>
-              <button
-                onClick={handleCancel}
-                disabled={cancelling}
-                className="flex-1 rounded-[14px] bg-destructive px-4 py-3 text-sm font-bold text-destructive-foreground disabled:opacity-70"
-              >
-                {cancelling ? "Cancelling…" : "Yes, cancel"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <CancelRefundDialog
+        bookingId={booking.id}
+        open={confirmingCancel}
+        onClose={() => setConfirmingCancel(false)}
+        onCancelled={async () => {
+          setConfirmingCancel(false);
+          setStatus("cancelled");
+          await qc.invalidateQueries({ queryKey: ["my-bookings"] });
+          void qc.invalidateQueries({ queryKey: ["wallet_transactions"] });
+          onBack();
+        }}
+      />
+      <CancellationPolicySheet open={policyOpen} onClose={() => setPolicyOpen(false)} serviceKey={serviceKey} />
 
       <RescheduleSheet
         open={rescheduleOpen}
