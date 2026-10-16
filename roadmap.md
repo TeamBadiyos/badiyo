@@ -48,3 +48,18 @@ drop table if exists public.courier_vehicle_courier_types, public.courier_vehicl
 - [x] Translate the stops timeline, OTP sharing, contact editing, return charges, final states, and order chips
 - [x] Translate the “Parcels for you” list and detail screens
 - [x] Send the stop-contact push in the recipient's saved English or Marathi language without including the OTP
+
+## Customer redesign — Part 1
+- [x] Theme: white bg, charcoal text, 20px cards, soft shadows, Nunito Sans
+- [x] 5 tabs Clean · Store · Food · Parcel · Rewards, last-used tab remembered; Orders → Profile
+- [x] Header: address label + area, wallet pill, avatar
+- [x] "Bring badiyos" outside-city screen with service picker → Demand (waitlist_requests)
+- [x] Removed All/Clean/Store chips and Sell-on-badiyos banner (→ Profile › Partner with badiyos)
+- [x] One cart at a time with "clear and start new" (store cart already enforced)
+- [ ] Browse without login (OTP only on Book/Order/Pay/Wallet)
+- [ ] First-open Location + Notifications screen; follow phone language on first open
+- [ ] Structured address form (City dropdown, pincode validation, Confirm this location)
+- [ ] Single checkout page for all services
+- [ ] Active order strip swipeable for several orders
+- [ ] "{N} people waiting" count — needs a server count function (DB changes not possible from this session)
+- [ ] CC "Hide sections with too few items" setting — needs a DB setting row + Command Center switch
