@@ -170,11 +170,11 @@ export function CleanTab({
         {bSub && <p className={`mt-1.5 text-sm font-semibold ${tone === "light" ? "text-primary-foreground hero-shadow" : "text-hero-title-dark opacity-80"}`}>{bSub}</p>}
       </section>
 
-      <div className="relative -mx-5 -mt-8 rounded-t-[28px] bg-background px-5 pt-6">
-        <div className="grid grid-cols-2 gap-3 pt-16">
-          <ServiceCard title={pick(lang, maidContent?.hero?.card_title, maidContent?.hero?.card_title_mr) || s.maid} status={statusLine(maidState)} closed={closed} icon={<Sparkles className="h-4 w-4" />} img={maidContent?.hero?.image_url || maidHero} onClick={() => openBooking(false)} />
+      <div className="relative -mx-5 -mt-8 rounded-t-[28px] bg-background px-5 pt-3">
+        <div className="grid grid-cols-2 gap-3 pt-[34px]">
+          <ServiceCard title={pick(lang, maidContent?.hero?.card_title, maidContent?.hero?.card_title_mr) || s.maid} status={statusLine(maidState)} closed={closed} icon={<Sparkles className="h-5 w-5" />} img={maidContent?.hero?.image_url || maidHero} onClick={() => openBooking(false)} />
           {washOptions.length > 0 && (
-            <ServiceCard title={pick(lang, washContent?.hero?.card_title, washContent?.hero?.card_title_mr) || s.washCard} status={statusLine(washState)} closed={washState != null && !washState.can_order} icon={<Car className="h-4 w-4" />} img={washContent?.hero?.image_url || washCar} onClick={() => openBooking(true)} />
+            <ServiceCard title={pick(lang, washContent?.hero?.card_title, washContent?.hero?.card_title_mr) || s.washCard} status={statusLine(washState)} closed={washState != null && !washState.can_order} icon={<Car className="h-5 w-5" />} img={washContent?.hero?.image_url || washCar} onClick={() => openBooking(true)} />
           )}
         </div>
 
@@ -278,16 +278,22 @@ function fill(text: string, vars: Record<string, string>): string {
 }
 
 function ServiceCard({ title, status, closed, icon, img, onClick }: { title: string; status: string; closed: boolean; icon: ReactNode; img: string; onClick: () => void }) {
+  const sp = status.indexOf(" ");
+  const l1 = sp > 0 ? status.slice(0, sp) : status;
+  const l2 = sp > 0 ? status.slice(sp + 1) : "";
   return (
     <button onClick={onClick} className="relative flex h-[96px] flex-col justify-end overflow-visible rounded-[18px] bg-card p-2.5 text-left shadow-soft transition active:scale-[0.98]">
-      <img src={img} alt="" loading="lazy" className={`pointer-events-none absolute bottom-0 right-0 h-[150%] w-auto max-w-none object-contain object-bottom ${closed ? "grayscale" : ""}`} />
-      <div className="relative w-[41%] min-w-0">
-        <span className="mb-1 flex items-center justify-between">
-          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-primary">{icon}</span>
+      <img src={img} alt="" loading="lazy" className="pointer-events-none absolute bottom-0 right-0 h-[135%] w-auto max-w-none object-contain object-bottom" />
+      <div className="relative w-[44%] min-w-0">
+        <span className="mb-1 flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">{icon}</span>
+        <span className="flex min-w-0 items-center gap-0.5">
+          <span className="truncate text-[13px] font-extrabold tracking-tight text-foreground">{title}</span>
           <ChevronRight className="h-4 w-4 shrink-0 text-foreground" />
         </span>
-        <span className="block truncate text-[13px] font-extrabold tracking-tight text-foreground">{title}</span>
-        <span className={`mt-0.5 block line-clamp-2 text-[11px] leading-tight font-semibold ${closed ? "text-muted-foreground" : "text-primary"}`}>{status}</span>
+        <span className={`mt-0.5 block text-[11px] leading-tight font-semibold ${closed ? "text-muted-foreground" : "text-primary"}`}>
+          <span className="block whitespace-nowrap">{l1}</span>
+          {l2 && <span className="block whitespace-nowrap">{l2}</span>}
+        </span>
       </div>
     </button>
   );
