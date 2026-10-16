@@ -75,7 +75,7 @@ export function useResolveAddressCity(addressId: string | null | undefined) {
     },
   });
   useEffect(() => {
-    if (q.data) setCustomerCityId(q.data.cityId);
+    if (q.data && (q.data.cityId || q.data.outside)) setCustomerCityId(q.data.cityId);
   }, [q.data]);
   return q.data ?? null;
 }
