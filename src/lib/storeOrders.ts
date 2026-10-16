@@ -113,7 +113,13 @@ export async function createStoreOrder(params: {
 }): Promise<CreatedOrder> {
   const data = await rpc("store_create_order", {
     _merchant_id: params.merchantId,
-    _items: params.lines.map((l) => ({ product_id: l.product_id, quantity: l.quantity })),
+    _items: params.lines.map((l) => ({
+      product_id: l.product_id,
+      quantity: l.quantity,
+      qty: l.quantity,
+      ...(l.variant_id ? { variant_id: l.variant_id } : {}),
+      ...(l.addons && l.addons.length ? { addon_ids: l.addons.map((a) => a.id) } : {}),
+    })),
     _address_id: params.addressId,
     _payment_mode: params.paymentMode,
     _note: params.note ?? null,
