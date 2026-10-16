@@ -7,7 +7,12 @@ import { supabase } from "@/integrations/supabase/client";
  * non-React fetchers (slots, Book Now, payment gates) can read it too.
  * null = unknown yet → server falls back to the default city.
  */
-let currentCityId: string | null = null;
+const CITY_KEY = "bdy_last_city_id";
+// Restored from the device on launch so cached content keyed by city is found on the first frame.
+let currentCityId: string | null = (() => {
+  if (typeof window === "undefined") return null;
+  try { return window.localStorage.getItem(CITY_KEY) || null; } catch { return null; }
+})();
 const listeners = new Set<() => void>();
 
 export function getCustomerCityId(): string | null {
@@ -17,6 +22,10 @@ export function getCustomerCityId(): string | null {
 export function setCustomerCityId(id: string | null) {
   if (id === currentCityId) return;
   currentCityId = id;
+  try {
+    if (id) window.localStorage.setItem(CITY_KEY, id);
+    else window.localStorage.removeItem(CITY_KEY);
+  } catch { /* ignore */ }
   listeners.forEach((l) => l());
 }
 
@@ -66,7 +75,7 @@ export function useResolveAddressCity(addressId: string | null | undefined) {
     },
   });
   useEffect(() => {
-    if (q.data) setCustomerCityId(q.data.cityId);
+    if (q.data && (q.data.cityId || q.data.outside)) setCustomerCityId(q.data.cityId);
   }, [q.data]);
   return q.data ?? null;
 }
