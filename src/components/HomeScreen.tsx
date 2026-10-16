@@ -399,6 +399,14 @@ export function HomeScreen({
     searchBar?.payload?.placeholder ?? t("home.searchPlaceholder");
 
   const [locationSheetOpen, setLocationSheetOpen] = useState(false);
+  // Runs after the address picker closes (e.g. reopen the Clean booking sheet/page).
+  const afterLocationRef = useRef<(() => void) | null>(null);
+  const closeLocation = () => {
+    setLocationSheetOpen(false);
+    const cb = afterLocationRef.current;
+    afterLocationRef.current = null;
+    if (cb) setTimeout(cb, 250);
+  };
   const [activeAddress, setActiveAddress] = useState<SavedAddress | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [tab, setTab] = useState<HomeTab>("clean");
@@ -619,7 +627,10 @@ export function HomeScreen({
             categories={categories.filter((c) => c.segment_id === cleanSegment.id)}
             promo={promo?.payload ?? null}
             addressLine={activeAddress ? `${addressTag}${locationLabel ? ` · ${locationLabel}` : ""}` : null}
-            onChangeAddress={() => setLocationSheetOpen(true)}
+            onChangeAddress={(onReturn) => {
+              afterLocationRef.current = onReturn ?? null;
+              setTimeout(() => setLocationSheetOpen(true), 200);
+            }}
             onOpenPromo={onOpenRewards}
             onOpenReferral={onOpenReferral ?? onOpenRewards}
             onCheckout={(o, slot) =>
@@ -730,10 +741,10 @@ export function HomeScreen({
       <LocationPickerSheet
         open={locationSheetOpen}
         activeId={activeAddress?.id ?? null}
-        onClose={() => setLocationSheetOpen(false)}
+        onClose={closeLocation}
         onSelect={(a) => {
           setActiveAddress(a);
-          setLocationSheetOpen(false);
+          closeLocation();
         }}
       />
     </main>
