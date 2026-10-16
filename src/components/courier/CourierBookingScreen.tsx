@@ -36,7 +36,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthUser } from "@/lib/authUser";
-import { courierQuote, courierCreateOrder, courierConfirmPayment, courierGetRateLimits, courierPlanStops } from "@/lib/courier.functions";
+import { courierQuote, courierGuestQuote, courierCreateOrder, courierConfirmPayment, courierGetRateLimits, courierPlanStops } from "@/lib/courier.functions";
 import { PlannedRoute, type ExtraStop } from "./MultiStopEditor";
 import { RouteTimeline, type TimelineStop } from "./RouteTimeline";
 import { payWithRazorpay, toPaymentError } from "@/lib/razorpayCheckout";
