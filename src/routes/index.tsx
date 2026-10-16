@@ -269,6 +269,17 @@ type Phase =
 
 
 
+const GUEST_LOCKED_PHASES = new Set<Phase>([
+  "address",
+  "wallet",
+  "rewards",
+  "orders",
+  "courier",
+  "courier-track",
+  "store-track",
+  "parcels-for-you",
+]);
+
 const TRACKING_PHASES = new Set<Phase>([
   "searching-expert",
   "expert-assigned",
@@ -283,7 +294,16 @@ function Index() {
   const phaseRef = useRef<Phase>("splash");
   const lastBackAtRef = useRef<number>(0);
 
-  const setPhase = useCallback((next: Phase) => {
+  // Guests browse freely; these screens need a phone login first. The screen
+  // they wanted is remembered and opened right after login succeeds.
+  const signedInRef = useRef(false);
+  const afterLoginRef = useRef<Phase | null>(null);
+  const setPhase = useCallback((requested: Phase) => {
+    let next = requested;
+    if (!signedInRef.current && GUEST_LOCKED_PHASES.has(requested)) {
+      afterLoginRef.current = requested;
+      next = "login";
+    }
     _setPhase((prev) => {
       if (next === prev) return prev;
       // Home is the root — clear history when returning to it.
