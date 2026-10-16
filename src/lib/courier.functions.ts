@@ -245,6 +245,69 @@ export const courierQuote = createServerFn({ method: "POST" })
     return { ...(quote as Record<string, unknown>), distance_source: source };
   });
 
+/**
+ * Price preview for guests (not signed in). Same fare formula as
+ * courier_quote_internal, single pickup -> single drop, no coupon. The real
+ * quote is recomputed by courierQuote/courierCreateOrder after login.
+ */
+export const courierGuestQuote = createServerFn({ method: "POST" })
+  .inputValidator((data) => parseFriendly(quoteSchema, data))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await assertWeightAllowed(supabaseAdmin, data.vehicle_type_id, data.weight_kg);
+    await assertInCourierZone(supabaseAdmin, data.pickup, "Pickup");
+    await assertInCourierZone(supabaseAdmin, data.drop, "Drop");
+    const { km, source } = await routeDistanceKm(data.pickup, data.drop);
+    const key = data.city.trim().toLowerCase();
+    const { data: rates } = await supabaseAdmin
+      .from("courier_vehicle_rates")
+      .select("*")
+      .eq("vehicle_type_id", data.vehicle_type_id)
+      .eq("customer_segment", "regular");
+    const rate = (rates ?? []).find(
+      (r: any) => String(r.city ?? "").trim().toLowerCase() === key && !r.is_placeholder,
+    ) as any;
+    if (!rate) throw new Error("Parcel delivery is not available in your area yet");
+    const { data: ctype } = await supabaseAdmin
+      .from("courier_types")
+      .select("extra_fee, is_active")
+      .eq("id", data.courier_type_id)
+      .maybeSingle();
+    if (!ctype || !ctype.is_active) throw new Error("This parcel type is not available");
+    const r2 = (n: number) => Math.round(n * 100) / 100;
+    const base = r2(
+      Math.max(
+        Number(rate.min_fare),
+        Number(rate.base_fare) + Math.max(0, km - Number(rate.included_km)) * Number(rate.per_km),
+      ),
+    );
+    const extra = Number(ctype.extra_fee ?? 0);
+    const platform = Number(rate.platform_fee ?? 0);
+    const subtotal = base + extra + platform;
+    const { data: gstPct } = await supabaseAdmin.rpc("tax_rate" as never, {
+      _key: "parcel_delivery_gst",
+    } as never);
+    const pct = Number(gstPct ?? 0);
+    const gst = r2((subtotal * pct) / 100);
+    return {
+      ok: true,
+      guest: true,
+      city: data.city,
+      distance_km: r2(km),
+      base_amount: base,
+      extra_fee: extra,
+      platform_fee: platform,
+      discount_amount: 0,
+      gst_percent: pct,
+      gst_amount: gst,
+      total_amount: r2(subtotal + gst),
+      stops_fee: 0,
+      pickup_count: 1,
+      drop_count: 1,
+      distance_source: source,
+    };
+  });
+
 export const courierCreateOrder = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => parseFriendly(createSchema, data))
