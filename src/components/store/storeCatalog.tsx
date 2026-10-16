@@ -18,6 +18,25 @@ import {
 } from "@/lib/store";
 import { ProductCard } from "./ProductCard";
 import { StoreImage } from "./StoreImage";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+
+/** Command Center switch: hide store/food sections with fewer than 3 items. */
+export const MIN_SECTION_ITEMS = 3;
+export function useHideLowItemSections(serviceKey: "store" | "food" = "store") {
+  return useQuery({
+    queryKey: ["hide_low_item_sections", serviceKey],
+    staleTime: 5 * 60_000,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("service_settings")
+        .select("hide_low_item_sections")
+        .eq("service_key", serviceKey)
+        .maybeSingle();
+      return Boolean((data as { hide_low_item_sections?: boolean } | null)?.hide_low_item_sections);
+    },
+  }).data ?? false;
+}
 
 type Coords = { lat: number; lng: number } | null;
 export type CatalogItem = { product: PublicProduct; store: PublicStore; km: number | null; closed: boolean };
@@ -44,6 +63,7 @@ export function useNearbyCatalog(coords: Coords) {
   const { data: radiusKm = DEFAULT_STORE_RADIUS_KM } = useStoreRadiusKm();
   const ids = useMemo(() => stores.map((s) => s.id), [stores]);
   const { data: previews, isLoading: lp } = useStorePreviewProducts(ids);
+  const hideLow = useHideLowItemSections("store");
 
   const items = useMemo<CatalogItem[]>(() => {
     const out: CatalogItem[] = [];
@@ -65,8 +85,8 @@ export function useNearbyCatalog(coords: Coords) {
     () =>
       categories
         .map((category) => ({ category, items: items.filter((i) => i.store.store_category_id === category.id) }))
-        .filter((s) => s.items.length > 0),
-    [categories, items],
+        .filter((s) => s.items.length >= (hideLow ? MIN_SECTION_ITEMS : 1)),
+    [categories, items, hideLow],
   );
 
   return { items, shelves, loading: isLoading || (ids.length > 0 && lp) };

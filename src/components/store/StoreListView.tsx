@@ -12,7 +12,7 @@ import {
 } from "@/lib/store";
 import { StoreRow } from "./StoreRow";
 import { CartBar } from "./CartBar";
-import { StoreCategoryGrid } from "./storeCatalog";
+import { MIN_SECTION_ITEMS, StoreCategoryGrid, useHideLowItemSections } from "./storeCatalog";
 import { buildStoreGroups, type StoreCategoryGroup } from "./storeGroups";
 
 type Coords = { lat: number; lng: number } | null;
@@ -38,9 +38,13 @@ export function StoreListView({
   const ids = useMemo(() => stores.map((s) => s.id), [stores]);
   const { data: previews, isLoading: loadingPreviews } = useStorePreviewProducts(ids);
 
+  const hideLow = useHideLowItemSections("store");
   const groups = useMemo(
-    () => buildStoreGroups(stores, categories, previews ?? {}, coords, radiusKm),
-    [stores, categories, previews, coords, radiusKm],
+    () =>
+      buildStoreGroups(stores, categories, previews ?? {}, coords, radiusKm).filter(
+        (g) => !hideLow || g.stores.length >= MIN_SECTION_ITEMS,
+      ),
+    [stores, categories, previews, coords, radiusKm, hideLow],
   );
 
   const loading = isLoading || (ids.length > 0 && loadingPreviews);

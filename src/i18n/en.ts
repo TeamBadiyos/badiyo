@@ -476,6 +476,7 @@ export const en = {
   "language.saveFailed": "Couldn't save your language. Please try again.",
 
   // ── Not serviceable / waitlist ───────────────────────────
+  "bring.waiting": "👥 {n} people in {city} are already waiting",
   "notServiceable.title": "Service Area",
   "notServiceable.heading": "badiyos isn't in your city yet",
   "notServiceable.sub": "badiyos hasn't launched here yet — but we're expanding fast.",
