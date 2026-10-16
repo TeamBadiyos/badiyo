@@ -87,7 +87,9 @@ export type ServiceContent = {
   details?: ContentDetails;
   /** "HH:MM" IST — night banner switches to sunrise banner at this time. */
   morning_switch_time?: string | null;
+  time_slabs?: TimeSlab[] | null;
 };
+export type TimeSlab = { from?: string | null; to?: string | null; image_url?: string | null; text_tone?: "light" | "dark" | null };
 export type BannerKey = "open_available" | "open_busy" | "closed_evening" | "closed_morning" | "holiday";
 export type ContentBanner = { title?: string | null; title_mr?: string | null; subline?: string | null; subline_mr?: string | null; image_url?: string | null };
 export type ContentDetails = { note?: string | null; note_mr?: string | null; note_icon?: string | null; included_title?: string | null; included_title_mr?: string | null; excluded_title?: string | null; excluded_title_mr?: string | null };
