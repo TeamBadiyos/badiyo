@@ -57,7 +57,7 @@ export function FullCalendarArt({ fullLabel }: { fullLabel: string }) {
 export function ContentCardTile({ title, imageUrl, price, onClick }: { title: string; imageUrl: string; price?: number | null; onClick: () => void }) {
   return (
     <button onClick={onClick} className="overflow-hidden rounded-[16px] border border-border bg-card text-left active:scale-[0.98]">
-      <div className="aspect-square w-full bg-muted">{imageUrl && <FadeImg src={imageUrl} alt={title} width={500} height={500} className="h-full w-full object-cover" />}</div>
+      <div className="w-full bg-muted">{imageUrl && <FadeImg src={imageUrl} alt={title} width={500} height={500} className="block h-auto w-full object-contain" />}</div>
       <div className="p-2">
         <p className="truncate text-xs font-bold text-foreground">{title}</p>
         {price != null && <p className="text-sm font-extrabold text-primary">₹{price}</p>}
@@ -69,7 +69,7 @@ export function ContentCardTile({ title, imageUrl, price, onClick }: { title: st
 export function OptionImageCard({ name, imageUrl, price, original, active, onClick }: { name: string; imageUrl: string; price: number; original?: number | null; active: boolean; onClick: () => void }) {
   return (
     <button onClick={onClick} className={`overflow-hidden rounded-[16px] border-2 text-left ${active ? "border-primary bg-primary/5" : "border-border bg-card"}`}>
-      <div className="aspect-square w-full bg-muted">{imageUrl && <FadeImg src={imageUrl} alt={name} width={500} height={500} className="h-full w-full object-cover" />}</div>
+      <div className="w-full bg-muted">{imageUrl && <FadeImg src={imageUrl} alt={name} width={500} height={500} className="block h-auto w-full object-contain" />}</div>
       <div className="p-2">
         <p className="truncate text-xs font-bold text-foreground">{name}</p>
         <p className="text-base font-extrabold text-foreground">₹{price}
@@ -110,7 +110,7 @@ export function CardDetailsSheet({ items, index, onIndex, details, lang, heading
                 ))}
               </div>
             )}
-            <img src={item.image} alt={item.title} className="mt-3 aspect-[16/10] w-full rounded-[18px] bg-muted object-cover object-center" />
+            <img src={item.image} alt={item.title} className="mt-3 h-auto max-h-[60vh] w-full rounded-[18px] bg-muted object-contain" />
             <p className="mt-3 text-lg font-extrabold text-foreground">{item.title}</p>
             {item.included.length > 0 && (
               <div className="mt-3">
