@@ -1130,14 +1130,15 @@ function Index() {
             note={expertNote}
             onBack={() => {
               // Booking wasn't made — make sure no coupon stays held.
-              void queryClient.invalidateQueries({ queryKey: ["my_coupons"] });
+              void queryClient.invalidateQueries({ queryKey: ["my_coupons"] }); void queryClient.invalidateQueries({ queryKey: ["wallet"] }); void queryClient.invalidateQueries({ queryKey: ["my_coin_balance"] });
               setPhase("summary");
             }}
             onSlotUnavailable={() => {
-              void queryClient.invalidateQueries({ queryKey: ["my_coupons"] });
+              void queryClient.invalidateQueries({ queryKey: ["my_coupons"] }); void queryClient.invalidateQueries({ queryKey: ["wallet"] }); void queryClient.invalidateQueries({ queryKey: ["my_coin_balance"] });
               setPhase("home");
             }}
             onDone={() => {
+              void queryClient.invalidateQueries({ queryKey: ["wallet"] }); void queryClient.invalidateQueries({ queryKey: ["my_coin_balance"] });
               setRedeemCoins(false);
               setExpertNote("");
               resetAndGoHome();

@@ -1,158 +1,107 @@
-import { getAuthUser } from "@/lib/authUser";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { usePullToRefresh, PullToRefreshIndicator } from "@/lib/usePullToRefresh";
 import { ArrowLeft, Coins, Wallet as WalletIcon } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { useLanguage } from "@/i18n";
+import { useWalletHistory, useWalletSummary, type WalletHistoryItem } from "@/lib/wallet";
 
-type WalletTx = {
-  id: string;
-  amount: number;
-  type: "credit" | "debit";
-  description: string;
-  created_at: string;
+const T = {
+  en: {
+    title: "Wallet", total: "badiyos Wallet", cash: "Cash", bonus: "Bonus", expires: "expires",
+    history: "Transaction History", loading: "Loading…", more: "Load more", empty: "No transactions yet",
+    emptySub: "Rewards and refunds will appear here.", note: "Use your wallet on your next booking.",
+    kinds: { top_up: "Top-up", payment: "Payment", refund: "Refund", referral: "Referral", bonus: "Bonus", bonus_expired: "Bonus expired", opening_balance: "Opening balance", adjustment: "Adjustment", old_coins: "Old coins" } as Record<string, string>,
+  },
+  mr: {
+    title: "वॉलेट", total: "badiyos वॉलेट", cash: "रोख", bonus: "बोनस", expires: "मुदत",
+    history: "व्यवहार इतिहास", loading: "लोड होत आहे…", more: "आणखी पहा", empty: "अजून कोणतेही व्यवहार नाहीत",
+    emptySub: "रिवॉर्ड्स आणि परतावे इथे दिसतील.", note: "पुढच्या बुकिंगवर वॉलेट वापरा.",
+    kinds: { top_up: "टॉप-अप", payment: "पेमेंट", refund: "परतावा", referral: "रेफरल", bonus: "बोनस", bonus_expired: "बोनसची मुदत संपली", opening_balance: "सुरुवातीची शिल्लक", adjustment: "समायोजन", old_coins: "जुने कॉइन्स" } as Record<string, string>,
+  },
 };
 
-async function fetchTransactions(): Promise<WalletTx[]> {
-  const { data: userRes } = await getAuthUser();
-  const uid = userRes.user?.id;
-  if (!uid) return [];
-  const { data, error } = await supabase
-    .from("wallet_transactions")
-    .select("id, amount, type, description, created_at")
-    .eq("user_id", uid)
-    .order("created_at", { ascending: false });
-  if (error) throw error;
-  // New wallet ledger (refunds to wallet, wallet payments).
-  const { data: led } = await supabase
-    .from("customer_wallet_ledger")
-    .select("id, amount, type, ref_type, reason, created_at")
-    .eq("user_id", uid)
-    .order("created_at", { ascending: false });
-  const ledger: WalletTx[] = ((led ?? []) as { id: string; amount: number; type: string; ref_type: string | null; reason: string | null; created_at: string }[]).map((r) => ({
-    id: `l_${r.id}`,
-    amount: Math.abs(Number(r.amount)),
-    type: Number(r.amount) >= 0 ? "credit" : "debit",
-    description:
-      r.type === "refund" && r.ref_type === "booking" ? "Booking refund · to badiyos Wallet"
-      : r.type === "payment" && r.ref_type === "booking" ? "Paid for booking"
-      : r.reason || r.type,
-    created_at: r.created_at,
-  }));
-  return [...((data ?? []) as WalletTx[]), ...ledger].sort((a, b) => b.created_at.localeCompare(a.created_at));
-}
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("en-US", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
+const fmt = (iso: string, lang: string, year = true) =>
+  new Date(iso).toLocaleDateString(lang === "mr" ? "mr-IN" : "en-IN", { day: "2-digit", month: "short", ...(year ? { year: "numeric" } : {}), timeZone: "Asia/Kolkata" });
+const rupee = (n: number) => `₹${Math.round(n * 100) / 100}`;
 
 export function WalletScreen({ onBack }: { onBack: () => void }) {
-  const { data: txs = [], isLoading } = useQuery({
-    queryKey: ["wallet_transactions"],
-    queryFn: fetchTransactions,
-  });
-
-  const queryClient = useQueryClient();
+  const { lang } = useLanguage();
+  const s = lang === "mr" ? T.mr : T.en;
+  const { data: sum } = useWalletSummary();
+  const hist = useWalletHistory();
+  const items: WalletHistoryItem[] = hist.data?.pages.flatMap((p) => p.items) ?? [];
+  const qc = useQueryClient();
   const { pull, refreshing } = usePullToRefresh(async () => {
-    await queryClient.refetchQueries({ queryKey: ["wallet_transactions"] });
+    await qc.refetchQueries({ queryKey: ["wallet"] });
   });
-
-  const balance = txs.reduce(
-    (sum, t) => sum + (t.type === "credit" ? Number(t.amount) : -Number(t.amount)),
-    0,
-  );
 
   return (
     <main className="min-h-screen w-full bg-background pb-10 momentum-scroll">
       <PullToRefreshIndicator pull={pull} refreshing={refreshing} />
       <div className="mx-auto w-full max-w-md px-5 pt-6">
         <header className="flex items-center gap-3">
-          <button
-            onClick={onBack}
-            aria-label="Back"
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card"
-          >
+          <button onClick={onBack} aria-label="Back" className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card">
             <ArrowLeft className="h-5 w-5 text-foreground" />
           </button>
-          <h1 className="text-lg font-bold text-foreground">Wallet</h1>
+          <h1 className="text-lg font-bold text-foreground">{s.title}</h1>
         </header>
 
-        {/* Balance card */}
         <section className="mt-5 rounded-[18px] bg-primary/10 p-5">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-primary/80">
-                Wallet Balance
-              </p>
-              <p className="mt-2 text-3xl font-extrabold text-foreground">
-                ₹{balance}
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Your badiyos Wallet balance can be used on your next booking.
-              </p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-primary">{s.total}</p>
+              <p className="mt-2 text-4xl font-extrabold text-foreground">{rupee(sum?.balance ?? 0)}</p>
             </div>
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm">
               <Coins className="h-6 w-6" />
             </div>
           </div>
+          <div className="mt-4 space-y-1.5 border-t border-primary/20 pt-3 text-sm">
+            <p className="font-bold text-foreground">{s.cash} {rupee(sum?.cash ?? 0)}</p>
+            {(sum?.bonus_expiring ?? []).map((b, i) => (
+              <p key={i} className="font-semibold text-foreground">
+                {s.bonus} {rupee(b.amount)} <span className="text-muted-foreground">· {s.expires} {fmt(b.expires_at, lang, false)}</span>
+              </p>
+            ))}
+            <p className="pt-1 text-xs text-muted-foreground">{s.note}</p>
+          </div>
         </section>
 
-        {/* Transactions */}
-        <div className="mt-6 flex items-center justify-between">
-          <h2 className="text-base font-bold text-foreground">Transaction History</h2>
-        </div>
-
+        <h2 className="mt-6 text-base font-bold text-foreground">{s.history}</h2>
         <section className="mt-3 space-y-2">
-          {isLoading ? (
-            <p className="py-10 text-center text-sm text-muted-foreground">Loading…</p>
-          ) : txs.length === 0 ? (
-            <EmptyState />
+          {hist.isLoading ? (
+            <p className="py-10 text-center text-sm text-muted-foreground">{s.loading}</p>
+          ) : items.length === 0 ? (
+            <div className="flex flex-col items-center rounded-[18px] border border-dashed border-border bg-card px-6 py-14 text-center">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10"><WalletIcon className="h-7 w-7 text-primary" /></div>
+              <p className="mt-4 text-base font-bold text-foreground">{s.empty}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{s.emptySub}</p>
+            </div>
           ) : (
-            txs.map((t) => {
-              const isCredit = t.type === "credit";
+            items.map((t) => {
+              const amt = Number(t.amount);
+              const isCredit = amt >= 0;
+              const kind = s.kinds[t.kind] ?? s.kinds.adjustment;
               return (
-                <div
-                  key={t.id}
-                  className="flex items-center justify-between rounded-[14px] border border-border bg-card px-4 py-3"
-                >
+                <div key={`${t.legacy ? "o" : "n"}_${t.id}`} className="flex items-center justify-between gap-3 rounded-[14px] border border-border bg-card px-4 py-3">
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-foreground">
-                      {t.description}
-                    </p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      {formatDate(t.created_at)}
-                    </p>
+                    <p className="truncate text-sm font-semibold text-foreground">{kind}</p>
+                    {t.label && t.label !== kind && <p className="truncate text-xs text-muted-foreground">{t.label}</p>}
+                    <p className="mt-0.5 text-xs text-muted-foreground">{fmt(t.created_at, lang)}</p>
                   </div>
-                  <span
-                    className={`shrink-0 text-sm font-bold ${
-                      isCredit ? "text-primary" : "text-muted-foreground"
-                    }`}
-                  >
-                    {isCredit ? "+" : "−"} ₹{Number(t.amount)}
+                  <span className={`shrink-0 text-sm font-bold ${isCredit ? "text-primary" : "text-muted-foreground"}`}>
+                    {isCredit ? "+" : "−"} {rupee(Math.abs(amt))}
                   </span>
                 </div>
               );
             })
           )}
+          {hist.hasNextPage && (
+            <button onClick={() => hist.fetchNextPage()} disabled={hist.isFetchingNextPage} className="w-full rounded-[14px] border border-border bg-card py-3 text-sm font-bold text-primary">
+              {hist.isFetchingNextPage ? s.loading : s.more}
+            </button>
+          )}
         </section>
       </div>
     </main>
-  );
-}
-
-function EmptyState() {
-  return (
-    <div className="flex flex-col items-center justify-center rounded-[18px] border border-dashed border-border bg-card px-6 py-14 text-center">
-      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
-        <WalletIcon className="h-7 w-7 text-primary" />
-      </div>
-      <p className="mt-4 text-base font-bold text-foreground">No transactions yet</p>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Rewards and refunds will appear here.
-      </p>
-    </div>
   );
 }

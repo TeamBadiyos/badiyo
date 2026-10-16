@@ -18,6 +18,7 @@ import { fetchReferralProgress } from "@/lib/coupons";
 import { toast } from "sonner";
 import { useLanguage } from "@/i18n";
 import { readLangOutsideReact } from "@/lib/catalogI18n";
+import { useWalletSummary } from "@/lib/wallet";
 
 
 import { buildPlayStoreInviteUrl, buildReferralShareMessage } from "@/lib/referrals";
@@ -202,6 +203,7 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
   });
   const invitedCount = progress?.invited ?? transactions.length;
   const joinedCount = progress?.joined ?? transactions.length;
+  const { data: walletSummary } = useWalletSummary();
   const qualifiedCount = progress?.qualified ?? successful.length;
   const totalRewards = useMemo(
     () => transactions.reduce((sum, t) => sum + txnEarned(t), 0),
@@ -214,7 +216,7 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
     signupReward + bookingReward;
   const familiesHelped = successful.length;
   const totalReferred = transactions.length;
-  const walletBalance = user?.total_coins_earned ?? 0;
+  const walletBalance = walletSummary?.balance ?? 0;
 
   const code = user?.referral_code ?? "";
   const inviteUrl = code

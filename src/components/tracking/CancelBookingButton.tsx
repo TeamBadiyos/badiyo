@@ -43,7 +43,7 @@ export function CancelBookingButton({
             );
           }
           await qc.invalidateQueries({ queryKey: ["my-bookings"] });
-          void qc.invalidateQueries({ queryKey: ["wallet_transactions"] });
+          void qc.invalidateQueries({ queryKey: ["wallet_transactions"] }); void qc.invalidateQueries({ queryKey: ["wallet"] }); void qc.invalidateQueries({ queryKey: ["my_coin_balance"] });
           setOpen(false);
           onCancelled?.();
         }}
