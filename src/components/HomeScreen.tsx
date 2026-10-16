@@ -1,3 +1,4 @@
+import { useStoreCart } from "@/lib/storeCart";
 import { ActiveOrdersStrip } from "@/components/home/ActiveOrdersStrip";
 import { getAuthUser } from "@/lib/authUser";
 import { lazy, Suspense, useEffect, useState } from "react";
@@ -260,6 +261,7 @@ export function HomeScreen({
   };
   const [openCategory, setOpenCategory] = useState<StoreCategoryGroup | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
+  const cartHasItems = useStoreCart().cart.lines.length > 0;
   // Ordering is on only when the store service itself is live.
   const storeOrdering = storeState?.status === "live";
 
