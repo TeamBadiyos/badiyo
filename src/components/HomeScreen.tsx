@@ -273,7 +273,7 @@ export function HomeScreen({
         return;
       }
       setOpenCategory(null);
-      setOpenStore(store);
+      setOpenStore(store, "link");
     }
     void openPending(capturePendingStoreKey());
     const onPending = (e: Event) => {
@@ -440,6 +440,7 @@ export function HomeScreen({
           onBack={() => setOpenStore(null)}
           onOpenCart={() => setCartOpen(true)}
           orderingEnabled={storeOrdering}
+          source={storeSource}
         />
       </Suspense>
     );
@@ -525,7 +526,7 @@ export function HomeScreen({
             onOpenStore={(s) => {
               setSearchQuery("");
               setOpenCategory(null);
-              setOpenStore(s);
+              setOpenStore(s, "search");
             }}
             onOpenService={(s) => {
               setSearchQuery("");
