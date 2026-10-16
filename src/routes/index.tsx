@@ -1135,6 +1135,7 @@ function Index() {
             }}
             onDone={() => {
               setRedeemCoins(false);
+              setExpertNote("");
               resetAndGoHome();
             }}
 
