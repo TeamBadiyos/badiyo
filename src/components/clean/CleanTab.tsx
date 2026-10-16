@@ -76,7 +76,7 @@ export function CleanTab({
   const closed = state != null && !state.can_order;
   const nextOpen = closed ? formatNextOpen(state?.next_open_at ?? state?.resume_at) : null;
 
-  const autoCatIds = new Set(categories.filter((c) => /auto|wash|car|bike/i.test(c.name)).map((c) => c.id));
+  const autoCatIds = new Set(categories.filter((c) => /auto|wash/i.test(c.name)).map((c) => c.id));
   const homeOptions = services
     .filter((x) => !autoCatIds.has(x.service_category_id ?? ""))
     .sort((a, b) => Number(a.duration_minutes) - Number(b.duration_minutes));
