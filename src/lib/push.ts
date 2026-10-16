@@ -21,6 +21,11 @@ export function setPushNavigator(nav: PushNavigator | null) {
   navigator_ = nav;
 }
 
+/** Open an in-app screen using the same routes notifications use. */
+export function openAppRoute(route: string, data?: Record<string, unknown>) {
+  navigator_?.(route, data);
+}
+
 function handleTap(data: Record<string, unknown> | undefined) {
   const route = typeof data?.route === "string" ? (data.route as string) : null;
   if (route && navigator_) {
