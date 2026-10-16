@@ -22,10 +22,8 @@ import { BottomNav } from "./BottomNav";
 import { setCleanDraft } from "@/lib/cleanBookingDraft";
 import { LocationPickerSheet, type SavedAddress } from "./LocationPickerSheet";
 import { ContestHomeBanner } from "./contest/ContestHomeBanner";
-import { DealsHomeBanner } from "./deals/DealsTab";
 import { supabase } from "@/integrations/supabase/client";
 import { useResolveAddressCity } from "@/lib/customerCity";
-import { BringBadiyosScreen } from "./BringBadiyosScreen";
 import { readHomeTab, type HomeTab } from "@/lib/homeTab";
 import { fetchMyCoinBalance } from "@/lib/coins";
 import { BellRing, Wallet as WalletIcon } from "lucide-react";
@@ -52,14 +50,17 @@ import {
   clearPendingStoreKey,
   fetchStoreByKey,
 } from "@/lib/storeShare";
-import { StoreListView } from "./store/StoreListView";
 import { StoreShelves } from "./store/storeCatalog";
-import { LiveSearchPanel } from "./home/LiveSearchPanel";
 import { CartBar } from "./store/CartBar";
 import { CleanTab } from "./clean/CleanTab";
 import type { SelectedSlot } from "@/lib/bookingTypes";
 // Shop pages (with their address picker and payment sheet) load only when the
 // customer actually opens a shop, a category or the cart.
+// Store/Food tab bodies, search and deals load only when first shown.
+const StoreListView = lazy(() => import("./store/StoreListView").then((m) => ({ default: m.StoreListView })));
+const LiveSearchPanel = lazy(() => import("./home/LiveSearchPanel").then((m) => ({ default: m.LiveSearchPanel })));
+const BringBadiyosScreen = lazy(() => import("./BringBadiyosScreen").then((m) => ({ default: m.BringBadiyosScreen })));
+const DealsHomeBanner = lazy(() => import("./deals/DealsTab").then((m) => ({ default: m.DealsHomeBanner })));
 const StoreDetailScreen = lazy(() =>
   import("./store/StoreDetailScreen").then((m) => ({ default: m.StoreDetailScreen })),
 );
@@ -418,6 +419,7 @@ export function HomeScreen({
 
   if (addressCity?.outside && activeAddress && cityDismissedFor !== activeAddress.id) {
     return (
+      <Suspense fallback={null}>
       <BringBadiyosScreen
         onRequireLogin={onRequireLogin}
         location={{
@@ -433,6 +435,7 @@ export function HomeScreen({
           setLocationSheetOpen(true);
         }}
       />
+      </Suspense>
     );
   }
 
@@ -550,6 +553,7 @@ export function HomeScreen({
         </form>
         )}
         {tab !== "clean" && searchQuery.trim().length >= 2 && (
+          <Suspense fallback={null}>
           <LiveSearchPanel
             query={searchQuery.trim()}
             coords={homeCoords}
@@ -565,12 +569,13 @@ export function HomeScreen({
               guardedBookService(toPayload(s, segments.find((g) => g.id === s.segment_id) ?? null));
             }}
           />
+          </Suspense>
         )}
 
 
 
         {tab !== "clean" && <ContestHomeBanner onOpen={onOpenContest} />}
-        {tab !== "clean" && onOpenDeal && <div className="px-4"><DealsHomeBanner onOpen={onOpenDeal} /></div>}
+        {tab !== "clean" && onOpenDeal && <div className="px-4"><Suspense fallback={null}><DealsHomeBanner onOpen={onOpenDeal} /></Suspense></div>}
 
         {tab === "clean" && cleanSegment ? (
           <CleanTab
@@ -746,6 +751,7 @@ function SegmentView({
 
   if (segment.display_template === "STORE_FIRST" && storeUnlocked) {
     return (
+      <Suspense fallback={<div className="mt-8 flex justify-center"><div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" /></div>}>
       <StoreListView
         coords={storeCoords ?? null}
         onOpenStore={(s) => onOpenStore?.(s)}
@@ -753,6 +759,7 @@ function SegmentView({
         onOpenCart={() => onOpenCart?.()}
         orderingEnabled={storeOrdering}
       />
+      </Suspense>
     );
   }
 
