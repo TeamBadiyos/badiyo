@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Car, ChevronRight, Gift, Sparkles } from "lucide-react";
 import type { ReactNode } from "react";
 import type { ServiceState } from "@/lib/serviceHours";
-import maidHero from "@/assets/clean-maid-hero.jpg";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthUserId } from "@/lib/authUser";
@@ -14,12 +13,7 @@ import type { SelectedSlot } from "../SlotSelectionScreen";
 import { CL, CleanScheduleScreen } from "./CleanScheduleScreen";
 import { CardDetailsSheet, ContentCardTile, type DetailItem } from "./parts";
 
-import jhadu from "@/assets/expert-house-cleaning.jpg";
-import bartan from "@/assets/expert-dishes.jpg";
-import dusting from "@/assets/expert-dusting.jpg";
-import washBike from "@/assets/wash-bike.jpg";
-import washCar from "@/assets/wash-car.jpg";
-import washCombo from "@/assets/wash-combo.jpg";
+import { FadeImg } from "./parts";
 
 const T = {
   en: {
@@ -35,14 +29,9 @@ const T = {
     maidCards: ["रोजची स्वच्छता", "किचन मदत", "सखोल स्वच्छता"],
   },
 };
-const MAID_IMG = [jhadu, bartan, dusting];
-
-function washImage(label: string): string {
-  const l = label.toLowerCase();
-  if (l.includes("combo")) return washCombo;
-  if (l.includes("bike")) return washBike;
-  return washCar;
-}
+// Only Command Center photos are shown — no bundled fallback photos.
+const MAID_IMG: string[] = [""];
+function washImage(_label: string): string { return ""; }
 
 type Detail = { key: CleanServiceKey; items: DetailItem[]; index: number };
 
@@ -66,8 +55,9 @@ export function CleanTab({
   const { data: washState } = useServiceHours("wash");
   const closed = maidState != null && !maidState.can_order;
   const nextOpen = closed ? formatNextOpen(maidState?.next_open_at ?? maidState?.resume_at) : null;
-  const { data: maidContent } = useServiceContent("clean");
-  const { data: washContent } = useServiceContent("wash");
+  const { data: maidContent, isPending: maidPending } = useServiceContent("clean");
+  const { data: washContent, isPending: washPending } = useServiceContent("wash");
+  const loading = maidPending || washPending;
 
   const autoCatIds = new Set(categories.filter((x) => /auto|wash/i.test(x.name)).map((x) => x.id));
   const byId = new Map(services.map((x) => [x.id, x]));
@@ -171,10 +161,11 @@ export function CleanTab({
       </section>
 
       <div className="relative -mx-5 -mt-8 rounded-t-[28px] bg-background px-5 pt-3">
+        {loading ? <CleanSkeleton /> : (<>
         <div className="grid grid-cols-2 gap-3 pt-[34px]">
-          <ServiceCard title={pick(lang, maidContent?.hero?.card_title, maidContent?.hero?.card_title_mr) || s.maid} status={statusLine(maidState)} closed={closed} icon={<Sparkles className="h-5 w-5" />} img={maidContent?.hero?.image_url || maidHero} onClick={() => openBooking(false)} />
+          <ServiceCard title={pick(lang, maidContent?.hero?.card_title, maidContent?.hero?.card_title_mr) || s.maid} status={statusLine(maidState)} closed={closed} icon={<Sparkles className="h-5 w-5" />} img={maidContent?.hero?.image_url || ""} onClick={() => openBooking(false)} />
           {washOptions.length > 0 && (
-            <ServiceCard title={pick(lang, washContent?.hero?.card_title, washContent?.hero?.card_title_mr) || s.washCard} status={statusLine(washState)} closed={washState != null && !washState.can_order} icon={<Car className="h-5 w-5" />} img={washContent?.hero?.image_url || washCar} onClick={() => openBooking(true)} />
+            <ServiceCard title={pick(lang, washContent?.hero?.card_title, washContent?.hero?.card_title_mr) || s.washCard} status={statusLine(washState)} closed={washState != null && !washState.can_order} icon={<Car className="h-5 w-5" />} img={washContent?.hero?.image_url || ""} onClick={() => openBooking(true)} />
           )}
         </div>
 
@@ -203,6 +194,7 @@ export function CleanTab({
           </>
         )}
 
+        </>)}
         <button onClick={onOpenReferral} className="mt-7 flex w-full items-center gap-3 rounded-[18px] bg-card p-4 text-left shadow-soft">
           <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary"><Gift className="h-5 w-5" /></span>
           <div className="min-w-0 flex-1">
@@ -234,7 +226,7 @@ export function CleanTab({
           serviceKey={draft.auto ? "wash" : "clean"}
           addressLine={addressLine}
           draft={{ optionId: draft.optionId, day: draft.day, slotMins: draft.slotMins }}
-          fallbackImage={(o) => (draft.auto ? washImage(o.duration_label) : jhadu)}
+          fallbackImage={(o) => ""}
           onDraftChange={(d) => setDraft((p) => (p ? { ...p, ...d } : p))}
           onChangeAddress={changeAddress}
           onBack={close}
@@ -283,7 +275,7 @@ function ServiceCard({ title, status, closed, icon, img, onClick }: { title: str
   const l2 = sp > 0 ? status.slice(sp + 1) : "";
   return (
     <button onClick={onClick} className="relative flex h-[96px] flex-col justify-end overflow-visible rounded-[18px] bg-card p-2.5 text-left shadow-soft transition active:scale-[0.98]">
-      <img src={img} alt="" loading="lazy" className="pointer-events-none absolute bottom-0 right-0 h-[135%] w-auto max-w-none object-contain object-bottom" />
+      {img && <FadeImg src={img} className="pointer-events-none absolute bottom-0 right-0 h-[135%] w-auto max-w-none object-contain object-bottom" />}
       <div className="relative w-[44%] min-w-0">
         <span className="mb-1 flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">{icon}</span>
         <span className="flex min-w-0 items-center gap-0.5">
@@ -337,4 +329,29 @@ function pickSlab(slabs: BannerSlab[] | null | undefined): { image: string | nul
   const def = DEFAULT_SLABS.find((d) => inSlab(now, d.from, d.to)) ?? DEFAULT_SLABS[1];
   const cc = (slabs ?? []).find((x) => inSlab(now, x.from, x.to));
   return { image: cc?.image_url || null, sky: def.sky, tone: (cc?.text_color as "light" | "dark") || def.tone };
+}
+
+function CleanSkeleton() {
+  const sh = "animate-pulse rounded-[16px] bg-muted";
+  return (
+    <div aria-hidden>
+      <div className="grid grid-cols-2 gap-3 pt-[34px]">
+        <div className={`h-[96px] ${sh} rounded-[18px]`} />
+        <div className={`h-[96px] ${sh} rounded-[18px]`} />
+      </div>
+      {[0, 1].map((k) => (
+        <div key={k}>
+          <div className={`mt-7 h-6 w-40 ${sh} rounded-md`} />
+          <div className="mt-3 grid grid-cols-3 gap-2.5">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="overflow-hidden rounded-[16px] border border-border bg-card">
+                <div className="aspect-square w-full animate-pulse bg-muted" />
+                <div className="p-2"><div className="h-3 w-3/4 animate-pulse rounded bg-muted" /><div className="mt-1.5 h-4 w-1/2 animate-pulse rounded bg-muted" /></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 }
