@@ -15,6 +15,8 @@ import {
   notifyMeForService,
   slotFitsWindow,
   durationFitsNow,
+  formatNextOpen,
+  timeToMinutes,
   useServiceState,
 } from "@/lib/serviceHours";
 import type { SegmentService } from "@/lib/segments";
@@ -33,6 +35,7 @@ const L = {
     full: "Full",
     noSlots: "No slots left on this day. Try another day.",
     busy: "All experts are busy right now",
+    closedNow: "We're closed now", opens: "Opens",
     busySub: "Schedule a time, or we'll tell you when one is free.",
     notify: "Notify me",
     cont: "Continue",
@@ -50,6 +53,7 @@ const L = {
     full: "पूर्ण",
     noSlots: "या दिवशी वेळ उपलब्ध नाही. दुसरा दिवस निवडा.",
     busy: "सध्या सर्व एक्सपर्ट व्यस्त आहेत",
+    closedNow: "सध्या बंद आहे", opens: "उघडेल",
     busySub: "वेळ ठरवा, किंवा एक्सपर्ट मोकळा होताच आम्ही कळवू.",
     notify: "मला कळवा",
     cont: "पुढे जा",
@@ -86,7 +90,6 @@ export function CleanBookSheet({
   const s = lang === "mr" ? L.mr : L.en;
   const [optionId, setOptionId] = useState<string | null>(null);
   const days = useMemo(getNext7DayOptions, []);
-  const allSlots = useMemo(getAllHourSlots, []);
   const [day, setDay] = useState(days[0].key);
   const [slotMins, setSlotMins] = useState<number | null>(null);
   const cityId = useCustomerCityId();
@@ -101,6 +104,15 @@ export function CleanBookSheet({
   const mins = Number(option?.duration_minutes) || 60;
 
   const { data: state } = useServiceState("clean", open);
+  // Slot range follows the service hours setting (open → close), IST.
+  const openM = timeToMinutes(state?.open_time);
+  const closeM = timeToMinutes(state?.close_time);
+  const allSlots = useMemo(
+    () => (openM != null && closeM != null ? getAllHourSlots(openM, closeM - 30) : getAllHourSlots()),
+    [openM, closeM],
+  );
+  const isClosed = state != null && !state.can_order;
+  const nextOpen = isClosed ? formatNextOpen(state?.next_open_at ?? state?.resume_at) : null;
   const { data: instantEnabled = true } = useQuery({
     queryKey: ["instant-booking-enabled"],
     queryFn: fetchInstantBookingEnabled,
@@ -220,7 +232,9 @@ export function CleanBookSheet({
         {mode === "now" ? (
           nowBlocked && option ? (
             <div className="mt-5 rounded-[18px] bg-surface-soft p-4 text-center">
-              <p className="text-base font-extrabold text-foreground">{s.busy}</p>
+              <p className="text-base font-extrabold text-foreground">
+                {isClosed ? `${s.closedNow}${nextOpen ? ` · ${s.opens} ${nextOpen}` : ""}` : s.busy}
+              </p>
               <p className="mt-1 text-xs text-muted-foreground">{s.busySub}</p>
               <div className="mt-3 grid grid-cols-2 gap-2">
                 <button onClick={() => onModeChange("later")} className="flex items-center justify-center gap-1.5 rounded-[14px] bg-primary py-3 text-sm font-extrabold text-primary-foreground">
