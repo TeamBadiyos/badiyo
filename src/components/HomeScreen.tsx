@@ -538,23 +538,23 @@ export function HomeScreen({
   return (
     <main className="min-h-screen w-full bg-background pb-28 momentum-scroll">
       <PullToRefreshIndicator pull={pull} refreshing={refreshing} />
-      <div className="mx-auto w-full max-w-md px-5 pt-2">
+      <div className="relative mx-auto w-full max-w-md px-5 pt-2">
         {/* Header: address on the left, wallet + profile on the right */}
         <header
-          className="bleed-safe-top sticky top-0 z-30 -mx-5 flex items-center justify-between gap-3 bg-background px-5 pb-3"
+          className={`bleed-safe-top z-30 flex items-center justify-between gap-3 px-5 pb-3 ${tab === "clean" ? "absolute inset-x-0 top-0 bg-transparent" : "sticky top-0 -mx-5 bg-background"}`}
           style={{ "--bleed-top-extra": "16px" } as React.CSSProperties}
         >
           <button
             onClick={() => setLocationSheetOpen(true)}
             className="min-w-0 flex-1 text-left"
           >
-            <span className="flex items-center gap-1 text-[17px] font-extrabold leading-tight text-foreground">
-              <MapPin className="h-4 w-4 shrink-0 text-primary" />
+            <span className={`flex items-center gap-1 text-[17px] font-extrabold leading-tight ${tab === "clean" ? "text-primary-foreground" : "text-foreground"}`}>
+              <MapPin className={`h-4 w-4 shrink-0 ${tab === "clean" ? "text-primary-foreground" : "text-primary"}`} />
               <span className="truncate">{addressTag}</span>
               <ChevronDown className="h-4 w-4 shrink-0" />
             </span>
             {locationLabel && (
-              <span className="mt-0.5 block truncate text-xs text-muted-foreground">{locationLabel}</span>
+              <span className={`mt-0.5 block truncate text-xs ${tab === "clean" ? "text-primary-foreground/80" : "text-muted-foreground"}`}>{locationLabel}</span>
             )}
           </button>
           <button
