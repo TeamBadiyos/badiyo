@@ -21,6 +21,7 @@ import { clearPersistedQueries } from "@/lib/queryPersistence";
 
 import { isNativeShell } from "@/lib/nativeServerFn";
 import { LiveServiceBar } from "@/components/tracking/LiveServiceBar";
+import { FirstOpenScreen, FIRST_OPEN_KEY } from "@/components/FirstOpenScreen";
 import { CompleteProfileSheet } from "@/components/CompleteProfileSheet";
 
 // --- Eager: only what the very first paint needs (splash → login). ---
@@ -298,6 +299,14 @@ function Index() {
   // they wanted is remembered and opened right after login succeeds.
   const signedInRef = useRef(false);
   const afterLoginRef = useRef<Phase | null>(null);
+  const [showFirstOpen, setShowFirstOpen] = useState(false);
+  useEffect(() => {
+    try {
+      if (!window.localStorage.getItem(FIRST_OPEN_KEY)) setShowFirstOpen(true);
+    } catch {
+      /* ignore */
+    }
+  }, []);
   const setPhase = useCallback((requested: Phase) => {
     let next = requested;
     if (!signedInRef.current && GUEST_LOCKED_PHASES.has(requested)) {
@@ -783,6 +792,9 @@ function Index() {
           className="pointer-events-none fixed inset-0 z-40 bg-foreground"
           style={{ opacity: Math.max(0, 0.18 * (1 - swipeBack.progress)) }}
         />
+      )}
+      {showFirstOpen && phase === "home" && (
+        <FirstOpenScreen onDone={() => setShowFirstOpen(false)} />
       )}
       <Suspense fallback={null}>
         {forceUpdate && <ForceUpdateScreen playStoreUrl={storeUrl} />}
