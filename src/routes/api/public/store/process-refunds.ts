@@ -46,6 +46,7 @@ export const Route = createFileRoute("/api/public/store/process-refunds")({
           if (
             !row.razorpay_payment_id ||
             row.razorpay_payment_id.startsWith("free_") ||
+            row.razorpay_payment_id.startsWith("wallet_") ||
             Math.round(Number(row.refund_amount ?? 0) * 100) <= 0
           ) {
             // Never paid → nothing to refund; say so instead of "refunded".
