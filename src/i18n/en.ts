@@ -257,37 +257,15 @@ export const en = {
   "home.searchPlaceholder": "Search for cleaning services…",
   "home.voiceSearch": "Voice search",
   "home.seeAll": "See all",
-  "home.oneExpert": "One Expert who can do it all",
-  "home.tile.houseCleaning": "House Cleaning",
-  "home.tile.dusting": "Dusting & Wiping",
-  "home.tile.dishes": "Cleaning Dishes",
-  "home.bookNow": "Book Now",
-  "home.add": "ADD",
   "home.addedToBooking": "Added {name} to booking",
   "home.unavailableBadge": "Not available today",
   "home.unavailableToast": "This service isn't available right now, please check back later.",
-  "home.bookSegment": "Book {segment}",
   "home.comingSoon": "{segment} is coming soon",
   "home.comingSoonSub": "We're getting this section ready for you.",
-  "home.scheduleHint": "Need it later? Schedule a time inside booking",
   "home.servicesBar": "Services",
   "home.tabAll": "All",
 
   // ── Slot selection ───────────────────────────────────────
-  "slot.bookNow": "Book Now",
-  "slot.scheduleLater": "Schedule Later",
-  "slot.arriveTitle": "Flexible Arrival Time",
-  "slot.arriveSub": "Aapke Expert ko location aur availability ke hisaab se pahunchne mein 30–60 mins lag sakte hain.",
-  "slot.laterNoteTitle": "Dhyan dein:",
-  "slot.laterNote": "Aapka selected time preferred service start time hai. Location, availability aur previous bookings ke hisaab se Expert ko pahunchne mein 30–60 mins extra lag sakte hain.",
-  "slot.chooseDay": "Choose a day",
-  "slot.chooseTime": "Choose a time",
-  "slot.noSlots": "Aaj ke saare slots poore ho chuke hain. Kripya koi dusra din chunein.",
-  "slot.tooLongTitle": "Closing time se pehle service poori nahi hogi",
-  "slot.tooLongNow": "Is service mein lagbhag {duration} lagte hain. Abhi shuru kiya toh closing time ({close}) ke baad poori hogi. Kripya aage ka slot schedule karein.",
-  "slot.tooLongSlot": "Is service mein lagbhag {duration} lagte hain. {start} baje shuru kiya toh closing time ({close}) ke baad poori hogi. Kripya pehle ka time chunein.",
-  "slot.tooLongPickAnother": "Choose another time",
-  "slot.tooLongGotIt": "Got it",
 
   // ── Address ──────────────────────────────────────────────
   "address.title": "Select Address",
@@ -296,7 +274,6 @@ export const en = {
   "address.emptySub": "Add one to continue with your booking",
   "address.addNew": "Add New Address",
   "address.notServiceable": "Not serviceable",
-  "address.notServiceableHint": "We don't serve this address yet.",
   "address.addNewPlus": "+ Add New Address",
   "address.fallbackLabel": "Address",
   "search.placeholder": "Search shop, hospital, area…",
@@ -478,15 +455,8 @@ export const en = {
 
   // ── Not serviceable / waitlist ───────────────────────────
   "bring.waiting": "👥 {n} people in {city} are already waiting",
-  "notServiceable.title": "Service Area",
-  "notServiceable.heading": "badiyos isn't in your city yet",
-  "notServiceable.sub": "badiyos hasn't launched here yet — but we're expanding fast.",
-  "notServiceable.subSegment": "{segment} hasn't launched in your area yet — but we're expanding fast.",
-  "notServiceable.join": "Join Waitlist",
-  "notServiceable.joining": "Adding you…",
   "notServiceable.joinFailed": "Couldn't add you to the waitlist. Please try again.",
   "notServiceable.onTheList": "You're on the list!",
-  "notServiceable.confirmation": "We'll notify you the moment we launch in your area!",
   "notServiceable.changeAddress": "Try another address",
 
   // ── Legal ────────────────────────────────────────────────
@@ -512,15 +482,6 @@ export const en = {
   "product.included": "What's included",
   "product.notIncluded": "What's not included",
 
-  "included.title": "What is included?",
-  "included.trainedTo": "The expert is trained to",
-  "included.notIncluded": "What is not included",
-  "included.equipmentNote": "Please provide all necessary equipments for the expert",
-  "included.emptyTitle": "Details coming soon",
-  "included.emptyBody": "We're still preparing the inclusion list for this task.",
-  "included.schedule": "Schedule",
-  "included.bookInstant": "Book Instant",
-  "included.link": "What's included?",
 
   // ── Service hours / status ───────────────────────────────
   "serviceState.closedNow": "Currently closed",
