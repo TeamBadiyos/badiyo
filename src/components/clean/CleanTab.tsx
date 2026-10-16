@@ -279,10 +279,10 @@ function fill(text: string, vars: Record<string, string>): string {
 
 function ServiceCard({ title, status, closed, icon, img, onClick }: { title: string; status: string; closed: boolean; icon: ReactNode; img: string; onClick: () => void }) {
   return (
-    <button onClick={onClick} className="relative flex min-h-[92px] flex-col justify-end overflow-visible rounded-[18px] bg-card p-3 text-left shadow-soft transition active:scale-[0.98]">
+    <button onClick={onClick} className="relative flex h-[96px] flex-col justify-end overflow-visible rounded-[18px] bg-card p-2.5 text-left shadow-soft transition active:scale-[0.98]">
       <img src={img} alt="" loading="lazy" className={`pointer-events-none absolute bottom-0 right-0 h-[150%] w-auto max-w-none object-contain object-bottom ${closed ? "grayscale" : ""}`} />
-      <div className="relative w-[46%] min-w-0">
-        <span className="mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">{icon}</span>
+      <div className="relative w-[43%] min-w-0">
+        <span className="mb-1 flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-primary">{icon}</span>
         <span className="flex min-w-0 items-center text-sm font-extrabold text-foreground"><span className="truncate">{title}</span><ChevronRight className="h-4 w-4 shrink-0" /></span>
         <span className={`mt-0.5 block line-clamp-2 text-[11px] leading-tight font-semibold ${closed ? "text-muted-foreground" : "text-primary"}`}>{status}</span>
       </div>
