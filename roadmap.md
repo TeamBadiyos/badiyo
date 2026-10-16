@@ -57,7 +57,7 @@ drop table if exists public.courier_vehicle_courier_types, public.courier_vehicl
 - [x] Removed All/Clean/Store chips and Sell-on-badiyos banner (→ Profile › Partner with badiyos)
 - [x] One cart at a time with "clear and start new" (store cart already enforced)
 - [x] Browse without login (login only for Book/Wallet/Rewards/Orders/Parcel)
-- [ ] First-open Location + Notifications screen; follow phone language on first open
+- [x] First-open Location + Notifications screen; follow phone language on first open
 - [ ] Structured address form (City dropdown, pincode validation, Confirm this location)
 - [ ] Single checkout page for all services
 - [ ] Active order strip swipeable for several orders
