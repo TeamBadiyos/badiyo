@@ -9,8 +9,9 @@ import { localizeState, pick, useBookNowAllowed, useNextFreeSlot, useServiceCont
 import { useLanguage } from "@/i18n";
 import { formatNextOpen } from "@/lib/serviceHours";
 import type { SegmentService, ServiceCategory } from "@/lib/segments";
-import type { SelectedSlot } from "../SlotSelectionScreen";
+import type { SelectedSlot } from "@/lib/bookingTypes";
 import { CL, CleanScheduleScreen } from "./CleanScheduleScreen";
+import { getCleanDraft, setCleanDraft, type CleanBookingDraft } from "@/lib/cleanBookingDraft";
 import { CardDetailsSheet, ContentCardTile, type DetailItem } from "./parts";
 
 import { FadeImg } from "./parts";
@@ -43,7 +44,7 @@ export function CleanTab({
   promo?: { text?: string } | null;
   addressLine: string | null;
   onChangeAddress: (onReturn?: () => void) => void;
-  onCheckout: (option: SegmentService, slot: SelectedSlot) => void;
+  onCheckout: (option: SegmentService, slot: SelectedSlot) => void | Promise<unknown>;
   onOpenPromo?: () => void;
   onOpenReferral?: () => void;
   onHeroTone?: (tone: "light" | "dark") => void;
@@ -87,17 +88,24 @@ export function CleanTab({
   const maidOptions = buildOptions(maidContent, false);
   const washOptions = buildOptions(washContent, true);
 
-  type Draft = { auto: boolean; optionId: string | null; day: string | null; slotMins: number | null };
-  const [draft, setDraft] = useState<Draft | null>(null);
-  const [shown, setShown] = useState(false);
+  type Draft = CleanBookingDraft;
+  // Restored from the shared draft so back from Checkout reopens the same booking page.
+  const [draft, setDraftState] = useState<Draft | null>(() => getCleanDraft());
+  const setDraft = (u: Draft | null | ((p: Draft | null) => Draft | null)) =>
+    setDraftState((p) => {
+      const n = typeof u === "function" ? u(p) : u;
+      setCleanDraft(n);
+      return n;
+    });
+  const shown = draft != null;
   const [detail, setDetail] = useState<Detail | null>(null);
   const openBooking = (auto: boolean, optionId?: string | null) => {
     setDetail(null);
     setDraft({ auto, optionId: optionId ?? null, day: null, slotMins: null });
-    setShown(true);
   };
-  const close = () => { setShown(false); setDraft(null); };
-  const changeAddress = () => { setShown(false); onChangeAddress(() => setShown(true)); };
+  const close = () => setDraft(null);
+  // Address sheet opens on top of the booking page; booking stays underneath.
+  const changeAddress = () => onChangeAddress();
 
   const maidCards: ContentCard[] = maidContent?.cards?.length ? maidContent.cards : T.en.maidCards.map((t, i) => ({ title: t, title_mr: T.mr.maidCards[i] }));
   const washCards: ContentCard[] = washContent?.cards?.length
@@ -236,7 +244,7 @@ export function CleanTab({
           onDraftChange={(d) => setDraft((p) => (p ? { ...p, ...d } : p))}
           onChangeAddress={changeAddress}
           onBack={close}
-          onContinue={(o, slot) => { close(); onCheckout(o, slot); }}
+          onContinue={(o, slot) => onCheckout(o, slot)}
         />
       )}
     </div>

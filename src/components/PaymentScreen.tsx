@@ -3,7 +3,7 @@ import { getAuthUser } from "@/lib/authUser";
 import { useEffect, useRef, useState } from "react";
 import { CheckCircle2, XCircle, Loader2, ArrowLeft, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import type { SelectedService, SelectedSlot } from "./SlotSelectionScreen";
+import type { SelectedService, SelectedSlot } from "@/lib/bookingTypes";
 import type { SelectedAddress } from "./BookingSummaryScreen";
 import { getErrorMessage } from "@/lib/errorMessage";
 import { useT } from "@/i18n";

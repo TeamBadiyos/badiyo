@@ -58,7 +58,7 @@ import { StoreShelves } from "./store/storeCatalog";
 import { LiveSearchPanel } from "./home/LiveSearchPanel";
 import { CartBar } from "./store/CartBar";
 import { CleanTab } from "./clean/CleanTab";
-import type { SelectedSlot } from "./SlotSelectionScreen";
+import type { SelectedSlot } from "@/lib/bookingTypes";
 // Shop pages (with their address picker and payment sheet) load only when the
 // customer actually opens a shop, a category or the cart.
 const StoreDetailScreen = lazy(() =>
@@ -232,7 +232,7 @@ export function HomeScreen({
   onOpenContactParcels?: (stopId?: string) => void;
   onOpenWallet?: () => void;
   onRequireLogin?: () => void;
-  onCheckout?: (service: BookServicePayload, slot: SelectedSlot, addressId: string | null) => void;
+  onCheckout?: (service: BookServicePayload, slot: SelectedSlot, addressId: string | null) => Promise<"ok" | "need-address" | void> | void;
   onOpenReferral?: () => void;
 }) {
   const { data: courierEnabled = false } = useQuery({
@@ -633,12 +633,23 @@ export function HomeScreen({
             addressLine={activeAddress ? `${addressTag}${locationLabel ? ` · ${locationLabel}` : ""}` : null}
             onChangeAddress={(onReturn) => {
               afterLocationRef.current = onReturn ?? null;
-              setTimeout(() => setLocationSheetOpen(true), 200);
+              setLocationSheetOpen(true);
             }}
             onOpenPromo={onOpenRewards}
             onOpenReferral={onOpenReferral ?? onOpenRewards}
             onCheckout={(o, slot) =>
-              withSingleCart(() => onCheckout?.(toPayload(o, cleanSegment), slot, activeAddress?.id ?? null))
+              new Promise<void>((resolve) => {
+                if (storeCart.cart.lines.length > 0) resolve(); // confirm dialog decides
+                withSingleCart(async () => {
+                  try {
+                    const r = await onCheckout?.(toPayload(o, cleanSegment), slot, activeAddress?.id ?? null);
+                    // No usable saved address: open the address sheet over the booking page.
+                    if (r === "need-address") setLocationSheetOpen(true);
+                  } finally {
+                    resolve();
+                  }
+                });
+              })
             }
           />
         ) : activeSegment ? (

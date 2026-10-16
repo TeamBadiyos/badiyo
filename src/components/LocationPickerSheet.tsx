@@ -1,7 +1,7 @@
 import { getAuthUser } from "@/lib/authUser";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Loader2, LocateFixed, MapPin, Plus, Search, X } from "lucide-react";
+import { Check, Loader2, LocateFixed, MapPin, Pencil, Plus, Search, Trash2, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AddAddressMapScreen, type PickedAddress } from "./AddAddressMapScreen";
 import {
@@ -32,6 +32,8 @@ export type SavedAddress = {
   area: string | null;
   city: string | null;
   is_default: boolean | null;
+  latitude?: number | null;
+  longitude?: number | null;
 };
 
 async function fetchAddresses(): Promise<SavedAddress[]> {
@@ -40,7 +42,7 @@ async function fetchAddresses(): Promise<SavedAddress[]> {
   if (!uid) return [];
   const { data, error } = await supabase
     .from("addresses")
-    .select("id, label, full_address, area, city, is_default")
+    .select("id, label, full_address, area, city, is_default, latitude, longitude")
     .eq("user_id", uid)
     .order("created_at", { ascending: false });
   if (error) throw error;
@@ -73,6 +75,9 @@ export function LocationPickerSheet({
   const [locLoading, setLocLoading] = useState(false);
   const [locError, setLocError] = useState<string | null>(null);
   const [locHelp, setLocHelp] = useState<LocationHelpKind>(null);
+  const [editing, setEditing] = useState<SavedAddress | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<SavedAddress | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const { data: addresses = [], isLoading } = useQuery({
     queryKey: ["addresses"],
@@ -83,6 +88,8 @@ export function LocationPickerSheet({
   useEffect(() => {
     if (!open) {
       setShowMap(false);
+      setEditing(null);
+      setConfirmDelete(null);
       setMapPoint(null);
       setQuery("");
       setResults([]);
@@ -95,7 +102,8 @@ export function LocationPickerSheet({
   // Otherwise back clears an active search first, then closes the sheet.
   const searchActive = query.trim().length > 0;
   useEffect(() => {
-    if (!open || showMap) return;
+    if (!open || showMap || editing) return;
+    if (confirmDelete) return pushBackHandler(() => setConfirmDelete(null));
     if (searchActive)
       return pushBackHandler(() => {
         setQuery("");
@@ -104,7 +112,7 @@ export function LocationPickerSheet({
         (document.activeElement as HTMLElement | null)?.blur?.();
       });
     return pushBackHandler(() => onClose());
-  }, [open, showMap, searchActive, onClose]);
+  }, [open, showMap, editing, confirmDelete, searchActive, onClose]);
 
   // Live place search (Geocoding API) alongside the saved-address filter.
   useEffect(() => {
@@ -212,6 +220,63 @@ export function LocationPickerSheet({
     },
   });
 
+  const editMutation = useMutation({
+    mutationFn: async (input: PickedAddress & { id: string }) => {
+      const { data: userData } = await getAuthUser();
+      const uid = userData.user?.id;
+      if (!uid) throw new Error("Please sign in to save an address.");
+      let photoUrl: string | null = null;
+      if (input.photo) {
+        const ext = (input.photo.name.split(".").pop() || "jpg").toLowerCase();
+        const path = `${uid}/${input.id}.${ext}`;
+        const { error: upErr } = await supabase.storage
+          .from("address-photos")
+          .upload(path, input.photo, { upsert: true, contentType: input.photo.type || "image/jpeg" });
+        if (!upErr) photoUrl = supabase.storage.from("address-photos").getPublicUrl(path).data.publicUrl;
+      }
+      const { error } = await supabase.rpc("customer_update_address", {
+        p_address_id: input.id,
+        p_label: input.label,
+        p_full_address: input.full_address,
+        p_area: input.area as unknown as string,
+        p_city: input.city as unknown as string,
+        p_latitude: input.latitude,
+        p_longitude: input.longitude,
+        p_landmark_photo_url: photoUrl ?? undefined,
+      });
+      if (error) throw error;
+      return {
+        id: input.id, label: input.label, full_address: input.full_address, area: input.area,
+        city: input.city, is_default: editing?.is_default ?? null, latitude: input.latitude, longitude: input.longitude,
+      } as SavedAddress;
+    },
+    onSuccess: (updated) => {
+      qc.invalidateQueries({ queryKey: ["addresses"] });
+      setEditing(null);
+      toast.success("Address updated");
+      onSelect(updated);
+    },
+  });
+
+  const deleteAddress = async (a: SavedAddress) => {
+    setDeleting(true);
+    const { error } = await supabase.rpc("customer_delete_address", { p_address_id: a.id });
+    setDeleting(false);
+    if (error) {
+      console.error("[address] delete failed:", error);
+      toast.error("Couldn't delete this address.");
+      return;
+    }
+    setConfirmDelete(null);
+    toast.success("Address deleted");
+    await qc.invalidateQueries({ queryKey: ["addresses"] });
+    if (a.id === activeId) {
+      const rest = addresses.filter((x) => x.id !== a.id);
+      const next = rest.find((x) => x.is_default) ?? rest[0];
+      if (next) onSelect(next);
+    }
+  };
+
   const openMapAt = (point: { lat: number; lng: number } | null) => {
     setMapPoint(point);
     setShowMap(true);
@@ -243,6 +308,26 @@ export function LocationPickerSheet({
 
   if (!open) return null;
 
+  if (editing) {
+    return (
+      <div className="fixed inset-0 z-50 bg-background">
+        <AddAddressMapScreen
+          initial={{
+            id: editing.id,
+            label: editing.label,
+            full_address: editing.full_address,
+            latitude: editing.latitude ?? null,
+            longitude: editing.longitude ?? null,
+          }}
+          onBack={() => setEditing(null)}
+          onSave={(a) => editMutation.mutate({ ...a, id: editing.id })}
+          isSaving={editMutation.isPending}
+          error={editMutation.error ? (editMutation.error as Error).message : null}
+        />
+      </div>
+    );
+  }
+
   if (showMap) {
     return (
       <div className="fixed inset-0 z-50 bg-background">
@@ -272,6 +357,20 @@ export function LocationPickerSheet({
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end">
       <LocationHelpDialog kind={locHelp} onClose={() => setLocHelp(null)} />
+      {confirmDelete && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-6">
+          <div className="w-full max-w-sm rounded-[20px] bg-card p-5 shadow-lg">
+            <p className="text-base font-extrabold text-foreground">Delete this address?</p>
+            <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{confirmDelete.full_address}</p>
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <button onClick={() => setConfirmDelete(null)} className="rounded-[14px] border border-border py-3 text-sm font-bold text-foreground">Cancel</button>
+              <button disabled={deleting} onClick={() => void deleteAddress(confirmDelete)} className="rounded-[14px] bg-destructive py-3 text-sm font-bold text-destructive-foreground disabled:opacity-50">
+                {deleting ? "Deleting…" : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <button
         aria-label="Close"
         className="flex-1 bg-black/40"
@@ -292,8 +391,20 @@ export function LocationPickerSheet({
           </button>
         </div>
 
+        <div className="mt-4">
+          <button
+            onClick={() => { setLocLoading(true); getCurrentCoords().then((c) => openMapAt({ lat: c.lat, lng: c.lng })).catch(() => openMapAt(null)).finally(() => setLocLoading(false)); }}
+            className="flex w-full items-center gap-3 rounded-[14px] border border-dashed border-primary/60 bg-primary/5 p-3 text-left transition active:scale-[0.99]"
+          >
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/15">
+              <Plus className="h-4 w-4 text-primary" />
+            </div>
+            <div className="text-sm font-bold text-primary">+ Add new address</div>
+          </button>
+        </div>
+
         {/* Search */}
-        <div className="mt-4 flex items-center gap-2 rounded-[14px] border border-border bg-background px-3 py-2.5">
+        <div className="mt-3 flex items-center gap-2 rounded-[14px] border border-border bg-background px-3 py-2.5">
           {searching ? (
             <Loader2 className="h-4 w-4 animate-spin text-primary" />
           ) : (
@@ -340,15 +451,7 @@ export function LocationPickerSheet({
             </div>
           </button>
 
-          <button
-            onClick={() => openMapAt(null)}
-            className="flex w-full items-center gap-3 rounded-[14px] border border-dashed border-primary/60 bg-primary/5 p-3 text-left transition active:scale-[0.99]"
-          >
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/15">
-              <Plus className="h-4 w-4 text-primary" />
-            </div>
-            <div className="text-sm font-bold text-primary">Add New Address</div>
-          </button>
+
         </div>
 
         <div className="mt-5 flex min-h-0 flex-1 flex-col">
@@ -391,8 +494,10 @@ export function LocationPickerSheet({
                   filtered.map((a) => {
                     const active = a.id === activeId;
                     return (
-                      <button
+                      <div
                         key={a.id}
+                        role="button"
+                        tabIndex={0}
                         onClick={() => onSelect(a)}
                         className={`flex w-full items-start gap-3 rounded-[16px] border p-3 text-left transition ${
                           active
@@ -406,17 +511,26 @@ export function LocationPickerSheet({
                         <div className="min-w-0 flex-1">
                           <div className="text-sm font-bold text-foreground">
                             {a.label ?? "Address"}
+                            {a.area ? <span className="font-semibold text-muted-foreground"> · {a.area}</span> : null}
                           </div>
                           <div className="line-clamp-2 text-xs text-muted-foreground">
                             {a.full_address}
                           </div>
+                        </div>
+                        <div className="flex shrink-0 items-center gap-1">
+                          <button type="button" aria-label="Edit address" onClick={(e) => { e.stopPropagation(); setEditing(a); }} className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
+                            <Pencil className="h-3.5 w-3.5 text-foreground" />
+                          </button>
+                          <button type="button" aria-label="Delete address" onClick={(e) => { e.stopPropagation(); setConfirmDelete(a); }} className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
+                            <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                          </button>
                         </div>
                         {active && (
                           <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary">
                             <Check className="h-3.5 w-3.5 text-primary-foreground" />
                           </div>
                         )}
-                      </button>
+                      </div>
                     );
                   })
                 )}

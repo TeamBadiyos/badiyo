@@ -20,8 +20,8 @@ export function SearchResultsScreen({
 }: {
   query: string;
   onBack: () => void;
-  onBookService: (s: import("./SlotSelectionScreen").SelectedService) => void;
-  onQuickBook?: (s: import("./SlotSelectionScreen").SelectedService) => void;
+  onBookService: (s: import("@/lib/bookingTypes").SelectedService) => void;
+  onQuickBook?: (s: import("@/lib/bookingTypes").SelectedService) => void;
   onOpenStore?: (s: import("@/lib/store").PublicStore) => void;
 }) {
   const { data: services = [], isLoading } = useQuery({
@@ -38,7 +38,7 @@ export function SearchResultsScreen({
   });
 
   const t = useT();
-  const selectService = (s: typeof services[number]): import("./SlotSelectionScreen").SelectedService => ({
+  const selectService = (s: typeof services[number]): import("@/lib/bookingTypes").SelectedService => ({
     id: s.id,
     service_category_id: s.service_category_id,
     duration_label: s.duration_label,

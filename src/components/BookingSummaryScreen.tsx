@@ -2,7 +2,7 @@ import { ArrowLeft, Check, ChevronRight, Clock, Calendar, Coins, Home as HomeIco
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import type { SelectedService, SelectedSlot } from "./SlotSelectionScreen";
+import type { SelectedService, SelectedSlot } from "@/lib/bookingTypes";
 import { useT, type TFunction } from "@/i18n";
 import { hapticImpact } from "@/lib/haptics";
 import { billBreakdown } from "@/lib/gst";
