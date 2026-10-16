@@ -1,3 +1,4 @@
+import { withCity, useCustomerCityId } from "@/lib/customerCity";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, ChevronDown, Clock, X } from "lucide-react";
 import {
@@ -243,13 +244,14 @@ export function SlotSelectionScreen({
     }
   }, [instantPaused, mode]);
 
+  const cityId = useCustomerCityId();
   // Server says every expert is busy for Book Now → offer Notify me / Schedule.
   const { data: instantGate } = useQuery({
-    queryKey: ["instant-allowed", durationMinutes],
+    queryKey: ["instant-allowed", durationMinutes, cityId],
     queryFn: async () => {
       const { data } = await supabase.rpc(
         "service_instant_allowed" as never,
-        { _service_key: "clean", _duration_minutes: durationMinutes || 60 } as never,
+        withCity({ _service_key: "clean", _duration_minutes: durationMinutes || 60 }) as never,
       );
       return (data as { ok?: boolean; reason_code?: string } | null) ?? null;
     },
