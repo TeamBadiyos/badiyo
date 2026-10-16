@@ -4,7 +4,7 @@ import type { ServiceState } from "@/lib/serviceHours";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthUserId } from "@/lib/authUser";
-import { pick, useBookNowAllowed, useNextFreeSlot, useServiceContent, useServiceHours, type BannerTextKey, type CleanServiceKey, type ContentCard, type ServiceContent, type BannerSlab } from "@/lib/serviceSettings";
+import { localizeState, pick, useBookNowAllowed, useNextFreeSlot, useServiceContent, useServiceHours, type BannerTextKey, type CleanServiceKey, type ContentCard, type ServiceContent, type BannerSlab } from "@/lib/serviceSettings";
 import { useLanguage } from "@/i18n";
 import { formatNextOpen } from "@/lib/serviceHours";
 import type { SegmentService, ServiceCategory } from "@/lib/segments";
@@ -50,13 +50,15 @@ export function CleanTab({
   const { lang } = useLanguage();
   const s = lang === "mr" ? T.mr : T.en;
   const c = lang === "mr" ? CL.mr : CL.en;
-  const { data: maidState } = useServiceHours("clean");
-  const { data: washState } = useServiceHours("wash");
+  const { data: maidRaw, isPending: maidHoursPending } = useServiceHours("clean");
+  const { data: washRaw } = useServiceHours("wash");
+  const maidState = localizeState(maidRaw);
+  const washState = localizeState(washRaw);
   const closed = maidState != null && !maidState.can_order;
   const nextOpen = closed ? formatNextOpen(maidState?.next_open_at ?? maidState?.resume_at) : null;
   const { data: maidContent, isPending: maidPending } = useServiceContent("clean");
   const { data: washContent, isPending: washPending } = useServiceContent("wash");
-  const loading = maidPending || washPending;
+  const loading = maidPending || washPending || maidHoursPending;
 
   const autoCatIds = new Set(categories.filter((x) => /auto|wash/i.test(x.name)).map((x) => x.id));
   const byId = new Map(services.map((x) => [x.id, x]));
@@ -144,7 +146,8 @@ export function CleanTab({
   const tone = slab.tone;
   useEffect(() => { onHeroTone?.(tone); }, [tone, onHeroTone]);
   const statusLine = (st: typeof maidState) => {
-    if (!st || st.can_order) return s.available;
+    if (!st) return "";
+    if (st.can_order) return s.available;
     const n = shortOpenTime(st.next_open_at ?? st.resume_at);
     return n ? `${s.opens} ${n}` : s.closedShort;
   };
