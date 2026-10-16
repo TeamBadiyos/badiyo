@@ -42,7 +42,7 @@ const T = {
     closed: "🕐 सध्या बंद", opens: "उघडेल",
   },
 };
-const TILE_IMG = [jhadu, pocha, bartan, dusting, kapde, more];
+const TILE_IMG = [jhadu, dusting, pocha, kapde, bartan, more];
 
 function washImage(label: string): string {
   const l = label.toLowerCase();
