@@ -721,10 +721,12 @@ function Index() {
       const elapsed = Date.now() - bootStartedAt;
       const wait = Math.max(0, SPLASH_MIN_MS - elapsed);
       setTimeout(() => {
-        if (cancelled) return;
-        setPhase("splash-out");
-        // Guests land on the tabs; login is asked only when an action needs it.
-        setTimeout(() => !cancelled && setPhase("home"), 220);
+        void cleanReady.then(() => {
+          if (cancelled) return;
+          setPhase("splash-out");
+          // Guests land on the tabs; login is asked only when an action needs it.
+          setTimeout(() => !cancelled && setPhase("home"), 220);
+        });
       }, wait);
     };
 
@@ -737,7 +739,7 @@ function Index() {
       if (data.session?.user && !data.session.user.is_anonymous) {
         settled = true;
         clearTimeout(splashCap);
-        enterAppAfterAuth("home");
+        void cleanReady.then(() => { if (!cancelled) enterAppAfterAuth("home"); });
         // Account housekeeping is not needed to draw Home, so it waits until
         // the screen is up instead of sharing the first seconds of bandwidth.
         runWhenIdle(() => {
