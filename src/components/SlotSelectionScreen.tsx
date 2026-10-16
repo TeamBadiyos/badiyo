@@ -227,6 +227,7 @@ export function SlotSelectionScreen({
       : "High demand ki wajah se Book Now abhi band hai. Kripya aage ka time schedule karein.";
   const fullyBookedLabel = lang === "mr" ? "पूर्ण भरले" : "Full";
 
+  const cityId = useCustomerCityId();
   const { data: fullSlots } = useQuery({
     queryKey: ["fully-booked-slots", days[0]?.key, days[days.length - 1]?.key, cityId],
     queryFn: () => fetchFullyBookedSlots("clean", days[0].key, days[days.length - 1].key),
