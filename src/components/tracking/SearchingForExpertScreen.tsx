@@ -70,6 +70,21 @@ export function SearchingForExpertScreen({
     refetchOnWindowFocus: true,
   });
 
+  // Auto-cancel window comes from the backend (per city/service), never hardcoded.
+  const { data: autoCancelMins } = useQuery({
+    queryKey: ["booking-auto-cancel-minutes", bookingId],
+    enabled: !!bookingId,
+    staleTime: 10 * 60_000,
+    queryFn: async () => {
+      const { data } = await supabase.rpc(
+        "booking_auto_cancel_minutes" as never,
+        { _booking_id: bookingId } as never,
+      );
+      const n = Number(data);
+      return Number.isFinite(n) && n > 0 ? n : null;
+    },
+  });
+
   const advancedRef = useRef(false);
   const cancelledRef = useRef(false);
 
@@ -185,6 +200,11 @@ export function SearchingForExpertScreen({
               <Clock className="h-3.5 w-3.5" />
               {t("track.searchingSub")}
             </p>
+            {autoCancelMins != null && (
+              <p className="mt-2 text-xs text-muted-foreground">
+                Agar {autoCancelMins} minute mein koi expert nahi mila, booking apne aap cancel hokar poora refund ho jayega.
+              </p>
+            )}
           </div>
         </section>
 

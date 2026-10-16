@@ -19,11 +19,14 @@ export function StoreDetailScreen({
   onBack,
   onOpenCart,
   orderingEnabled = true,
+  source = "browse",
 }: {
   store: PublicStore;
   onBack: () => void;
   onOpenCart: () => void;
   orderingEnabled?: boolean;
+  /** How the customer reached this store — recorded in store analytics. */
+  source?: "browse" | "search" | "link" | "banner";
 }) {
   useBackHandler(true, () => onBack());
   const t = useT();
@@ -41,6 +44,7 @@ export function StoreDetailScreen({
         await supabase.rpc("record_merchant_store_visit", {
           _merchant_id: store.id,
           _session_id: sessionId,
+          _source: source,
         });
       } catch {
         /* analytics must never break the store page */
