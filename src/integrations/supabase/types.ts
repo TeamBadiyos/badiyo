@@ -13345,6 +13345,14 @@ export type Database = {
         Args: { _at?: string; _service_key: string }
         Returns: boolean
       }
+      service_content_banner: {
+        Args: { _c: Json; _key: string }
+        Returns: Json
+      }
+      service_content_banner_texts_default: {
+        Args: { _key: string }
+        Returns: Json
+      }
       service_content_check_extras: { Args: { _p: Json }; Returns: undefined }
       service_content_check_key: { Args: { _k: string }; Returns: undefined }
       service_content_check_text: {

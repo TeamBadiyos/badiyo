@@ -37,13 +37,13 @@ export function BottomNav({
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-10 border-t border-border bg-card shadow-nav"
+      className="fixed inset-x-0 bottom-0 z-10 border-t border-border/70 bg-card shadow-nav"
       style={{
         paddingBottom: "max(2px, var(--app-safe-bottom))",
-        height: "calc(66px + var(--app-safe-bottom))",
+        height: "calc(70px + var(--app-safe-bottom))",
       }}
     >
-      <div className="mx-auto flex h-full w-full max-w-md items-stretch justify-around px-2">
+      <div className="mx-auto flex h-full w-full max-w-md items-stretch justify-around px-1">
         {TABS.map(({ key, labelKey, Icon }) => {
           const isActive = activeKey === key;
           return (
@@ -52,16 +52,19 @@ export function BottomNav({
               onClick={() => select(key)}
               aria-label={t(labelKey)}
               aria-current={isActive ? "page" : undefined}
-              className={`flex flex-1 flex-col items-center justify-center gap-1 text-[11px] font-bold transition ${
+              className={`flex flex-1 flex-col items-center justify-center gap-[3px] text-[11px] font-bold transition ${
                 isActive ? "text-primary" : "text-muted-foreground"
               }`}
             >
               <span
-                className={`flex h-8 w-12 items-center justify-center rounded-full transition ${
-                  isActive ? "bg-primary/12" : ""
+                className={`flex h-9 w-[52px] items-center justify-center rounded-full transition ${
+                  isActive ? "bg-primary shadow-soft" : "bg-transparent"
                 }`}
               >
-                <Icon className="h-[22px] w-[22px]" strokeWidth={isActive ? 2.4 : 2} />
+                <Icon
+                  className={`h-[26px] w-[26px] ${isActive ? "text-primary-foreground" : ""}`}
+                  strokeWidth={isActive ? 2.3 : 1.9}
+                />
               </span>
               {t(labelKey)}
             </button>
