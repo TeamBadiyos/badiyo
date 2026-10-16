@@ -98,6 +98,10 @@ export function CleanTab({
       return n;
     });
   const shown = draft != null;
+  // A preselected option decides Maid vs Wash (e.g. opened from search).
+  const isWashDraft = draft?.optionId
+    ? washOptions.some((o) => o.id === draft.optionId) || (!maidOptions.some((o) => o.id === draft.optionId) && draft.auto)
+    : !!draft?.auto;
   const [detail, setDetail] = useState<Detail | null>(null);
   const openBooking = (auto: boolean, optionId?: string | null) => {
     setDetail(null);
@@ -232,10 +236,11 @@ export function CleanTab({
 
       {shown && draft && (
         <CleanScheduleScreen
-          options={draft.auto ? washOptions : maidOptions}
-          isAuto={draft.auto}
-          serviceKey={draft.auto ? "wash" : "clean"}
-          title={draft.auto
+          key={isWashDraft ? "wash" : "clean"}
+          options={isWashDraft ? washOptions : maidOptions}
+          isAuto={isWashDraft}
+          serviceKey={isWashDraft ? "wash" : "clean"}
+          title={isWashDraft
             ? pick(lang, washContent?.hero?.card_title, washContent?.hero?.card_title_mr) || s.wash
             : pick(lang, maidContent?.hero?.card_title, maidContent?.hero?.card_title_mr) || s.maid}
           addressLine={addressLine}
