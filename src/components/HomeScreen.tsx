@@ -19,6 +19,7 @@ import { usePullToRefresh, PullToRefreshIndicator } from "@/lib/usePullToRefresh
 import { ChevronDown, ChevronRight, Clock, Gift, Home, MapPin, Mic, Search, Sparkles, User, Wind, type LucideIcon } from "lucide-react";
 import { BadiyoLogo } from "./BadiyoLogo";
 import { BottomNav } from "./BottomNav";
+import { setCleanDraft } from "@/lib/cleanBookingDraft";
 import { LocationPickerSheet, type SavedAddress } from "./LocationPickerSheet";
 import { ContestHomeBanner } from "./contest/ContestHomeBanner";
 import { DealsHomeBanner } from "./deals/DealsTab";
@@ -162,8 +163,6 @@ function toPayload(s: SegmentService, segment?: Segment | null): BookServicePayl
 
 
 export function HomeScreen({
-  onBookService,
-  onQuickBook,
   onOpenProfile,
   onOpenRewards,
   onOpenContest,
@@ -178,8 +177,6 @@ export function HomeScreen({
   onCheckout,
   onOpenReferral,
 }: {
-  onBookService?: (service: BookServicePayload) => void;
-  onQuickBook?: (service: BookServicePayload) => void;
   onOpenProfile?: () => void;
   onOpenRewards?: () => void;
   onOpenContest?: () => void;
@@ -327,14 +324,14 @@ export function HomeScreen({
     return true;
   };
 
-  const addToBooking = (s: SegmentService, segment?: Segment | null) => {
-    if (guardBlocked()) return;
-    toast(t("home.addedToBooking", { name: s.service_name || s.duration_label }));
-    withSingleCart(() => onQuickBook?.(toPayload(s, segment ?? null)));
-  };
   const guardedBookService = (p: BookServicePayload) => {
     if (guardBlocked()) return;
-    withSingleCart(() => onBookService?.(p));
+    // Old service pages are gone: open the Clean booking page with this option.
+    withSingleCart(() => {
+      setCleanDraft({ auto: false, optionId: p.id ?? null, day: null, slotMins: null });
+      setCleanKey((k) => k + 1);
+      setTab("clean");
+    });
   };
 
 
@@ -369,6 +366,7 @@ export function HomeScreen({
   const [activeAddress, setActiveAddress] = useState<SavedAddress | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [tab, setTab] = useState<HomeTab>("clean");
+  const [cleanKey, setCleanKey] = useState(0);
   useEffect(() => setTab(readHomeTab()), []);
   const { data: coinBalance } = useQuery({
     queryKey: ["my_coin_balance"],
@@ -422,10 +420,6 @@ export function HomeScreen({
     segments.find((s) => s.slug?.toLowerCase().includes("clean")) ??
     segments[0] ??
     null;
-  const tileService = cleanSegment ? servicesFor(cleanSegment)[0] ?? null : null;
-  const bookTileService = () => {
-    if (tileService) guardedBookService(toPayload(tileService, cleanSegment));
-  };
 
   if (addressCity?.outside && activeAddress && cityDismissedFor !== activeAddress.id) {
     return (
@@ -585,6 +579,7 @@ export function HomeScreen({
 
         {tab === "clean" && cleanSegment ? (
           <CleanTab
+            key={cleanKey}
             onHeroTone={setHeroTone}
             services={servicesFor(cleanSegment)}
             categories={categories.filter((c) => c.segment_id === cleanSegment.id)}
@@ -616,9 +611,6 @@ export function HomeScreen({
           segment={activeSegment}
           categories={categories.filter((c) => c.segment_id === activeSegment.id)}
           services={servicesFor(activeSegment)}
-          onBookService={guardedBookService}
-          onAdd={(s) => addToBooking(s, activeSegment)}
-          onOpenTask={bookTileService}
           availability={availability}
           statusBadge={statusBadge}
           storeUnlocked={storeUnlocked}
@@ -734,9 +726,6 @@ function SegmentView({
   segment,
   categories,
   services,
-  onBookService,
-  onAdd,
-  onOpenTask,
   availability,
   statusBadge,
   storeUnlocked,
@@ -749,9 +738,6 @@ function SegmentView({
   segment: Segment;
   categories: ServiceCategory[];
   services: SegmentService[];
-  onBookService?: (s: BookServicePayload) => void;
-  onAdd: (s: SegmentService) => void;
-  onOpenTask: () => void;
   availability?: AvailabilityMap;
   statusBadge?: string | null;
   storeUnlocked?: boolean;
