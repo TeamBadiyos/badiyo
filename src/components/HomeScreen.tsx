@@ -38,10 +38,8 @@ import {
   type SegmentService,
   type ServiceCategory,
 } from "@/lib/segments";
-import { ServiceProductCard } from "./home/ServiceProductCard";
 import { fetchCourierEnabled } from "./courier/courierData";
 
-import { SectionHeading } from "./SectionHeading";
 import { BrandWatermark } from "./BrandWatermark";
 import { anchorPrice } from "@/lib/price";
 import { useLanguage, useT } from "@/i18n";
@@ -104,11 +102,8 @@ function ScreenSkeleton() {
 
 
 import { fetchSections } from "@/lib/homeData";
-import { readLangOutsideReact, translateCatalog } from "@/lib/catalogI18n";
 import {
   fetchAvailability,
-  isUnavailable,
-  unavailableReason,
   type AvailabilityMap,
 } from "@/lib/availability";
 
