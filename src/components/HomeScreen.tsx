@@ -57,21 +57,17 @@ import type { SelectedSlot } from "@/lib/bookingTypes";
 // Shop pages (with their address picker and payment sheet) load only when the
 // customer actually opens a shop, a category or the cart.
 // Store/Food tab bodies, search and deals load only when first shown.
-const StoreListView = lazy(() => import("./store/StoreListView").then((m) => ({ default: m.StoreListView })));
+const CommerceTab = lazy(() => import("./commerce/CommerceTab").then((m) => ({ default: m.CommerceTab })));
 const LiveSearchPanel = lazy(() => import("./home/LiveSearchPanel").then((m) => ({ default: m.LiveSearchPanel })));
 const BringBadiyosScreen = lazy(() => import("./BringBadiyosScreen").then((m) => ({ default: m.BringBadiyosScreen })));
 const DealsHomeBanner = lazy(() => import("./deals/DealsTab").then((m) => ({ default: m.DealsHomeBanner })));
-const StoreDetailScreen = lazy(() =>
-  import("./store/StoreDetailScreen").then((m) => ({ default: m.StoreDetailScreen })),
-);
-const StoreCategoryScreen = lazy(() =>
-  import("./store/StoreCategoryScreen").then((m) => ({ default: m.StoreCategoryScreen })),
+const CommerceStoreScreen = lazy(() =>
+  import("./commerce/CommerceStoreScreen").then((m) => ({ default: m.CommerceStoreScreen })),
 );
 const StoreCartScreen = lazy(() =>
   import("./store/StoreCartScreen").then((m) => ({ default: m.StoreCartScreen })),
 );
 
-import type { StoreCategoryGroup } from "./store/storeGroups";
 import type { TranslationKey } from "@/i18n/en";
 
 
@@ -219,16 +215,20 @@ export function HomeScreen({
   const { data: storeState } = useServiceState("store");
   const { data: isTester = false } = useIsInternalTester();
   const storeUnlocked = storeState?.status === "live" || isTester;
-  const [openStore, setOpenStoreRaw] = useState<PublicStore | null>(null);
+  const [openStore, setOpenStoreRaw] = useState<{ id: string; distance_km?: number | null } | null>(null);
+  const [lastStore, setLastStore] = useState<{ id: string; distance_km?: number | null } | null>(null);
   const [storeSource, setStoreSource] = useState<"browse" | "search" | "link" | "banner">("browse");
   const setOpenStore = (
-    s: PublicStore | null,
+    s: PublicStore | { id: string; distance_km?: number | null } | null,
     src: "browse" | "search" | "link" | "banner" = "browse",
   ) => {
-    if (s) setStoreSource(src);
-    setOpenStoreRaw(s);
+    if (s) {
+      setStoreSource(src);
+      const ref = { id: s.id, distance_km: "distance_km" in s ? s.distance_km : null };
+      setLastStore(ref);
+      setOpenStoreRaw(ref);
+    } else setOpenStoreRaw(null);
   };
-  const [openCategory, setOpenCategory] = useState<StoreCategoryGroup | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
   const storeCart = useStoreCart();
   const cartHasItems = storeCart.cart.lines.length > 0;
@@ -241,6 +241,8 @@ export function HomeScreen({
   };
   // Ordering is on only when the store service itself is live.
   const storeOrdering = storeState?.status === "live";
+  const { data: foodState } = useServiceState("food");
+  const foodOrdering = foodState?.status === "live" || isTester;
 
   /**
    * Shared store links (user.badiyos.com/store/<custom-name>) open that shop
@@ -257,7 +259,6 @@ export function HomeScreen({
         toast.error("Ye dukaan abhi uplabdh nahi hai");
         return;
       }
-      setOpenCategory(null);
       setOpenStore(store, "link");
     }
     void openPending(capturePendingStoreKey());
@@ -444,6 +445,12 @@ export function HomeScreen({
       <Suspense fallback={<ScreenSkeleton />}>
         <StoreCartScreen
           onBack={() => setCartOpen(false)}
+          onAddMore={() => {
+            setCartOpen(false);
+            const id = storeCart.cart.merchantId;
+            if (id && openStore?.id !== id) setOpenStore({ id: lastStore?.id === id ? lastStore.distance_km ?? null : null } as never);
+            if (id && openStore?.id !== id) setOpenStore({ id, distance_km: lastStore?.id === id ? lastStore.distance_km : null });
+          }}
           onAddAddress={() => {
             setCartOpen(false);
             setLocationSheetOpen(true);
@@ -451,7 +458,6 @@ export function HomeScreen({
           onDone={(orderId) => {
             setCartOpen(false);
             setOpenStore(null);
-            setOpenCategory(null);
             if (orderId && onOpenStoreOrder) onOpenStoreOrder(orderId);
             else onOpenOrders?.();
           }}
@@ -462,31 +468,17 @@ export function HomeScreen({
   if (openStore) {
     return (
       <Suspense fallback={<ScreenSkeleton />}>
-        <StoreDetailScreen
-          store={openStore}
+        <CommerceStoreScreen
+          storeId={openStore.id}
+          distanceKm={openStore.distance_km ?? null}
           onBack={() => setOpenStore(null)}
           onOpenCart={() => setCartOpen(true)}
-          orderingEnabled={storeOrdering}
+          orderingEnabled={storeOrdering || foodOrdering}
           source={storeSource}
         />
       </Suspense>
     );
   }
-  if (openCategory) {
-    return (
-      <Suspense fallback={<ScreenSkeleton />}>
-        <StoreCategoryScreen
-          coords={homeCoords ?? null}
-          group={openCategory}
-          onBack={() => setOpenCategory(null)}
-          onOpenStore={setOpenStore}
-          onOpenCart={() => setCartOpen(true)}
-          orderingEnabled={storeOrdering}
-        />
-      </Suspense>
-    );
-  }
-
 
   return (
     <main className="min-h-screen w-full bg-background pb-28 momentum-scroll">
@@ -531,8 +523,8 @@ export function HomeScreen({
           </button>
         </header>
 
-        {/* Search bar (Store/Food only) */}
-        {tab !== "clean" && (
+        {/* Old search bar — Store/Food now have their own inside the tab */}
+        {false && (
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -552,7 +544,7 @@ export function HomeScreen({
           </button>
         </form>
         )}
-        {tab !== "clean" && searchQuery.trim().length >= 2 && (
+        {false && searchQuery.trim().length >= 2 && (
           <Suspense fallback={null}>
           <LiveSearchPanel
             query={searchQuery.trim()}
@@ -606,21 +598,14 @@ export function HomeScreen({
               })
             }
           />
-        ) : activeSegment ? (
-        <SegmentView
-          segment={activeSegment}
-          categories={categories.filter((c) => c.segment_id === activeSegment.id)}
-          services={servicesFor(activeSegment)}
-          availability={availability}
-          statusBadge={statusBadge}
-          storeUnlocked={storeUnlocked}
-          storeCoords={homeCoords}
-          onOpenStore={setOpenStore}
-          onOpenCategory={setOpenCategory}
-          onOpenCart={() => setCartOpen(true)}
-          storeOrdering={storeOrdering}
-        />
-        ) : (
+        ) : tab === "store" || tab === "food" ? (
+          <Suspense fallback={<div className="mt-6 space-y-3">{[0, 1, 2].map((i) => <div key={i} className="h-24 animate-pulse rounded-[18px] bg-muted" />)}</div>}>
+            <CommerceTab
+              key={tab}
+              service={tab}
+              coords={addressCity?.lat != null && addressCity?.lng != null ? { lat: addressCity.lat, lng: addressCity.lng } : homeCoords}
+              onOpenStore={(s) => setOpenStore(s, "browse")}
+              emptyFallback={tab === "food" ? (
           <section className="mt-6 flex flex-col items-center rounded-[20px] bg-surface-soft px-6 py-12 text-center">
             <div className="text-6xl">🍱</div>
             <h2 className="mt-4 text-2xl font-extrabold">{t("home.comingSoonTitle")}</h2>
@@ -644,7 +629,10 @@ export function HomeScreen({
               {t("bring.notify")}
             </button>
           </section>
-        )}
+              ) : undefined}
+            />
+          </Suspense>
+        ) : null}
 
 
         {/* Promo banner — high-emphasis solid brand highlight */}
@@ -671,8 +659,8 @@ export function HomeScreen({
         <BrandWatermark />
       </div>
 
-      {storeUnlocked && <CartBar aboveNav onOpenCart={() => setCartOpen(true)} />}
-      {!(storeUnlocked && cartHasItems) && <ActiveOrdersStrip onOpenStoreOrder={onOpenStoreOrder} />}
+      {tab !== "clean" && <CartBar aboveNav onOpenCart={() => setCartOpen(true)} />}
+      {!(tab !== "clean" && cartHasItems) && <ActiveOrdersStrip onOpenStoreOrder={onOpenStoreOrder} />}
       <AlertDialog open={!!pendingBook} onOpenChange={(o) => !o && setPendingBook(null)}>
         <AlertDialogContent className="rounded-[20px]">
           <AlertDialogHeader>
@@ -717,58 +705,3 @@ export function HomeScreen({
   );
 }
 
-/**
- * A segment's dedicated page. CATEGORY_FIRST is the existing Home Cleaning
- * booking list; STORE_FIRST is the read-only shop browser, gated behind the
- * store service flag (or the internal-tester list).
- */
-function SegmentView({
-  segment,
-  categories,
-  services,
-  availability,
-  statusBadge,
-  storeUnlocked,
-  storeCoords,
-  onOpenStore,
-  onOpenCategory,
-  onOpenCart,
-  storeOrdering,
-}: {
-  segment: Segment;
-  categories: ServiceCategory[];
-  services: SegmentService[];
-  availability?: AvailabilityMap;
-  statusBadge?: string | null;
-  storeUnlocked?: boolean;
-  storeCoords?: { lat: number; lng: number } | null;
-  onOpenStore?: (store: PublicStore) => void;
-  onOpenCategory?: (group: StoreCategoryGroup) => void;
-  onOpenCart?: () => void;
-  storeOrdering?: boolean;
-}) {
-  const t = useT();
-
-  if (segment.display_template === "STORE_FIRST" && storeUnlocked) {
-    return (
-      <Suspense fallback={<div className="mt-8 flex justify-center"><div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" /></div>}>
-      <StoreListView
-        coords={storeCoords ?? null}
-        onOpenStore={(s) => onOpenStore?.(s)}
-        onOpenCategory={(g) => onOpenCategory?.(g)}
-        onOpenCart={() => onOpenCart?.()}
-        orderingEnabled={storeOrdering}
-      />
-      </Suspense>
-    );
-  }
-
-  return (
-    <div className="mt-8 rounded-[18px] border border-dashed border-border bg-card px-6 py-12 text-center">
-      <p className="text-base font-bold text-foreground">
-        {t("home.comingSoon", { segment: segment.name })}
-      </p>
-      <p className="mt-1 text-sm text-muted-foreground">{t("home.comingSoonSub")}</p>
-    </div>
-  );
-}

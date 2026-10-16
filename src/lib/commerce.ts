@@ -21,6 +21,7 @@ export type CommerceStore = {
   distance_km?: number | null;
   next_open_at: string | null;
   address?: string | null;
+  service_type?: string | null;
 };
 
 export type CommerceCategory = Bi & { id: string; icon_url: string | null; is_other?: boolean };
