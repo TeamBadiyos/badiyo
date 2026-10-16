@@ -1,3 +1,4 @@
+import { ActiveOrdersStrip } from "@/components/home/ActiveOrdersStrip";
 import { getAuthUser } from "@/lib/authUser";
 import { lazy, Suspense, useEffect, useState } from "react";
 
@@ -641,6 +642,7 @@ export function HomeScreen({
       </div>
 
       {storeUnlocked && <CartBar aboveNav onOpenCart={() => setCartOpen(true)} />}
+      {!(storeUnlocked && cartHasItems) && <ActiveOrdersStrip onOpenStoreOrder={onOpenStoreOrder} />}
       <BottomNav
         activeKey={tab}
         onHome={setTab}
