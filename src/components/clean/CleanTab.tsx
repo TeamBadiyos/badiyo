@@ -6,7 +6,7 @@ import maidHero from "@/assets/clean-maid-hero.jpg";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthUserId } from "@/lib/authUser";
-import { pick, useBookNowAllowed, useNextFreeSlot, useServiceContent, useServiceHours, type BannerKey, type CleanServiceKey, type ContentCard, type ServiceContent } from "@/lib/serviceSettings";
+import { pick, useBookNowAllowed, useNextFreeSlot, useServiceContent, useServiceHours, type BannerKey, type CleanServiceKey, type ContentCard, type ServiceContent, type TimeSlab } from "@/lib/serviceSettings";
 import { useLanguage } from "@/i18n";
 import { formatNextOpen } from "@/lib/serviceHours";
 import type { SegmentService, ServiceCategory } from "@/lib/segments";
@@ -149,7 +149,9 @@ export function CleanTab({
   };
   const bTitle = fill(pick(lang, banner?.title, banner?.title_mr), vars) || s.maidHero;
   const bSub = fill(pick(lang, banner?.subline, banner?.subline_mr), vars);
-  const sky = bannerKey === "closed_evening" ? "var(--hero-night)" : bannerKey === "closed_morning" ? "var(--hero-morning)" : bannerKey === "holiday" ? "var(--hero-holiday)" : "var(--hero-day)";
+  const slab = pickSlab(maidContent?.time_slabs);
+  const heroImg = bannerKey === "campaign" ? (banner?.image_url || slab.image) : slab.image;
+  const tone = slab.tone;
   const statusLine = (st: typeof maidState) => {
     if (!st || st.can_order) return s.available;
     const n = formatNextOpen(st.next_open_at ?? st.resume_at);
@@ -160,10 +162,10 @@ export function CleanTab({
     <div>
       <section
         className="bleed-safe-top relative -mx-5 flex min-h-[35vh] flex-col items-center justify-center overflow-hidden px-6 pb-14 text-center"
-        style={{ "--bleed-top-extra": "72px", background: banner?.image_url ? `center/cover no-repeat url("${banner.image_url}")` : sky } as React.CSSProperties}
+        style={{ "--bleed-top-extra": "72px", background: heroImg ? `center/cover no-repeat url("${heroImg}")` : slab.sky } as React.CSSProperties}
       >
-        <h1 className="text-2xl font-extrabold leading-tight text-hero-title drop-shadow">{bTitle}</h1>
-        {bSub && <p className="mt-1.5 text-sm font-semibold text-primary-foreground/90 drop-shadow">{bSub}</p>}
+        <h1 className={`text-2xl font-extrabold leading-tight ${tone === "light" ? "text-hero-title hero-shadow" : "text-hero-title-dark"}`}>{bTitle}</h1>
+        {bSub && <p className={`mt-1.5 text-sm font-semibold ${tone === "light" ? "text-primary-foreground hero-shadow" : "text-hero-title-dark opacity-80"}`}>{bSub}</p>}
       </section>
 
       <div className="relative -mx-5 -mt-8 rounded-t-[28px] bg-background px-5 pt-6">
@@ -242,10 +244,10 @@ export function CleanTab({
 }
 
 function pickBanner(st: ServiceState | null | undefined, content: ServiceContent | null | undefined, nowAllowed: boolean): BannerKey | "campaign" {
+  const c = content?.campaign;
+  if (c?.active && (c.title || c.image_url)) return "campaign";
   if (st && /holiday/i.test(st.reason_code ?? "")) return "holiday";
   if (!st || st.can_order) {
-    const c = content?.campaign;
-    if (c?.active && (c.title || c.image_url)) return "campaign";
     return nowAllowed ? "open_available" : "open_busy";
   }
   const now = new Date().toLocaleTimeString("en-GB", { timeZone: "Asia/Kolkata", hour12: false }).slice(0, 5);
@@ -306,4 +308,25 @@ function dayLabel(iso: string | null | undefined, banner: string, lang: string):
   const h = Number(now.toLocaleString("en-US", { timeZone: tz, hour: "numeric", hour12: false })) % 24;
   if (banner === "closed_evening" && h >= 12) return mr ? "उद्या" : "tomorrow";
   return mr ? "आज" : "today";
+}
+
+const DEFAULT_SLABS: { from: string; to: string; sky: string; tone: "light" | "dark" }[] = [
+  { from: "05:00", to: "08:00", sky: "var(--hero-sunrise)", tone: "dark" },
+  { from: "08:00", to: "17:00", sky: "var(--hero-day)", tone: "dark" },
+  { from: "17:00", to: "21:00", sky: "var(--hero-evening)", tone: "light" },
+  { from: "21:00", to: "05:00", sky: "var(--hero-night)", tone: "light" },
+];
+
+function inSlab(now: string, from?: string | null, to?: string | null): boolean {
+  const f = (from ?? "").slice(0, 5).padStart(5, "0");
+  const t = (to ?? "").slice(0, 5).padStart(5, "0");
+  if (!from || !to) return false;
+  return f <= t ? now >= f && now < t : now >= f || now < t;
+}
+
+function pickSlab(slabs: TimeSlab[] | null | undefined): { image: string | null; sky: string; tone: "light" | "dark" } {
+  const now = new Date().toLocaleTimeString("en-GB", { timeZone: "Asia/Kolkata", hour12: false }).slice(0, 5).replace(/^24/, "00");
+  const def = DEFAULT_SLABS.find((d) => inSlab(now, d.from, d.to)) ?? DEFAULT_SLABS[1];
+  const cc = (slabs ?? []).find((x) => inSlab(now, x.from, x.to));
+  return { image: cc?.image_url || null, sky: def.sky, tone: (cc?.text_tone as "light" | "dark") || def.tone };
 }

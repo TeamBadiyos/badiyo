@@ -496,7 +496,12 @@ select,
   --hero-title: oklch(0.88 0.17 92);
   --hero-night: linear-gradient(180deg, oklch(0.22 0.06 270), oklch(0.32 0.08 275));
   --hero-morning: linear-gradient(180deg, oklch(0.55 0.12 40), oklch(0.78 0.12 70));
-  --hero-day: linear-gradient(180deg, oklch(0.55 0.14 160), oklch(0.7 0.14 165));
+  --hero-day: linear-gradient(180deg, oklch(0.82 0.08 230), oklch(0.95 0.04 210));
+  --hero-sunrise: linear-gradient(180deg, oklch(0.8 0.1 60), oklch(0.93 0.07 85));
+  --hero-evening: linear-gradient(180deg, oklch(0.4 0.12 300), oklch(0.62 0.15 40));
+  --hero-title-dark: oklch(0.27 0.02 250);
   --hero-holiday: linear-gradient(180deg, oklch(0.4 0.12 20), oklch(0.55 0.14 40));
 }
 @utility text-hero-title { color: var(--hero-title); }
+@utility text-hero-title-dark { color: var(--hero-title-dark); }
+@utility hero-shadow { text-shadow: 0 2px 8px color-mix(in oklab, var(--hero-title-dark) 55%, transparent); }
