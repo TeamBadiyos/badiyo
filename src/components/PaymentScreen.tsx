@@ -1,3 +1,4 @@
+import { withCity } from "@/lib/customerCity";
 import { getAuthUser } from "@/lib/authUser";
 import { useEffect, useRef, useState } from "react";
 import { CheckCircle2, XCircle, Loader2, ArrowLeft, AlertCircle } from "lucide-react";
@@ -244,7 +245,7 @@ export function PaymentScreen({
       if (slot.mode === "now") {
         const { data: gate, error: gateErr } = await supabase.rpc(
           "service_instant_allowed" as never,
-          { _service_key: "clean", _duration_minutes: Number(service.duration_minutes) || 60 } as never,
+          withCity({ _service_key: "clean", _duration_minutes: Number(service.duration_minutes) || 60 }) as never,
         );
         const g = gate as { ok?: boolean; close_time?: string | null } | null;
         if (!gateErr && g && g.ok === false) {
@@ -278,7 +279,7 @@ export function PaymentScreen({
           const mins = Number(slot.slotId); // minutes since midnight
           const { data: full, error: fullErr } = await supabase.rpc(
             "list_fully_booked_slots" as never,
-            { _service_key: "clean", _from: day, _to: day } as never,
+            withCity({ _service_key: "clean", _from: day, _to: day }) as never,
           );
           const rows = (full as { start_hour: number; start_minute?: number }[] | null) ?? [];
           if (

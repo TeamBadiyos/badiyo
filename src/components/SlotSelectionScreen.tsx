@@ -1,3 +1,4 @@
+import { withCity, useCustomerCityId } from "@/lib/customerCity";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, ChevronDown, Clock, X } from "lucide-react";
 import {
@@ -226,8 +227,9 @@ export function SlotSelectionScreen({
       : "High demand ki wajah se Book Now abhi band hai. Kripya aage ka time schedule karein.";
   const fullyBookedLabel = lang === "mr" ? "पूर्ण भरले" : "Full";
 
+  const cityId = useCustomerCityId();
   const { data: fullSlots } = useQuery({
-    queryKey: ["fully-booked-slots", days[0]?.key, days[days.length - 1]?.key],
+    queryKey: ["fully-booked-slots", days[0]?.key, days[days.length - 1]?.key, cityId],
     queryFn: () => fetchFullyBookedSlots("clean", days[0].key, days[days.length - 1].key),
     staleTime: 30_000,
     refetchInterval: 60_000,
@@ -245,11 +247,11 @@ export function SlotSelectionScreen({
 
   // Server says every expert is busy for Book Now → offer Notify me / Schedule.
   const { data: instantGate } = useQuery({
-    queryKey: ["instant-allowed", durationMinutes],
+    queryKey: ["instant-allowed", durationMinutes, cityId],
     queryFn: async () => {
       const { data } = await supabase.rpc(
         "service_instant_allowed" as never,
-        { _service_key: "clean", _duration_minutes: durationMinutes || 60 } as never,
+        withCity({ _service_key: "clean", _duration_minutes: durationMinutes || 60 }) as never,
       );
       return (data as { ok?: boolean; reason_code?: string } | null) ?? null;
     },

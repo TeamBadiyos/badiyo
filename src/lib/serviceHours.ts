@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { withCity } from "@/lib/customerCity";
 
 export type ServiceState = {
   status: "live" | "coming_soon" | "temporarily_stopped" | "hidden";
@@ -71,7 +72,7 @@ export async function fetchFullyBookedSlots(
 ): Promise<Set<string>> {
   const { data, error } = await supabase.rpc(
     "list_fully_booked_slots" as never,
-    { _service_key: serviceKey, _from: from, _to: to } as never,
+    withCity({ _service_key: serviceKey, _from: from, _to: to }) as never,
   );
   if (error || !Array.isArray(data)) return new Set();
   return new Set(

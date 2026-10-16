@@ -11,6 +11,8 @@ import { ServicesBar } from "./home/ServicesBar";
 import { ContestHomeBanner } from "./contest/ContestHomeBanner";
 import { DealsHomeBanner } from "./deals/DealsTab";
 import { supabase } from "@/integrations/supabase/client";
+import { useResolveAddressCity } from "@/lib/customerCity";
+import { NotServiceableScreen } from "./NotServiceableScreen";
 import { useAvatarUrl } from "@/lib/useAvatarUrl";
 import {
   fetchSegmentServices,
@@ -394,6 +396,9 @@ export function HomeScreen({
     if (defaultAddress) setActiveAddress((prev) => prev ?? defaultAddress);
   }, [defaultAddress]);
 
+  const addressCity = useResolveAddressCity(activeAddress?.id);
+  const [cityDismissedFor, setCityDismissedFor] = useState<string | null>(null);
+
   const locationLabel = activeAddress?.area ?? activeAddress?.label ?? "Lahoti Compound";
 
   const activeSegment = segments.find((s) => s.id === activeSegmentId) ?? null;
@@ -411,6 +416,27 @@ export function HomeScreen({
   const bookTileService = () => {
     if (tileService) guardedBookService(toPayload(tileService, cleanSegment));
   };
+
+  if (addressCity?.outside && activeAddress && cityDismissedFor !== activeAddress.id) {
+    return (
+      <NotServiceableScreen
+        location={{
+          segmentId: null,
+          latitude: addressCity.lat!,
+          longitude: addressCity.lng!,
+          addressText: activeAddress.full_address,
+          city: activeAddress.city,
+          area: activeAddress.area,
+        }}
+        segmentName={null}
+        onBack={() => setCityDismissedFor(activeAddress.id)}
+        onChangeAddress={() => {
+          setCityDismissedFor(activeAddress.id);
+          setLocationSheetOpen(true);
+        }}
+      />
+    );
+  }
 
   if (cartOpen) {
     return (
