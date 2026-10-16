@@ -8623,6 +8623,7 @@ export type Database = {
           low_stock_threshold: number
           merchant_id: string
           name: string
+          original_price: number | null
           pending_changes: Json | null
           pending_submitted_at: string | null
           price: number
@@ -8656,6 +8657,7 @@ export type Database = {
           low_stock_threshold?: number
           merchant_id: string
           name: string
+          original_price?: number | null
           pending_changes?: Json | null
           pending_submitted_at?: string | null
           price: number
@@ -8689,6 +8691,7 @@ export type Database = {
           low_stock_threshold?: number
           merchant_id?: string
           name?: string
+          original_price?: number | null
           pending_changes?: Json | null
           pending_submitted_at?: string | null
           price?: number

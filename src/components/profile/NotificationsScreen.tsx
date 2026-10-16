@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getErrorMessage } from "@/lib/errorMessage";
+import { useLanguage } from "@/i18n";
 
 type Pref = { key: "booking" | "promos" | "referrals"; label: string; desc: string };
 
@@ -18,6 +19,8 @@ const DEFAULTS = { booking: true, promos: true, referrals: true };
 export function NotificationsScreen({ onBack }: { onBack: () => void }) {
   const [state, setState] = useState<Record<string, boolean>>(DEFAULTS);
   const [uid, setUid] = useState<string | null>(null);
+  const { lang } = useLanguage();
+  const [offers, setOffers] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
@@ -29,12 +32,13 @@ export function NotificationsScreen({ onBack }: { onBack: () => void }) {
       if (!id) return;
       const { data } = await supabase
         .from("users")
-        .select("notification_preferences")
+        .select("notification_preferences, offer_notifications")
         .eq("id", id)
         .maybeSingle();
       if (cancelled) return;
       const prefs = (data?.notification_preferences ?? {}) as Record<string, boolean>;
       setState({ ...DEFAULTS, ...prefs });
+      setOffers((data as { offer_notifications?: boolean | null } | null)?.offer_notifications !== false);
     })();
     return () => {
       cancelled = true;
@@ -54,6 +58,17 @@ export function NotificationsScreen({ onBack }: { onBack: () => void }) {
     } catch (e) {
       setState(state);
       toast.error(await getErrorMessage(e));
+    }
+  }
+
+  async function toggleOffers() {
+    const next = !offers;
+    setOffers(next);
+    if (!uid) return;
+    const { error } = await supabase.rpc("app_set_offer_notifications", { _on: next });
+    if (error) {
+      setOffers(!next);
+      toast.error(await getErrorMessage(error));
     }
   }
 
@@ -97,6 +112,31 @@ export function NotificationsScreen({ onBack }: { onBack: () => void }) {
               </div>
             );
           })}
+        </section>
+
+        <section className="mt-4 overflow-hidden rounded-[18px] border border-border bg-card shadow-sm">
+          <div className="flex items-center gap-3 px-4 py-4">
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-bold text-foreground">
+                {lang === "mr" ? "ऑफर्स आणि वॉलेट आठवण" : "Offers & wallet reminders"}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {lang === "mr"
+                  ? "नवीन ऑफर्स आणि बोनस संपण्याआधी आठवण"
+                  : "New offers and reminders before your bonus expires"}
+              </p>
+            </div>
+            <button
+              role="switch"
+              aria-checked={offers}
+              onClick={toggleOffers}
+              className={`relative h-6 w-11 shrink-0 rounded-full transition ${offers ? "bg-primary" : "bg-muted"}`}
+            >
+              <span
+                className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition ${offers ? "left-[22px]" : "left-0.5"}`}
+              />
+            </button>
+          </div>
         </section>
       </div>
     </main>
