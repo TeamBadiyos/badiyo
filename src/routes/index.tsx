@@ -373,7 +373,12 @@ function Index() {
   // interrupts if the limit is actually reached.
   const enterAppAfterAuth = useCallback(
     (fallbackPhase: Phase = "home") => {
-      setPhase(fallbackPhase);
+      signedInRef.current = true;
+      const pending = afterLoginRef.current;
+      afterLoginRef.current = null;
+      // After the PIN step we still finish on "home"; a remembered screen
+      // (e.g. Wallet tapped as a guest) opens instead of Home.
+      setPhase(fallbackPhase === "home" && pending ? pending : fallbackPhase);
       // Home data + Home chunk start loading in parallel with the device call.
       void prefetchHomeData(queryClient);
       void import("@/components/HomeScreen");
@@ -695,7 +700,8 @@ function Index() {
       setTimeout(() => {
         if (cancelled) return;
         setPhase("splash-out");
-        setTimeout(() => !cancelled && setPhase("login"), 220);
+        // Guests land on the tabs; login is asked only when an action needs it.
+        setTimeout(() => !cancelled && setPhase("home"), 220);
       }, wait);
     };
 
@@ -736,6 +742,7 @@ function Index() {
 
     const { data: sub } = supabase.auth.onAuthStateChange(async (event) => {
       if (event === "SIGNED_OUT") {
+        signedInRef.current = false;
         // Drop every cached query so the next person signing in on this
         // device never sees the previous account's address or data.
         queryClient.clear();
@@ -857,7 +864,11 @@ function Index() {
         <div className="animate-fade-slide-in">
           <PinSetScreen
             phone={pendingPhone}
-            onDone={() => setPhase("home")}
+            onDone={() => {
+              const pending = afterLoginRef.current;
+              afterLoginRef.current = null;
+              setPhase(pending ?? "home");
+            }}
           />
         </div>
       )}
