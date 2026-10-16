@@ -17,34 +17,6 @@ export function AddressLine({ text, changeLabel, addLabel, onChange }: { text: s
   );
 }
 
-export function DurationCard({
-  option, active, full, popularLabel, fullLabel, onClick, className = "",
-}: {
-  option: SegmentService; active: boolean; full?: boolean; popularLabel: string; fullLabel: string; onClick: () => void; className?: string;
-}) {
-  const price = Number(option.price);
-  const old = Number(option.strikethrough_price);
-  const popular = Number(option.duration_minutes) === 120;
-  return (
-    <button
-      disabled={full}
-      onClick={onClick}
-      className={`relative flex flex-col items-start rounded-[16px] border-2 p-3 pt-4 text-left transition ${
-        full ? "border-border bg-muted opacity-60" : active ? "border-primary bg-primary/5" : "border-border bg-card"
-      } ${className}`}
-    >
-      {popular && !full && (
-        <span className="absolute -top-2 left-2 rounded-full bg-primary px-2 py-0.5 text-[10px] font-extrabold text-primary-foreground">{popularLabel}</span>
-      )}
-      {full && (
-        <span className="absolute -top-2 left-2 rounded-full bg-muted-foreground px-2 py-0.5 text-[10px] font-extrabold text-background">{fullLabel}</span>
-      )}
-      <span className="text-sm font-bold text-foreground">{option.duration_label}</span>
-      <span className="mt-1 text-lg font-extrabold text-foreground">₹{price}</span>
-      {old > price && <span className="text-xs text-muted-foreground line-through">₹{old}</span>}
-    </button>
-  );
-}
 
 export function DayCard({ label, sub, active, onClick }: { label: string; sub: string; active: boolean; onClick: () => void }) {
   return (
@@ -81,25 +53,6 @@ export function FullCalendarArt({ fullLabel }: { fullLabel: string }) {
   );
 }
 
-export function HeroCard({ heading, subline, button, imageUrl, bgColor, onClick }: { heading: string; subline: string; button: string; imageUrl?: string | null; bgColor?: string | null; onClick: () => void }) {
-  const dark = !!bgColor;
-  return (
-    <button onClick={onClick} style={bgColor ? { backgroundColor: bgColor } : undefined} className={`relative flex min-h-[150px] w-full overflow-hidden rounded-[22px] p-5 text-left shadow-card-m ${dark ? "" : "bg-surface-soft"}`}>
-      <div className={`relative z-10 flex flex-1 flex-col ${imageUrl ? "max-w-[60%]" : ""}`}>
-        {heading ? (
-          <>
-            <p className={`text-xl font-extrabold leading-tight ${dark ? "text-primary-foreground" : "text-foreground"}`}>{heading}</p>
-            {subline && <p className={`mt-1 text-sm font-semibold ${dark ? "text-primary-foreground/80" : "text-muted-foreground"}`}>{subline}</p>}
-          </>
-        ) : (
-          <p className={`text-xl font-extrabold leading-tight ${dark ? "text-primary-foreground" : "text-foreground"}`}>{subline}</p>
-        )}
-        <span className="mt-auto inline-flex w-fit rounded-full bg-background px-4 py-2 text-sm font-extrabold text-foreground">{button}</span>
-      </div>
-      {imageUrl && <img src={imageUrl} alt="" className="pointer-events-none absolute bottom-0 right-0 h-full max-w-[45%] object-contain object-bottom" />}
-    </button>
-  );
-}
 
 export function ContentCardTile({ title, imageUrl, price, onClick }: { title: string; imageUrl: string; price?: number | null; onClick: () => void }) {
   return (
