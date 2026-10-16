@@ -449,7 +449,7 @@ export function ReferralDashboardScreen({ onBack }: { onBack: () => void }) {
               ))}
             </section>
             <p className="mt-2 text-[11px] text-muted-foreground">
-              You get ₹{signupReward} when a friend joins, and {bookingReward} more
+              You get ₹{signupReward} when a friend joins, and ₹{bookingReward} more
               once they complete their first booking.
             </p>
 
