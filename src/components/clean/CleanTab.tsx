@@ -165,7 +165,7 @@ export function CleanTab({
         style={{ "--bleed-top-extra": "72px", background: heroImg ? `center/cover no-repeat url("${heroImg}")` : slab.sky } as React.CSSProperties}
       >
         <h1 className={`text-2xl font-extrabold leading-tight ${tone === "light" ? "text-hero-title hero-shadow" : "text-hero-title-dark"}`}>{bTitle}</h1>
-        {bSub && <p className={`mt-1.5 text-sm font-semibold ${tone === "light" ? "text-primary-foreground hero-shadow" : "text-hero-title-dark/80"}`}>{bSub}</p>}
+        {bSub && <p className={`mt-1.5 text-sm font-semibold ${tone === "light" ? "text-primary-foreground hero-shadow" : "text-hero-title-dark opacity-80"}`}>{bSub}</p>}
       </section>
 
       <div className="relative -mx-5 -mt-8 rounded-t-[28px] bg-background px-5 pt-6">
