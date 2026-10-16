@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { isImageLoaded } from "@/lib/serviceSettings";
+import { localSrc } from "@/lib/imageStore";
 import { Check, Droplets, MapPin, Package, X } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import type { ContentDetails } from "@/lib/serviceSettings";
@@ -184,9 +185,12 @@ export function CardDetailsSheet({ items, index, onIndex, details, lang, heading
 
 /** Image that fades in once loaded; instant if already preloaded. */
 export function FadeImg({ src, alt = "", className = "", width, height }: { src: string; alt?: string; className?: string; width?: number; height?: number }) {
-  const [ok, setOk] = useState(() => isImageLoaded(src));
+  const [instant] = useState(() => isImageLoaded(src));
+  const [ok, setOk] = useState(instant);
+  const [s, setS] = useState(() => localSrc(src));
   return (
-    <img src={src} alt={alt} width={width} height={height} decoding="async" onLoad={() => setOk(true)}
-      className={`${className} transition-opacity duration-300 ${ok ? "opacity-100" : "opacity-0"}`} />
+    <img src={s} alt={alt} width={width} height={height} decoding={instant ? "sync" : "async"} onLoad={() => setOk(true)}
+      onError={() => { if (s !== src) setS(src); }}
+      className={`${className} ${instant ? "" : "transition-opacity duration-300"} ${ok ? "opacity-100" : "opacity-0"}`} />
   );
 }

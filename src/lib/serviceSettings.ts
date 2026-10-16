@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCustomerCityId, getCustomerCityId } from "@/lib/customerCity";
 import { useGstPercent } from "@/lib/gst";
 import type { ServiceState } from "@/lib/serviceHours";
+import { localSrc, syncImages } from "@/lib/imageStore";
 
 /** Clean Home = 'clean', Car & Bike Wash = 'wash'. Public RPCs, city-aware. */
 export type CleanServiceKey = "clean" | "wash";
@@ -17,12 +18,62 @@ export function useServiceHours(key: CleanServiceKey, enabled = true) {
     enabled,
     staleTime: 60_000,
     refetchInterval: 60_000,
-    queryFn: async (): Promise<ServiceState | null> => {
-      const { data, error } = await rpc("app_service_hours", { _service_key: key, _city_id: cityId });
-      if (error) return null; // fail-open
-      return ((data as { state?: ServiceState } | null)?.state ?? null) as ServiceState | null;
-    },
+    initialData: () => readCache<ServiceState>("hours", key, cityId),
+    initialDataUpdatedAt: 0,
+    queryFn: () => fetchHours(key, cityId),
   });
+}
+
+async function fetchHours(key: CleanServiceKey, cityId: string | null): Promise<ServiceState | null> {
+  const { data, error } = await rpc("app_service_hours", { _service_key: key, _city_id: cityId });
+  if (error) return readCache<ServiceState>("hours", key, cityId) ?? null;
+  const v = ((data as { state?: ServiceState } | null)?.state ?? null) as ServiceState | null;
+  writeCache("hours", key, cityId, v);
+  return v;
+}
+
+async function fetchBookNow(key: CleanServiceKey, cityId: string | null): Promise<BookNowGate> {
+  const { data, error } = await rpc("app_book_now_allowed", { _service_key: key, _city_id: cityId });
+  if (error || !data) return readCache<BookNowGate>("booknow", key, cityId) ?? { allowed: true, reason: null };
+  const d = data as { allowed?: boolean; reason?: BookNowGate["reason"] };
+  const v: BookNowGate = { allowed: d.allowed !== false, reason: d.allowed === false ? (d.reason ?? "slot_full") : null };
+  writeCache("booknow", key, cityId, v);
+  return v;
+}
+
+function istParts(d: Date) {
+  const f = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false }).formatToParts(d);
+  const g = (t: string) => f.find((x) => x.type === t)?.value ?? "00";
+  return { date: `${g("year")}-${g("month")}-${g("day")}`, mins: (Number(g("hour")) % 24) * 60 + Number(g("minute")) };
+}
+const hm = (t?: string | null) => { const m = t?.match(/^(\d{1,2}):(\d{2})/); return m ? Number(m[1]) * 60 + Number(m[2]) : null; };
+
+/**
+ * Re-evaluate a saved hours state against the current India time, so a cached
+ * reading never shows "Open now" after closing (or "Opens…" after opening).
+ */
+export function localizeState(st: ServiceState | null | undefined, now = new Date()): ServiceState | null | undefined {
+  if (!st || st.status !== "live") return st;
+  const open = hm(st.open_time), close = hm(st.close_time);
+  if (open == null || close == null) return st;
+  const { date, mins } = istParts(now);
+  const inHours = mins >= open && mins < close;
+  const nextOpenIso = (dayOffset: number) => {
+    const base = new Date(`${date}T00:00:00+05:30`).getTime() + dayOffset * 86_400_000;
+    return new Date(base + open * 60_000).toISOString();
+  };
+  if (st.can_order && !inHours) {
+    return { ...st, can_order: false, open: false, next_open_at: nextOpenIso(mins < open ? 0 : 1) };
+  }
+  if (!st.can_order && inHours) {
+    const nx = st.next_open_at ?? st.resume_at;
+    if (nx && new Date(nx).getTime() <= now.getTime()) return { ...st, can_order: true, open: true };
+  }
+  if (!st.can_order && !inHours) {
+    const nx = st.next_open_at ?? st.resume_at;
+    if (nx && new Date(nx).getTime() <= now.getTime()) return { ...st, next_open_at: nextOpenIso(mins < open ? 0 : 1) };
+  }
+  return st;
 }
 
 export type BookNowGate = { allowed: boolean; reason: "book_now_off" | "closed" | "slot_full" | null };
@@ -33,12 +84,9 @@ export function useBookNowAllowed(key: CleanServiceKey, enabled = true) {
     queryKey: ["app-book-now-allowed", key, cityId],
     enabled,
     staleTime: 30_000,
-    queryFn: async (): Promise<BookNowGate> => {
-      const { data, error } = await rpc("app_book_now_allowed", { _service_key: key, _city_id: cityId });
-      if (error || !data) return { allowed: true, reason: null };
-      const d = data as { allowed?: boolean; reason?: BookNowGate["reason"] };
-      return { allowed: d.allowed !== false, reason: d.allowed === false ? (d.reason ?? "slot_full") : null };
-    },
+    initialData: () => readCache<BookNowGate>("booknow", key, cityId),
+    initialDataUpdatedAt: 0,
+    queryFn: () => fetchBookNow(key, cityId),
   });
 }
 
@@ -136,40 +184,46 @@ export function contentImageUrls(c: ServiceContent | null | undefined): string[]
 }
 
 const loadedImages = new Set<string>();
-export function isImageLoaded(url: string) { return loadedImages.has(url); }
+export function isImageLoaded(url: string) { return loadedImages.has(url) || loadedImages.has(localSrc(url)); }
 export function preloadImages(urls: string[]): Promise<void> {
   if (typeof window === "undefined") return Promise.resolve();
-  return Promise.all(urls.map((u) => loadedImages.has(u) ? null : new Promise<void>((res) => {
-    const img = new Image();
-    img.onload = () => { loadedImages.add(u); res(); };
-    img.onerror = () => res();
-    img.src = u;
-  }))).then(() => {});
+  return Promise.all(urls.map((u) => {
+    const src = localSrc(u);
+    if (loadedImages.has(src)) return null;
+    return new Promise<void>((res) => {
+      const img = new Image();
+      img.src = src;
+      const done = () => { loadedImages.add(src); loadedImages.add(u); res(); };
+      (img.decode ? img.decode() : new Promise<void>((r, j) => { img.onload = () => r(); img.onerror = j; })).then(done, () => res());
+    });
+  })).then(() => {});
 }
 
-/** Splash warm-up: content + hours + Book Now for Clean & Wash, then images. Capped at maxMs. */
-export function prefetchCleanTab(qc: import("@tanstack/react-query").QueryClient, maxMs = 2000): Promise<void> {
+/**
+ * Splash warm-up. With a device cache: resolves as soon as the cached photos are
+ * decoded (network refresh continues afterwards). Without: waits for the network.
+ * Capped at maxMs either way.
+ */
+export function prefetchCleanTab(qc: import("@tanstack/react-query").QueryClient, maxMs = 1500): Promise<void> {
   const cityId = getCustomerCityId();
   const keys: CleanServiceKey[] = ["clean", "wash"];
-  const work = Promise.all(keys.map(async (k) => {
-    const cached = readCache<ServiceContent>("content", k, cityId);
-    if (cached) void preloadImages(contentImageUrls(cached));
+  const cached = keys.map((k) => readCache<ServiceContent>("content", k, cityId));
+  const warm = cached.every(Boolean) && keys.every((k) => readCache("hours", k, cityId) !== undefined);
+  const network = Promise.all(keys.map(async (k) => {
     const [content] = await Promise.all([
-      qc.fetchQuery({ queryKey: ["app-service-content", k, cityId], queryFn: () => fetchServiceContent(k, cityId), staleTime: 0 }).catch(() => cached ?? null),
-      qc.prefetchQuery({ queryKey: ["app-service-hours", k, cityId], queryFn: async () => {
-        const { data, error } = await rpc("app_service_hours", { _service_key: k, _city_id: cityId });
-        return error ? null : ((data as { state?: ServiceState } | null)?.state ?? null);
-      } }),
-      k === "clean" ? qc.prefetchQuery({ queryKey: ["app-book-now-allowed", k, cityId], queryFn: async () => {
-        const { data, error } = await rpc("app_book_now_allowed", { _service_key: k, _city_id: cityId });
-        if (error || !data) return { allowed: true, reason: null };
-        const d = data as { allowed?: boolean; reason?: BookNowGate["reason"] };
-        return { allowed: d.allowed !== false, reason: d.allowed === false ? (d.reason ?? "slot_full") : null };
-      } }) : null,
+      qc.fetchQuery({ queryKey: ["app-service-content", k, cityId], queryFn: () => fetchServiceContent(k, cityId), staleTime: 0 }).catch(() => readCache<ServiceContent>("content", k, cityId) ?? null),
+      qc.fetchQuery({ queryKey: ["app-service-hours", k, cityId], queryFn: () => fetchHours(k, cityId), staleTime: 0 }).catch(() => null),
+      qc.fetchQuery({ queryKey: ["app-book-now-allowed", k, cityId], queryFn: () => fetchBookNow(k, cityId), staleTime: 0 }).catch(() => null),
     ]);
-    await preloadImages(contentImageUrls(content));
-  })).then(() => {});
-  return Promise.race([work.catch(() => {}), new Promise<void>((r) => setTimeout(r, maxMs))]);
+    return contentImageUrls(content);
+  })).then(async (lists) => {
+    const all = lists.flat();
+    await syncImages(all, all);
+    await preloadImages(all);
+  });
+  void network.catch(() => {});
+  const ready = warm ? preloadImages(cached.flatMap((c) => contentImageUrls(c))) : network;
+  return Promise.race([ready.catch(() => {}), new Promise<void>((r) => setTimeout(r, maxMs))]);
 }
 
 /** Next free half-hour today (≥45 min notice) or tomorrow's first; null if none. */

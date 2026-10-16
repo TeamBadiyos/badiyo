@@ -1,10 +1,11 @@
+import { localSrc } from "@/lib/imageStore";
 import { useEffect, useState } from "react";
 import { ChevronRight, Gift } from "lucide-react";
 import type { ServiceState } from "@/lib/serviceHours";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthUserId } from "@/lib/authUser";
-import { pick, useBookNowAllowed, useNextFreeSlot, useServiceContent, useServiceHours, type BannerTextKey, type CleanServiceKey, type ContentCard, type ServiceContent, type BannerSlab } from "@/lib/serviceSettings";
+import { localizeState, pick, useBookNowAllowed, useNextFreeSlot, useServiceContent, useServiceHours, type BannerTextKey, type CleanServiceKey, type ContentCard, type ServiceContent, type BannerSlab } from "@/lib/serviceSettings";
 import { useLanguage } from "@/i18n";
 import { formatNextOpen } from "@/lib/serviceHours";
 import type { SegmentService, ServiceCategory } from "@/lib/segments";
@@ -50,13 +51,15 @@ export function CleanTab({
   const { lang } = useLanguage();
   const s = lang === "mr" ? T.mr : T.en;
   const c = lang === "mr" ? CL.mr : CL.en;
-  const { data: maidState } = useServiceHours("clean");
-  const { data: washState } = useServiceHours("wash");
+  const { data: maidRaw, isPending: maidHoursPending } = useServiceHours("clean");
+  const { data: washRaw } = useServiceHours("wash");
+  const maidState = localizeState(maidRaw);
+  const washState = localizeState(washRaw);
   const closed = maidState != null && !maidState.can_order;
   const nextOpen = closed ? formatNextOpen(maidState?.next_open_at ?? maidState?.resume_at) : null;
   const { data: maidContent, isPending: maidPending } = useServiceContent("clean");
   const { data: washContent, isPending: washPending } = useServiceContent("wash");
-  const loading = maidPending || washPending;
+  const loading = maidPending || washPending || maidHoursPending;
 
   const autoCatIds = new Set(categories.filter((x) => /auto|wash/i.test(x.name)).map((x) => x.id));
   const byId = new Map(services.map((x) => [x.id, x]));
@@ -144,7 +147,8 @@ export function CleanTab({
   const tone = slab.tone;
   useEffect(() => { onHeroTone?.(tone); }, [tone, onHeroTone]);
   const statusLine = (st: typeof maidState) => {
-    if (!st || st.can_order) return s.available;
+    if (!st) return "";
+    if (st.can_order) return s.available;
     const n = shortOpenTime(st.next_open_at ?? st.resume_at);
     return n ? `${s.opens} ${n}` : s.closedShort;
   };
@@ -153,7 +157,7 @@ export function CleanTab({
     <div>
       <section
         className="bleed-safe-top relative -mx-5 flex min-h-[35vh] flex-col items-center justify-center overflow-hidden px-6 pb-14 text-center"
-        style={{ "--bleed-top-extra": "72px", background: heroImg ? `center/cover no-repeat url("${heroImg}"), ${slab.sky}` : slab.sky } as React.CSSProperties}
+        style={{ "--bleed-top-extra": "72px", background: heroImg ? `center/cover no-repeat url("${localSrc(heroImg)}"), ${slab.sky}` : slab.sky } as React.CSSProperties}
       >
         <h1 className={`text-2xl font-extrabold leading-tight ${tone === "light" ? "text-hero-title hero-shadow" : "text-hero-title-dark"}`}>{bTitle}</h1>
         {bSub && <p className={`mt-1.5 text-sm font-semibold ${tone === "light" ? "text-primary-foreground hero-shadow" : "text-hero-title-dark opacity-80"}`}>{bSub}</p>}
@@ -162,9 +166,9 @@ export function CleanTab({
       <div className="relative -mx-5 -mt-8 rounded-t-[28px] bg-background px-5 pt-3">
         {loading ? <CleanSkeleton /> : (<>
         <div className="grid grid-cols-2 gap-3 pt-[34px]">
-          <ServiceCard title={pick(lang, maidContent?.hero?.card_title, maidContent?.hero?.card_title_mr) || s.maid} status={statusLine(maidState)} closed={closed} img={maidContent?.hero?.image_url || ""} onClick={() => openBooking(false)} />
+          <ServiceCard title={pick(lang, maidContent?.hero?.card_title, maidContent?.hero?.card_title_mr) || s.maid} status={statusLine(maidState)} closed={!maidState || closed} img={maidContent?.hero?.image_url || ""} onClick={() => openBooking(false)} />
           {washOptions.length > 0 && (
-            <ServiceCard title={pick(lang, washContent?.hero?.card_title, washContent?.hero?.card_title_mr) || s.washCard} status={statusLine(washState)} closed={washState != null && !washState.can_order} img={washContent?.hero?.image_url || ""} onClick={() => openBooking(true)} />
+            <ServiceCard title={pick(lang, washContent?.hero?.card_title, washContent?.hero?.card_title_mr) || s.washCard} status={statusLine(washState)} closed={!washState || !washState.can_order} img={washContent?.hero?.image_url || ""} onClick={() => openBooking(true)} />
           )}
         </div>
 
