@@ -116,11 +116,21 @@ export function CleanTab({
     ? washContent.cards
     : washOptions.map((o) => ({ title: o.duration_label, price_option_id: o.id }));
 
+  const lines = (arr: unknown): string[] => (Array.isArray(arr) ? arr : []).map((x) => {
+    if (typeof x === "string") return x.trim();
+    if (x && typeof x === "object") {
+      const o = x as { en?: unknown; mr?: unknown };
+      const en = typeof o.en === "string" ? o.en.trim() : "";
+      const mr = typeof o.mr === "string" ? o.mr.trim() : "";
+      return lang === "mr" ? mr || en : en || mr;
+    }
+    return "";
+  }).filter(Boolean);
   const toItem = (card: ContentCard, image: string): DetailItem => ({
     image,
     title: pick(lang, card.title, card.title_mr),
-    included: (lang === "mr" && card.included_mr?.length ? card.included_mr : card.included) ?? [],
-    notIncluded: (lang === "mr" && card.not_included_mr?.length ? card.not_included_mr : card.not_included) ?? [],
+    included: lines(lang === "mr" && card.included_mr?.length ? card.included_mr : card.included),
+    notIncluded: lines(lang === "mr" && card.not_included_mr?.length ? card.not_included_mr : card.not_included),
     optionId: card.price_option_id ?? null,
   });
   const maidImg = (card: ContentCard, i: number) => card.image_url || MAID_IMG[i % MAID_IMG.length];
