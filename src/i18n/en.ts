@@ -452,7 +452,7 @@ export const en = {
 
   // ── Not serviceable / waitlist ───────────────────────────
   "notServiceable.title": "Service Area",
-  "notServiceable.heading": "We're not in your area yet",
+  "notServiceable.heading": "badiyos isn't in your city yet",
   "notServiceable.sub": "badiyos hasn't launched here yet — but we're expanding fast.",
   "notServiceable.subSegment": "{segment} hasn't launched in your area yet — but we're expanding fast.",
   "notServiceable.join": "Join Waitlist",

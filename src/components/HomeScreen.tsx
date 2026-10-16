@@ -421,12 +421,13 @@ export function HomeScreen({
     return (
       <NotServiceableScreen
         location={{
-          latitude: addressCity.lat,
-          longitude: addressCity.lng,
-          address_text: activeAddress.full_address,
+          segmentId: null,
+          latitude: addressCity.lat!,
+          longitude: addressCity.lng!,
+          addressText: activeAddress.full_address,
           city: activeAddress.city,
           area: activeAddress.area,
-        } as never}
+        }}
         segmentName={null}
         onBack={() => setCityDismissedFor(activeAddress.id)}
         onChangeAddress={() => {
