@@ -1,4 +1,4 @@
-import { sellWhatsAppHref } from "@/lib/storeShare";
+import { sellWhatsAppHref } from "@/lib/store";
 import { Package, Store } from "lucide-react";
 import { getAuthUser } from "@/lib/authUser";
 import {
