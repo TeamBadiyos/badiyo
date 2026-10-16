@@ -14,7 +14,12 @@
 1. **Lift the booking draft** (service key, option, day, time) to the route shell, stored as a "booking" state that CleanTab reads to reopen the Booking page on mount.
 2. **Continue → Checkout directly**: run sign-in + address/serviceability checks while the Booking page stays visible (button shows a spinner), then switch straight to `summary`. Only if the address is missing/not serviceable open the address sheet over the Booking page.
 3. **Checkout back** → Home phase with the Booking page reopened from the saved draft. Booking back → clears draft → Clean tab. Same handler for hardware back (via `useBackHandler`) and ←.
-4. **Address as a sheet**: wrap the existing address picker in a bottom sheet used by Booking and Checkout; selecting returns to the same screen and updates the address. Not pushed to history.
+4. **Address as a sheet** (one shared sheet, opened from Booking, Checkout and the "Home ▾" header on the Clean tab; never pushed to history, back closes it):
+   - "+ Add new address" at the top, then all saved addresses showing label, area, full address and a tick on the selected one.
+   - Tapping an address selects it and closes the sheet back to the same screen.
+   - Each saved address has Edit and Delete (delete asks to confirm; deleting the selected one falls back to the default/next address).
+   - "+ Add new address" and Edit open the existing new address form (map pin on current location, City dropdown, Area, Pincode check, Flat/House, Building, Landmark, Home/Work/Other, "Confirm this location") on top; after saving it returns to the same Booking/Checkout screen with that address selected.
+   - Guests tapping "Home ▾" are asked to sign in only when saving an address.
 5. **Cleanup (Clean flow only)**, after confirming no other references with search:
    - Remove the Clean path through `slot` (SlotSelectionScreen) and `address` phases, `onQuickBook`, old service detail pages, old Instant/Schedule sheets, old 6-tile section, any `app_clean_media` code, now-unused clean translations and bundled clean images (`clean-*.jpg`, `expert-*.jpg`, `wash-*.jpg`) if unreferenced.
    - Old phases/deep links that pointed at these (e.g. a booking re-entry from Orders "Book again", search results) redirect to the new Booking page or the Clean tab.
