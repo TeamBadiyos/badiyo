@@ -1,3 +1,4 @@
+import { ensureSignedIn } from "@/lib/authGate";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -627,7 +628,18 @@ export function HomeScreen({
             <h2 className="mt-4 text-2xl font-extrabold">{t("home.comingSoonTitle")}</h2>
             <p className="mt-2 text-sm text-muted-foreground">{t("home.foodSoonSub")}</p>
             <button
-              onClick={() => toast.success(t("notServiceable.onTheList"))}
+              onClick={async () => {
+                if (!(await ensureSignedIn())) return;
+                const { error } = await supabase.rpc("customer_notify_me" as never, {
+                  _service_key: "food",
+                  _city: activeAddress?.city?.split(",")[0]?.trim() || null,
+                  _area: activeAddress?.area ?? null,
+                  _lat: addressCity?.lat ?? homeCoords?.lat ?? null,
+                  _lng: addressCity?.lng ?? homeCoords?.lng ?? null,
+                } as never);
+                if (error) toast.error(t("notServiceable.joinFailed"));
+                else toast.success(t("notServiceable.onTheList"));
+              }}
               className="mt-6 flex items-center gap-2 rounded-[20px] bg-primary px-6 py-3.5 text-base font-extrabold text-primary-foreground shadow-soft"
             >
               <BellRing className="h-5 w-5" />
