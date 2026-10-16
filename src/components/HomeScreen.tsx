@@ -60,6 +60,7 @@ import type { SelectedSlot } from "@/lib/bookingTypes";
 // customer actually opens a shop, a category or the cart.
 // Store/Food tab bodies, search and deals load only when first shown.
 const CommerceTab = lazy(() => import("./commerce/CommerceTab").then((m) => ({ default: m.CommerceTab })));
+const ParcelHome = lazy(() => import("./parcel/ParcelHome").then((m) => ({ default: m.ParcelHome })));
 const LiveSearchPanel = lazy(() => import("./home/LiveSearchPanel").then((m) => ({ default: m.LiveSearchPanel })));
 const BringBadiyosScreen = lazy(() => import("./BringBadiyosScreen").then((m) => ({ default: m.BringBadiyosScreen })));
 const DealsHomeBanner = lazy(() => import("./deals/DealsTab").then((m) => ({ default: m.DealsHomeBanner })));
