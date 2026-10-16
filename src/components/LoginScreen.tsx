@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { X } from "lucide-react";
 import { BadiyoLogo } from "./BadiyoLogo";
 import { invokeFunction } from "@/lib/invokeFunction";
 import { captureReferralCode } from "@/lib/referrals";
@@ -16,7 +17,9 @@ export function LoginScreen({
   onOtpSent,
   onPinLogin,
   onOpenLegal,
+  onBack,
 }: {
+  onBack?: () => void;
   onOtpSent?: (phone: string) => void;
   onPinLogin?: (phone: string) => void;
   onOpenLegal?: (slug: LegalSlug) => void;
@@ -75,6 +78,16 @@ export function LoginScreen({
         className="bleed-safe-top relative shrink-0 bg-gradient-to-b from-primary-dark via-primary to-primary-light px-5 pb-10"
         style={{ ["--bleed-top-extra" as string]: "1.5rem" }}
       >
+        {onBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            aria-label="Close"
+            className="absolute left-4 top-5 flex h-8 w-8 items-center justify-center rounded-full bg-card/95 text-primary shadow-sm"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
         <div className="absolute right-4 top-5 flex items-center rounded-full bg-white/95 p-0.5 shadow-sm">
           <button
             type="button"
