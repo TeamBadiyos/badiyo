@@ -7,7 +7,8 @@ import type { ServiceState } from "@/lib/serviceHours";
 /** Clean Home = 'clean', Car & Bike Wash = 'wash'. Public RPCs, city-aware. */
 export type CleanServiceKey = "clean" | "wash";
 
-const rpc = supabase.rpc as unknown as (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>;
+const rpc = ((fn: string, args: Record<string, unknown>) =>
+  (supabase.rpc as unknown as (f: string, a: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>).call(supabase, fn, args));
 
 export function useServiceHours(key: CleanServiceKey, enabled = true) {
   const cityId = useCustomerCityId();
