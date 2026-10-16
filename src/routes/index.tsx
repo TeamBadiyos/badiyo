@@ -354,6 +354,7 @@ function Index() {
   const [selectedAddress, setSelectedAddress] = useState<SelectedAddress | null>(null);
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
   const [redeemCoins, setRedeemCoins] = useState(false);
+  const [expertNote, setExpertNote] = useState("");
 
   const [rewardsTab, setRewardsTab] = useState<"rewards" | "contest" | "deals">("contest");
   const [focusDealId, setFocusDealId] = useState<string | null>(null);
@@ -1081,6 +1082,8 @@ function Index() {
             onCouponChange={setAppliedCoupon}
             redeemCoins={redeemCoins}
             onRedeemCoinsChange={setRedeemCoins}
+            note={expertNote}
+            onNoteChange={setExpertNote}
             onOpenCoupons={() => setPhase("coupon-picker")}
 
             onBack={() => setPhase("home")}
