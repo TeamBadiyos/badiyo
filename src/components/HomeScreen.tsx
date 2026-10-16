@@ -7,12 +7,14 @@ import { ChevronDown, ChevronRight, Clock, Gift, Home, MapPin, Mic, Search, Spar
 import { BadiyoLogo } from "./BadiyoLogo";
 import { BottomNav } from "./BottomNav";
 import { LocationPickerSheet, type SavedAddress } from "./LocationPickerSheet";
-import { ServicesBar } from "./home/ServicesBar";
 import { ContestHomeBanner } from "./contest/ContestHomeBanner";
 import { DealsHomeBanner } from "./deals/DealsTab";
 import { supabase } from "@/integrations/supabase/client";
 import { useResolveAddressCity } from "@/lib/customerCity";
-import { NotServiceableScreen } from "./NotServiceableScreen";
+import { BringBadiyosScreen } from "./BringBadiyosScreen";
+import { readHomeTab, type HomeTab } from "@/lib/homeTab";
+import { fetchMyCoinBalance } from "@/lib/coins";
+import { BellRing, Wallet as WalletIcon } from "lucide-react";
 import { useAvatarUrl } from "@/lib/useAvatarUrl";
 import {
   fetchSegmentServices,
@@ -42,7 +44,6 @@ import { StoreListView } from "./store/StoreListView";
 import { StoreShelves } from "./store/storeCatalog";
 import { LiveSearchPanel } from "./home/LiveSearchPanel";
 import { CartBar } from "./store/CartBar";
-import { SellOnBadiyosCard } from "./store/SellOnBadiyosCard";
 // Shop pages (with their address picker and payment sheet) load only when the
 // customer actually opens a shop, a category or the cart.
 const StoreDetailScreen = lazy(() =>
@@ -198,6 +199,8 @@ export function HomeScreen({
   onSearch,
   onOpenCourier,
   onOpenContactParcels,
+  onOpenWallet,
+  onRequireLogin,
 }: {
   onBookService?: (service: BookServicePayload) => void;
   onQuickBook?: (service: BookServicePayload) => void;
@@ -210,6 +213,8 @@ export function HomeScreen({
   onSearch?: (query: string) => void;
   onOpenCourier?: () => void;
   onOpenContactParcels?: (stopId?: string) => void;
+  onOpenWallet?: () => void;
+  onRequireLogin?: () => void;
 }) {
   const { data: courierEnabled = false } = useQuery({
     queryKey: ["courier_enabled"],
@@ -370,7 +375,13 @@ export function HomeScreen({
   const [locationSheetOpen, setLocationSheetOpen] = useState(false);
   const [activeAddress, setActiveAddress] = useState<SavedAddress | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeSegmentId, setActiveSegmentId] = useState<string | null>(null);
+  const [tab, setTab] = useState<HomeTab>("clean");
+  useEffect(() => setTab(readHomeTab()), []);
+  const { data: coinBalance } = useQuery({
+    queryKey: ["my_coin_balance"],
+    queryFn: fetchMyCoinBalance,
+    staleTime: 60_000,
+  });
 
   // Cached so returning to Home does not re-run auth + address lookup on
   // every mount (that pair used to add a visible delay to the header).
@@ -399,9 +410,13 @@ export function HomeScreen({
   const addressCity = useResolveAddressCity(activeAddress?.id);
   const [cityDismissedFor, setCityDismissedFor] = useState<string | null>(null);
 
-  const locationLabel = activeAddress?.area ?? activeAddress?.label ?? "Lahoti Compound";
+  const addressTag = activeAddress?.label || t("common.home");
+  const locationLabel = activeAddress?.area || activeAddress?.full_address || activeAddress?.city || "";
 
-  const activeSegment = segments.find((s) => s.id === activeSegmentId) ?? null;
+  const activeSegment =
+    tab === "food"
+      ? null
+      : segments.find((s) => s.slug === (tab === "store" ? "store" : "clean")) ?? null;
   const servicesFor = (segment: Segment) =>
     services.filter((s) => s.segment_id === segment.id);
   const servicesForCategory = (category: ServiceCategory) =>
@@ -419,16 +434,15 @@ export function HomeScreen({
 
   if (addressCity?.outside && activeAddress && cityDismissedFor !== activeAddress.id) {
     return (
-      <NotServiceableScreen
+      <BringBadiyosScreen
+        onRequireLogin={onRequireLogin}
         location={{
-          segmentId: null,
           latitude: addressCity.lat!,
           longitude: addressCity.lng!,
           addressText: activeAddress.full_address,
           city: activeAddress.city,
           area: activeAddress.area,
         }}
-        segmentName={null}
         onBack={() => setCityDismissedFor(activeAddress.id)}
         onChangeAddress={() => {
           setCityDismissedFor(activeAddress.id);
@@ -491,33 +505,38 @@ export function HomeScreen({
     <main className="min-h-screen w-full bg-background pb-28 momentum-scroll">
       <PullToRefreshIndicator pull={pull} refreshing={refreshing} />
       <div className="mx-auto w-full max-w-md px-5 pt-2">
-        {/* Header */}
+        {/* Header: address on the left, wallet + profile on the right */}
         <header
           className="bleed-safe-top sticky top-0 z-30 -mx-5 flex items-center justify-between gap-3 bg-background px-5 pb-3"
           style={{ "--bleed-top-extra": "16px" } as React.CSSProperties}
         >
-          <BadiyoLogo variant="green" className="h-7 w-auto" />
           <button
             onClick={() => setLocationSheetOpen(true)}
-            className="flex items-center gap-1 text-sm font-semibold text-foreground max-w-[55%]"
+            className="min-w-0 flex-1 text-left"
           >
-            <MapPin className="h-4 w-4 shrink-0 text-primary" />
-            <span className="truncate">{locationLabel}</span>
-            <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+            <span className="flex items-center gap-1 text-[17px] font-extrabold leading-tight text-foreground">
+              <MapPin className="h-4 w-4 shrink-0 text-primary" />
+              <span className="truncate">{addressTag}</span>
+              <ChevronDown className="h-4 w-4 shrink-0" />
+            </span>
+            {locationLabel && (
+              <span className="mt-0.5 block truncate text-xs text-muted-foreground">{locationLabel}</span>
+            )}
+          </button>
+          <button
+            onClick={onOpenWallet}
+            aria-label={t("home.walletAria")}
+            className="flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-primary/10 px-3 text-sm font-extrabold text-primary"
+          >
+            <WalletIcon className="h-4 w-4" />₹{coinBalance ?? 0}
           </button>
           <button
             onClick={onOpenProfile}
             aria-label={t("common.profile")}
-            className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-primary/60 bg-card"
+            className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10"
           >
             {avatarUrl ? (
-              <img
-                src={avatarUrl}
-                alt={t("common.profile")}
-                className="h-full w-full object-cover"
-                loading="eager"
-                decoding="async"
-              />
+              <img src={avatarUrl} alt={t("common.profile")} className="h-full w-full object-cover" decoding="async" />
             ) : (
               <User className="h-5 w-5 text-primary" />
             )}
@@ -563,12 +582,6 @@ export function HomeScreen({
 
 
 
-        {/* Services bar (segment tabs) */}
-        <ServicesBar
-          segments={visibleSegments}
-          activeSegmentId={activeSegmentId}
-          onSelect={setActiveSegmentId}
-        />
         <ContestHomeBanner onOpen={onOpenContest} />
         {onOpenDeal && <div className="px-4"><DealsHomeBanner onOpen={onOpenDeal} /></div>}
 
@@ -590,44 +603,21 @@ export function HomeScreen({
           storeOrdering={storeOrdering}
         />
         ) : (
-          <div className="mt-2">
-            {segments.map((segment) => {
-              const segmentCategories = categories.filter(
-                (c) => c.segment_id === segment.id && servicesForCategory(c).length > 0,
-              );
-              if (segmentCategories.length === 0) return null;
-              return (
-                <section key={segment.id} className="mt-6 first:mt-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <SectionHeading>{translateCatalog(segment.name, readLangOutsideReact())}</SectionHeading>
-                    <button
-                      onClick={() => setActiveSegmentId(segment.id)}
-                      className="flex items-center gap-0.5 text-sm font-bold text-primary"
-                    >
-                      {t("home.seeAll")}
-                      <ChevronRight className="h-4 w-4" />
-                    </button>
-                  </div>
-
-                  {segmentCategories.map((category) => (
-                    <CategoryRow
-                      key={category.id}
-                      category={category}
-                      services={servicesForCategory(category).slice(0, 3)}
-                      onViewDetail={(s) => guardedBookService(toPayload(s, segment))}
-                      onAdd={(s) => addToBooking(s, segment)}
-                      availability={availability}
-                      statusBadge={statusBadge}
-                    />
-                  ))}
-                </section>
-              );
-            })}
-          </div>
+          <section className="mt-6 flex flex-col items-center rounded-[20px] bg-surface-soft px-6 py-12 text-center">
+            <div className="text-6xl">🍱</div>
+            <h2 className="mt-4 text-2xl font-extrabold">{t("home.comingSoonTitle")}</h2>
+            <p className="mt-2 text-sm text-muted-foreground">{t("home.foodSoonSub")}</p>
+            <button
+              onClick={() => toast.success(t("notServiceable.onTheList"))}
+              className="mt-6 flex items-center gap-2 rounded-[20px] bg-primary px-6 py-3.5 text-base font-extrabold text-primary-foreground shadow-soft"
+            >
+              <BellRing className="h-5 w-5" />
+              {t("bring.notify")}
+            </button>
+          </section>
         )}
 
-
-        {storeUnlocked && (!activeSegment || activeSegment.display_template === "CATEGORY_FIRST") && (
+        {storeUnlocked && false && (
           <StoreShelves coords={homeCoords} onOpenStore={(s) => setOpenStore(s)} />
         )}
 
@@ -657,12 +647,10 @@ export function HomeScreen({
 
       {storeUnlocked && <CartBar aboveNav onOpenCart={() => setCartOpen(true)} />}
       <BottomNav
-        activeKey="home"
-        onHome={() => setActiveSegmentId(null)}
-        onOrders={onOpenOrders ?? (() => {})}
+        activeKey={tab}
+        onHome={setTab}
         onRewards={onOpenRewards ?? (() => {})}
-        onParcel={onOpenCourier}
-        showParcel={courierEnabled}
+        onParcel={courierEnabled ? onOpenCourier : () => toast(t("home.comingSoonTitle"))}
       />
 
 
@@ -732,11 +720,6 @@ function SegmentView({
   if (segment.display_template !== "CATEGORY_FIRST") {
     return (
       <>
-        {segment.display_template === "STORE_FIRST" && (
-          <div className="mt-4">
-            <SellOnBadiyosCard />
-          </div>
-        )}
         <div className="mt-8 rounded-[18px] border border-dashed border-border bg-card px-6 py-12 text-center">
           <p className="text-base font-bold text-foreground">
             {t("home.comingSoon", { segment: segment.name })}
