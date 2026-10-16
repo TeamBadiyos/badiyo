@@ -547,15 +547,15 @@ export function HomeScreen({
           <button
             onClick={() => setLocationSheetOpen(true)}
             className="min-w-0 flex-1 text-left"
-            style={tab === "clean" ? { textShadow: "0 1px 4px color-mix(in oklab, var(--foreground) 45%, transparent)" } : undefined}
+            style={onLight ? { textShadow: "0 1px 4px color-mix(in oklab, var(--foreground) 45%, transparent)" } : undefined}
           >
-            <span className={`flex items-center gap-1 text-[17px] font-extrabold leading-tight ${tab === "clean" ? "text-primary-foreground" : "text-foreground"}`}>
-              <MapPin className={`h-4 w-4 shrink-0 ${tab === "clean" ? "text-primary-foreground" : "text-primary"}`} />
+            <span className={`flex items-center gap-1 text-[17px] font-extrabold leading-tight ${onLight ? "text-primary-foreground" : "text-foreground"}`}>
+              <MapPin className={`h-4 w-4 shrink-0 ${onLight ? "text-primary-foreground" : "text-primary"}`} />
               <span className="truncate">{addressTag}</span>
               <ChevronDown className="h-4 w-4 shrink-0" />
             </span>
             {locationLabel && (
-              <span className={`mt-0.5 block truncate text-xs ${tab === "clean" ? "text-primary-foreground/80" : "text-muted-foreground"}`}>{locationLabel}</span>
+              <span className={`mt-0.5 block truncate text-xs ${onLight ? "text-primary-foreground/80" : "text-muted-foreground"}`}>{locationLabel}</span>
             )}
           </button>
           <button

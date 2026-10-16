@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Car, ChevronRight, Gift, Sparkles } from "lucide-react";
 import type { ReactNode } from "react";
 import type { ServiceState } from "@/lib/serviceHours";
@@ -47,7 +47,7 @@ function washImage(label: string): string {
 type Detail = { key: CleanServiceKey; items: DetailItem[]; index: number };
 
 export function CleanTab({
-  services, categories, addressLine, onChangeAddress, onCheckout, onOpenReferral,
+  services, categories, addressLine, onChangeAddress, onCheckout, onOpenReferral, onHeroTone,
 }: {
   services: SegmentService[];
   categories: ServiceCategory[];
@@ -57,6 +57,7 @@ export function CleanTab({
   onCheckout: (option: SegmentService, slot: SelectedSlot) => void;
   onOpenPromo?: () => void;
   onOpenReferral?: () => void;
+  onHeroTone?: (tone: "light" | "dark") => void;
 }) {
   const { lang } = useLanguage();
   const s = lang === "mr" ? T.mr : T.en;
