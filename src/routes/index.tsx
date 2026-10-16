@@ -14,7 +14,6 @@ import { initStatusBar } from "@/lib/statusBar";
 import { NoInternetScreen } from "@/components/utility/NoInternetScreen";
 
 import { BadiyoLogo } from "@/components/BadiyoLogo";
-import type { NotServiceableLocation } from "@/components/NotServiceableScreen";
 import { checkServiceability } from "@/lib/serviceability";
 import { hasLoginPin } from "@/lib/auth.functions";
 import { prefetchHomeData } from "@/lib/homeData";
@@ -276,8 +275,7 @@ type Phase =
   | "courier"
   | "courier-track"
   | "store-track"
-  | "parcels-for-you"
-  | "not-serviceable";
+  | "parcels-for-you";
 
 
 
@@ -285,7 +283,6 @@ type Phase =
 // lucky draw); login is asked only on Book / Enroll / Apply coupon / Wallet /
 // Orders via ensureSignedIn() or these locked screens.
 const GUEST_LOCKED_PHASES = new Set<Phase>([
-  "address",
   "wallet",
   "orders",
   "courier-track",
@@ -360,7 +357,6 @@ function Index() {
 
   const [rewardsTab, setRewardsTab] = useState<"rewards" | "contest" | "deals">("contest");
   const [focusDealId, setFocusDealId] = useState<string | null>(null);
-  const [notServiceable, setNotServiceable] = useState<NotServiceableLocation | null>(null);
   const [activeBookingId, setActiveBookingId] = useState<string | null>(null);
   const [activeBookingStatus, setActiveBookingStatus] = useState<string | null>(null);
   const [selectedBooking, setSelectedBooking] = useState<BookingRow | null>(null);
