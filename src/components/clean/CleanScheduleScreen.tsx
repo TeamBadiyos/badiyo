@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
@@ -6,7 +6,7 @@ import { useCustomerCityId } from "@/lib/customerCity";
 import { ensureSignedIn } from "@/lib/authGate";
 import { useLanguage } from "@/i18n";
 import { getAllHourSlots, getNext7DayOptions, isHourBookable } from "@/lib/hourSlots";
-import { fetchSlotAllowed, notifyMeForService, slotFitsWindow, timeToMinutes } from "@/lib/serviceHours";
+import { notifyMeForService, slotFitsWindow, timeToMinutes } from "@/lib/serviceHours";
 import { fetchAppFullySlots, useBookNowAllowed, useServiceHours, type CleanServiceKey } from "@/lib/serviceSettings";
 import type { SegmentService } from "@/lib/segments";
 import type { SelectedSlot } from "../SlotSelectionScreen";
@@ -35,11 +35,12 @@ export type ScheduleDraft = { optionId: string | null; day: string | null; slotM
 const NOW = -1;
 
 export function CleanScheduleScreen({
-  options, isAuto, serviceKey, addressLine, draft, fallbackImage, onDraftChange, onChangeAddress, onBack, onContinue,
+  options, isAuto, serviceKey, title, addressLine, draft, fallbackImage, onDraftChange, onChangeAddress, onBack, onContinue,
 }: {
   options: SegmentService[];
   isAuto?: boolean;
   serviceKey: CleanServiceKey;
+  title?: string;
   addressLine: string | null;
   draft: ScheduleDraft;
   fallbackImage: (o: SegmentService) => string;
@@ -74,22 +75,14 @@ export function CleanScheduleScreen({
     [openM, closeM],
   );
 
-  const { data: fullSlots } = useQuery({
+  const { data: fullSlots, isFetching } = useQuery({
     queryKey: ["app-fully-booked", serviceKey, days[0].key, days[6].key, cityId],
     staleTime: 30_000,
     queryFn: () => fetchAppFullySlots(serviceKey, days[0].key, days[6].key),
   });
-  const { data: dayAllowed, isFetching } = useQuery({
-    queryKey: ["service-slots", serviceKey, day, mins, allSlots.length],
-    enabled: !!option,
-    staleTime: 60_000,
-    queryFn: async () =>
-      new Map(await Promise.all(allSlots.map(async (x) => [x.mins, await fetchSlotAllowed(serviceKey, day, x.range, mins)] as const))),
-  });
-
   const visible = allSlots.filter((x) => isHourBookable(day, x.mins) && slotFitsWindow(state, x.mins, mins));
-  const isFull = (m: number) => m !== NOW && ((fullSlots?.has(`${day}|${m}`) ?? false) || dayAllowed?.get(m) === false);
-  const loaded = !!option && !!dayAllowed && !isFetching;
+  const isFull = (m: number) => m !== NOW && (fullSlots?.has(`${day}|${m}`) ?? false);
+  const loaded = !!option && !!fullSlots && !isFetching;
   const dayFull = loaded && !nowOk && visible.every((x) => isFull(x.mins));
 
   // Pre-select earliest available (Now first when offered); drop invalid choice.
@@ -100,7 +93,7 @@ export function CleanScheduleScreen({
     if (!loaded) return;
     setSlotMins(visible.find((x) => !isFull(x.mins))?.mins ?? null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fullSlots, dayAllowed, day, mins, nowOk, loaded]);
+  }, [fullSlots, day, mins, nowOk, loaded]);
 
   type Cell = { mins: number; label: string };
   const nowCell: Cell = { mins: NOW, label: s.now };
@@ -121,9 +114,9 @@ export function CleanScheduleScreen({
 
   const go = () => {
     if (!option || slotMins === null) return;
-    if (slotMins === NOW) return onContinue(option, { mode: "now" });
+    if (slotMins === NOW) return onContinue(option, { mode: "now", serviceKey });
     const slot = allSlots.find((x) => x.mins === slotMins)!;
-    onContinue(option, { mode: "later", day, slotId: slot.mins, slotLabel: slot.label, slotRange: slot.range });
+    onContinue(option, { mode: "later", day, slotId: slot.mins, slotLabel: slot.label, slotRange: slot.range, serviceKey });
   };
   const notify = async () => {
     if (!(await ensureSignedIn())) return;
@@ -139,7 +132,7 @@ export function CleanScheduleScreen({
           <button onClick={onBack} aria-label="Back" className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card">
             <ArrowLeft className="h-5 w-5 text-foreground" />
           </button>
-          <h1 className="text-xl font-extrabold text-foreground">{s.book}</h1>
+          <h1 className="text-xl font-extrabold text-foreground">{title || s.book}</h1>
         </div>
         <div className="mt-4">
           <AddressLine text={addressLine} changeLabel={s.change} addLabel={s.addAddr} onChange={onChangeAddress} />
@@ -154,11 +147,11 @@ export function CleanScheduleScreen({
         </div>
 
         <h3 className="mt-6 text-base font-extrabold text-foreground">{s.day}</h3>
-        <div className="-mx-5 mt-3 flex gap-2.5 overflow-x-auto px-5 pb-1">
+        <ScrollRow className="mt-3 gap-2.5">
           {days.map((d, i) => (
             <DayCard key={d.key} label={dayLabel(i)} sub={i < 2 ? `${d.weekday} ${d.dayNum}` : String(d.dayNum)} active={d.key === day} onClick={() => setDay(d.key)} />
           ))}
-        </div>
+        </ScrollRow>
 
         {option && (dayFull || (loaded && shownGroups.length === 0)) ? (
           <div className="mt-6 rounded-[20px] bg-surface-soft p-5 text-center">
@@ -178,7 +171,7 @@ export function CleanScheduleScreen({
             {shownGroups.map((g) => (
               <div key={g.label} className="mt-3">
                 <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">{g.label}</p>
-                <div className="-mx-5 mt-2 flex gap-2 overflow-x-auto px-5 pb-1">
+                <ScrollRow className="mt-2 gap-2">
                   {g.list.map((x) => {
                     const full = isFull(x.mins);
                     const active = x.mins === slotMins;
@@ -187,8 +180,8 @@ export function CleanScheduleScreen({
                         key={x.mins}
                         disabled={full}
                         onClick={() => setSlotMins(x.mins)}
-                        className={`min-w-[88px] shrink-0 rounded-[14px] border-2 px-3 py-3 text-center text-sm font-bold ${
-                          full ? "border-border bg-muted text-muted-foreground" : active ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground"
+                        className={`w-[96px] shrink-0 rounded-[14px] border-2 px-2 py-3 text-center text-sm ${
+                          full ? "border-border bg-muted font-bold text-muted-foreground" : active ? "border-primary bg-primary/5 font-extrabold text-foreground" : "border-border bg-card font-bold text-foreground"
                         }`}
                       >
                         {x.label}
@@ -196,7 +189,7 @@ export function CleanScheduleScreen({
                       </button>
                     );
                   })}
-                </div>
+                </ScrollRow>
               </div>
             ))}
           </>
@@ -207,6 +200,30 @@ export function CleanScheduleScreen({
         <button disabled={!canContinue} onClick={go} className="mx-auto block w-full max-w-md rounded-[16px] bg-primary py-4 text-base font-extrabold text-primary-foreground disabled:opacity-40">
           {s.cont}{option ? ` · ₹${Number(option.price)}` : ""}
         </button>
+      </div>
+    </div>
+  );
+}
+
+/** Horizontal row with a right-edge fade + › while more items remain. */
+function ScrollRow({ children, className = "" }: { children: ReactNode; className?: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [more, setMore] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const upd = () => setMore(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+    upd();
+    el.addEventListener("scroll", upd, { passive: true });
+    const ro = new ResizeObserver(upd);
+    ro.observe(el);
+    return () => { el.removeEventListener("scroll", upd); ro.disconnect(); };
+  }, [children]);
+  return (
+    <div className="relative -mx-5">
+      <div ref={ref} className={`flex overflow-x-auto px-5 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${className}`}>{children}</div>
+      <div aria-hidden className={`pointer-events-none absolute inset-y-0 right-0 flex w-12 items-center justify-end bg-gradient-to-l from-background via-background/80 to-transparent pr-1.5 transition-opacity ${more ? "opacity-100" : "opacity-0"}`}>
+        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-card text-base font-extrabold leading-none text-primary shadow-sm">›</span>
       </div>
     </div>
   );

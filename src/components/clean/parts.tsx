@@ -49,11 +49,11 @@ export function DayCard({ label, sub, active, onClick }: { label: string; sub: s
   return (
     <button
       onClick={onClick}
-      className={`flex min-w-[84px] shrink-0 flex-col items-center rounded-[16px] border-2 px-3 py-3 ${
+      className={`flex w-[80px] shrink-0 flex-col items-center rounded-[16px] border-2 px-3 py-3 ${
         active ? "border-primary bg-primary/5" : "border-border bg-card"
       }`}
     >
-      <span className="text-sm font-extrabold text-foreground">{label}</span>
+      <span className={`text-sm text-foreground ${active ? "font-extrabold" : "font-bold"}`}>{label}</span>
       <span className="mt-0.5 text-xs font-semibold text-muted-foreground">{sub}</span>
     </button>
   );
