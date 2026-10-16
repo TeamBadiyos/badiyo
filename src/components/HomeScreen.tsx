@@ -552,7 +552,6 @@ export function HomeScreen({
             storeUnlocked={storeUnlocked}
             onOpenStore={(s) => {
               setSearchQuery("");
-              setOpenCategory(null);
               setOpenStore(s, "search");
             }}
             onOpenService={(s) => {
