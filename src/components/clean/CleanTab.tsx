@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useServiceHours } from "@/lib/serviceSettings";
 import { useCustomerCityId } from "@/lib/customerCity";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronRight, Clock, Gift, RotateCcw, Zap } from "lucide-react";
@@ -81,7 +82,7 @@ export function CleanTab({
 }) {
   const { lang } = useLanguage();
   const s = lang === "mr" ? T.mr : T.en;
-  const { data: state } = useServiceState("clean");
+  const { data: state } = useServiceHours("clean");
   const closed = state != null && !state.can_order;
   const nextOpen = closed ? formatNextOpen(state?.next_open_at ?? state?.resume_at) : null;
 
