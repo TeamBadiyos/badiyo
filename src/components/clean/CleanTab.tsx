@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useCustomerCityId } from "@/lib/customerCity";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronRight, Clock, Gift, RotateCcw, Zap } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
