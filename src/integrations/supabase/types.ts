@@ -11478,6 +11478,14 @@ export type Database = {
         Args: { _city_id?: string; _service_key: string }
         Returns: number
       }
+      app_book_now_allowed: {
+        Args: { _city_id: string; _service_key: string }
+        Returns: Json
+      }
+      app_booking_quote: {
+        Args: { _city_id: string; _price_option_id: string }
+        Returns: Json
+      }
       app_city_for_location: {
         Args: { _lat: number; _lng: number }
         Returns: string
@@ -11491,12 +11499,27 @@ export type Database = {
         Returns: Json
       }
       app_expert_application_submit: { Args: never; Returns: Json }
+      app_fully_booked_slots: {
+        Args: {
+          _city_id: string
+          _from: string
+          _service_key: string
+          _to: string
+        }
+        Returns: Json
+      }
       app_list_banners: {
         Args: { _city_id: string; _tab: string }
         Returns: Json
       }
       app_merchant_issue_signup_agreement: { Args: never; Returns: string }
       app_my_agreements: { Args: never; Returns: Json }
+      app_ops_value: { Args: { _city: string; _key: string }; Returns: string }
+      app_service_hours: {
+        Args: { _city_id: string; _service_key: string }
+        Returns: Json
+      }
+      app_svc_key: { Args: { _k: string }; Returns: string }
       apply_referral_code: { Args: { _code: string }; Returns: string }
       auto_cancel_minutes: {
         Args: { _city_id: string; _service_key: string }
@@ -11521,6 +11544,7 @@ export type Database = {
         Args: { p_booking_id: string }
         Returns: Json
       }
+      booking_gst_percent: { Args: { _category_id: string }; Returns: number }
       booking_journey_sweeper: { Args: never; Returns: number }
       booking_total_expert_payout: {
         Args: { _booking_id: string }
