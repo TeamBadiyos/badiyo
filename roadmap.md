@@ -69,3 +69,9 @@ drop table if exists public.courier_vehicle_courier_types, public.courier_vehicl
 - [x] Guests can open Parcel (price) and Rewards/Contest
 - [x] One cart at a time across Clean + Store
 - [ ] Single shared checkout page for Clean/Store/Parcel (open)
+
+## Clean booking navigation + cleanup — DONE
+- [x] Continue → Checkout directly; back → Booking (same selection) → Clean tab
+- [x] Address sheet: list/tick, add new on top, edit/delete; used by Booking, Checkout, header
+- [x] Removed old slot/address/not-serviceable phases, old Clean sections, unused images/packages
+- [ ] Signed-in Checkout round-trip test on a phone (preview can't sign in to this backend)
