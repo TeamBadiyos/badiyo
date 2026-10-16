@@ -118,7 +118,7 @@ export function CleanTab({
   });
 
   const bannerKey = pickBanner(maidState, maidContent);
-  const banner = bannerKey === "campaign" ? maidContent?.campaign : maidContent?.banners?.[bannerKey];
+  const banner = bannerKey === "campaign" ? (maidContent as WithBanners | null | undefined)?.campaign : (maidContent as WithBanners | null | undefined)?.banners?.[bannerKey];
   const vars = {
     greeting: greeting(lang), name: "", open_time: maidState?.open_time ? fmtTime(maidState.open_time) : (nextOpen ?? ""),
     day: nextOpen?.split(" ").length === 3 ? nextOpen.split(" ").slice(0, 2).join(" ") : (nextOpen?.includes("tomorrow") ? (lang === "mr" ? "उद्या" : "tomorrow") : (lang === "mr" ? "आज" : "today")),
