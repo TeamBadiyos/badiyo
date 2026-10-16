@@ -82,15 +82,12 @@ export type ServiceContent = {
   hero?: { heading?: string | null; heading_mr?: string | null; subline?: string | null; subline_mr?: string | null; button?: string | null; button_mr?: string | null; image_url?: string | null; bg_color?: string | null; card_title?: string | null; card_title_mr?: string | null };
   cards?: ContentCard[];
   options?: ContentOption[];
-  banners?: Partial<Record<BannerKey, ContentBanner>>;
+  banner?: { slabs?: BannerSlab[] | null; texts?: Partial<Record<BannerTextKey, ContentBanner>> | null } | null;
   campaign?: ContentBanner & { active?: boolean; enabled?: boolean; link?: string | null };
   details?: ContentDetails;
-  /** "HH:MM" IST — night banner switches to sunrise banner at this time. */
-  morning_switch_time?: string | null;
-  time_slabs?: TimeSlab[] | null;
 };
-export type TimeSlab = { from?: string | null; to?: string | null; image_url?: string | null; text_tone?: "light" | "dark" | null };
-export type BannerKey = "open_available" | "open_busy" | "closed_evening" | "closed_morning" | "holiday";
+export type BannerSlab = { from?: string | null; to?: string | null; label?: string | null; image_url?: string | null; text_color?: "light" | "dark" | null };
+export type BannerTextKey = "open_free" | "open_busy" | "closed" | "holiday";
 export type ContentBanner = { title?: string | null; title_mr?: string | null; subline?: string | null; subline_mr?: string | null; image_url?: string | null };
 export type ContentDetails = { note?: string | null; note_mr?: string | null; note_icon?: string | null; included_title?: string | null; included_title_mr?: string | null; excluded_title?: string | null; excluded_title_mr?: string | null };
 

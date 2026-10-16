@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Car, ChevronRight, Gift, Sparkles } from "lucide-react";
 import type { ReactNode } from "react";
 import type { ServiceState } from "@/lib/serviceHours";
@@ -6,7 +6,7 @@ import maidHero from "@/assets/clean-maid-hero.jpg";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthUserId } from "@/lib/authUser";
-import { pick, useBookNowAllowed, useNextFreeSlot, useServiceContent, useServiceHours, type BannerKey, type CleanServiceKey, type ContentCard, type ServiceContent, type TimeSlab } from "@/lib/serviceSettings";
+import { pick, useBookNowAllowed, useNextFreeSlot, useServiceContent, useServiceHours, type BannerTextKey, type CleanServiceKey, type ContentCard, type ServiceContent, type BannerSlab } from "@/lib/serviceSettings";
 import { useLanguage } from "@/i18n";
 import { formatNextOpen } from "@/lib/serviceHours";
 import type { SegmentService, ServiceCategory } from "@/lib/segments";
@@ -47,7 +47,7 @@ function washImage(label: string): string {
 type Detail = { key: CleanServiceKey; items: DetailItem[]; index: number };
 
 export function CleanTab({
-  services, categories, addressLine, onChangeAddress, onCheckout, onOpenReferral,
+  services, categories, addressLine, onChangeAddress, onCheckout, onOpenReferral, onHeroTone,
 }: {
   services: SegmentService[];
   categories: ServiceCategory[];
@@ -57,6 +57,7 @@ export function CleanTab({
   onCheckout: (option: SegmentService, slot: SelectedSlot) => void;
   onOpenPromo?: () => void;
   onOpenReferral?: () => void;
+  onHeroTone?: (tone: "light" | "dark") => void;
 }) {
   const { lang } = useLanguage();
   const s = lang === "mr" ? T.mr : T.en;
@@ -137,7 +138,7 @@ export function CleanTab({
     },
   });
   const bannerKey = pickBanner(maidState, maidContent, bookNow?.allowed !== false);
-  const banner = bannerKey === "campaign" ? maidContent?.campaign : maidContent?.banners?.[bannerKey];
+  const banner = bannerKey === "campaign" ? maidContent?.campaign : maidContent?.banner?.texts?.[bannerKey];
   const { data: freeSlot } = useNextFreeSlot("clean", maidState, bannerKey === "open_busy");
   const nextAt = formatNextOpen(maidState?.next_open_at ?? maidState?.resume_at);
   const dayWord = dayLabel(maidState?.next_open_at ?? maidState?.resume_at, bannerKey, lang);
@@ -149,9 +150,10 @@ export function CleanTab({
   };
   const bTitle = fill(pick(lang, banner?.title, banner?.title_mr), vars) || s.maidHero;
   const bSub = fill(pick(lang, banner?.subline, banner?.subline_mr), vars);
-  const slab = pickSlab(maidContent?.time_slabs);
+  const slab = pickSlab(maidContent?.banner?.slabs);
   const heroImg = bannerKey === "campaign" ? (banner?.image_url || slab.image) : slab.image;
   const tone = slab.tone;
+  useEffect(() => { onHeroTone?.(tone); }, [tone, onHeroTone]);
   const statusLine = (st: typeof maidState) => {
     if (!st || st.can_order) return s.available;
     const n = formatNextOpen(st.next_open_at ?? st.resume_at);
@@ -243,17 +245,14 @@ export function CleanTab({
   );
 }
 
-function pickBanner(st: ServiceState | null | undefined, content: ServiceContent | null | undefined, nowAllowed: boolean): BannerKey | "campaign" {
+function pickBanner(st: ServiceState | null | undefined, content: ServiceContent | null | undefined, nowAllowed: boolean): BannerTextKey | "campaign" {
   const c = content?.campaign;
   if (c?.active && (c.title || c.image_url)) return "campaign";
   if (st && /holiday/i.test(st.reason_code ?? "")) return "holiday";
   if (!st || st.can_order) {
-    return nowAllowed ? "open_available" : "open_busy";
+    return nowAllowed ? "open_free" : "open_busy";
   }
-  const now = new Date().toLocaleTimeString("en-GB", { timeZone: "Asia/Kolkata", hour12: false }).slice(0, 5);
-  const open = (st.open_time ?? "").slice(0, 5);
-  const sw = (content?.morning_switch_time || "05:00").slice(0, 5).padStart(5, "0");
-  return now >= sw && (!open || now < open) ? "closed_morning" : "closed_evening";
+  return "closed";
 }
 
 function greeting(lang: string): string {
@@ -306,7 +305,7 @@ function dayLabel(iso: string | null | undefined, banner: string, lang: string):
     return d.toLocaleDateString(mr ? "mr-IN" : "en-IN", { timeZone: tz, day: "numeric", month: "short" });
   }
   const h = Number(now.toLocaleString("en-US", { timeZone: tz, hour: "numeric", hour12: false })) % 24;
-  if (banner === "closed_evening" && h >= 12) return mr ? "उद्या" : "tomorrow";
+  if (banner === "closed" && h >= 12) return mr ? "उद्या" : "tomorrow";
   return mr ? "आज" : "today";
 }
 
@@ -324,9 +323,9 @@ function inSlab(now: string, from?: string | null, to?: string | null): boolean 
   return f <= t ? now >= f && now < t : now >= f || now < t;
 }
 
-function pickSlab(slabs: TimeSlab[] | null | undefined): { image: string | null; sky: string; tone: "light" | "dark" } {
+function pickSlab(slabs: BannerSlab[] | null | undefined): { image: string | null; sky: string; tone: "light" | "dark" } {
   const now = new Date().toLocaleTimeString("en-GB", { timeZone: "Asia/Kolkata", hour12: false }).slice(0, 5).replace(/^24/, "00");
   const def = DEFAULT_SLABS.find((d) => inSlab(now, d.from, d.to)) ?? DEFAULT_SLABS[1];
   const cc = (slabs ?? []).find((x) => inSlab(now, x.from, x.to));
-  return { image: cc?.image_url || null, sky: def.sky, tone: (cc?.text_tone as "light" | "dark") || def.tone };
+  return { image: cc?.image_url || null, sky: def.sky, tone: (cc?.text_color as "light" | "dark") || def.tone };
 }
