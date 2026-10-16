@@ -282,8 +282,11 @@ function ServiceCard({ title, status, closed, icon, img, onClick }: { title: str
     <button onClick={onClick} className="relative flex h-[96px] flex-col justify-end overflow-visible rounded-[18px] bg-card p-2.5 text-left shadow-soft transition active:scale-[0.98]">
       <img src={img} alt="" loading="lazy" className={`pointer-events-none absolute bottom-0 right-0 h-[150%] w-auto max-w-none object-contain object-bottom ${closed ? "grayscale" : ""}`} />
       <div className="relative w-[41%] min-w-0">
-        <span className="mb-1 flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-primary">{icon}</span>
-        <span className="flex min-w-0 items-center text-[13px] font-extrabold tracking-tight text-foreground"><span className="truncate">{title}</span><ChevronRight className="h-3.5 w-3.5 shrink-0" /></span>
+        <span className="mb-1 flex items-center justify-between">
+          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-primary">{icon}</span>
+          <ChevronRight className="h-4 w-4 shrink-0 text-foreground" />
+        </span>
+        <span className="block truncate text-[13px] font-extrabold tracking-tight text-foreground">{title}</span>
         <span className={`mt-0.5 block line-clamp-2 text-[11px] leading-tight font-semibold ${closed ? "text-muted-foreground" : "text-primary"}`}>{status}</span>
       </div>
     </button>
