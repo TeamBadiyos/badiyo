@@ -96,17 +96,80 @@ export function pick(lang: string, en?: string | null, mr?: string | null): stri
   return (lang === "mr" && mr?.trim() ? mr : en) ?? "";
 }
 
+// --- Device cache: Clean content renders instantly from the last copy. ---
+const CACHE_PREFIX = "bdy_svc_cache:";
+function cacheKey(kind: string, key: string, city: string | null) { return `${CACHE_PREFIX}${kind}:${key}:${city ?? "none"}`; }
+function readCache<T>(kind: string, key: string, city: string | null): T | undefined {
+  if (typeof window === "undefined") return undefined;
+  try { const v = window.localStorage.getItem(cacheKey(kind, key, city)); return v ? (JSON.parse(v) as T) : undefined; } catch { return undefined; }
+}
+function writeCache(kind: string, key: string, city: string | null, v: unknown) {
+  if (typeof window === "undefined" || v == null) return;
+  try { window.localStorage.setItem(cacheKey(kind, key, city), JSON.stringify(v)); } catch { /* full */ }
+}
+
+async function fetchServiceContent(key: CleanServiceKey, cityId: string | null): Promise<ServiceContent | null> {
+  const { data, error } = await rpc("app_service_content", { _service_key: key, _city_id: cityId });
+  if (error) throw error;
+  const v = (data ?? null) as ServiceContent | null;
+  writeCache("content", key, cityId, v);
+  return v;
+}
+
 export function useServiceContent(key: CleanServiceKey) {
   const cityId = useCustomerCityId();
   return useQuery({
     queryKey: ["app-service-content", key, cityId],
     staleTime: 5 * 60_000,
-    queryFn: async (): Promise<ServiceContent | null> => {
-      const { data, error } = await rpc("app_service_content", { _service_key: key, _city_id: cityId });
-      if (error || !data) return null;
-      return data as ServiceContent;
-    },
+    retry: 1,
+    initialData: () => readCache<ServiceContent>("content", key, cityId),
+    initialDataUpdatedAt: 0, // always refresh in the background
+    queryFn: () => fetchServiceContent(key, cityId),
   });
+}
+
+/** All image URLs a service's content will show on the Clean tab. */
+export function contentImageUrls(c: ServiceContent | null | undefined): string[] {
+  if (!c) return [];
+  return [c.hero?.image_url, c.campaign?.image_url, ...(c.banner?.slabs ?? []).map((s) => s.image_url), ...(c.cards ?? []).map((x) => x.image_url), ...(c.options ?? []).map((o) => o.image_url)]
+    .filter((u): u is string => !!u);
+}
+
+const loadedImages = new Set<string>();
+export function isImageLoaded(url: string) { return loadedImages.has(url); }
+export function preloadImages(urls: string[]): Promise<void> {
+  if (typeof window === "undefined") return Promise.resolve();
+  return Promise.all(urls.map((u) => loadedImages.has(u) ? null : new Promise<void>((res) => {
+    const img = new Image();
+    img.onload = () => { loadedImages.add(u); res(); };
+    img.onerror = () => res();
+    img.src = u;
+  }))).then(() => {});
+}
+
+/** Splash warm-up: content + hours + Book Now for Clean & Wash, then images. Capped at maxMs. */
+export function prefetchCleanTab(qc: import("@tanstack/react-query").QueryClient, maxMs = 2000): Promise<void> {
+  const cityId = getCustomerCityId();
+  const keys: CleanServiceKey[] = ["clean", "wash"];
+  const work = Promise.all(keys.map(async (k) => {
+    const cached = readCache<ServiceContent>("content", k, cityId);
+    if (cached) void preloadImages(contentImageUrls(cached));
+    const [content] = await Promise.all([
+      qc.fetchQuery({ queryKey: ["app-service-content", k, cityId], queryFn: () => fetchServiceContent(k, cityId), staleTime: 0 }).catch(() => cached ?? null),
+      qc.prefetchQuery({ queryKey: ["app-service-hours", k, cityId], queryFn: async () => {
+        const { data, error } = await rpc("app_service_hours", { _service_key: k, _city_id: cityId });
+        return error ? null : ((data as { state?: ServiceState } | null)?.state ?? null);
+      } }),
+      k === "clean" ? qc.prefetchQuery({ queryKey: ["app-book-now-allowed", k, cityId], queryFn: async () => {
+        const { data, error } = await rpc("app_book_now_allowed", { _service_key: k, _city_id: cityId });
+        if (error || !data) return { allowed: true, reason: null };
+        const d = data as { allowed?: boolean; reason?: BookNowGate["reason"] };
+        return { allowed: d.allowed !== false, reason: d.allowed === false ? (d.reason ?? "slot_full") : null };
+      } }) : null,
+    ]);
+    await preloadImages(contentImageUrls(content));
+  })).then(() => {});
+  return Promise.race([work.catch(() => {}), new Promise<void>((r) => setTimeout(r, maxMs))]);
 }
 
 /** Next free half-hour today (≥45 min notice) or tomorrow's first; null if none. */
