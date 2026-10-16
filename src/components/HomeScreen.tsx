@@ -364,7 +364,7 @@ export function HomeScreen({
   const addToBooking = (s: SegmentService, segment?: Segment | null) => {
     if (guardBlocked()) return;
     toast(t("home.addedToBooking", { name: s.service_name || s.duration_label }));
-    onQuickBook?.(toPayload(s, segment ?? null));
+    withSingleCart(() => onQuickBook?.(toPayload(s, segment ?? null)));
   };
   const guardedBookService = (p: BookServicePayload) => {
     if (guardBlocked()) return;
