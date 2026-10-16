@@ -192,3 +192,83 @@ export function isStoreOrderActive(o: StoreOrder): boolean {
   }
   return STORE_ACTIVE_STATUSES.includes(s);
 }
+
+export type StoreCheckoutQuote =
+  | {
+      ok: true;
+      item_total: number;
+      delivery_fee: number;
+      gst_items: number;
+      gst_delivery: number;
+      platform_fee: number;
+      gst_platform: number;
+      gross_total: number;
+      you_save: number;
+      coupon: { ok: boolean; reason?: string; code?: string; discount?: number; min_order_amount?: number } | null;
+      coupon_discount: number;
+      wallet_balance: number;
+      wallet_used: number;
+      to_pay: number;
+    }
+  | { ok: false; code: string };
+
+const cartItems = (lines: CartLine[]) =>
+  lines.map((l) => ({
+    product_id: l.product_id,
+    quantity: l.quantity,
+    qty: l.quantity,
+    ...(l.variant_id ? { variant_id: l.variant_id } : {}),
+    ...(l.addons && l.addons.length ? { addon_ids: l.addons.map((a) => a.id) } : {}),
+  }));
+
+/** Bill for the shared Checkout, computed by the database (same maths as placing the order). */
+export async function fetchStoreCheckoutQuote(p: {
+  merchantId: string;
+  lines: CartLine[];
+  addressId: string;
+  couponCode: string | null;
+  useWallet: boolean;
+}): Promise<StoreCheckoutQuote> {
+  const { data, error } = await supabase.rpc("store_checkout_quote" as never, {
+    _merchant_id: p.merchantId,
+    _items: cartItems(p.lines),
+    _address_id: p.addressId,
+    _coupon_code: p.couponCode,
+    _use_wallet: p.useWallet,
+  } as never);
+  if (error) throw error;
+  return data as unknown as StoreCheckoutQuote;
+}
+
+export type PlacedStoreOrder = CreatedOrder & { paid: boolean; wallet_used: number; coupon_discount: number };
+
+/** Place a shop order with optional coupon and wallet. `paid` = fully covered by the wallet. */
+export async function placeStoreOrder(p: {
+  merchantId: string;
+  lines: CartLine[];
+  addressId: string;
+  note: string | null;
+  couponCode: string | null;
+  useWallet: boolean;
+}): Promise<PlacedStoreOrder> {
+  const data = await rpc("store_place_order", {
+    _merchant_id: p.merchantId,
+    _items: cartItems(p.lines),
+    _address_id: p.addressId,
+    _note: p.note,
+    _coupon_code: p.couponCode,
+    _use_wallet: p.useWallet,
+  });
+  if (data.ok !== true) throw new StoreOrderError(String(data.code ?? "order_failed"));
+  return {
+    order_id: String(data.order_id),
+    order_number: String(data.order_number),
+    items_total: Number(data.items_total ?? 0),
+    delivery_fee: Number(data.delivery_fee ?? 0),
+    total_amount: Number(data.total_amount ?? 0),
+    payment_mode: "online",
+    paid: data.paid === true,
+    wallet_used: Number(data.wallet_used ?? 0),
+    coupon_discount: Number(data.coupon_discount ?? 0),
+  };
+}

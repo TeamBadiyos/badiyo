@@ -28,7 +28,7 @@ import {
   type CommerceStore,
 } from "@/lib/commerce";
 
-const COPY = {
+export const STORE_COPY = {
   en: {
     recommended: "⭐ Recommended",
     add: "Add",
@@ -84,7 +84,7 @@ export function CommerceStoreScreen({
 }) {
   useBackHandler(true, () => onBack());
   const { lang } = useLanguage();
-  const c = COPY[lang];
+  const c = STORE_COPY[lang];
   const cart = useStoreCart();
   const { data, isLoading } = useStorePage(storeId);
   const [sheetItem, setSheetItem] = useState<CommerceItem | null>(null);
@@ -266,7 +266,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 type ItemProps = {
   items: CommerceItem[];
   lang: string;
-  c: (typeof COPY)["en"];
+  c: (typeof STORE_COPY)["en"];
   cart: ReturnType<typeof useStoreCart>;
   canAdd: boolean;
   onAdd: (i: CommerceItem) => void;
@@ -360,7 +360,7 @@ function FoodList({ items, ...rest }: ItemProps) {
   );
 }
 
-function OptionsSheet({
+export function OptionsSheet({
   item,
   c,
   onClose,
@@ -368,7 +368,7 @@ function OptionsSheet({
 }: {
   item: CommerceItem;
   lang: string;
-  c: (typeof COPY)["en"];
+  c: (typeof STORE_COPY)["en"];
   onClose: () => void;
   onConfirm: (opts: CartOptions) => void;
 }) {
