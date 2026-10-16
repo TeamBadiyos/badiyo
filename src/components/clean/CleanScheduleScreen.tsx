@@ -81,7 +81,7 @@ export function CleanScheduleScreen({
     queryFn: () => fetchAppFullySlots(serviceKey, days[0].key, days[6].key),
   });
   const visible = allSlots.filter((x) => isHourBookable(day, x.mins) && slotFitsWindow(state, x.mins, mins));
-  const isFull = (m: number) => m !== NOW && ((fullSlots?.has(`${day}|${m}`) ?? false)));
+  const isFull = (m: number) => m !== NOW && (fullSlots?.has(`${day}|${m}`) ?? false);
   const loaded = !!option && !!fullSlots && !isFetching;
   const dayFull = loaded && !nowOk && visible.every((x) => isFull(x.mins));
 
