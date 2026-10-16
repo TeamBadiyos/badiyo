@@ -243,8 +243,6 @@ type Phase =
   | "pin-login"
   | "pin-set"
   | "home"
-  | "slot"
-  | "address"
   | "manage-addresses"
   | "summary"
   | "coupon-picker"
