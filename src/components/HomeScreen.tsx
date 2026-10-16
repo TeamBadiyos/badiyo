@@ -243,7 +243,15 @@ export function HomeScreen({
   const { data: storeState } = useServiceState("store");
   const { data: isTester = false } = useIsInternalTester();
   const storeUnlocked = storeState?.status === "live" || isTester;
-  const [openStore, setOpenStore] = useState<PublicStore | null>(null);
+  const [openStore, setOpenStoreRaw] = useState<PublicStore | null>(null);
+  const [storeSource, setStoreSource] = useState<"browse" | "search" | "link" | "banner">("browse");
+  const setOpenStore = (
+    s: PublicStore | null,
+    src: "browse" | "search" | "link" | "banner" = "browse",
+  ) => {
+    if (s) setStoreSource(src);
+    setOpenStoreRaw(s);
+  };
   const [openCategory, setOpenCategory] = useState<StoreCategoryGroup | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
   // Ordering is on only when the store service itself is live.
