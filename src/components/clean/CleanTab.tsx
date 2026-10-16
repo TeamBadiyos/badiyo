@@ -8,6 +8,7 @@ import { formatNextOpen, useServiceState } from "@/lib/serviceHours";
 import type { SegmentService, ServiceCategory } from "@/lib/segments";
 import type { SelectedSlot } from "../SlotSelectionScreen";
 import { CleanBookSheet, type CleanSheetMode } from "./CleanBookSheet";
+import { CleanScheduleScreen } from "./CleanScheduleScreen";
 
 import jhadu from "@/assets/expert-house-cleaning.jpg";
 import pocha from "@/assets/clean-pocha.jpg";
@@ -72,7 +73,7 @@ export function CleanTab({
   categories: ServiceCategory[];
   promo?: { text?: string } | null;
   addressLine: string | null;
-  onChangeAddress: () => void;
+  onChangeAddress: (onReturn?: () => void) => void;
   onCheckout: (option: SegmentService, slot: SelectedSlot) => void;
   onOpenPromo?: () => void;
   onOpenReferral?: () => void;
@@ -89,10 +90,18 @@ export function CleanTab({
     .sort((a, b) => Number(a.duration_minutes) - Number(b.duration_minutes));
   const autoOptions = services.filter((x) => autoCatIds.has(x.service_category_id ?? ""));
 
-  const [sheet, setSheet] = useState<{ mode: CleanSheetMode; auto: boolean; optionId?: string | null } | null>(null);
-  // Instant stays tappable when closed; the sheet explains and offers Schedule / Notify me.
-  const open = (mode: CleanSheetMode, auto: boolean, optionId?: string | null) =>
-    setSheet({ mode, auto, optionId });
+  type Draft = { kind: CleanSheetMode; auto: boolean; optionId: string | null; day: string | null; slotMins: number | null };
+  const [draft, setDraft] = useState<Draft | null>(null);
+  const [shown, setShown] = useState(false);
+  // Instant stays tappable when closed; the sheet explains and offers Schedule.
+  const open = (mode: CleanSheetMode, auto: boolean, optionId?: string | null) => {
+    setDraft({ kind: mode, auto, optionId: optionId ?? null, day: null, slotMins: null });
+    setShown(true);
+  };
+  const close = () => { setShown(false); setDraft(null); };
+  // Change address: hide the sheet/page, open the picker on top, then come back with choices kept.
+  const changeAddress = () => { setShown(false); onChangeAddress(() => setShown(true)); };
+  const draftOptions = draft?.auto ? autoOptions : homeOptions;
 
   const { data: lastBooking } = useQuery({
     queryKey: ["clean_last_booking"],
@@ -235,20 +244,29 @@ export function CleanTab({
       </button>
 
       <CleanBookSheet
-        open={!!sheet}
-        mode={sheet?.mode ?? "now"}
-        onModeChange={(m) => setSheet((p) => (p ? { ...p, mode: m } : p))}
-        options={sheet?.auto ? autoOptions : homeOptions}
-        initialOptionId={sheet?.optionId}
-        isAuto={sheet?.auto}
+        open={shown && draft?.kind === "now"}
+        options={draftOptions}
+        initialOptionId={draft?.optionId}
+        isAuto={draft?.auto}
         addressLine={addressLine}
-        onChangeAddress={onChangeAddress}
-        onClose={() => setSheet(null)}
-        onContinue={(o, slot) => {
-          setSheet(null);
-          onCheckout(o, slot);
-        }}
+        onChangeAddress={changeAddress}
+        onClose={close}
+        onOptionChange={(id) => setDraft((p) => (p ? { ...p, optionId: id } : p))}
+        onSchedule={(id) => setDraft((p) => (p ? { ...p, kind: "later", optionId: id } : p))}
+        onContinue={(o, slot) => { close(); onCheckout(o, slot); }}
       />
+      {shown && draft?.kind === "later" && (
+        <CleanScheduleScreen
+          options={draftOptions}
+          isAuto={draft.auto}
+          addressLine={addressLine}
+          draft={{ optionId: draft.optionId, day: draft.day, slotMins: draft.slotMins }}
+          onDraftChange={(d) => setDraft((p) => (p ? { ...p, ...d } : p))}
+          onChangeAddress={changeAddress}
+          onBack={close}
+          onContinue={(o, slot) => { close(); onCheckout(o, slot); }}
+        />
+      )}
     </div>
   );
 }
