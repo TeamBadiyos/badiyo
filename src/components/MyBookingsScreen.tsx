@@ -28,6 +28,8 @@ export type BookingRow = {
   cancellation_fee?: number | null;
   refund_amount?: number | null;
   refund_status?: string | null;
+  refund_destination?: string | null;
+  service_category_id?: string | null;
 
   addresses: {
     label: string | null;
@@ -59,7 +61,7 @@ async function fetchBookings(): Promise<BookingRow[]> {
   const { data, error } = await supabase
     .from("bookings")
     .select(
-      "id, service_label, service_duration_minutes, price, total_amount, gst_percent, gst_amount, status, slot_type, scheduled_date, scheduled_time_slot, created_at, rating, review_text, address_id, razorpay_payment_id, cancellation_fee, refund_amount, refund_status, addresses(label, full_address, area, city, latitude, longitude, is_default)",
+      "id, service_label, service_duration_minutes, price, total_amount, gst_percent, gst_amount, status, slot_type, scheduled_date, scheduled_time_slot, created_at, rating, review_text, address_id, razorpay_payment_id, cancellation_fee, refund_amount, refund_status, refund_destination, service_category_id, addresses(label, full_address, area, city, latitude, longitude, is_default)",
     )
     .eq("user_id", uid)
     .is("deleted_at", null)
