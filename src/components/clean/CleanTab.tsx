@@ -22,21 +22,21 @@ import washCombo from "@/assets/wash-combo.jpg";
 
 const T = {
   en: {
-    bookNow: "Book Now", bookNowSub: "Abhi bulao",
-    schedule: "Schedule", scheduleSub: "Time chuno",
+    bookNow: "Instant", bookNowSub: "Get now",
+    schedule: "Schedule", scheduleSub: "Pick your time",
     wash: "🚗 Car & Bike Wash",
-    oneMaid: "Ek maid, saare kaam",
-    tiles: ["Jhadu", "Pocha", "Bartan", "Dusting", "Kapde", "Aur bhi"],
+    oneMaid: "One Expert who can do it all",
+    tiles: ["House\nCleaning", "Dusting &\nWiping", "Bathroom\nCleaning", "Wash, Fold\n& Arrange", "Cleaning\nDishes", "And many\nmore"],
     again: "🔁 Book again",
     refer: "Refer & Earn", referSub: "Invite friends, earn coins on their first booking",
     closed: "🕐 Closed now", opens: "Opens",
   },
   mr: {
-    bookNow: "आत्ता बुक करा", bookNowSub: "लगेच बोलवा",
+    bookNow: "लगेच", bookNowSub: "आत्ता बोलवा",
     schedule: "वेळ ठरवा", scheduleSub: "वेळ निवडा",
     wash: "🚗 कार आणि बाईक वॉश",
-    oneMaid: "एक मेड, सगळी कामे",
-    tiles: ["झाडू", "पोछा", "भांडी", "डस्टिंग", "कपडे", "आणखी"],
+    oneMaid: "एक एक्सपर्ट, सगळी कामे",
+    tiles: ["घर\nस्वच्छता", "डस्टिंग आणि\nपुसणे", "बाथरूम\nस्वच्छता", "कपडे धुणे\nव घडी", "भांडी\nघासणे", "आणखी\nबरेच काही"],
     again: "🔁 पुन्हा बुक करा",
     refer: "रेफर करा आणि कमवा", referSub: "मित्रांना बोलवा, त्यांच्या पहिल्या बुकिंगवर कॉइन्स मिळवा",
     closed: "🕐 सध्या बंद", opens: "उघडेल",
