@@ -1133,6 +1133,10 @@ function Index() {
               void queryClient.invalidateQueries({ queryKey: ["my_coupons"] });
               setPhase("summary");
             }}
+            onSlotUnavailable={() => {
+              void queryClient.invalidateQueries({ queryKey: ["my_coupons"] });
+              setPhase("home");
+            }}
             onDone={() => {
               setRedeemCoins(false);
               setExpertNote("");

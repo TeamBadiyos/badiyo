@@ -50,6 +50,7 @@ export function PaymentScreen({
   coupon,
   redeemCoins = false,
   onBack,
+  onSlotUnavailable,
   onDone,
   onTrackBooking,
   onOpenHelp,
@@ -60,6 +61,8 @@ export function PaymentScreen({
   coupon?: AppliedCoupon | null;
   redeemCoins?: boolean;
   onBack: () => void;
+  /** Slot/Book Now became unavailable — go back to the booking page. */
+  onSlotUnavailable?: () => void;
   onDone: () => void;
   onTrackBooking: (bookingId: string | null) => void;
   onOpenHelp?: () => void;
