@@ -446,6 +446,8 @@ export function HomeScreen({
 
   const addressTag = activeAddress?.label || t("nav.home");
   const locationLabel = activeAddress?.area || activeAddress?.full_address || activeAddress?.city || "";
+  const [heroTone, setHeroTone] = useState<"light" | "dark">("light");
+  const onLight = tab === "clean" && heroTone === "light";
 
   const activeSegment =
     tab === "food"
@@ -624,6 +626,7 @@ export function HomeScreen({
 
         {tab === "clean" && cleanSegment ? (
           <CleanTab
+            onHeroTone={setHeroTone}
             services={servicesFor(cleanSegment)}
             categories={categories.filter((c) => c.segment_id === cleanSegment.id)}
             promo={promo?.payload ?? null}
