@@ -61,8 +61,6 @@ export function BringBadiyosScreen({
       } as never);
       if (error) throw new Error(t("notServiceable.joinFailed"));
     },
-      }
-    },
     onSuccess: () => setStep("done"),
     onError: (e) => {
       if ((e as Error).message !== "login") toast.error((e as Error).message);
