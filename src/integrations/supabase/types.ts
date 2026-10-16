@@ -6122,6 +6122,8 @@ export type Database = {
           commission_gst_pct: number
           commission_pct: number
           commission_pct_applied: number | null
+          coupon_code: string | null
+          coupon_discount: number
           courier_order_id: string | null
           created_at: string
           customer_name: string | null
@@ -6172,6 +6174,7 @@ export type Database = {
           total_payable: number | null
           updated_at: string
           user_id: string | null
+          wallet_used: number
         }
         Insert: {
           accepted_at?: string | null
@@ -6186,6 +6189,8 @@ export type Database = {
           commission_gst_pct?: number
           commission_pct?: number
           commission_pct_applied?: number | null
+          coupon_code?: string | null
+          coupon_discount?: number
           courier_order_id?: string | null
           created_at?: string
           customer_name?: string | null
@@ -6236,6 +6241,7 @@ export type Database = {
           total_payable?: number | null
           updated_at?: string
           user_id?: string | null
+          wallet_used?: number
         }
         Update: {
           accepted_at?: string | null
@@ -6250,6 +6256,8 @@ export type Database = {
           commission_gst_pct?: number
           commission_pct?: number
           commission_pct_applied?: number | null
+          coupon_code?: string | null
+          coupon_discount?: number
           courier_order_id?: string | null
           created_at?: string
           customer_name?: string | null
@@ -6300,6 +6308,7 @@ export type Database = {
           total_payable?: number | null
           updated_at?: string
           user_id?: string | null
+          wallet_used?: number
         }
         Relationships: [
           {
@@ -11671,6 +11680,16 @@ export type Database = {
         }
         Returns: Json
       }
+      app_commerce_search: {
+        Args: {
+          _city_id: string
+          _lat?: number
+          _lng?: number
+          _q: string
+          _service_key: string
+        }
+        Returns: Json
+      }
       app_create_booking_wallet: { Args: { _payload: Json }; Returns: Json }
       app_demand_add_names: {
         Args: { _names: string[]; _request_id: string }
@@ -15286,6 +15305,16 @@ export type Database = {
         Args: { _order_id: string; _reason?: string }
         Returns: Json
       }
+      store_checkout_quote: {
+        Args: {
+          _address_id: string
+          _coupon_code?: string
+          _items: Json
+          _merchant_id: string
+          _use_wallet?: boolean
+        }
+        Returns: Json
+      }
       store_commission_snapshot:
         | {
             Args: { _items_total: number; _merchant_id: string }
@@ -15329,6 +15358,17 @@ export type Database = {
       }
       store_max_radius_km: { Args: never; Returns: number }
       store_my_orders: { Args: never; Returns: Json }
+      store_place_order: {
+        Args: {
+          _address_id: string
+          _coupon_code?: string
+          _items: Json
+          _merchant_id: string
+          _note?: string
+          _use_wallet?: boolean
+        }
+        Returns: Json
+      }
       store_quote_delivery: {
         Args: { _address_id: string; _merchant_id: string }
         Returns: Json
