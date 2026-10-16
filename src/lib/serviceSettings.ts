@@ -82,7 +82,13 @@ export type ServiceContent = {
   hero?: { heading?: string | null; heading_mr?: string | null; subline?: string | null; subline_mr?: string | null; button?: string | null; button_mr?: string | null; image_url?: string | null; bg_color?: string | null };
   cards?: ContentCard[];
   options?: ContentOption[];
+  banners?: Partial<Record<BannerKey, ContentBanner>>;
+  campaign?: ContentBanner & { active?: boolean; enabled?: boolean; link?: string | null };
+  details?: ContentDetails;
 };
+export type BannerKey = "open_available" | "open_busy" | "closed_evening" | "closed_morning" | "holiday";
+export type ContentBanner = { title?: string | null; title_mr?: string | null; subline?: string | null; subline_mr?: string | null; image_url?: string | null };
+export type ContentDetails = { note?: string | null; note_mr?: string | null; note_icon?: string | null; included_title?: string | null; included_title_mr?: string | null; excluded_title?: string | null; excluded_title_mr?: string | null };
 
 /** Language pick: Marathi field when lang=mr and non-empty, else English. */
 export function pick(lang: string, en?: string | null, mr?: string | null): string {
