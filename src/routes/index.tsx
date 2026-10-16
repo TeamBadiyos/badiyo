@@ -133,9 +133,9 @@ const SearchResultsScreen = lazyNamed(
   "SearchResultsScreen",
 );
 const OrdersScreen = lazyNamed(() => import("@/components/OrdersScreen"), "OrdersScreen");
-const CourierBookingScreen = lazyNamed(
-  () => import("@/components/courier/CourierBookingScreen"),
-  "CourierBookingScreen",
+const ParcelFlow = lazyNamed(
+  () => import("@/components/parcel/ParcelFlow"),
+  "ParcelFlow",
 );
 const CourierTrackingScreen = lazyNamed(
   () => import("@/components/courier/CourierTrackingScreen"),
@@ -1045,7 +1045,7 @@ function Index() {
       )}
       {phase === "courier" && (
         <div className="animate-fade-slide-in">
-          <CourierBookingScreen
+          <ParcelFlow
             onBack={() => setPhase("home")}
             onBooked={(id) => {
               setCourierOrderId(id);

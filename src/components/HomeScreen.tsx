@@ -60,6 +60,7 @@ import type { SelectedSlot } from "@/lib/bookingTypes";
 // customer actually opens a shop, a category or the cart.
 // Store/Food tab bodies, search and deals load only when first shown.
 const CommerceTab = lazy(() => import("./commerce/CommerceTab").then((m) => ({ default: m.CommerceTab })));
+const ParcelHome = lazy(() => import("./parcel/ParcelHome").then((m) => ({ default: m.ParcelHome })));
 const LiveSearchPanel = lazy(() => import("./home/LiveSearchPanel").then((m) => ({ default: m.LiveSearchPanel })));
 const BringBadiyosScreen = lazy(() => import("./BringBadiyosScreen").then((m) => ({ default: m.BringBadiyosScreen })));
 const DealsHomeBanner = lazy(() => import("./deals/DealsTab").then((m) => ({ default: m.DealsHomeBanner })));
@@ -566,8 +567,8 @@ export function HomeScreen({
 
 
 
-        {tab !== "clean" && <ContestHomeBanner onOpen={onOpenContest} />}
-        {tab !== "clean" && onOpenDeal && <div className="px-4"><Suspense fallback={null}><DealsHomeBanner onOpen={onOpenDeal} /></Suspense></div>}
+        {tab !== "clean" && tab !== "parcel" && <ContestHomeBanner onOpen={onOpenContest} />}
+        {tab !== "clean" && tab !== "parcel" && onOpenDeal && <div className="px-4"><Suspense fallback={null}><DealsHomeBanner onOpen={onOpenDeal} /></Suspense></div>}
 
         {tab === "clean" && cleanSegment ? (
           <CleanTab
@@ -616,11 +617,19 @@ export function HomeScreen({
               ) : undefined}
             />
           </Suspense>
+        ) : tab === "parcel" ? (
+          <Suspense fallback={<div className="-mx-5 h-[48vh] animate-pulse bg-muted" />}>
+            <ParcelHome
+              pickup={activeAddress}
+              onChangePickup={() => setLocationSheetOpen(true)}
+              onStart={() => onOpenCourier?.()}
+            />
+          </Suspense>
         ) : null}
 
 
         {/* Promo banner — high-emphasis solid brand highlight */}
-        {promo && tab !== "clean" && (
+        {promo && tab !== "clean" && tab !== "parcel" && (
           <button
             onClick={onOpenRewards}
             className="promo-texture-on-brand surface-brand mt-6 flex w-full items-center gap-3 overflow-hidden rounded-[18px] p-4 text-left shadow-card-m transition active:scale-[0.98]"
@@ -643,7 +652,7 @@ export function HomeScreen({
         <BrandWatermark />
       </div>
 
-      {tab !== "clean" && <CartBar aboveNav onOpenCart={() => setCartOpen(true)} />}
+      {tab !== "clean" && tab !== "parcel" && <CartBar aboveNav onOpenCart={() => setCartOpen(true)} />}
       {!(tab !== "clean" && cartHasItems) && <ActiveOrdersStrip onOpenStoreOrder={onOpenStoreOrder} />}
       <AlertDialog open={!!pendingBook} onOpenChange={(o) => !o && setPendingBook(null)}>
         <AlertDialogContent className="rounded-[20px]">
@@ -672,7 +681,6 @@ export function HomeScreen({
         activeKey={tab}
         onHome={setTab}
         onRewards={onOpenRewards ?? (() => {})}
-        onParcel={courierEnabled ? onOpenCourier : () => toast(t("home.comingSoonTitle"))}
       />
 
 

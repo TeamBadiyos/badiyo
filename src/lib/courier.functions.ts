@@ -33,6 +33,7 @@ const createSchema = quoteSchema.extend({
   // Multi-stop (optional). Passed through unchanged; the database validates.
   stops: z.array(z.record(z.string(), z.unknown())).max(40).optional(),
   parcels: z.array(z.record(z.string(), z.unknown())).max(40).optional(),
+  use_wallet: z.boolean().optional(),
 });
 
 const planStopsSchema = z.object({
@@ -361,6 +362,34 @@ export const courierCreateOrder = createServerFn({ method: "POST" })
     if (error) rpcError(error.message);
 
     const result = created as { order_id: string; quote: { total_amount: number } };
+    let walletUsed = 0;
+    if (data.use_wallet) {
+      // Runs as the customer so the wallet spend is tied to their own account.
+      const { data: w, error: wErr } = await context.supabase.rpc("courier_apply_wallet" as never, {
+        _order_id: result.order_id,
+      } as never);
+      if (wErr) rpcError(wErr.message);
+      const wr = w as { wallet_used?: number; total_amount?: number };
+      walletUsed = Number(wr?.wallet_used ?? 0);
+      result.quote = { ...result.quote, total_amount: Number(wr?.total_amount ?? result.quote.total_amount) };
+      if (walletUsed > 0 && Number(result.quote.total_amount) <= 0) {
+        const walletOrderId = `free_wallet_${result.order_id}`.slice(0, 48);
+        await supabaseAdmin
+          .from("courier_orders")
+          .update({ razorpay_order_id: walletOrderId })
+          .eq("id", result.order_id);
+        await markCourierPaid(result.order_id, walletOrderId);
+        return {
+          order_id: result.order_id,
+          quote: result.quote,
+          razorpay_order_id: walletOrderId,
+          amount: 0,
+          key_id: keyId,
+          free: true as const,
+          wallet_used: walletUsed,
+        };
+      }
+    }
     const amountPaise = Math.round(Number(result.quote.total_amount) * 100);
 
     // Fully discounted parcel: nothing to charge. Razorpay rejects a zero

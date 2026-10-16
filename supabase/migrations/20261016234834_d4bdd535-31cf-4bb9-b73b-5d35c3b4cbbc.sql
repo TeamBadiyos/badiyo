@@ -1,0 +1,1 @@
+REVOKE ALL ON FUNCTION public.courier_wallet_return_on_end() FROM public, anon, authenticated;
