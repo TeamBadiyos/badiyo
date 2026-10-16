@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { LocationDeniedScreen } from "@/components/utility/LocationDeniedScreen";
 import {
   ArrowLeft,
   Camera,
@@ -534,7 +535,8 @@ export function AddAddressMapScreen({
 
   return (
     <div className="fixed inset-0 z-30 flex flex-col bg-background pb-[var(--app-safe-bottom)]">
-      <LocationHelpDialog kind={locHelp} onClose={() => setLocHelp(null)} />
+      <LocationHelpDialog kind={locHelp === "denied" ? null : locHelp} onClose={() => setLocHelp(null)} />
+      {locHelp === "denied" && <LocationDeniedScreen onEnterManually={() => setLocHelp(null)} />}
       {confirming && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/40" onClick={() => setConfirming(false)}>
           <div
