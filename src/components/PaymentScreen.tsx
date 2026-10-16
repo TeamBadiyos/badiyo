@@ -257,8 +257,9 @@ export function PaymentScreen({
             close
               ? `Service ${close} tak hi available hai. Kripya aage ka slot schedule karein.`
               : "Abhi service band hai. Kripya aage ka slot schedule karein.",
+            { position: "top-center" },
           );
-          onBack();
+          (onSlotUnavailable ?? onBack)();
           return;
         }
       }
@@ -276,8 +277,9 @@ export function PaymentScreen({
               lang === "mr"
                 ? "सध्या इन्स्टंट बुकिंग पूर्ण भरले आहेत. कृपया पुढील वेळ निवडा."
                 : "High demand ki wajah se Book Now abhi band hai. Kripya aage ka time schedule karein.",
+              { position: "top-center" },
             );
-            onBack();
+            (onSlotUnavailable ?? onBack)();
             return;
           }
         } else {
@@ -292,8 +294,9 @@ export function PaymentScreen({
               lang === "mr"
                 ? "हा स्लॉट पूर्ण भरला आहे. कृपया दुसरा स्लॉट निवडा."
                 : "This slot is fully booked. Please select another slot.",
+              { position: "top-center" },
             );
-            onBack();
+            (onSlotUnavailable ?? onBack)();
             return;
           }
         }
