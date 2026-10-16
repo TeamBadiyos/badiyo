@@ -270,12 +270,13 @@ type Phase =
 
 
 
+// Guests may open Parcel (enter pickup/drop, see price) and Rewards (see the
+// lucky draw); login is asked only on Book / Enroll / Apply coupon / Wallet /
+// Orders via ensureSignedIn() or these locked screens.
 const GUEST_LOCKED_PHASES = new Set<Phase>([
   "address",
   "wallet",
-  "rewards",
   "orders",
-  "courier",
   "courier-track",
   "store-track",
   "parcels-for-you",
