@@ -19,12 +19,11 @@ import { usePullToRefresh, PullToRefreshIndicator } from "@/lib/usePullToRefresh
 import { ChevronDown, ChevronRight, Clock, Gift, Home, MapPin, Mic, Search, Sparkles, User, Wind, type LucideIcon } from "lucide-react";
 import { BadiyoLogo } from "./BadiyoLogo";
 import { BottomNav } from "./BottomNav";
+import { setCleanDraft } from "@/lib/cleanBookingDraft";
 import { LocationPickerSheet, type SavedAddress } from "./LocationPickerSheet";
 import { ContestHomeBanner } from "./contest/ContestHomeBanner";
-import { DealsHomeBanner } from "./deals/DealsTab";
 import { supabase } from "@/integrations/supabase/client";
 import { useResolveAddressCity } from "@/lib/customerCity";
-import { BringBadiyosScreen } from "./BringBadiyosScreen";
 import { readHomeTab, type HomeTab } from "@/lib/homeTab";
 import { fetchMyCoinBalance } from "@/lib/coins";
 import { BellRing, Wallet as WalletIcon } from "lucide-react";
@@ -37,10 +36,8 @@ import {
   type SegmentService,
   type ServiceCategory,
 } from "@/lib/segments";
-import { ServiceProductCard } from "./home/ServiceProductCard";
 import { fetchCourierEnabled } from "./courier/courierData";
 
-import { SectionHeading } from "./SectionHeading";
 import { BrandWatermark } from "./BrandWatermark";
 import { anchorPrice } from "@/lib/price";
 import { useLanguage, useT } from "@/i18n";
@@ -53,14 +50,17 @@ import {
   clearPendingStoreKey,
   fetchStoreByKey,
 } from "@/lib/storeShare";
-import { StoreListView } from "./store/StoreListView";
 import { StoreShelves } from "./store/storeCatalog";
-import { LiveSearchPanel } from "./home/LiveSearchPanel";
 import { CartBar } from "./store/CartBar";
 import { CleanTab } from "./clean/CleanTab";
-import type { SelectedSlot } from "./SlotSelectionScreen";
+import type { SelectedSlot } from "@/lib/bookingTypes";
 // Shop pages (with their address picker and payment sheet) load only when the
 // customer actually opens a shop, a category or the cart.
+// Store/Food tab bodies, search and deals load only when first shown.
+const StoreListView = lazy(() => import("./store/StoreListView").then((m) => ({ default: m.StoreListView })));
+const LiveSearchPanel = lazy(() => import("./home/LiveSearchPanel").then((m) => ({ default: m.LiveSearchPanel })));
+const BringBadiyosScreen = lazy(() => import("./BringBadiyosScreen").then((m) => ({ default: m.BringBadiyosScreen })));
+const DealsHomeBanner = lazy(() => import("./deals/DealsTab").then((m) => ({ default: m.DealsHomeBanner })));
 const StoreDetailScreen = lazy(() =>
   import("./store/StoreDetailScreen").then((m) => ({ default: m.StoreDetailScreen })),
 );
@@ -74,9 +74,6 @@ const StoreCartScreen = lazy(() =>
 import type { StoreCategoryGroup } from "./store/storeGroups";
 import type { TranslationKey } from "@/i18n/en";
 
-import expertHouse from "@/assets/expert-house-cleaning.jpg";
-import expertDusting from "@/assets/expert-dusting.jpg";
-import expertDishes from "@/assets/expert-dishes.jpg";
 
 const ICON_MAP: Record<string, LucideIcon> = {
   clock: Clock,
@@ -106,53 +103,12 @@ function ScreenSkeleton() {
 
 
 import { fetchSections } from "@/lib/homeData";
-import { readLangOutsideReact, translateCatalog } from "@/lib/catalogI18n";
 import {
   fetchAvailability,
-  isUnavailable,
-  unavailableReason,
   type AvailabilityMap,
 } from "@/lib/availability";
 
 
-const EXPERT_TILES: { image: string; labelKey: TranslationKey; slug: string; illustration?: boolean }[] = [
-  { image: expertHouse, labelKey: "home.tile.houseCleaning", slug: "house-cleaning" },
-  { image: expertDusting, labelKey: "home.tile.dusting", slug: "dusting-wiping" },
-  { image: expertDishes, labelKey: "home.tile.dishes", slug: "cleaning-dishes" },
-];
-
-function ExpertTiles({ onOpenTask }: { onOpenTask: () => void }) {
-  const t = useT();
-  return (
-    <div className="mt-5 grid grid-cols-3 gap-4">
-      {EXPERT_TILES.map((tile) => (
-        <button
-          type="button"
-          key={tile.labelKey}
-          onClick={() => onOpenTask()}
-          className="flex flex-col text-left transition active:scale-[0.98]"
-        >
-          <div
-            className={`${tile.illustration ? "brand-grade-soft" : "brand-grade"} aspect-square overflow-hidden rounded-[18px] bg-muted shadow-card-m`}
-          >
-            <img
-              src={tile.image}
-              alt={t(tile.labelKey)}
-              width={512}
-              height={512}
-              loading="lazy"
-              className="h-full w-full object-cover"
-            />
-          </div>
-
-          <p className="mt-2 w-full text-center text-xs font-semibold text-foreground leading-tight">
-            {t(tile.labelKey)}
-          </p>
-        </button>
-      ))}
-    </div>
-  );
-}
 
 export type BookServicePayload = {
   /** service_price_options.id — the authoritative item the customer picked. */
@@ -203,8 +159,6 @@ function toPayload(s: SegmentService, segment?: Segment | null): BookServicePayl
 
 
 export function HomeScreen({
-  onBookService,
-  onQuickBook,
   onOpenProfile,
   onOpenRewards,
   onOpenContest,
@@ -219,8 +173,6 @@ export function HomeScreen({
   onCheckout,
   onOpenReferral,
 }: {
-  onBookService?: (service: BookServicePayload) => void;
-  onQuickBook?: (service: BookServicePayload) => void;
   onOpenProfile?: () => void;
   onOpenRewards?: () => void;
   onOpenContest?: () => void;
@@ -232,7 +184,7 @@ export function HomeScreen({
   onOpenContactParcels?: (stopId?: string) => void;
   onOpenWallet?: () => void;
   onRequireLogin?: () => void;
-  onCheckout?: (service: BookServicePayload, slot: SelectedSlot, addressId: string | null) => void;
+  onCheckout?: (service: BookServicePayload, slot: SelectedSlot, addressId: string | null) => Promise<"ok" | "need-address" | void> | void;
   onOpenReferral?: () => void;
 }) {
   const { data: courierEnabled = false } = useQuery({
@@ -368,14 +320,14 @@ export function HomeScreen({
     return true;
   };
 
-  const addToBooking = (s: SegmentService, segment?: Segment | null) => {
-    if (guardBlocked()) return;
-    toast(t("home.addedToBooking", { name: s.service_name || s.duration_label }));
-    withSingleCart(() => onQuickBook?.(toPayload(s, segment ?? null)));
-  };
   const guardedBookService = (p: BookServicePayload) => {
     if (guardBlocked()) return;
-    withSingleCart(() => onBookService?.(p));
+    // Old service pages are gone: open the Clean booking page with this option.
+    withSingleCart(() => {
+      setCleanDraft({ auto: false, optionId: p.id ?? null, day: null, slotMins: null });
+      setCleanKey((k) => k + 1);
+      setTab("clean");
+    });
   };
 
 
@@ -410,6 +362,7 @@ export function HomeScreen({
   const [activeAddress, setActiveAddress] = useState<SavedAddress | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [tab, setTab] = useState<HomeTab>("clean");
+  const [cleanKey, setCleanKey] = useState(0);
   useEffect(() => setTab(readHomeTab()), []);
   const { data: coinBalance } = useQuery({
     queryKey: ["my_coin_balance"],
@@ -463,13 +416,10 @@ export function HomeScreen({
     segments.find((s) => s.slug?.toLowerCase().includes("clean")) ??
     segments[0] ??
     null;
-  const tileService = cleanSegment ? servicesFor(cleanSegment)[0] ?? null : null;
-  const bookTileService = () => {
-    if (tileService) guardedBookService(toPayload(tileService, cleanSegment));
-  };
 
   if (addressCity?.outside && activeAddress && cityDismissedFor !== activeAddress.id) {
     return (
+      <Suspense fallback={null}>
       <BringBadiyosScreen
         onRequireLogin={onRequireLogin}
         location={{
@@ -485,6 +435,7 @@ export function HomeScreen({
           setLocationSheetOpen(true);
         }}
       />
+      </Suspense>
     );
   }
 
@@ -602,6 +553,7 @@ export function HomeScreen({
         </form>
         )}
         {tab !== "clean" && searchQuery.trim().length >= 2 && (
+          <Suspense fallback={null}>
           <LiveSearchPanel
             query={searchQuery.trim()}
             coords={homeCoords}
@@ -617,15 +569,17 @@ export function HomeScreen({
               guardedBookService(toPayload(s, segments.find((g) => g.id === s.segment_id) ?? null));
             }}
           />
+          </Suspense>
         )}
 
 
 
         {tab !== "clean" && <ContestHomeBanner onOpen={onOpenContest} />}
-        {tab !== "clean" && onOpenDeal && <div className="px-4"><DealsHomeBanner onOpen={onOpenDeal} /></div>}
+        {tab !== "clean" && onOpenDeal && <div className="px-4"><Suspense fallback={null}><DealsHomeBanner onOpen={onOpenDeal} /></Suspense></div>}
 
         {tab === "clean" && cleanSegment ? (
           <CleanTab
+            key={cleanKey}
             onHeroTone={setHeroTone}
             services={servicesFor(cleanSegment)}
             categories={categories.filter((c) => c.segment_id === cleanSegment.id)}
@@ -633,12 +587,23 @@ export function HomeScreen({
             addressLine={activeAddress ? `${addressTag}${locationLabel ? ` · ${locationLabel}` : ""}` : null}
             onChangeAddress={(onReturn) => {
               afterLocationRef.current = onReturn ?? null;
-              setTimeout(() => setLocationSheetOpen(true), 200);
+              setLocationSheetOpen(true);
             }}
             onOpenPromo={onOpenRewards}
             onOpenReferral={onOpenReferral ?? onOpenRewards}
             onCheckout={(o, slot) =>
-              withSingleCart(() => onCheckout?.(toPayload(o, cleanSegment), slot, activeAddress?.id ?? null))
+              new Promise<void>((resolve) => {
+                if (storeCart.cart.lines.length > 0) resolve(); // confirm dialog decides
+                withSingleCart(async () => {
+                  try {
+                    const r = await onCheckout?.(toPayload(o, cleanSegment), slot, activeAddress?.id ?? null);
+                    // No usable saved address: open the address sheet over the booking page.
+                    if (r === "need-address") setLocationSheetOpen(true);
+                  } finally {
+                    resolve();
+                  }
+                });
+              })
             }
           />
         ) : activeSegment ? (
@@ -646,9 +611,6 @@ export function HomeScreen({
           segment={activeSegment}
           categories={categories.filter((c) => c.segment_id === activeSegment.id)}
           services={servicesFor(activeSegment)}
-          onBookService={guardedBookService}
-          onAdd={(s) => addToBooking(s, activeSegment)}
-          onOpenTask={bookTileService}
           availability={availability}
           statusBadge={statusBadge}
           storeUnlocked={storeUnlocked}
@@ -764,9 +726,6 @@ function SegmentView({
   segment,
   categories,
   services,
-  onBookService,
-  onAdd,
-  onOpenTask,
   availability,
   statusBadge,
   storeUnlocked,
@@ -779,9 +738,6 @@ function SegmentView({
   segment: Segment;
   categories: ServiceCategory[];
   services: SegmentService[];
-  onBookService?: (s: BookServicePayload) => void;
-  onAdd: (s: SegmentService) => void;
-  onOpenTask: () => void;
   availability?: AvailabilityMap;
   statusBadge?: string | null;
   storeUnlocked?: boolean;
@@ -795,6 +751,7 @@ function SegmentView({
 
   if (segment.display_template === "STORE_FIRST" && storeUnlocked) {
     return (
+      <Suspense fallback={<div className="mt-8 flex justify-center"><div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" /></div>}>
       <StoreListView
         coords={storeCoords ?? null}
         onOpenStore={(s) => onOpenStore?.(s)}
@@ -802,115 +759,16 @@ function SegmentView({
         onOpenCart={() => onOpenCart?.()}
         orderingEnabled={storeOrdering}
       />
-    );
-  }
-
-  if (segment.display_template !== "CATEGORY_FIRST") {
-    return (
-      <>
-        <div className="mt-8 rounded-[18px] border border-dashed border-border bg-card px-6 py-12 text-center">
-          <p className="text-base font-bold text-foreground">
-            {t("home.comingSoon", { segment: segment.name })}
-          </p>
-          <p className="mt-1 text-sm text-muted-foreground">{t("home.comingSoonSub")}</p>
-        </div>
-      </>
+      </Suspense>
     );
   }
 
   return (
-    <>
-      <SectionHeading className="mt-4">
-        {t("home.bookSegment", { segment: segment.name })}
-      </SectionHeading>
-
-      {categories.map((category) => {
-        const items = services.filter((s) => s.service_category_id === category.id);
-        if (items.length === 0) return null;
-        return (
-          <CategoryRow
-            key={category.id}
-            category={category}
-            services={items}
-            onViewDetail={(s) => onBookService?.(toPayload(s, segment))}
-            onAdd={(s) => onAdd(s)}
-            availability={availability}
-            statusBadge={statusBadge}
-          />
-        );
-      })}
-
-
-      <p className="mt-4 text-center text-xs text-muted-foreground">
-        {t("home.scheduleHint")}
+    <div className="mt-8 rounded-[18px] border border-dashed border-border bg-card px-6 py-12 text-center">
+      <p className="text-base font-bold text-foreground">
+        {t("home.comingSoon", { segment: segment.name })}
       </p>
-
-      {segment.slug?.toLowerCase().includes("clean") && (
-        <>
-          <SectionHeading size="lg" className="mt-7">
-            {t("home.oneExpert")}
-          </SectionHeading>
-          <ExpertTiles onOpenTask={onOpenTask} />
-        </>
-      )}
-
-    </>
-  );
-}
-
-/** One category's labelled row of compact product cards. */
-function CategoryRow({
-  category,
-  services,
-  onViewDetail,
-  onAdd,
-  availability,
-  statusBadge,
-}: {
-  category: ServiceCategory;
-  services: SegmentService[];
-  onViewDetail: (s: SegmentService) => void;
-  onAdd: (s: SegmentService) => void;
-  availability?: AvailabilityMap;
-  statusBadge?: string | null;
-}) {
-  const t = useT();
-  const categoryBlocked = isUnavailable(availability, "category", category.id);
-  const categoryReason = unavailableReason(availability, "category", category.id);
-  return (
-    <div className={`mt-4 ${categoryBlocked ? "opacity-70" : ""}`}>
-      <div className="flex items-center gap-2">
-        <h3 className="text-[13px] font-bold tracking-[-0.01em] text-muted-foreground">
-          {translateCatalog(category.name, readLangOutsideReact())}
-        </h3>
-        {categoryBlocked ? (
-          <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold text-muted-foreground">
-            {categoryReason || t("home.unavailableBadge")}
-          </span>
-        ) : null}
-      </div>
-      <div className="mt-2 grid grid-cols-3 gap-2.5">
-        {services.map((s) => (
-          <ServiceProductCard
-            key={s.id}
-            service={{
-              name: s.duration_label,
-              price: Number(s.price),
-              strikePrice: s.strikethrough_price,
-              imageUrl: s.image_url,
-              durationMinutes: s.pricing_type === "flat" ? null : s.duration_minutes,
-            }}
-            unavailable={categoryBlocked || isUnavailable(availability, "item", s.id)}
-            unavailableLabel={
-              categoryReason || unavailableReason(availability, "item", s.id) || null
-            }
-            statusBadge={statusBadge}
-            onViewDetail={() => onViewDetail(s)}
-            onAdd={() => onAdd(s)}
-          />
-        ))}
-      </div>
-
+      <p className="mt-1 text-sm text-muted-foreground">{t("home.comingSoonSub")}</p>
     </div>
   );
 }

@@ -5,7 +5,7 @@ import { anchorPrice } from "@/lib/price";
 import { sizedImageUrl } from "@/lib/serviceImage";
 import { useT } from "@/i18n";
 
-import fallbackImage from "@/assets/expert-house-cleaning.jpg";
+import fallbackImage from "@/assets/service-fallback.webp";
 import { readLangOutsideReact, translateCatalog } from "@/lib/catalogI18n";
 
 export type ProductCardService = {

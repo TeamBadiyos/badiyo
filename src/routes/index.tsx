@@ -14,7 +14,6 @@ import { initStatusBar } from "@/lib/statusBar";
 import { NoInternetScreen } from "@/components/utility/NoInternetScreen";
 
 import { BadiyoLogo } from "@/components/BadiyoLogo";
-import type { NotServiceableLocation } from "@/components/NotServiceableScreen";
 import { checkServiceability } from "@/lib/serviceability";
 import { hasLoginPin } from "@/lib/auth.functions";
 import { prefetchHomeData } from "@/lib/homeData";
@@ -43,14 +42,6 @@ import { HomeScreen } from "@/components/HomeScreen";
 const OtpVerifyScreen = lazyNamed(() => import("@/components/OtpVerifyScreen"), "OtpVerifyScreen");
 const PinLoginScreen = lazyNamed(() => import("@/components/PinLoginScreen"), "PinLoginScreen");
 const PinSetScreen = lazyNamed(() => import("@/components/PinSetScreen"), "PinSetScreen");
-const NotServiceableScreen = lazyNamed(
-  () => import("@/components/NotServiceableScreen"),
-  "NotServiceableScreen",
-);
-const SlotSelectionScreen = lazyNamed(
-  () => import("@/components/SlotSelectionScreen"),
-  "SlotSelectionScreen",
-);
 const AddressSelectionScreen = lazyNamed(
   () => import("@/components/AddressSelectionScreen"),
   "AddressSelectionScreen",
@@ -172,7 +163,7 @@ const SoftUpdateDialog = lazyNamed(
   "SoftUpdateDialog",
 );
 
-import type { SelectedService, SelectedSlot } from "@/components/SlotSelectionScreen";
+import type { SelectedService, SelectedSlot } from "@/lib/bookingTypes";
 import type { SelectedAddress } from "@/components/BookingSummaryScreen";
 import type { AppliedCoupon } from "@/lib/coupons";
 import type { BookingRow } from "@/components/MyBookingsScreen";
@@ -183,6 +174,26 @@ import { ensureUserRow } from "@/lib/ensureUserRow";
 import { registerPushForCurrentUser, setPushNavigator } from "@/lib/push";
 import { checkForUpdate, isSoftUpdateSnoozed, PLAY_STORE_WEB_URL } from "@/lib/version";
 import { supabase } from "@/integrations/supabase/client";
+import { setCleanDraft } from "@/lib/cleanBookingDraft";
+import { writeHomeTab } from "@/lib/homeTab";
+import { LocationPickerSheet } from "@/components/LocationPickerSheet";
+
+/** A saved address with a map pin inside a served area, or null. */
+async function loadUsableAddress(id: string, segmentId: string | null): Promise<SelectedAddress | null> {
+  const { data: addr } = await supabase
+    .from("addresses")
+    .select("id, label, full_address, area, city, is_default, latitude, longitude")
+    .eq("id", id)
+    .maybeSingle();
+  if (addr?.latitude == null || addr?.longitude == null) return null;
+  try {
+    const res = await checkServiceability(addr.latitude, addr.longitude, segmentId);
+    if (!res.serviceable) return null;
+  } catch {
+    // a failed check must not block the booking
+  }
+  return addr as SelectedAddress;
+}
 import { invokeFunction } from "@/lib/invokeFunction";
 
 /** Full-screen brand placeholder shown while a lazy screen chunk loads. */
@@ -231,8 +242,6 @@ type Phase =
   | "pin-login"
   | "pin-set"
   | "home"
-  | "slot"
-  | "address"
   | "manage-addresses"
   | "summary"
   | "coupon-picker"
@@ -266,8 +275,7 @@ type Phase =
   | "courier"
   | "courier-track"
   | "store-track"
-  | "parcels-for-you"
-  | "not-serviceable";
+  | "parcels-for-you";
 
 
 
@@ -275,7 +283,6 @@ type Phase =
 // lucky draw); login is asked only on Book / Enroll / Apply coupon / Wallet /
 // Orders via ensureSignedIn() or these locked screens.
 const GUEST_LOCKED_PHASES = new Set<Phase>([
-  "address",
   "wallet",
   "orders",
   "courier-track",
@@ -339,6 +346,7 @@ function Index() {
     });
   }, []);
 
+  const [checkoutAddrOpen, setCheckoutAddrOpen] = useState(false);
   const [legal, setLegal] = useState<{ slug: LegalSlug; from: Phase } | null>(null);
   const [activeTicketId, setActiveTicketId] = useState<string | null>(null);
   const [selectedService, setSelectedService] = useState<SelectedService | null>(null);
@@ -349,7 +357,6 @@ function Index() {
 
   const [rewardsTab, setRewardsTab] = useState<"rewards" | "contest" | "deals">("contest");
   const [focusDealId, setFocusDealId] = useState<string | null>(null);
-  const [notServiceable, setNotServiceable] = useState<NotServiceableLocation | null>(null);
   const [activeBookingId, setActiveBookingId] = useState<string | null>(null);
   const [activeBookingStatus, setActiveBookingStatus] = useState<string | null>(null);
   const [selectedBooking, setSelectedBooking] = useState<BookingRow | null>(null);
@@ -427,7 +434,6 @@ function Index() {
   useEffect(() => {
     if (phase !== "home") return;
     const warm = () => {
-      void import("@/components/SlotSelectionScreen");
       void import("@/components/SearchResultsScreen");
       void import("@/components/AddressSelectionScreen");
       void import("@/components/BookingSummaryScreen");
@@ -449,7 +455,21 @@ function Index() {
 
 
 
+  // The saved Clean booking page only survives the checkout path.
+  useEffect(() => {
+    const keep: Phase[] = ["home", "summary", "coupon-picker", "payment", "login", "otp-verify", "pin-login", "pin-set", "splash", "splash-out"];
+    if (!keep.includes(phase)) setCleanDraft(null);
+  }, [phase]);
+
+  // Old service pages are gone: any service tap opens the Clean booking page.
+  function openCleanBooking(optionId: string | null) {
+    setCleanDraft({ auto: false, optionId, day: null, slotMins: null });
+    writeHomeTab("clean");
+    setPhase("home");
+  }
+
   function resetAndGoHome() {
+    setCleanDraft(null);
     setActiveBookingId(null);
     setSelectedService(null);
     setSelectedSlot(null);
@@ -983,17 +1003,6 @@ function Index() {
       {phase === "home" && (
         <div className="animate-fade-slide-in">
           <HomeScreen
-            onBookService={(s) => {
-              setSelectedService(s);
-              setPhase("slot");
-            }}
-            onQuickBook={(s) => {
-              // "ADD" shortcut: same booking flow as Book Now on the detail
-              // page, with the default "now" slot, skipping the detail page.
-              setSelectedService(s);
-              setSelectedSlot({ mode: "now" });
-              setPhase("address");
-            }}
             onOpenProfile={() => setPhase("profile")}
             onOpenRewards={() => { setRewardsTab("contest"); setPhase("rewards"); }}
             onOpenContest={() => { setRewardsTab("contest"); setPhase("rewards"); }}
@@ -1013,31 +1022,15 @@ function Index() {
             onOpenReferral={() => setPhase("referrals")}
             onCheckout={async (s, slot, addressId) => {
               if (!(await ensureSignedIn())) return;
+              // Straight to the shared checkout when the saved address is usable;
+              // otherwise the address sheet opens over the booking page.
+              const addr = addressId ? await loadUsableAddress(addressId, s.segment_id ?? null) : null;
+              if (!addr) return "need-address" as const;
               setSelectedService(s);
               setSelectedSlot(slot);
-              // Straight to the shared checkout when the saved address has a map pin.
-              if (addressId) {
-                const { data: addr } = await supabase
-                  .from("addresses")
-                  .select("id, label, full_address, area, city, is_default, latitude, longitude")
-                  .eq("id", addressId)
-                  .maybeSingle();
-                if (addr?.latitude != null && addr?.longitude != null) {
-                  try {
-                    const res = await checkServiceability(addr.latitude, addr.longitude, s.segment_id ?? null);
-                    if (!res.serviceable) {
-                      setPhase("address");
-                      return;
-                    }
-                  } catch {
-                    // a failed check must not block the booking
-                  }
-                  setSelectedAddress(addr as SelectedAddress);
-                  setPhase("summary");
-                  return;
-                }
-              }
-              setPhase("address");
+              setSelectedAddress(addr);
+              setPhase("summary");
+              return "ok" as const;
             }}
             onOpenContactParcels={openContactParcels}
           />
@@ -1078,63 +1071,6 @@ function Index() {
           />
         </div>
       )}
-      {phase === "slot" && selectedService && (
-        <div className="animate-fade-slide-in">
-          <SlotSelectionScreen
-            service={selectedService}
-            onBack={() => setPhase("home")}
-            onContinue={(slot) => {
-              setSelectedSlot(slot);
-              setPhase("address");
-            }}
-          />
-        </div>
-      )}
-      {phase === "address" && (
-        <div className="animate-fade-slide-in">
-          <AddressSelectionScreen
-            serviceCheck="home"
-            segmentId={selectedService?.segment_id ?? null}
-            onBack={() => setPhase("slot")}
-            onContinue={async (addr) => {
-              const segmentId = selectedService?.segment_id ?? null;
-              try {
-                const res = await checkServiceability(
-                  addr.latitude,
-                  addr.longitude,
-                  segmentId,
-                );
-                if (!res.serviceable) {
-                  setNotServiceable({
-                    segmentId,
-                    latitude: Number(addr.latitude ?? 0),
-                    longitude: Number(addr.longitude ?? 0),
-                    addressText: addr.full_address,
-                    area: addr.area,
-                    city: addr.city,
-                  });
-                  setPhase("not-serviceable");
-                  return;
-                }
-              } catch {
-                // If the check itself fails, don't block the booking.
-              }
-              setSelectedAddress(addr);
-              setPhase("summary");
-            }}
-          />
-        </div>
-      )}
-      {phase === "not-serviceable" && notServiceable && (
-        <div className="animate-fade-slide-in">
-          <NotServiceableScreen
-            location={notServiceable}
-            segmentName={selectedService?.segment_name ?? null}
-            onBack={() => setPhase("address")}
-            onChangeAddress={() => setPhase("address")}
-          />
-        </div>
-      )}
       {phase === "summary" && selectedService && selectedSlot && selectedAddress && (
         <div className="animate-fade-slide-in">
           <BookingSummaryScreen
@@ -1147,9 +1083,23 @@ function Index() {
             onRedeemCoinsChange={setRedeemCoins}
             onOpenCoupons={() => setPhase("coupon-picker")}
 
-            onBack={() => setPhase("address")}
-            onEditAddress={() => setPhase("address")}
+            onBack={() => setPhase("home")}
+            onEditAddress={() => setCheckoutAddrOpen(true)}
             onProceedToPay={() => setPhase("payment")}
+          />
+          <LocationPickerSheet
+            open={checkoutAddrOpen}
+            activeId={selectedAddress.id}
+            onClose={() => setCheckoutAddrOpen(false)}
+            onSelect={async (a) => {
+              const addr = await loadUsableAddress(a.id, selectedService.segment_id ?? null);
+              if (!addr) {
+                toast.error("We don't serve this address yet. Please pick another.");
+                return;
+              }
+              setSelectedAddress(addr);
+              setCheckoutAddrOpen(false);
+            }}
           />
         </div>
       )}
@@ -1385,15 +1335,8 @@ function Index() {
               setPhase("home");
               void import("@/lib/storeShare").then((m) => m.storePendingStoreKey(st.id));
             }}
-            onBookService={(s) => {
-              setSelectedService(s);
-              setPhase("slot");
-            }}
-            onQuickBook={(s) => {
-              setSelectedService(s);
-              setSelectedSlot({ mode: "now" });
-              setPhase("address");
-            }}
+            onBookService={(s) => openCleanBooking(s.id ?? null)}
+            onQuickBook={(s) => openCleanBooking(s.id ?? null)}
           />
         </div>
       )}
@@ -1550,7 +1493,7 @@ function Index() {
         bottomOffset={
           phase === "home" || phase === "orders" || phase === "rewards"
             ? 72
-            : phase === "address" || phase === "slot" || phase === "summary"
+            : phase === "summary"
               ? 68
               : 0
         }

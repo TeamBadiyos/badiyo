@@ -6,8 +6,8 @@ import { loadMapsScript } from "@/lib/googleMapsLoader";
 import { decodeGooglePolyline, routePointKey } from "@/lib/mapRoute";
 import { fetchTrackingRoadRoute } from "@/lib/trackingRoute.functions";
 import { supabase } from "@/integrations/supabase/client";
-import riderMarkerImage from "@/assets/map-rider-worker.png";
-import womanMarkerImage from "@/assets/map-woman-worker.png";
+import riderMarkerImage from "@/assets/map-rider-worker.webp";
+import womanMarkerImage from "@/assets/map-woman-worker.webp";
 
 type ExpertLocation = {
   expert_id: string;

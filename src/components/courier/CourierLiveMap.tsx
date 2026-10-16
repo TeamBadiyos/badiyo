@@ -7,7 +7,7 @@ import { MapPin, Navigation } from "lucide-react";
 import { loadMapsScript } from "@/lib/googleMapsLoader";
 import { decodeGooglePolyline, routePointKey } from "@/lib/mapRoute";
 import { fetchTrackingRoadRoute } from "@/lib/trackingRoute.functions";
-import riderMarkerImage from "@/assets/map-rider-worker.png";
+import riderMarkerImage from "@/assets/map-rider-worker.webp";
 import { fetchRiderLocation } from "./courierData";
 import { useT, type TFunction } from "@/i18n";
 

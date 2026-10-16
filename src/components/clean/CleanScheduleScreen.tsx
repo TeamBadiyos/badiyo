@@ -10,7 +10,7 @@ import { getAllHourSlots, getNext7DayOptions, isHourBookable } from "@/lib/hourS
 import { notifyMeForService, slotFitsWindow, timeToMinutes } from "@/lib/serviceHours";
 import { fetchAppFullySlots, useBookNowAllowed, useServiceHours, type CleanServiceKey } from "@/lib/serviceSettings";
 import type { SegmentService } from "@/lib/segments";
-import type { SelectedSlot } from "../SlotSelectionScreen";
+import type { SelectedSlot } from "@/lib/bookingTypes";
 import { AddressLine, DayCard, FullCalendarArt, OptionImageCard } from "./parts";
 
 export const CL = {
@@ -48,7 +48,7 @@ export function CleanScheduleScreen({
   onDraftChange: (d: ScheduleDraft) => void;
   onChangeAddress: () => void;
   onBack: () => void;
-  onContinue: (option: SegmentService, slot: SelectedSlot) => void;
+  onContinue: (option: SegmentService, slot: SelectedSlot) => void | Promise<unknown>;
 }) {
   useBackHandler(true, () => onBack());
   const { lang } = useLanguage();
@@ -114,11 +114,18 @@ export function CleanScheduleScreen({
   const dayLabel = (i: number) => (i === 0 ? s.today : i === 1 ? s.tomorrow : days[i].weekday);
   const canContinue = !!option && slotMins !== null && !isFull(slotMins);
 
-  const go = () => {
-    if (!option || slotMins === null) return;
-    if (slotMins === NOW) return onContinue(option, { mode: "now", serviceKey });
-    const slot = allSlots.find((x) => x.mins === slotMins)!;
-    onContinue(option, { mode: "later", day, slotId: slot.mins, slotLabel: slot.label, slotRange: slot.range, serviceKey });
+  const [busy, setBusy] = useState(false);
+  const go = async () => {
+    if (!option || slotMins === null || busy) return;
+    const slot = slotMins === NOW ? null : allSlots.find((x) => x.mins === slotMins)!;
+    setBusy(true);
+    try {
+      await (slot
+        ? onContinue(option, { mode: "later", day, slotId: slot.mins, slotLabel: slot.label, slotRange: slot.range, serviceKey })
+        : onContinue(option, { mode: "now", serviceKey }));
+    } finally {
+      setBusy(false);
+    }
   };
   const notify = async () => {
     if (!(await ensureSignedIn())) return;
@@ -199,8 +206,8 @@ export function CleanScheduleScreen({
       </div>
 
       <div className="fixed inset-x-0 bottom-0 border-t border-border bg-background px-5 py-3 safe-bottom">
-        <button disabled={!canContinue} onClick={go} className="mx-auto block w-full max-w-md rounded-[16px] bg-primary py-4 text-base font-extrabold text-primary-foreground disabled:opacity-40">
-          {s.cont}{option ? ` · ₹${Number(option.price)}` : ""}
+        <button disabled={!canContinue || busy} onClick={() => void go()} className="mx-auto block w-full max-w-md rounded-[16px] bg-primary py-4 text-base font-extrabold text-primary-foreground disabled:opacity-40">
+          {busy ? "…" : <>{s.cont}{option ? ` · ₹${Number(option.price)}` : ""}</>}
         </button>
       </div>
     </div>

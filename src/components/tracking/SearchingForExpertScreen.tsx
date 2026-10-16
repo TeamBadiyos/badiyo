@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { MapPin, Search, Clock, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { SelectedAddress } from "../BookingSummaryScreen";
-import type { SelectedService, SelectedSlot } from "../SlotSelectionScreen";
+import type { SelectedService, SelectedSlot } from "@/lib/bookingTypes";
 import { StageTracker, stageFromStatus } from "./StageTracker";
 import { CancelBookingButton } from "./CancelBookingButton";
 import { useT } from "@/i18n";

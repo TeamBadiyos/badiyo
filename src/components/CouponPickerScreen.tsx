@@ -12,7 +12,7 @@ import {
   type CouponPreview,
   type MyCoupon,
 } from "@/lib/coupons";
-import type { SelectedService } from "./SlotSelectionScreen";
+import type { SelectedService } from "@/lib/bookingTypes";
 
 type EvaluatedCoupon = {
   coupon: MyCoupon;

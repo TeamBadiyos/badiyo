@@ -23,7 +23,7 @@ import {
   useServiceState,
 } from "@/lib/serviceHours";
 import { toast } from "sonner";
-import courierBike from "@/assets/courier-bike.png";
+import courierBike from "@/assets/courier-bike.webp";
 import { AddressSelectionScreen } from "@/components/AddressSelectionScreen";
 import { Button } from "@/components/ui/button";
 import {
@@ -685,7 +685,7 @@ export function CourierBookingScreen({
                         )}
                       </div>
                       <div className="flex h-40 items-center justify-center bg-primary/10 p-2">
-                        <img src={courierBike} alt="Delivery bike" width={1024} height={768} loading="lazy" className="h-auto w-full object-contain" />
+                        <img src={courierBike} alt="Delivery bike" width={640} height={480} loading="lazy" className="h-auto w-full object-contain" />
                       </div>
                     </div>
                   </Button>
@@ -784,7 +784,7 @@ export function CourierBookingScreen({
             </div>
             <div className="overflow-hidden rounded-lg border border-border bg-card">
               <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center bg-primary/5">
-                <img src={courierBike} alt="Delivery bike" width={1024} height={768} loading="lazy" className="h-24 w-24 object-contain p-2" />
+                <img src={courierBike} alt="Delivery bike" width={640} height={480} loading="lazy" className="h-24 w-24 object-contain p-2" />
                 <div className="min-w-0 pr-4">
                   <p className="text-lg font-extrabold text-foreground">{selectedVehicle?.name ?? t("courier.bike")}</p>
                   <p className="text-sm text-muted-foreground">{selectedType?.name} · {formatWeight(weight)} kg</p>
