@@ -1,58 +1,36 @@
 import { useState } from "react";
-import { useServiceHours } from "@/lib/serviceSettings";
-import { useCustomerCityId } from "@/lib/customerCity";
-import { useQuery } from "@tanstack/react-query";
-import { ChevronRight, Clock, Gift, RotateCcw, Zap } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { getAuthUser } from "@/lib/authUser";
+import { ChevronRight } from "lucide-react";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { pick, useServiceContent, useServiceHours, type CleanServiceKey, type ContentCard, type ServiceContent } from "@/lib/serviceSettings";
 import { useLanguage } from "@/i18n";
-import { formatNextOpen, useServiceState } from "@/lib/serviceHours";
+import { formatNextOpen } from "@/lib/serviceHours";
 import type { SegmentService, ServiceCategory } from "@/lib/segments";
 import type { SelectedSlot } from "../SlotSelectionScreen";
-import { CleanBookSheet, type CleanSheetMode } from "./CleanBookSheet";
-import { CleanScheduleScreen } from "./CleanScheduleScreen";
+import { CL, CleanScheduleScreen } from "./CleanScheduleScreen";
+import { ContentCardTile, HeroCard } from "./parts";
 
 import jhadu from "@/assets/expert-house-cleaning.jpg";
-import pocha from "@/assets/clean-pocha.jpg";
 import bartan from "@/assets/expert-dishes.jpg";
 import dusting from "@/assets/expert-dusting.jpg";
-import kapde from "@/assets/clean-kapde.jpg";
-import more from "@/assets/clean-more.jpg";
 import washBike from "@/assets/wash-bike.jpg";
 import washCar from "@/assets/wash-car.jpg";
 import washCombo from "@/assets/wash-combo.jpg";
 
 const T = {
   en: {
-    bookNow: "Instant", bookNowSub: "Get now",
-    schedule: "Schedule", scheduleSub: "Pick your time",
-    wash: "🚗 Car & Bike Wash",
-    oneMaid: "One Expert who can do it all",
-    tiles: ["House\nCleaning", "Dusting &\nWiping", "Bathroom\nCleaning", "Wash, Fold\n& Arrange", "Cleaning\nDishes", "And many\nmore"],
-    again: "🔁 Book again",
     refer: "Refer & Earn", referSub: "Invite friends, earn coins on their first booking",
     closed: "🕐 Closed now", opens: "Opens",
+    maidHero: "Maid for Your Everyday Needs", washHero: "A Wash for Every Ride", button: "Book Now",
+    maidCards: ["Daily Cleaning", "Kitchen Help", "Deep Cleaning"],
   },
   mr: {
-    bookNow: "लगेच", bookNowSub: "आत्ता बोलवा",
-    schedule: "वेळ ठरवा", scheduleSub: "वेळ निवडा",
-    wash: "🚗 कार आणि बाईक वॉश",
-    oneMaid: "एक एक्सपर्ट, सगळी कामे",
-    tiles: ["घर\nस्वच्छता", "डस्टिंग आणि\nपुसणे", "बाथरूम\nस्वच्छता", "कपडे धुणे\nव घडी", "भांडी\nघासणे", "आणखी\nबरेच काही"],
-    again: "🔁 पुन्हा बुक करा",
     refer: "रेफर करा आणि कमवा", referSub: "मित्रांना बोलवा, त्यांच्या पहिल्या बुकिंगवर कॉइन्स मिळवा",
     closed: "🕐 सध्या बंद", opens: "उघडेल",
+    maidHero: "रोजच्या घरकामासाठी मावशी", washHero: "प्रत्येक गाडीसाठी वॉश", button: "बुक करा",
+    maidCards: ["रोजची स्वच्छता", "किचन मदत", "सखोल स्वच्छता"],
   },
 };
-const TILE_IMG = [jhadu, dusting, pocha, kapde, bartan, more];
-
-type CleanMedia = {
-  maid_url?: string;
-  heading?: string;
-  heading_mr?: string;
-  tiles?: { title?: string; title_mr?: string; url?: string; enabled?: boolean }[];
-  tile_urls?: string[];
-};
+const MAID_IMG = [jhadu, bartan, dusting];
 
 function washImage(label: string): string {
   const l = label.toLowerCase();
@@ -61,15 +39,10 @@ function washImage(label: string): string {
   return washCar;
 }
 
+type Detail = { key: CleanServiceKey; title: string; image: string; included: string[]; notIncluded: string[]; optionId: string | null };
+
 export function CleanTab({
-  services,
-  categories,
-  promo,
-  addressLine,
-  onChangeAddress,
-  onCheckout,
-  onOpenPromo,
-  onOpenReferral,
+  services, categories, addressLine, onChangeAddress, onCheckout, onOpenReferral,
 }: {
   services: SegmentService[];
   categories: ServiceCategory[];
@@ -82,158 +55,111 @@ export function CleanTab({
 }) {
   const { lang } = useLanguage();
   const s = lang === "mr" ? T.mr : T.en;
+  const c = lang === "mr" ? CL.mr : CL.en;
   const { data: state } = useServiceHours("clean");
   const closed = state != null && !state.can_order;
   const nextOpen = closed ? formatNextOpen(state?.next_open_at ?? state?.resume_at) : null;
+  const { data: maidContent } = useServiceContent("clean");
+  const { data: washContent } = useServiceContent("wash");
 
-  const autoCatIds = new Set(categories.filter((c) => /auto|wash/i.test(c.name)).map((c) => c.id));
-  const homeOptions = services
-    .filter((x) => !autoCatIds.has(x.service_category_id ?? ""))
-    .sort((a, b) => Number(a.duration_minutes) - Number(b.duration_minutes));
-  const autoOptions = services.filter((x) => autoCatIds.has(x.service_category_id ?? ""));
+  const autoCatIds = new Set(categories.filter((x) => /auto|wash/i.test(x.name)).map((x) => x.id));
+  const byId = new Map(services.map((x) => [x.id, x]));
 
-  type Draft = { kind: CleanSheetMode; auto: boolean; optionId: string | null; day: string | null; slotMins: number | null };
+  // Server options override display (name, price, image); fallback to category split.
+  const buildOptions = (content: ServiceContent | null | undefined, auto: boolean): SegmentService[] => {
+    const list = (content?.options ?? [])
+      .map((o) => {
+        const base = byId.get(o.price_option_id);
+        if (!base) return null;
+        return {
+          ...base,
+          duration_label: pick(lang, o.name, o.name_mr) || base.duration_label,
+          price: o.price ?? base.price,
+          strikethrough_price: o.original_price ?? base.strikethrough_price,
+          image_url: o.image_url || base.image_url,
+        } as SegmentService;
+      })
+      .filter((x): x is SegmentService => !!x);
+    if (list.length) return list;
+    return services
+      .filter((x) => autoCatIds.has(x.service_category_id ?? "") === auto)
+      .sort((a, b) => Number(a.duration_minutes) - Number(b.duration_minutes));
+  };
+  const maidOptions = buildOptions(maidContent, false);
+  const washOptions = buildOptions(washContent, true);
+
+  type Draft = { auto: boolean; optionId: string | null; day: string | null; slotMins: number | null };
   const [draft, setDraft] = useState<Draft | null>(null);
   const [shown, setShown] = useState(false);
-  // Instant stays tappable when closed; the sheet explains and offers Schedule.
-  const open = (mode: CleanSheetMode, auto: boolean, optionId?: string | null) => {
-    setDraft({ kind: mode, auto, optionId: optionId ?? null, day: null, slotMins: null });
+  const [detail, setDetail] = useState<Detail | null>(null);
+  const openBooking = (auto: boolean, optionId?: string | null) => {
+    setDetail(null);
+    setDraft({ auto, optionId: optionId ?? null, day: null, slotMins: null });
     setShown(true);
   };
   const close = () => { setShown(false); setDraft(null); };
-  // Change address: hide the sheet/page, open the picker on top, then come back with choices kept.
   const changeAddress = () => { setShown(false); onChangeAddress(() => setShown(true)); };
-  const draftOptions = draft?.auto ? autoOptions : homeOptions;
 
-  const { data: lastBooking } = useQuery({
-    queryKey: ["clean_last_booking"],
-    staleTime: 5 * 60_000,
-    queryFn: async () => {
-      const { data: u } = await getAuthUser();
-      if (!u.user) return null;
-      const { data } = await supabase
-        .from("bookings")
-        .select("price_option_id, service_label, created_at")
-        .eq("user_id", u.user.id)
-        .not("price_option_id", "is", null)
-        .order("created_at", { ascending: false })
-        .limit(1);
-      return data?.[0] ?? null;
-    },
-  });
-  const againOption = lastBooking ? services.find((x) => x.id === lastBooking.price_option_id) : null;
+  const hero = (content: ServiceContent | null | undefined, fallbackSub: string, key: CleanServiceKey) => {
+    const h = content?.hero;
+    return (
+      <HeroCard
+        heading={pick(lang, h?.heading, h?.heading_mr)}
+        subline={pick(lang, h?.subline, h?.subline_mr) || fallbackSub}
+        button={pick(lang, h?.button, h?.button_mr) || s.button}
+        imageUrl={h?.image_url}
+        bgColor={h?.bg_color}
+        onClick={() => openBooking(key === "wash")}
+      />
+    );
+  };
 
-  // Command Center content via public RPC app_clean_media(_city) — no login needed.
-  // { maid_url, heading, heading_mr, tiles: [{ title, title_mr, url, enabled }] }; fallbacks below.
-  const cityId = useCustomerCityId();
-  const { data: mediaRow } = useQuery({
-    queryKey: ["clean_media", cityId],
-    staleTime: 5 * 60_000,
-    queryFn: async () => {
-      const { data, error } = await (supabase.rpc as any)("app_clean_media", { _city: cityId });
-      if (error) return null;
-      return (data ?? null) as CleanMedia | null;
-    },
+  const maidCards: ContentCard[] = maidContent?.cards?.length ? maidContent.cards : T.en.maidCards.map((t, i) => ({ title: t, title_mr: T.mr.maidCards[i] }));
+  const washCards: ContentCard[] = washContent?.cards?.length
+    ? washContent.cards
+    : washOptions.map((o) => ({ title: o.duration_label, price_option_id: o.id }));
+
+  const cardDetail = (key: CleanServiceKey, card: ContentCard, image: string): Detail => ({
+    key, image,
+    title: pick(lang, card.title, card.title_mr),
+    included: (lang === "mr" && card.included_mr?.length ? card.included_mr : card.included) ?? [],
+    notIncluded: (lang === "mr" && card.not_included_mr?.length ? card.not_included_mr : card.not_included) ?? [],
+    optionId: card.price_option_id ?? null,
   });
-  const maid = mediaRow?.maid_url || null;
-  const heading = (lang === "mr" ? mediaRow?.heading_mr : mediaRow?.heading) || s.oneMaid;
-  const tiles = s.tiles
-    .map((fallback, i) => {
-      const t = mediaRow?.tiles?.[i];
-      const title = (lang === "mr" ? t?.title_mr : t?.title) || fallback;
-      const url = t?.url || mediaRow?.tile_urls?.[i] || TILE_IMG[i];
-      return { title, url, enabled: t?.enabled !== false };
-    })
-    .filter((t) => t.enabled);
 
   return (
     <div className="mt-1">
       {closed && (
         <p className="mb-3 rounded-[14px] bg-muted px-4 py-2.5 text-sm font-bold text-foreground">
-          {s.closed}
-          {nextOpen ? ` · ${s.opens} ${nextOpen}` : ""}
+          {s.closed}{nextOpen ? ` · ${s.opens} ${nextOpen}` : ""}
         </p>
       )}
 
-      {/* Schedule + Instant; maid cutout rises above the Instant card */}
-      <div className={`grid grid-cols-2 gap-3 ${maid ? "mt-10" : ""}`}>
-        <button onClick={() => open("later", false)} className="rounded-[20px] border border-border bg-card p-4 text-left shadow-card-m active:scale-[0.98]">
-          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10"><Clock className="h-5 w-5 text-primary" /></span>
-          <p className="mt-4 flex items-center text-lg font-extrabold text-foreground">{s.schedule}<ChevronRight className="h-4 w-4" /></p>
-          <p className="text-xs font-semibold text-muted-foreground">{s.scheduleSub}</p>
-        </button>
-        <button onClick={() => open("now", false)} className="relative rounded-[20px] border border-border bg-card p-4 text-left shadow-card-m active:scale-[0.98]">
-          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10"><Zap className="h-5 w-5 text-primary" /></span>
-          <p className="relative z-10 mt-4 flex items-center text-lg font-extrabold text-foreground">{s.bookNow}<ChevronRight className="h-4 w-4" /></p>
-          <p className="relative z-10 text-xs font-semibold text-muted-foreground">{s.bookNowSub}</p>
-          {maid && (
-            <img src={maid} alt="" className="pointer-events-none absolute bottom-0 right-0 h-[145%] w-auto max-w-[62%] object-contain object-bottom" />
-          )}
-        </button>
-      </div>
+      {hero(maidContent, s.maidHero, "clean")}
+      {maidCards.length > 0 && (
+        <div className="mt-3 grid grid-cols-3 gap-2.5">
+          {maidCards.map((card, i) => {
+            const img = card.image_url || MAID_IMG[i % MAID_IMG.length];
+            return <ContentCardTile key={i} title={pick(lang, card.title, card.title_mr)} imageUrl={img} onClick={() => setDetail(cardDetail("clean", card, img))} />;
+          })}
+        </div>
+      )}
 
-      {/* Car & Bike Wash */}
-      {autoOptions.length > 0 && (
+      {washOptions.length > 0 && (
         <>
-          <h2 className="mt-6 text-lg font-extrabold text-foreground">{s.wash}</h2>
-          <div className="mt-2 grid grid-cols-3 gap-2.5">
-            {autoOptions.map((o) => (
-              <button key={o.id} onClick={() => open("now", true, o.id)} className="overflow-hidden rounded-[16px] border border-border bg-card text-left active:scale-[0.98]">
-                <img src={o.image_url || washImage(o.duration_label)} alt={o.duration_label} loading="lazy" width={500} height={500} className="aspect-square w-full object-cover" />
-                <div className="p-2">
-                  <p className="truncate text-xs font-bold text-foreground">{o.duration_label.replace(/\s*wash/i, "")}</p>
-                  <p className="text-sm font-extrabold text-primary">₹{Number(o.price)}</p>
-                </div>
-              </button>
-            ))}
+          <div className="mt-6">{hero(washContent, s.washHero, "wash")}</div>
+          <div className="mt-3 grid grid-cols-3 gap-2.5">
+            {washCards.map((card, i) => {
+              const opt = washOptions.find((o) => o.id === card.price_option_id);
+              const title = pick(lang, card.title, card.title_mr);
+              const img = card.image_url || opt?.image_url || washImage(card.title ?? "");
+              return <ContentCardTile key={i} title={title} imageUrl={img} price={opt ? Number(opt.price) : null} onClick={() => setDetail(cardDetail("wash", card, img))} />;
+            })}
           </div>
         </>
       )}
 
-      {/* Offer card */}
-      {promo?.text && (
-        <button onClick={onOpenPromo} className="surface-brand mt-6 flex w-full items-center gap-3 rounded-[18px] p-4 text-left shadow-card-m">
-          <Gift className="h-6 w-6 shrink-0 text-primary-foreground" />
-          <p className="flex-1 text-sm font-bold leading-snug text-primary-foreground">{promo.text}</p>
-          <ChevronRight className="h-5 w-5 text-primary-foreground" />
-        </button>
-      )}
-
-      {/* One expert, all work — heading, titles, photos and on/off from CC clean_media */}
-      {tiles.length > 0 && (
-        <>
-          <h2 className="mt-7 text-xl font-extrabold text-foreground">{heading}</h2>
-          <div className="mt-3 grid grid-cols-3 gap-x-3 gap-y-4">
-            {tiles.map((t, i) => (
-              <div key={i}>
-                <img src={t.url} alt={t.title} loading="lazy" width={500} height={500} className="aspect-square w-full rounded-[16px] bg-muted object-cover" />
-                <p className="mt-2 whitespace-pre-line text-center text-[13px] font-semibold leading-tight text-foreground">{t.title}</p>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
-
-
-      {/* Book again */}
-      {againOption && (
-        <button
-          onClick={() => (closed ? open("later", autoCatIds.has(againOption.service_category_id ?? ""), againOption.id) : onCheckout(againOption, { mode: "now" }))}
-          className="mt-6 flex w-full items-center gap-3 rounded-[18px] border border-border bg-card p-4 text-left"
-        >
-          <RotateCcw className="h-6 w-6 shrink-0 text-primary" />
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-extrabold text-foreground">{s.again}</p>
-            <p className="truncate text-xs text-muted-foreground">
-              {againOption.service_name} · {againOption.duration_label} · ₹{Number(againOption.price)}
-            </p>
-          </div>
-          <ChevronRight className="h-5 w-5 text-muted-foreground" />
-        </button>
-      )}
-
-      {/* Refer & Earn */}
-      <button onClick={onOpenReferral} className="mt-4 flex w-full items-center gap-3 rounded-[18px] bg-surface-soft p-4 text-left">
+      <button onClick={onOpenReferral} className="mt-6 flex w-full items-center gap-3 rounded-[18px] bg-surface-soft p-4 text-left">
         <span className="text-2xl">🎁</span>
         <div className="min-w-0 flex-1">
           <p className="text-sm font-extrabold text-foreground">{s.refer}</p>
@@ -242,26 +168,40 @@ export function CleanTab({
         <ChevronRight className="h-5 w-5 text-muted-foreground" />
       </button>
 
-      <CleanBookSheet
-        open={shown && draft?.kind === "now"}
-        options={draftOptions}
-        initialOptionId={draft?.optionId}
-        isAuto={draft?.auto}
-        serviceKey={draft?.auto ? "wash" : "clean"}
-        addressLine={addressLine}
-        onChangeAddress={changeAddress}
-        onClose={close}
-        onOptionChange={(id) => setDraft((p) => (p ? { ...p, optionId: id } : p))}
-        onSchedule={(id) => setDraft((p) => (p ? { ...p, kind: "later", optionId: id } : p))}
-        onContinue={(o, slot) => { close(); onCheckout(o, slot); }}
-      />
-      {shown && draft?.kind === "later" && (
+      <Sheet open={!!detail} onOpenChange={(o) => !o && setDetail(null)}>
+        <SheetContent side="bottom" className="max-h-[88dvh] overflow-y-auto rounded-t-[24px] px-5 pb-6 safe-bottom">
+          {detail && (
+            <>
+              <img src={detail.image} alt={detail.title} className="mt-4 aspect-[4/3] w-full rounded-[18px] bg-muted object-cover" />
+              <SheetTitle className="mt-4 text-xl font-extrabold text-foreground">{detail.title}</SheetTitle>
+              {detail.included.length > 0 && (
+                <div className="mt-3">
+                  <p className="text-sm font-extrabold text-foreground">{c.included}</p>
+                  <ul className="mt-1 space-y-1">{detail.included.map((x, i) => <li key={i} className="text-sm text-foreground"><span className="font-bold text-primary">✓</span> {x}</li>)}</ul>
+                </div>
+              )}
+              {detail.notIncluded.length > 0 && (
+                <div className="mt-3">
+                  <p className="text-sm font-extrabold text-foreground">{c.notIncluded}</p>
+                  <ul className="mt-1 space-y-1">{detail.notIncluded.map((x, i) => <li key={i} className="text-sm text-muted-foreground"><span className="font-bold text-destructive">✗</span> {x}</li>)}</ul>
+                </div>
+              )}
+              <button onClick={() => openBooking(detail.key === "wash", detail.optionId)} className="mt-5 w-full rounded-[16px] bg-primary py-4 text-base font-extrabold text-primary-foreground">
+                {c.bookNow}
+              </button>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
+
+      {shown && draft && (
         <CleanScheduleScreen
-          options={draftOptions}
+          options={draft.auto ? washOptions : maidOptions}
           isAuto={draft.auto}
           serviceKey={draft.auto ? "wash" : "clean"}
           addressLine={addressLine}
           draft={{ optionId: draft.optionId, day: draft.day, slotMins: draft.slotMins }}
+          fallbackImage={(o) => (draft.auto ? washImage(o.duration_label) : jhadu)}
           onDraftChange={(d) => setDraft((p) => (p ? { ...p, ...d } : p))}
           onChangeAddress={changeAddress}
           onBack={close}
