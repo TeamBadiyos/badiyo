@@ -13345,8 +13345,18 @@ export type Database = {
         Args: { _at?: string; _service_key: string }
         Returns: boolean
       }
+      service_content_check_extras: { Args: { _p: Json }; Returns: undefined }
       service_content_check_key: { Args: { _k: string }; Returns: undefined }
+      service_content_check_text: {
+        Args: { _label: string; _max: number; _required: boolean; _v: string }
+        Returns: undefined
+      }
       service_content_defaults: { Args: { _key: string }; Returns: Json }
+      service_content_extras_defaults: { Args: { _key: string }; Returns: Json }
+      service_content_merge_extras: {
+        Args: { _c: Json; _key: string }
+        Returns: Json
+      }
       service_content_options: {
         Args: { _city: string; _key: string }
         Returns: Json
