@@ -1,7 +1,7 @@
 import { Gift, Package, ShoppingBasket, Sparkles, UtensilsCrossed, type LucideIcon } from "lucide-react";
 import { useT } from "@/i18n";
 import { hapticSelection } from "@/lib/haptics";
-import { writeHomeTab, type NavTab } from "@/lib/homeTab";
+import { writeHomeTab, type HomeTab, type NavTab } from "@/lib/homeTab";
 
 const TABS: { key: NavTab; labelKey: "nav.clean" | "nav.store" | "nav.food" | "nav.parcelTab" | "nav.rewards"; Icon: LucideIcon }[] = [
   { key: "clean", labelKey: "nav.clean", Icon: Sparkles },
@@ -22,15 +22,15 @@ export function BottomNav({
   onParcel,
 }: {
   activeKey: NavTab | null;
-  onHome: (tab: "clean" | "store" | "food") => void;
+  onHome: (tab: HomeTab) => void;
   onRewards: () => void;
+  /** Unused: Parcel is a Home tab now. Kept so callers compile. */
   onParcel?: () => void;
 }) {
   const t = useT();
   const select = (key: NavTab) => {
     void hapticSelection();
     if (key === "rewards") return onRewards();
-    if (key === "parcel") return onParcel?.();
     writeHomeTab(key);
     onHome(key);
   };
