@@ -608,7 +608,7 @@ export function HomeScreen({
               emptyFallback={tab === "food" ? (
                 <ComingSoonService
                   service="food"
-                  cityId={addressCity?.city_id ?? null}
+                  cityId={addressCity?.cityId ?? null}
                   cityName={activeAddress?.city ?? null}
                   area={activeAddress?.area ?? null}
                   coords={addressCity?.lat != null && addressCity?.lng != null ? { lat: addressCity.lat, lng: addressCity.lng } : homeCoords}
