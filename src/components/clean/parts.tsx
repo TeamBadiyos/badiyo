@@ -74,3 +74,49 @@ export function FullCalendarArt({ fullLabel }: { fullLabel: string }) {
     </svg>
   );
 }
+
+export function HeroCard({ heading, subline, button, imageUrl, bgColor, onClick }: { heading: string; subline: string; button: string; imageUrl?: string | null; bgColor?: string | null; onClick: () => void }) {
+  const dark = !!bgColor;
+  return (
+    <button onClick={onClick} style={bgColor ? { backgroundColor: bgColor } : undefined} className={`relative flex min-h-[150px] w-full overflow-hidden rounded-[22px] p-5 text-left shadow-card-m ${dark ? "" : "bg-surface-soft"}`}>
+      <div className={`relative z-10 flex flex-1 flex-col ${imageUrl ? "max-w-[60%]" : ""}`}>
+        {heading ? (
+          <>
+            <p className={`text-xl font-extrabold leading-tight ${dark ? "text-primary-foreground" : "text-foreground"}`}>{heading}</p>
+            {subline && <p className={`mt-1 text-sm font-semibold ${dark ? "text-primary-foreground/80" : "text-muted-foreground"}`}>{subline}</p>}
+          </>
+        ) : (
+          <p className={`text-xl font-extrabold leading-tight ${dark ? "text-primary-foreground" : "text-foreground"}`}>{subline}</p>
+        )}
+        <span className="mt-auto inline-flex w-fit rounded-full bg-background px-4 py-2 text-sm font-extrabold text-foreground">{button}</span>
+      </div>
+      {imageUrl && <img src={imageUrl} alt="" className="pointer-events-none absolute bottom-0 right-0 h-full max-w-[45%] object-contain object-bottom" />}
+    </button>
+  );
+}
+
+export function ContentCardTile({ title, imageUrl, price, onClick }: { title: string; imageUrl: string; price?: number | null; onClick: () => void }) {
+  return (
+    <button onClick={onClick} className="overflow-hidden rounded-[16px] border border-border bg-card text-left active:scale-[0.98]">
+      <img src={imageUrl} alt={title} loading="lazy" width={500} height={500} className="aspect-square w-full bg-muted object-cover" />
+      <div className="p-2">
+        <p className="truncate text-xs font-bold text-foreground">{title}</p>
+        {price != null && <p className="text-sm font-extrabold text-primary">₹{price}</p>}
+      </div>
+    </button>
+  );
+}
+
+export function OptionImageCard({ name, imageUrl, price, original, active, onClick }: { name: string; imageUrl: string; price: number; original?: number | null; active: boolean; onClick: () => void }) {
+  return (
+    <button onClick={onClick} className={`overflow-hidden rounded-[16px] border-2 text-left ${active ? "border-primary bg-primary/5" : "border-border bg-card"}`}>
+      <img src={imageUrl} alt={name} loading="lazy" width={500} height={500} className="aspect-square w-full bg-muted object-cover" />
+      <div className="p-2">
+        <p className="truncate text-xs font-bold text-foreground">{name}</p>
+        <p className="text-base font-extrabold text-foreground">₹{price}
+          {original != null && original > price && <span className="ml-1 text-xs font-semibold text-muted-foreground line-through">₹{original}</span>}
+        </p>
+      </div>
+    </button>
+  );
+}

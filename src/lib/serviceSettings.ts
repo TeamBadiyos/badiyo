@@ -75,3 +75,29 @@ export function useBookingGstPercent(priceOptionId: string | null | undefined): 
   const { data } = useBookingQuote(priceOptionId);
   return data && Number.isFinite(data.gst_rate) ? data.gst_rate : fallback;
 }
+
+export type ContentCard = { title?: string; title_mr?: string; image_url?: string | null; included?: string[]; not_included?: string[]; included_mr?: string[]; not_included_mr?: string[]; price_option_id?: string | null };
+export type ContentOption = { name?: string; name_mr?: string; price?: number; original_price?: number | null; image_url?: string | null; price_option_id: string };
+export type ServiceContent = {
+  hero?: { heading?: string | null; heading_mr?: string | null; subline?: string | null; subline_mr?: string | null; button?: string | null; button_mr?: string | null; image_url?: string | null; bg_color?: string | null };
+  cards?: ContentCard[];
+  options?: ContentOption[];
+};
+
+/** Language pick: Marathi field when lang=mr and non-empty, else English. */
+export function pick(lang: string, en?: string | null, mr?: string | null): string {
+  return (lang === "mr" && mr?.trim() ? mr : en) ?? "";
+}
+
+export function useServiceContent(key: CleanServiceKey) {
+  const cityId = useCustomerCityId();
+  return useQuery({
+    queryKey: ["app-service-content", key, cityId],
+    staleTime: 5 * 60_000,
+    queryFn: async (): Promise<ServiceContent | null> => {
+      const { data, error } = await rpc("app_service_content", { _service_key: key, _city_id: cityId });
+      if (error || !data) return null;
+      return data as ServiceContent;
+    },
+  });
+}

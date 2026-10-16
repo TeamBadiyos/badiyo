@@ -7,22 +7,42 @@ import { ensureSignedIn } from "@/lib/authGate";
 import { useLanguage } from "@/i18n";
 import { getAllHourSlots, getNext7DayOptions, isHourBookable } from "@/lib/hourSlots";
 import { fetchSlotAllowed, notifyMeForService, slotFitsWindow, timeToMinutes } from "@/lib/serviceHours";
-import { fetchAppFullySlots, useServiceHours, type CleanServiceKey } from "@/lib/serviceSettings";
+import { fetchAppFullySlots, useBookNowAllowed, useServiceHours, type CleanServiceKey } from "@/lib/serviceSettings";
 import type { SegmentService } from "@/lib/segments";
 import type { SelectedSlot } from "../SlotSelectionScreen";
-import { CL } from "./CleanBookSheet";
-import { AddressLine, DayCard, DurationCard, FullCalendarArt } from "./parts";
+import { AddressLine, DayCard, FullCalendarArt, OptionImageCard } from "./parts";
+
+export const CL = {
+  en: {
+    book: "Book", duration: "How long?", vehicle: "Choose vehicle", day: "Which day?", time: "What time?",
+    today: "Today", tomorrow: "Tomorrow", morning: "Morning", afternoon: "Afternoon", evening: "Evening",
+    full: "Full", now: "Now ⚡", cont: "Continue", change: "Change", addAddr: "Add address",
+    dayFull: "Today's slots are full 🙏", dayFullOther: "This day is full 🙏",
+    dayFullSub: "We'll tell you when a slot opens", notify: "🔔 Notify me", seeNext: "See next day →",
+    notified: "We'll tell you when a slot opens", included: "Included", notIncluded: "Not included", bookNow: "Book Now",
+  },
+  mr: {
+    book: "बुक करा", duration: "किती वेळ?", vehicle: "वाहन निवडा", day: "कोणता दिवस?", time: "किती वाजता?",
+    today: "आज", tomorrow: "उद्या", morning: "सकाळ", afternoon: "दुपार", evening: "संध्याकाळ",
+    full: "पूर्ण", now: "आत्ता ⚡", cont: "पुढे जा", change: "बदला", addAddr: "पत्ता जोडा",
+    dayFull: "आजचे सर्व स्लॉट भरले 🙏", dayFullOther: "हा दिवस भरला आहे 🙏",
+    dayFullSub: "स्लॉट मोकळा होताच आम्ही कळवू", notify: "🔔 मला कळवा", seeNext: "पुढचा दिवस पहा →",
+    notified: "स्लॉट मोकळा होताच आम्ही कळवू", included: "समाविष्ट", notIncluded: "समाविष्ट नाही", bookNow: "बुक करा",
+  },
+};
 
 export type ScheduleDraft = { optionId: string | null; day: string | null; slotMins: number | null };
+const NOW = -1;
 
 export function CleanScheduleScreen({
-  options, isAuto, serviceKey, addressLine, draft, onDraftChange, onChangeAddress, onBack, onContinue,
+  options, isAuto, serviceKey, addressLine, draft, fallbackImage, onDraftChange, onChangeAddress, onBack, onContinue,
 }: {
   options: SegmentService[];
   isAuto?: boolean;
   serviceKey: CleanServiceKey;
   addressLine: string | null;
   draft: ScheduleDraft;
+  fallbackImage: (o: SegmentService) => string;
   onDraftChange: (d: ScheduleDraft) => void;
   onChangeAddress: () => void;
   onBack: () => void;
@@ -32,7 +52,9 @@ export function CleanScheduleScreen({
   const s = lang === "mr" ? CL.mr : CL.en;
   const cityId = useCustomerCityId();
   const days = useMemo(getNext7DayOptions, []);
-  const [optionId, setOptionId] = useState<string | null>(draft.optionId);
+  const [optionId, setOptionId] = useState<string | null>(
+    draft.optionId ?? (options.find((o) => Number(o.duration_minutes) === 120) ?? options[0])?.id ?? null,
+  );
   const [day, setDay] = useState<string>(draft.day ?? days[0].key);
   const [slotMins, setSlotMins] = useState<number | null>(draft.slotMins);
   useEffect(() => onDraftChange({ optionId, day, slotMins }), [optionId, day, slotMins]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -41,6 +63,10 @@ export function CleanScheduleScreen({
   const mins = Number(option?.duration_minutes) || 60;
 
   const { data: state } = useServiceHours(serviceKey);
+  const { data: gate } = useBookNowAllowed(serviceKey);
+  const isToday = day === days[0].key;
+  const nowOk = isToday && !!gate?.allowed && (state == null || state.can_order);
+
   const openM = timeToMinutes(state?.open_time);
   const closeM = timeToMinutes(state?.close_time);
   const allSlots = useMemo(
@@ -62,19 +88,32 @@ export function CleanScheduleScreen({
   });
 
   const visible = allSlots.filter((x) => isHourBookable(day, x.mins) && slotFitsWindow(state, x.mins, mins));
-  const isFull = (m: number) => (fullSlots?.has(`${day}|${m}`) ?? false) || dayAllowed?.get(m) === false;
-  const dayFull = !!option && !!dayAllowed && !isFetching && visible.every((x) => isFull(x.mins));
+  const isFull = (m: number) => m !== NOW && ((fullSlots?.has(`${day}|${m}`) ?? false) || dayAllowed?.get(m) === false);
+  const loaded = !!option && !!dayAllowed && !isFetching;
+  const dayFull = loaded && !nowOk && visible.every((x) => isFull(x.mins));
 
+  // Pre-select earliest available (Now first when offered); drop invalid choice.
   useEffect(() => {
-    if (slotMins !== null && (isFull(slotMins) || !visible.some((x) => x.mins === slotMins))) setSlotMins(null);
+    const valid = slotMins === NOW ? nowOk : slotMins !== null && !isFull(slotMins) && visible.some((x) => x.mins === slotMins);
+    if (valid) return;
+    if (nowOk) return setSlotMins(NOW);
+    if (!loaded) return;
+    setSlotMins(visible.find((x) => !isFull(x.mins))?.mins ?? null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fullSlots, dayAllowed, day, mins]);
+  }, [fullSlots, dayAllowed, day, mins, nowOk, loaded]);
 
-  const groups = [
-    { label: s.morning, list: visible.filter((x) => x.mins < 720) },
-    { label: s.afternoon, list: visible.filter((x) => x.mins >= 720 && x.mins < 960) },
-    { label: s.evening, list: visible.filter((x) => x.mins >= 960) },
-  ].filter((g) => g.list.length > 0);
+  type Cell = { mins: number; label: string };
+  const nowCell: Cell = { mins: NOW, label: s.now };
+  const groups: { label: string; list: Cell[] }[] = [
+    { label: s.morning, list: visible.filter((x) => x.mins < 720) as Cell[] },
+    { label: s.afternoon, list: visible.filter((x) => x.mins >= 720 && x.mins < 960) as Cell[] },
+    { label: s.evening, list: visible.filter((x) => x.mins >= 960) as Cell[] },
+  ];
+  if (nowOk) {
+    const g = groups.find((x) => x.list.length > 0) ?? groups[0];
+    g.list = [nowCell, ...g.list];
+  }
+  const shownGroups = groups.filter((g) => g.list.length > 0);
 
   const dayIdx = days.findIndex((d) => d.key === day);
   const dayLabel = (i: number) => (i === 0 ? s.today : i === 1 ? s.tomorrow : days[i].weekday);
@@ -82,6 +121,7 @@ export function CleanScheduleScreen({
 
   const go = () => {
     if (!option || slotMins === null) return;
+    if (slotMins === NOW) return onContinue(option, { mode: "now" });
     const slot = allSlots.find((x) => x.mins === slotMins)!;
     onContinue(option, { mode: "later", day, slotId: slot.mins, slotLabel: slot.label, slotRange: slot.range });
   };
@@ -99,10 +139,18 @@ export function CleanScheduleScreen({
           <button onClick={onBack} aria-label="Back" className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card">
             <ArrowLeft className="h-5 w-5 text-foreground" />
           </button>
-          <h1 className="text-xl font-extrabold text-foreground">{s.schedule}</h1>
+          <h1 className="text-xl font-extrabold text-foreground">{s.book}</h1>
         </div>
         <div className="mt-4">
           <AddressLine text={addressLine} changeLabel={s.change} addLabel={s.addAddr} onChange={onChangeAddress} />
+        </div>
+
+        <h3 className="mt-6 text-base font-extrabold text-foreground">{isAuto ? s.vehicle : s.duration}</h3>
+        <div className="mt-3 grid grid-cols-3 gap-2.5">
+          {options.map((o) => (
+            <OptionImageCard key={o.id} name={o.duration_label} imageUrl={o.image_url || fallbackImage(o)} price={Number(o.price)}
+              original={o.strikethrough_price != null ? Number(o.strikethrough_price) : null} active={o.id === optionId} onClick={() => setOptionId(o.id)} />
+          ))}
         </div>
 
         <h3 className="mt-6 text-base font-extrabold text-foreground">{s.day}</h3>
@@ -112,16 +160,7 @@ export function CleanScheduleScreen({
           ))}
         </div>
 
-        <h3 className="mt-6 text-base font-extrabold text-foreground">{isAuto ? s.vehicle : s.duration}</h3>
-        <div className="-mx-5 mt-3 flex gap-2.5 overflow-x-auto px-5 pb-1 pt-2">
-          {options.map((o) => (
-            <DurationCard key={o.id} option={o} active={o.id === optionId} popularLabel={s.popular} fullLabel={s.full} onClick={() => setOptionId(o.id)} className="min-w-[104px] shrink-0" />
-          ))}
-        </div>
-
-        {!option ? (
-          <p className="mt-6 text-sm text-muted-foreground">{s.pickDuration}</p>
-        ) : dayFull || visible.length === 0 ? (
+        {option && (dayFull || (loaded && shownGroups.length === 0)) ? (
           <div className="mt-6 rounded-[20px] bg-surface-soft p-5 text-center">
             <FullCalendarArt fullLabel={s.full} />
             <p className="mt-3 text-base font-extrabold text-foreground">{dayIdx === 0 ? s.dayFull : s.dayFullOther}</p>
@@ -136,10 +175,10 @@ export function CleanScheduleScreen({
         ) : (
           <>
             <h3 className="mt-6 text-base font-extrabold text-foreground">{s.time}</h3>
-            {groups.map((g) => (
+            {shownGroups.map((g) => (
               <div key={g.label} className="mt-3">
                 <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">{g.label}</p>
-                <div className="mt-2 grid grid-cols-4 gap-2">
+                <div className="-mx-5 mt-2 flex gap-2 overflow-x-auto px-5 pb-1">
                   {g.list.map((x) => {
                     const full = isFull(x.mins);
                     const active = x.mins === slotMins;
@@ -148,7 +187,7 @@ export function CleanScheduleScreen({
                         key={x.mins}
                         disabled={full}
                         onClick={() => setSlotMins(x.mins)}
-                        className={`rounded-[12px] border-2 px-1 py-2 text-center text-[13px] font-bold ${
+                        className={`min-w-[88px] shrink-0 rounded-[14px] border-2 px-3 py-3 text-center text-sm font-bold ${
                           full ? "border-border bg-muted text-muted-foreground" : active ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground"
                         }`}
                       >
