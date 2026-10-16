@@ -114,7 +114,7 @@ async function fetchAll() {
 function friendLabel(t: Txn) {
   const name = t.referred_name?.trim();
   if (name) return name;
-  return "Friend";
+  return L("Friend", "मित्र");
 }
 
 function initialsFor(t: Txn) {
