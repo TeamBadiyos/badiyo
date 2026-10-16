@@ -302,6 +302,17 @@ function Index() {
   const afterLoginRef = useRef<Phase | null>(null);
   const [showFirstOpen, setShowFirstOpen] = useState(false);
   useEffect(() => {
+    const onNeedLogin = () => {
+      const cur = phaseRef.current;
+      afterLoginRef.current = cur === "login" ? null : cur;
+      historyRef.current.push(cur);
+      phaseRef.current = "login";
+      _setPhase("login");
+    };
+    window.addEventListener(LOGIN_REQUIRED_EVENT, onNeedLogin);
+    return () => window.removeEventListener(LOGIN_REQUIRED_EVENT, onNeedLogin);
+  }, []);
+  useEffect(() => {
     try {
       if (!window.localStorage.getItem(FIRST_OPEN_KEY)) setShowFirstOpen(true);
     } catch {
