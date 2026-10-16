@@ -7,7 +7,10 @@ import { z } from "zod";
 export const guestLuckyDrawStatus = createServerFn({ method: "GET" }).handler(async () => {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data, error } = await supabaseAdmin.rpc("customer_lucky_draw_status");
-  if (error) throw new Error("Could not load the contest");
+  if (error) {
+    console.error("[guest contest]", error.message);
+    throw new Error("Could not load the contest");
+  }
   return JSON.stringify(data ?? null);
 });
 
