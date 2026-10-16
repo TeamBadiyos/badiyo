@@ -11483,6 +11483,7 @@ export type Database = {
         Returns: string
       }
       app_city_price_options: { Args: { _city_id: string }; Returns: Json }
+      app_clean_media: { Args: { _city?: string }; Returns: Json }
       app_expert_application_agreements: { Args: never; Returns: Json }
       app_expert_application_get: { Args: never; Returns: Json }
       app_expert_application_save: {
@@ -11948,6 +11949,8 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      clean_media_normalize: { Args: { _p: Json }; Returns: Json }
+      clean_media_require: { Args: { _city: string }; Returns: undefined }
       coins_release_stale_reservations: { Args: never; Returns: number }
       compute_tds: {
         Args: { _gross: number; _owner_id: string; _owner_type: string }
@@ -13860,6 +13863,7 @@ export type Database = {
         Args: { _city_id: string; _keys: string[] }
         Returns: Json
       }
+      staff_get_clean_media: { Args: { _city: string }; Returns: Json }
       staff_get_referral_config: { Args: never; Returns: Json }
       staff_handover_booking_expert: {
         Args: {
@@ -14095,6 +14099,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      staff_reset_clean_media: { Args: { _city: string }; Returns: Json }
       staff_reset_receiver_location: {
         Args: { _reason: string; _receiver_id: string }
         Returns: Json
@@ -14198,6 +14203,10 @@ export type Database = {
       staff_save_capacity_message: {
         Args: { _payload: Json }
         Returns: undefined
+      }
+      staff_save_clean_media: {
+        Args: { _city: string; _payload: Json }
+        Returns: Json
       }
       staff_save_company_profile: { Args: { _p: Json }; Returns: undefined }
       staff_save_wallet_bonus_rule: {
