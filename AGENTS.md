@@ -14,3 +14,4 @@
 - Guest public reads (parcel price preview, contest info) go through unauthenticated server functions that return only non-personal data — why: customer RPCs require a session.
 - Clean tab first frame renders from device cache (hours/book-now/content in localStorage, images via src/lib/imageStore.ts on native) and re-evaluates open/closed locally in IST — why: no guessed 'Open now' or white flash on app open.
 - Clean booking page state lives in `src/lib/cleanBookingDraft.ts`; every service entry (search, Store tab service hits) opens the Clean booking page via that draft, and Checkout back returns to Home where CleanTab restores it — why: no old slot/address pages in the back stack. Address changes use `LocationPickerSheet` as an overlay, never a phase.
+- `BookingSummaryScreen` (also exported as `CheckoutScreen`) is the shared checkout layout; future Store/Food/Parcel checkouts reuse it — why: one checkout across services.
