@@ -477,6 +477,7 @@ export const mr: Partial<Record<keyof typeof en, string>> = {
   "language.saved": "भाषा बदलली",
   "language.saveFailed": "भाषा सेव्ह होऊ शकली नाही. कृपया पुन्हा प्रयत्न करा.",
 
+  "bring.waiting": "👥 {city} मध्ये {n} लोक आधीच वाट पाहत आहेत",
   "notServiceable.title": "सेवा क्षेत्र",
   "notServiceable.heading": "आम्ही अजून तुमच्या भागात नाही",
   "notServiceable.sub": "badiyos अजून इथे सुरू झालेली नाही — पण आम्ही वेगाने विस्तार करत आहोत.",

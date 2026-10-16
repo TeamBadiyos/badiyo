@@ -3,17 +3,16 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Check } from "lucide-react";
 import { toast } from "sonner";
 import { useT } from "@/i18n";
-import { getAuthUser } from "@/lib/authUser";
-import { fetchSegments } from "@/lib/segments";
-import { joinWaitlist } from "@/lib/serviceability";
+import { supabase } from "@/integrations/supabase/client";
+import { ensureSignedIn } from "@/lib/authGate";
 import { BadiyoLogo } from "./BadiyoLogo";
 
 type Svc = "maid" | "grocery" | "food" | "parcel";
-const SERVICES: { key: Svc; emoji: string; segmentSlug: string }[] = [
-  { key: "maid", emoji: "🧹", segmentSlug: "clean" },
-  { key: "grocery", emoji: "🛒", segmentSlug: "store" },
-  { key: "food", emoji: "🍱", segmentSlug: "store" },
-  { key: "parcel", emoji: "📦", segmentSlug: "courier" },
+const SERVICES: { key: Svc; emoji: string }[] = [
+  { key: "maid", emoji: "🧹" },
+  { key: "grocery", emoji: "🛒" },
+  { key: "food", emoji: "🍱" },
+  { key: "parcel", emoji: "📦" },
 ];
 
 /**
@@ -35,32 +34,33 @@ export function BringBadiyosScreen({
   const city = location.city?.split(",")[0]?.trim() || t("bring.yourCity");
   const [step, setStep] = useState<"intro" | "pick" | "done">("intro");
   const [picked, setPicked] = useState<Set<Svc>>(new Set());
-  const { data: segments = [] } = useQuery({ queryKey: ["segments"], queryFn: fetchSegments });
+
+  const { data: waiting = 0 } = useQuery({
+    queryKey: ["demand_waiting_count", city],
+    staleTime: 5 * 60_000,
+    queryFn: async () => {
+      const { data } = await supabase.rpc("demand_waiting_count" as never, { _city: city } as never);
+      return Number(data ?? 0);
+    },
+  });
 
   const notify = useMutation({
     mutationFn: async () => {
-      const { data } = await getAuthUser();
-      if (!data.user) {
+      if (!(await ensureSignedIn())) {
         toast(t("bring.loginFirst"));
-        onRequireLogin?.();
         throw new Error("login");
       }
-      const segIds = new Set<string>();
-      for (const s of SERVICES) {
-        if (!picked.has(s.key)) continue;
-        const seg = segments.find((g) => g.slug === s.segmentSlug);
-        if (seg) segIds.add(seg.id);
-      }
-      const wanted = SERVICES.filter((s) => picked.has(s.key)).map((s) => s.key).join(", ");
-      const area = location.area ? `${location.area} · ` : "";
-      for (const segmentId of segIds) {
-        await joinWaitlist({
-          segmentId,
-          latitude: location.latitude,
-          longitude: location.longitude,
-          city,
-          addressText: `${area}${location.addressText ?? ""} [wants: ${wanted}]`,
-        });
+      const { error } = await supabase.rpc("submit_demand_request" as never, {
+        _services: SERVICES.filter((s) => picked.has(s.key)).map((s) => s.key),
+        _city: city,
+        _area: location.area ?? null,
+        _lat: location.latitude,
+        _lng: location.longitude,
+        _source: "outside-city",
+        _address_text: location.addressText ?? null,
+      } as never);
+      if (error) throw new Error(t("notServiceable.joinFailed"));
+    },
       }
     },
     onSuccess: () => setStep("done"),
@@ -155,6 +155,11 @@ export function BringBadiyosScreen({
             >
               {t("bring.cta", { city })}
             </button>
+            {waiting >= 20 && (
+              <p className="mt-4 text-sm font-bold text-foreground">
+                {t("bring.waiting", { n: String(waiting), city })}
+              </p>
+            )}
             {onChangeAddress && (
               <button onClick={onChangeAddress} className="mt-4 text-sm font-bold text-primary">
                 {t("notServiceable.changeAddress")}
