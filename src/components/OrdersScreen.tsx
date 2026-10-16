@@ -656,12 +656,10 @@ export function OrdersScreen({
 
 
       <BottomNav
-        activeKey="orders"
-        onHome={onOpenHome}
-        onOrders={() => {}}
+        activeKey={null}
+        onHome={() => onOpenHome()}
         onRewards={onOpenRewards}
-        onParcel={onOpenCourier}
-        showParcel={courierEnabled}
+        onParcel={courierEnabled ? onOpenCourier : undefined}
       />
     </main>
   );

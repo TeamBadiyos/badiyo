@@ -1,105 +1,69 @@
-import { Home, ClipboardList, Gift, Package, type LucideIcon } from "lucide-react";
+import { Gift, Package, ShoppingBasket, Sparkles, UtensilsCrossed, type LucideIcon } from "lucide-react";
 import { useT } from "@/i18n";
 import { hapticSelection } from "@/lib/haptics";
+import { writeHomeTab, type NavTab } from "@/lib/homeTab";
 
-type TabKey = "home" | "orders" | "parcel" | "rewards";
+const TABS: { key: NavTab; labelKey: "nav.clean" | "nav.store" | "nav.food" | "nav.parcelTab" | "nav.rewards"; Icon: LucideIcon }[] = [
+  { key: "clean", labelKey: "nav.clean", Icon: Sparkles },
+  { key: "store", labelKey: "nav.store", Icon: ShoppingBasket },
+  { key: "food", labelKey: "nav.food", Icon: UtensilsCrossed },
+  { key: "parcel", labelKey: "nav.parcelTab", Icon: Package },
+  { key: "rewards", labelKey: "nav.rewards", Icon: Gift },
+];
 
-type Tab = {
-  key: TabKey;
-  label: string;
-  Icon: LucideIcon;
-  onClick: () => void;
-  primary?: boolean;
-};
-
+/**
+ * Five main tabs: Clean · Store · Food · Parcel · Rewards.
+ * Clean/Store/Food live inside Home; `onHome(tab)` opens Home on that tab.
+ */
 export function BottomNav({
   activeKey,
   onHome,
-  onOrders,
   onRewards,
   onParcel,
-  showParcel = false,
 }: {
-  activeKey: TabKey;
-  onHome: () => void;
-  onOrders: () => void;
+  activeKey: NavTab | null;
+  onHome: (tab: "clean" | "store" | "food") => void;
   onRewards: () => void;
   onParcel?: () => void;
-  showParcel?: boolean;
 }) {
   const t = useT();
-  const withHaptic = (fn: () => void) => () => {
+  const select = (key: NavTab) => {
     void hapticSelection();
-    fn();
+    if (key === "rewards") return onRewards();
+    if (key === "parcel") return onParcel?.();
+    writeHomeTab(key);
+    onHome(key);
   };
-  const tabs: Tab[] = [
-    { key: "home", label: t("nav.home"), Icon: Home, onClick: withHaptic(onHome) },
-    { key: "orders", label: t("nav.orders"), Icon: ClipboardList, onClick: withHaptic(onOrders) },
-    ...(showParcel && onParcel
-      ? [
-          {
-            key: "parcel" as const,
-            label: t("nav.parcel"),
-            Icon: Package,
-            onClick: withHaptic(onParcel),
-            primary: true,
-          },
-        ]
-      : []),
-    { key: "rewards", label: t("nav.rewards"), Icon: Gift, onClick: withHaptic(onRewards) },
-  ];
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-10 border-t border-border bg-card"
+      className="fixed inset-x-0 bottom-0 z-10 border-t border-border bg-card shadow-nav"
       style={{
         paddingBottom: "max(2px, var(--app-safe-bottom))",
-        height: "calc(72px + var(--app-safe-bottom))",
-        borderTopLeftRadius: 24,
-        borderTopRightRadius: 24,
+        height: "calc(66px + var(--app-safe-bottom))",
       }}
     >
-      <div className="mx-auto flex h-full w-full max-w-md items-stretch justify-around px-4">
-        {tabs.map(({ key, label, Icon, onClick, primary }) => {
+      <div className="mx-auto flex h-full w-full max-w-md items-stretch justify-around px-2">
+        {TABS.map(({ key, labelKey, Icon }) => {
           const isActive = activeKey === key;
-          if (primary) {
-            return (
-              <button
-                key={key}
-                onClick={onClick}
-                aria-label={label}
-                className="relative flex flex-1 flex-col items-center justify-end pb-2"
-              >
-                <div
-                  className={`-mt-6 flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition ${
-                    isActive
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-primary/90 text-primary-foreground"
-                  }`}
-                >
-                  <Icon className="h-6 w-6" />
-                </div>
-                <span
-                  className={`mt-1 text-[11px] font-semibold ${
-                    isActive ? "text-primary" : "text-muted-foreground"
-                  }`}
-                >
-                  {label}
-                </span>
-              </button>
-            );
-          }
           return (
             <button
               key={key}
-              onClick={onClick}
-              aria-label={label}
-              className={`flex flex-1 flex-col items-center justify-center gap-1 text-xs font-semibold transition ${
+              onClick={() => select(key)}
+              aria-label={t(labelKey)}
+              aria-current={isActive ? "page" : undefined}
+              className={`flex flex-1 flex-col items-center justify-center gap-1 text-[11px] font-bold transition ${
                 isActive ? "text-primary" : "text-muted-foreground"
               }`}
             >
-              <Icon className="h-5 w-5" />
-              <span>{label}</span>
+              <span
+                className={`flex h-8 w-12 items-center justify-center rounded-full transition ${
+                  isActive ? "bg-primary/12" : ""
+                }`}
+              >
+                <Icon className="h-[22px] w-[22px]" strokeWidth={isActive ? 2.4 : 2} />
+              </span>
+              {t(labelKey)}
             </button>
           );
         })}
