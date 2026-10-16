@@ -2455,6 +2455,7 @@ export type Database = {
           product_id: string | null
           reason: string | null
           service_type: string
+          source: string
           status: string
           submitted_by: string | null
           suggested_name: string
@@ -2470,6 +2471,7 @@ export type Database = {
           product_id?: string | null
           reason?: string | null
           service_type: string
+          source?: string
           status?: string
           submitted_by?: string | null
           suggested_name: string
@@ -2485,6 +2487,7 @@ export type Database = {
           product_id?: string | null
           reason?: string | null
           service_type?: string
+          source?: string
           status?: string
           submitted_by?: string | null
           suggested_name?: string
@@ -12196,7 +12199,12 @@ export type Database = {
         Args: { _audience: string; _targets: string[]; _uid: string }
         Returns: boolean
       }
+      cat_guess: { Args: { _label: string; _svc: string }; Returns: string }
       cat_is_admin: { Args: never; Returns: boolean }
+      cat_push: {
+        Args: { _body: string; _merchant: string; _title: string }
+        Returns: undefined
+      }
       cc_uid: { Args: never; Returns: string }
       cc_visible_cities: { Args: never; Returns: string[] }
       check_booking_capacity: { Args: { _booking_id: string }; Returns: Json }
@@ -13949,6 +13957,7 @@ export type Database = {
         Returns: Json
       }
       staff_allowed_city_ids: { Args: never; Returns: string[] }
+      staff_apply_label_mapping: { Args: { _rows: Json }; Returns: Json }
       staff_apply_product_category_map: {
         Args: { _map: Json }
         Returns: number
@@ -14350,6 +14359,10 @@ export type Database = {
       }
       staff_insurance_stats: { Args: never; Returns: Json }
       staff_list_bulk_plans: { Args: never; Returns: Json }
+      staff_list_category_suggestions: {
+        Args: { _service: string }
+        Returns: Json
+      }
       staff_list_cities: { Args: never; Returns: Json }
       staff_list_customer_invoices: {
         Args: { _from: string; _q?: string; _service?: string; _to: string }
@@ -14550,6 +14563,10 @@ export type Database = {
         Args: { _booking_id: string; _reason: string }
         Returns: undefined
       }
+      staff_reject_category_suggestion: {
+        Args: { _id: string; _reason: string }
+        Returns: Json
+      }
       staff_remove_service_holiday: {
         Args: { _holiday_id: string }
         Returns: Json
@@ -14580,6 +14597,17 @@ export type Database = {
       }
       staff_reset_service_content: {
         Args: { _city: string; _service_key: string }
+        Returns: Json
+      }
+      staff_resolve_category_suggestion: {
+        Args: {
+          _id: string
+          _image_path?: string
+          _mode: string
+          _name_en?: string
+          _name_mr?: string
+          _target_id?: string
+        }
         Returns: Json
       }
       staff_retry_refund: {
