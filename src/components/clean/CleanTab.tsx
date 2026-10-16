@@ -43,6 +43,14 @@ const T = {
 };
 const TILE_IMG = [jhadu, dusting, pocha, kapde, bartan, more];
 
+type CleanMedia = {
+  maid_url?: string;
+  heading?: string;
+  heading_mr?: string;
+  tiles?: { title?: string; title_mr?: string; url?: string; enabled?: boolean }[];
+  tile_urls?: string[];
+};
+
 function washImage(label: string): string {
   const l = label.toLowerCase();
   if (l.includes("combo")) return washCombo;
@@ -156,6 +164,49 @@ export function CleanTab({
         </button>
       </div>
 
+      {/* Car & Bike Wash */}
+      {autoOptions.length > 0 && (
+        <>
+          <h2 className="mt-6 text-lg font-extrabold text-foreground">{s.wash}</h2>
+          <div className="mt-2 grid grid-cols-3 gap-2.5">
+            {autoOptions.map((o) => (
+              <button key={o.id} onClick={() => open("now", true, o.id)} className="overflow-hidden rounded-[16px] border border-border bg-card text-left active:scale-[0.98]">
+                <img src={o.image_url || washImage(o.duration_label)} alt={o.duration_label} loading="lazy" width={500} height={500} className="aspect-square w-full object-cover" />
+                <div className="p-2">
+                  <p className="truncate text-xs font-bold text-foreground">{o.duration_label.replace(/\s*wash/i, "")}</p>
+                  <p className="text-sm font-extrabold text-primary">₹{Number(o.price)}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+
+      {/* Offer card */}
+      {promo?.text && (
+        <button onClick={onOpenPromo} className="surface-brand mt-6 flex w-full items-center gap-3 rounded-[18px] p-4 text-left shadow-card-m">
+          <Gift className="h-6 w-6 shrink-0 text-primary-foreground" />
+          <p className="flex-1 text-sm font-bold leading-snug text-primary-foreground">{promo.text}</p>
+          <ChevronRight className="h-5 w-5 text-primary-foreground" />
+        </button>
+      )}
+
+      {/* One expert, all work — heading, titles, photos and on/off from CC clean_media */}
+      {tiles.length > 0 && (
+        <>
+          <h2 className="mt-7 text-xl font-extrabold text-foreground">{heading}</h2>
+          <div className="mt-3 grid grid-cols-3 gap-x-3 gap-y-4">
+            {tiles.map((t, i) => (
+              <div key={i}>
+                <img src={t.url} alt={t.title} loading="lazy" width={500} height={500} className="aspect-square w-full rounded-[16px] bg-muted object-cover" />
+                <p className="mt-2 whitespace-pre-line text-center text-[13px] font-semibold leading-tight text-foreground">{t.title}</p>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+
       {/* Book again */}
       {againOption && (
         <button
@@ -186,7 +237,7 @@ export function CleanTab({
       <CleanBookSheet
         open={!!sheet}
         mode={sheet?.mode ?? "now"}
-        onModeChange={(m) => setSheet((p) => (p ? { ...p, mode: closed ? "later" : m } : p))}
+        onModeChange={(m) => setSheet((p) => (p ? { ...p, mode: m } : p))}
         options={sheet?.auto ? autoOptions : homeOptions}
         initialOptionId={sheet?.optionId}
         isAuto={sheet?.auto}
