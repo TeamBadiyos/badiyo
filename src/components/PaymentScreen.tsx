@@ -9,7 +9,8 @@ import { getErrorMessage } from "@/lib/errorMessage";
 import { useT } from "@/i18n";
 import { hapticImpact } from "@/lib/haptics";
 import { billBreakdown } from "@/lib/gst";
-import { useBookingGstPercent } from "@/lib/serviceSettings";
+import { fetchAppFullySlots, useBookingGstPercent } from "@/lib/serviceSettings";
+import { getCustomerCityId } from "@/lib/customerCity";
 import type { AppliedCoupon } from "@/lib/coupons";
 import { releaseMyCoins, releaseMyCoupon } from "@/lib/coins";
 
@@ -238,6 +239,7 @@ export function PaymentScreen({
     setRefId(null);
     setBookingLoadError(null);
     let rzpOrderId: string | null = null;
+    const svcKey = slot.serviceKey ?? "clean";
     try {
       const receipt = `bk_${Date.now()}`;
 
@@ -246,7 +248,7 @@ export function PaymentScreen({
       if (slot.mode === "now") {
         const { data: gate, error: gateErr } = await supabase.rpc(
           "service_instant_allowed" as never,
-          withCity({ _service_key: "clean", _duration_minutes: Number(service.duration_minutes) || 60 }) as never,
+          withCity({ _service_key: svcKey, _duration_minutes: Number(service.duration_minutes) || 60 }) as never,
         );
         const g = gate as { ok?: boolean; close_time?: string | null } | null;
         if (!gateErr && g && g.ok === false) {
@@ -265,8 +267,11 @@ export function PaymentScreen({
       {
         const lang = readLangOutsideReact();
         if (slot.mode === "now") {
-          const { data: on, error: onErr } = await supabase.rpc("instant_booking_enabled" as never);
-          if (!onErr && on === false) {
+          const { data: on, error: onErr } = await supabase.rpc(
+            "app_book_now_allowed" as never,
+            { _service_key: svcKey, _city_id: getCustomerCityId() } as never,
+          );
+          if (!onErr && (on as { allowed?: boolean } | null)?.allowed === false) {
             toast(
               lang === "mr"
                 ? "सध्या इन्स्टंट बुकिंग पूर्ण भरले आहेत. कृपया पुढील वेळ निवडा."
@@ -278,15 +283,10 @@ export function PaymentScreen({
         } else {
           const day = new Date(slot.day).toISOString().slice(0, 10);
           const mins = Number(slot.slotId); // minutes since midnight
-          const { data: full, error: fullErr } = await supabase.rpc(
-            "list_fully_booked_slots" as never,
-            withCity({ _service_key: "clean", _from: day, _to: day }) as never,
-          );
-          const rows = (full as { start_hour: number; start_minute?: number }[] | null) ?? [];
+          const full = await fetchAppFullySlots(svcKey, day, day);
           if (
-            !fullErr &&
             Number.isFinite(mins) &&
-            rows.some((r) => Number(r.start_hour) * 60 + Number(r.start_minute ?? 0) === mins)
+            full.has(`${day}|${mins}`)
           ) {
             toast(
               lang === "mr"
