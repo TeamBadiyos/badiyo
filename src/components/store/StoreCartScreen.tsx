@@ -7,7 +7,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Check, Loader2, MapPin, Minus, Plus, ShoppingBag } from "lucide-react";
 import { toast } from "sonner";
-import { useT } from "@/i18n";
+import { useLanguage, useT } from "@/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthUser } from "@/lib/authUser";
 import { hapticImpact } from "@/lib/haptics";
@@ -65,7 +65,10 @@ const ERROR_KEYS: Record<string, TranslationKey> = {
 export function StoreCartScreen({
   onBack,
   onDone,
+  onAddMore,
 }: {
+  /** Back to the shop so the customer can add more. */
+  onAddMore?: () => void;
   onBack: () => void;
   /** Kept for callers; adding an address now happens inside the address screen. */
   onAddAddress?: () => void;
@@ -75,6 +78,7 @@ export function StoreCartScreen({
   // picker registers its own handler
   useBackHandler(true, () => onBack());
   const t = useT();
+  const { lang } = useLanguage();
   const cart = useStoreCart();
   const queryClient = useQueryClient();
   const [addressId, setAddressId] = useState<string | null>(null);
@@ -219,7 +223,7 @@ export function StoreCartScreen({
             <ul className="mt-3 space-y-2">
               {cart.cart.lines.map((l) => (
                 <li
-                  key={l.product_id}
+                  key={l.key}
                   className="flex items-center gap-3 rounded-[18px] border border-border bg-card p-2.5"
                 >
                   <StoreImage
@@ -230,7 +234,7 @@ export function StoreCartScreen({
                   />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-[13px] font-bold text-foreground">{l.name}</p>
-                    <p className="truncate text-[11px] text-muted-foreground">{l.unit ?? ""}</p>
+                    <p className="truncate text-[11px] text-muted-foreground">{[l.variant_name, ...(l.addons ?? []).map((a) => a.name), l.unit].filter(Boolean).join(" · ")}</p>
                     <p className="mt-0.5 text-[13px] font-extrabold text-foreground">
                       ₹{(l.price * l.quantity).toFixed(0)}
                     </p>
@@ -241,7 +245,7 @@ export function StoreCartScreen({
                       aria-label="-"
                       onClick={() => {
                         void hapticImpact("light");
-                        cart.setQuantity(l.product_id, l.quantity - 1);
+                        cart.setQuantity(l.key, l.quantity - 1);
                       }}
                       className="flex h-6 w-6 items-center justify-center rounded-full active:scale-90"
                     >
@@ -255,7 +259,7 @@ export function StoreCartScreen({
                       aria-label="+"
                       onClick={() => {
                         void hapticImpact("light");
-                        cart.setQuantity(l.product_id, l.quantity + 1);
+                        cart.setQuantity(l.key, l.quantity + 1);
                       }}
                       className="flex h-6 w-6 items-center justify-center rounded-full active:scale-90"
                     >
@@ -265,6 +269,16 @@ export function StoreCartScreen({
                 </li>
               ))}
             </ul>
+            {onAddMore && (
+              <button
+                type="button"
+                onClick={onAddMore}
+                className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-[14px] border border-dashed border-primary/40 py-2.5 text-sm font-extrabold text-primary"
+              >
+                <Plus className="h-4 w-4" />
+                {lang === "mr" ? "आणखी वस्तू जोडा" : "Add more items"}
+              </button>
+            )}
 
             {/* Delivery address — opens the app's own address picker */}
             <section className="mt-4 overflow-hidden rounded-[18px] border border-border bg-card">
