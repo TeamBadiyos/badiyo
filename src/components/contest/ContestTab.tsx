@@ -1,3 +1,4 @@
+import { ensureSignedIn } from "@/lib/authGate";
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Trophy, Gift, Users, PartyPopper } from "lucide-react";
@@ -22,6 +23,7 @@ export function useEnrol() {
   const [busy, setBusy] = useState(false);
   const enrol = async () => {
     if (busy) return;
+    if (!(await ensureSignedIn())) return;
     setBusy(true);
     try {
       const no = await enrolLuckyDraw();
