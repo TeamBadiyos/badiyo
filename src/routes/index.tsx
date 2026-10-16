@@ -21,6 +21,7 @@ import { clearPersistedQueries } from "@/lib/queryPersistence";
 
 import { isNativeShell } from "@/lib/nativeServerFn";
 import { LiveServiceBar } from "@/components/tracking/LiveServiceBar";
+import { FirstOpenScreen, FIRST_OPEN_KEY } from "@/components/FirstOpenScreen";
 import { CompleteProfileSheet } from "@/components/CompleteProfileSheet";
 
 // --- Eager: only what the very first paint needs (splash → login). ---
@@ -269,6 +270,17 @@ type Phase =
 
 
 
+const GUEST_LOCKED_PHASES = new Set<Phase>([
+  "address",
+  "wallet",
+  "rewards",
+  "orders",
+  "courier",
+  "courier-track",
+  "store-track",
+  "parcels-for-you",
+]);
+
 const TRACKING_PHASES = new Set<Phase>([
   "searching-expert",
   "expert-assigned",
@@ -283,7 +295,24 @@ function Index() {
   const phaseRef = useRef<Phase>("splash");
   const lastBackAtRef = useRef<number>(0);
 
-  const setPhase = useCallback((next: Phase) => {
+  // Guests browse freely; these screens need a phone login first. The screen
+  // they wanted is remembered and opened right after login succeeds.
+  const signedInRef = useRef(false);
+  const afterLoginRef = useRef<Phase | null>(null);
+  const [showFirstOpen, setShowFirstOpen] = useState(false);
+  useEffect(() => {
+    try {
+      if (!window.localStorage.getItem(FIRST_OPEN_KEY)) setShowFirstOpen(true);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+  const setPhase = useCallback((requested: Phase) => {
+    let next = requested;
+    if (!signedInRef.current && GUEST_LOCKED_PHASES.has(requested)) {
+      afterLoginRef.current = requested;
+      next = "login";
+    }
     _setPhase((prev) => {
       if (next === prev) return prev;
       // Home is the root — clear history when returning to it.
@@ -353,7 +382,12 @@ function Index() {
   // interrupts if the limit is actually reached.
   const enterAppAfterAuth = useCallback(
     (fallbackPhase: Phase = "home") => {
-      setPhase(fallbackPhase);
+      signedInRef.current = true;
+      const pending = fallbackPhase === "home" ? afterLoginRef.current : null;
+      if (pending) afterLoginRef.current = null;
+      // After the PIN step we still finish on "home"; a remembered screen
+      // (e.g. Wallet tapped as a guest) opens instead of Home.
+      setPhase(fallbackPhase === "home" && pending ? pending : fallbackPhase);
       // Home data + Home chunk start loading in parallel with the device call.
       void prefetchHomeData(queryClient);
       void import("@/components/HomeScreen");
@@ -675,7 +709,8 @@ function Index() {
       setTimeout(() => {
         if (cancelled) return;
         setPhase("splash-out");
-        setTimeout(() => !cancelled && setPhase("login"), 220);
+        // Guests land on the tabs; login is asked only when an action needs it.
+        setTimeout(() => !cancelled && setPhase("home"), 220);
       }, wait);
     };
 
@@ -716,6 +751,7 @@ function Index() {
 
     const { data: sub } = supabase.auth.onAuthStateChange(async (event) => {
       if (event === "SIGNED_OUT") {
+        signedInRef.current = false;
         // Drop every cached query so the next person signing in on this
         // device never sees the previous account's address or data.
         queryClient.clear();
@@ -756,6 +792,9 @@ function Index() {
           className="pointer-events-none fixed inset-0 z-40 bg-foreground"
           style={{ opacity: Math.max(0, 0.18 * (1 - swipeBack.progress)) }}
         />
+      )}
+      {showFirstOpen && phase === "home" && (
+        <FirstOpenScreen onDone={() => setShowFirstOpen(false)} />
       )}
       <Suspense fallback={null}>
         {forceUpdate && <ForceUpdateScreen playStoreUrl={storeUrl} />}
@@ -837,7 +876,11 @@ function Index() {
         <div className="animate-fade-slide-in">
           <PinSetScreen
             phone={pendingPhone}
-            onDone={() => setPhase("home")}
+            onDone={() => {
+              const pending = afterLoginRef.current;
+              afterLoginRef.current = null;
+              setPhase(pending ?? "home");
+            }}
           />
         </div>
       )}

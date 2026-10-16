@@ -42,7 +42,12 @@ function readLocalLang(): Lang {
   if (typeof window === "undefined") return "en";
   try {
     const v = window.localStorage.getItem(STORAGE_KEY);
-    return v === "mr" ? "mr" : "en";
+    if (v === "mr" || v === "en") return v;
+    // First open: follow the phone's language (Marathi phone → मराठी).
+    const langs = [navigator.language, ...(navigator.languages ?? [])];
+    const detected: Lang = langs.some((l) => l?.toLowerCase().startsWith("mr")) ? "mr" : "en";
+    window.localStorage.setItem(STORAGE_KEY, detected);
+    return detected;
   } catch {
     return "en";
   }
