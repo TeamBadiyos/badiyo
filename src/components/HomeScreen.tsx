@@ -1,3 +1,13 @@
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useStoreCart } from "@/lib/storeCart";
 import { ActiveOrdersStrip } from "@/components/home/ActiveOrdersStrip";
 import { getAuthUser } from "@/lib/authUser";
@@ -261,7 +271,15 @@ export function HomeScreen({
   };
   const [openCategory, setOpenCategory] = useState<StoreCategoryGroup | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
-  const cartHasItems = useStoreCart().cart.lines.length > 0;
+  const storeCart = useStoreCart();
+  const cartHasItems = storeCart.cart.lines.length > 0;
+  // One cart at a time across services: starting a Clean booking while the
+  // shop cart has items asks to clear it first.
+  const [pendingBook, setPendingBook] = useState<null | (() => void)>(null);
+  const withSingleCart = (go: () => void) => {
+    if (storeCart.cart.lines.length > 0) setPendingBook(() => go);
+    else go();
+  };
   // Ordering is on only when the store service itself is live.
   const storeOrdering = storeState?.status === "live";
 
@@ -350,7 +368,7 @@ export function HomeScreen({
   };
   const guardedBookService = (p: BookServicePayload) => {
     if (guardBlocked()) return;
-    onBookService?.(p);
+    withSingleCart(() => onBookService?.(p));
   };
 
 
@@ -645,6 +663,29 @@ export function HomeScreen({
 
       {storeUnlocked && <CartBar aboveNav onOpenCart={() => setCartOpen(true)} />}
       {!(storeUnlocked && cartHasItems) && <ActiveOrdersStrip onOpenStoreOrder={onOpenStoreOrder} />}
+      <AlertDialog open={!!pendingBook} onOpenChange={(o) => !o && setPendingBook(null)}>
+        <AlertDialogContent className="rounded-[20px]">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Start a new cart?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Your cart has items from {storeCart.cart.storeName || "a shop"}. Clear and start new?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep cart</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                const go = pendingBook;
+                storeCart.clear();
+                setPendingBook(null);
+                go?.();
+              }}
+            >
+              Clear and start new
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <BottomNav
         activeKey={tab}
         onHome={setTab}
