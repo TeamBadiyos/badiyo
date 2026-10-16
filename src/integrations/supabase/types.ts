@@ -13532,6 +13532,13 @@ export type Database = {
       slot_step:
         | { Args: never; Returns: number }
         | { Args: { _city: string }; Returns: number }
+      slot_window: {
+        Args: { _cid: string; _date: string; _g: string }
+        Returns: {
+          first_min: number
+          last_min: number
+        }[]
+      }
       staff_accept_booking: {
         Args: { _booking_id: string }
         Returns: undefined
