@@ -1,3 +1,4 @@
+import { ensureSignedIn } from "@/lib/authGate";
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -96,6 +97,7 @@ function DealCard({ offer, mine, focus }: { offer: EventOffer; mine: MyRedemptio
   const free = Number(offer.price) <= 0;
 
   const doRedeem = async (pin?: string): Promise<boolean> => {
+    if (!(await ensureSignedIn())) return false;
     setBusy(true);
     try {
       const r = await redeemOffer(offer.id, pin);
@@ -125,6 +127,7 @@ function DealCard({ offer, mine, focus }: { offer: EventOffer; mine: MyRedemptio
   };
 
   const onPay = async () => {
+    if (!(await ensureSignedIn())) return;
     setBusy(true); setLocal(null);
     try {
       let p;

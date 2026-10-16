@@ -1,3 +1,4 @@
+import { LOGIN_REQUIRED_EVENT } from "@/lib/authGate";
 import { createFileRoute } from "@tanstack/react-router";
 import { Suspense, lazy, useCallback, useEffect, useRef, useState, type ComponentType } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -270,12 +271,13 @@ type Phase =
 
 
 
+// Guests may open Parcel (enter pickup/drop, see price) and Rewards (see the
+// lucky draw); login is asked only on Book / Enroll / Apply coupon / Wallet /
+// Orders via ensureSignedIn() or these locked screens.
 const GUEST_LOCKED_PHASES = new Set<Phase>([
   "address",
   "wallet",
-  "rewards",
   "orders",
-  "courier",
   "courier-track",
   "store-track",
   "parcels-for-you",
@@ -300,6 +302,17 @@ function Index() {
   const signedInRef = useRef(false);
   const afterLoginRef = useRef<Phase | null>(null);
   const [showFirstOpen, setShowFirstOpen] = useState(false);
+  useEffect(() => {
+    const onNeedLogin = () => {
+      const cur = phaseRef.current;
+      afterLoginRef.current = cur === "login" ? null : cur;
+      historyRef.current.push(cur);
+      phaseRef.current = "login";
+      _setPhase("login");
+    };
+    window.addEventListener(LOGIN_REQUIRED_EVENT, onNeedLogin);
+    return () => window.removeEventListener(LOGIN_REQUIRED_EVENT, onNeedLogin);
+  }, []);
   useEffect(() => {
     try {
       if (!window.localStorage.getItem(FIRST_OPEN_KEY)) setShowFirstOpen(true);

@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { guestLuckyDrawLeaderboard, guestLuckyDrawStatus } from "@/lib/luckyDrawGuest.functions";
 import { buildPlayStoreInviteUrl } from "@/lib/referrals";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -69,8 +70,15 @@ function normPrize(p: Any, i: number): LdPrize {
 }
 
 export async function fetchLuckyDrawStatus(): Promise<LdStatus | null> {
-  const { data, error } = await supabase.rpc("customer_lucky_draw_status");
-  if (error) throw error;
+  const { data: sess } = await supabase.auth.getSession();
+  let data: unknown;
+  if (!sess.session) {
+    data = JSON.parse(await guestLuckyDrawStatus());
+  } else {
+    const res = await supabase.rpc("customer_lucky_draw_status");
+    if (res.error) throw res.error;
+    data = res.data;
+  }
   const d = (data ?? null) as Any | null;
   const c: Any | null = d && (d.campaign ?? (d.id ? d : null));
   if (!c || !c.id || c.is_active === false) return null;
@@ -130,8 +138,15 @@ export async function fetchLuckyDrawStatus(): Promise<LdStatus | null> {
 export type LdRow = { rank: number; name: string; referrals: number; isMe: boolean };
 
 export async function fetchLeaderboard(limit: number): Promise<{ rows: LdRow[]; me: LdRow | null; hasMore: boolean }> {
-  const { data, error } = await supabase.rpc("customer_lucky_draw_leaderboard", { _limit: limit });
-  if (error) throw error;
+  const { data: sess } = await supabase.auth.getSession();
+  let data: unknown;
+  if (!sess.session) {
+    data = JSON.parse(await guestLuckyDrawLeaderboard({ data: { limit } }));
+  } else {
+    const res = await supabase.rpc("customer_lucky_draw_leaderboard", { _limit: limit });
+    if (res.error) throw res.error;
+    data = res.data;
+  }
   const d = (data ?? {}) as Any;
   const list: Any[] = Array.isArray(d) ? d : d.rows ?? d.items ?? d.leaderboard ?? d.entries ?? [];
   const rows = list.map((r, i) => ({

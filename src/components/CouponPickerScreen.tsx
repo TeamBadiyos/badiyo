@@ -1,3 +1,4 @@
+import { ensureSignedIn } from "@/lib/authGate";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Check, Gift, Tag } from "lucide-react";
@@ -122,6 +123,7 @@ export function CouponPickerScreen({
   async function apply(code: string) {
     const normalized = code.trim().toUpperCase();
     if (!normalized) return;
+    if (!(await ensureSignedIn())) return;
     setApplyingCode(normalized);
     setCouponError(null);
     const result = await previewCoupon(

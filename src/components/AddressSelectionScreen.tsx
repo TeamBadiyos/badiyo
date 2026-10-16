@@ -29,10 +29,20 @@ type Address = {
   longitude: number | null;
 };
 
+const GUEST_ADDR_KEY = "badiyos_guest_addresses";
+function readGuestAddresses(): Address[] {
+  try {
+    return JSON.parse(window.sessionStorage.getItem(GUEST_ADDR_KEY) || "[]") as Address[];
+  } catch {
+    return [];
+  }
+}
+
 async function fetchAddresses(): Promise<Address[]> {
   const { data: userData } = await getAuthUser();
   const uid = userData.user?.id;
-  if (!uid) return [];
+  // Guests can pin addresses for this visit (e.g. Parcel price check).
+  if (!uid) return readGuestAddresses();
   const { data, error } = await supabase
     .from("addresses")
     .select("id, label, full_address, area, city, is_default, landmark_photo_url, latitude, longitude")
@@ -193,7 +203,23 @@ export function AddressSelectionScreen({
       const { data: userData } = await getAuthUser();
       const uid = userData.user?.id;
       if (!uid) {
-        throw new Error("You need to sign in before saving an address.");
+        const guest: Address = {
+          id: `guest-${Date.now()}`,
+          label: input.label,
+          full_address: input.full_address,
+          area: input.area,
+          city: input.city,
+          is_default: addresses.length === 0,
+          landmark_photo_url: null,
+          latitude: input.latitude,
+          longitude: input.longitude,
+        } as Address;
+        try {
+          window.sessionStorage.setItem(GUEST_ADDR_KEY, JSON.stringify([guest, ...readGuestAddresses()]));
+        } catch {
+          /* ignore */
+        }
+        return guest;
       }
       // Ensure a matching row exists in public.users to satisfy the FK.
       const { error: userUpsertError } = await supabase
