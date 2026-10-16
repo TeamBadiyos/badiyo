@@ -250,13 +250,14 @@ function pickBanner(st: ServiceState | null | undefined, content: ServiceContent
   }
   const now = new Date().toLocaleTimeString("en-GB", { timeZone: "Asia/Kolkata", hour12: false }).slice(0, 5);
   const open = (st.open_time ?? "").slice(0, 5);
-  return open && now < open ? "closed_morning" : "closed_evening";
+  const sw = (content?.morning_switch_time || "05:00").slice(0, 5).padStart(5, "0");
+  return now >= sw && (!open || now < open) ? "closed_morning" : "closed_evening";
 }
 
 function greeting(lang: string): string {
   const h = Number(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata", hour: "numeric", hour12: false }));
-  if (lang === "mr") return h < 12 ? "सुप्रभात" : h < 17 ? "नमस्कार" : "शुभ संध्या";
-  return h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
+  if (lang === "mr") return h >= 5 && h < 12 ? "सुप्रभात" : h >= 12 && h < 17 ? "शुभ दुपार" : h >= 17 && h < 21 ? "शुभ संध्याकाळ" : "शुभ रात्री";
+  return h >= 5 && h < 12 ? "Good Morning" : h >= 12 && h < 17 ? "Good Afternoon" : h >= 17 && h < 21 ? "Good Evening" : "Good Night";
 }
 
 function fmtTime(t: string): string {
