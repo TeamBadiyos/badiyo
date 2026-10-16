@@ -1,3 +1,5 @@
+import { sellWhatsAppHref } from "@/lib/storeShare";
+import { Package, Store } from "lucide-react";
 import { getAuthUser } from "@/lib/authUser";
 import {
   ArrowLeft,
@@ -30,6 +32,7 @@ type Group = { title: string; items: Item[] };
 export function ProfileScreen({
   onBack,
   onOpenBookings,
+  onOpenOrders,
   onOpenWallet,
   onOpenEditProfile,
   onOpenNotifications,
@@ -43,6 +46,7 @@ export function ProfileScreen({
 }: {
   onBack: () => void;
   onOpenBookings: () => void;
+  onOpenOrders?: () => void;
   onOpenWallet: () => void;
   onOpenEditProfile: () => void;
   onOpenNotifications: () => void;
@@ -94,8 +98,10 @@ export function ProfileScreen({
       title: "Activity",
       items: [
         { key: "bookings", label: "My Bookings", desc: "View past and upcoming services", icon: CalendarCheck, onClick: onOpenBookings },
+        ...(onOpenOrders ? [{ key: "orders", label: t("profile.orders"), desc: t("profile.ordersDesc"), icon: Package, onClick: onOpenOrders }] : []),
         { key: "wallet", label: "Wallet", desc: "Badiyos coins & transactions", icon: WalletIcon, onClick: onOpenWallet },
         { key: "referrals", label: "Refer & Earn", desc: "Invite friends and earn rewards", icon: Gift, onClick: onOpenReferrals },
+        { key: "partner", label: t("profile.partner"), desc: t("profile.partnerDesc"), icon: Store, onClick: () => { window.location.href = sellWhatsAppHref(); } },
       ],
     },
     {
