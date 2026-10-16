@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronRight, Gift, RotateCcw } from "lucide-react";
+import { ChevronRight, Clock, Gift, RotateCcw, Zap } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthUser } from "@/lib/authUser";
 import { useLanguage } from "@/i18n";
@@ -104,6 +104,23 @@ export function CleanTab({
   });
   const againOption = lastBooking ? services.find((x) => x.id === lastBooking.price_option_id) : null;
 
+  // Images uploaded in Command Center: homepage_sections row with section_type "clean_media",
+  // payload { maid_url, tile_urls: [6 urls] }.
+  const { data: mediaRow } = useQuery({
+    queryKey: ["clean_media"],
+    staleTime: 5 * 60_000,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("homepage_sections")
+        .select("payload")
+        .eq("section_type", "clean_media")
+        .eq("is_active", true)
+        .limit(1);
+      return (data?.[0]?.payload ?? null) as { maid_url?: string; tile_urls?: string[] } | null;
+    },
+  });
+  const media = { maid: mediaRow?.maid_url || null, tiles: mediaRow?.tile_urls ?? [] };
+
   return (
     <div className="mt-1">
       {closed && (
@@ -113,24 +130,25 @@ export function CleanTab({
         </p>
       )}
 
-      {/* Two big cards */}
-      <div className="grid grid-cols-2 gap-3">
-        {!closed && (
-          <button onClick={() => open("now", false)} className="overflow-hidden rounded-[20px] bg-primary text-left text-primary-foreground shadow-card-m active:scale-[0.98]">
-            <img src={maidHero} alt="" width={816} height={816} className="aspect-[4/3] w-full object-cover object-top" />
-            <div className="p-3">
-              <p className="text-base font-extrabold">⚡ {s.bookNow}</p>
-              <p className="text-xs font-semibold opacity-90">{s.bookNowSub}</p>
-            </div>
-          </button>
-        )}
-        <button onClick={() => open("later", false)} className={`overflow-hidden rounded-[20px] border border-border bg-card text-left shadow-card-m active:scale-[0.98] ${closed ? "col-span-2" : ""}`}>
-          <img src={maidHero} alt="" width={816} height={816} className={`w-full object-cover object-top ${closed ? "aspect-[2/1]" : "aspect-[4/3]"}`} />
-          <div className="p-3">
-            <p className="text-base font-extrabold text-foreground">🕐 {s.schedule}</p>
+      {/* Schedule + Instant with maid cutout */}
+      <div className="relative">
+        <div className={`grid gap-3 ${closed ? "grid-cols-1" : "grid-cols-2"} ${!closed ? "pr-[22%]" : ""}`}>
+          <button onClick={() => open("later", false)} className="rounded-[20px] border border-border bg-card p-4 text-left shadow-card-m active:scale-[0.98]">
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10"><Clock className="h-5 w-5 text-primary" /></span>
+            <p className="mt-4 flex items-center text-lg font-extrabold text-foreground">{s.schedule}<ChevronRight className="h-4 w-4" /></p>
             <p className="text-xs font-semibold text-muted-foreground">{s.scheduleSub}</p>
-          </div>
-        </button>
+          </button>
+          {!closed && (
+            <button onClick={() => open("now", false)} className="rounded-[20px] border border-border bg-card p-4 text-left shadow-card-m active:scale-[0.98]">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10"><Zap className="h-5 w-5 text-primary" /></span>
+              <p className="mt-4 flex items-center text-lg font-extrabold text-foreground">{s.bookNow}<ChevronRight className="h-4 w-4" /></p>
+              <p className="text-xs font-semibold text-muted-foreground">{s.bookNowSub}</p>
+            </button>
+          )}
+        </div>
+        {!closed && media.maid && (
+          <img src={media.maid} alt="" className="pointer-events-none absolute bottom-0 right-0 h-[118%] w-auto max-w-[34%] object-contain object-bottom" />
+        )}
       </div>
 
       {/* Car & Bike Wash */}
@@ -140,7 +158,7 @@ export function CleanTab({
           <div className="mt-2 grid grid-cols-3 gap-2.5">
             {autoOptions.map((o) => (
               <button key={o.id} onClick={() => open("now", true, o.id)} className="overflow-hidden rounded-[16px] border border-border bg-card text-left active:scale-[0.98]">
-                <img src={washImage(o.duration_label)} alt={o.duration_label} loading="lazy" width={816} height={816} className="aspect-square w-full object-cover" />
+                <img src={o.image_url || washImage(o.duration_label)} alt={o.duration_label} loading="lazy" width={500} height={500} className="aspect-square w-full object-cover" />
                 <div className="p-2">
                   <p className="truncate text-xs font-bold text-foreground">{o.duration_label.replace(/\s*wash/i, "")}</p>
                   <p className="text-sm font-extrabold text-primary">₹{Number(o.price)}</p>
@@ -160,13 +178,13 @@ export function CleanTab({
         </button>
       )}
 
-      {/* One maid, all work */}
-      <h2 className="mt-6 text-lg font-extrabold text-foreground">{s.oneMaid}</h2>
-      <div className="mt-2 grid grid-cols-3 gap-2.5">
+      {/* One expert, all work */}
+      <h2 className="mt-7 text-xl font-extrabold text-foreground">{s.oneMaid}</h2>
+      <div className="mt-3 grid grid-cols-3 gap-x-3 gap-y-4">
         {s.tiles.map((label, i) => (
-          <div key={label} className="overflow-hidden rounded-[16px] bg-card">
-            <img src={TILE_IMG[i]} alt={label} loading="lazy" width={512} height={512} className="aspect-square w-full rounded-[16px] object-cover" />
-            <p className="mt-1.5 text-center text-xs font-bold text-foreground">{label}</p>
+          <div key={i}>
+            <img src={media.tiles[i] || TILE_IMG[i]} alt={label} loading="lazy" width={500} height={500} className="aspect-square w-full rounded-[16px] bg-muted object-cover" />
+            <p className="mt-2 whitespace-pre-line text-center text-[13px] font-semibold leading-tight text-foreground">{label}</p>
           </div>
         ))}
       </div>
