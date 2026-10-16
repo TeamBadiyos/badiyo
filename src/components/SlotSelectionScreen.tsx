@@ -228,7 +228,7 @@ export function SlotSelectionScreen({
   const fullyBookedLabel = lang === "mr" ? "पूर्ण भरले" : "Full";
 
   const { data: fullSlots } = useQuery({
-    queryKey: ["fully-booked-slots", days[0]?.key, days[days.length - 1]?.key],
+    queryKey: ["fully-booked-slots", days[0]?.key, days[days.length - 1]?.key, cityId],
     queryFn: () => fetchFullyBookedSlots("clean", days[0].key, days[days.length - 1].key),
     staleTime: 30_000,
     refetchInterval: 60_000,
@@ -244,7 +244,6 @@ export function SlotSelectionScreen({
     }
   }, [instantPaused, mode]);
 
-  const cityId = useCustomerCityId();
   // Server says every expert is busy for Book Now → offer Notify me / Schedule.
   const { data: instantGate } = useQuery({
     queryKey: ["instant-allowed", durationMinutes, cityId],
