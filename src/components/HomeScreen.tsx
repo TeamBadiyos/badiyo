@@ -379,7 +379,7 @@ export function HomeScreen({
     queryFn: async (): Promise<SavedAddress | null> => {
       const { data: userData } = await getAuthUser();
       const uid = userData.user?.id;
-      if (!uid) return getCoordsIfPermitted();
+      if (!uid) return null;
       const { data } = await supabase
         .from("addresses")
         .select("id, label, full_address, area, city, is_default")
