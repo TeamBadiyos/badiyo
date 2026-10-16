@@ -194,26 +194,20 @@ export function CleanTab({
           )}
         </div>
 
-        {maidCards.length > 0 && (
+        {(maidCards.length > 0 || (washOptions.length > 0 && washCards.length > 0)) && (
           <>
-            <h2 className="mt-7 text-lg font-extrabold text-foreground">{s.maidDoes}</h2>
+            <h2 className="mt-7 text-lg font-extrabold text-foreground">
+              {pick(lang, maidContent?.section_title, maidContent?.section_title_mr) || (lang === "mr" ? "आमचे एक्सपर्ट काय करतात" : "What our experts do")}
+            </h2>
             <div className="mt-3 grid grid-cols-3 gap-2.5">
-              {maidCards.map((card, i) => {
+              {maidCards.slice(0, 3).map((card, i) => {
                 const img = card.image_url || MAID_IMG[i % MAID_IMG.length];
-                return <ContentCardTile key={i} title={pick(lang, card.title, card.title_mr)} imageUrl={img} onClick={() => openDetail("clean", i)} />;
+                return <ContentCardTile key={`m${i}`} title={pick(lang, card.title, card.title_mr)} imageUrl={img} onClick={() => openDetail("clean", i)} />;
               })}
-            </div>
-          </>
-        )}
-
-        {washOptions.length > 0 && (
-          <>
-            <h2 className="mt-7 text-lg font-extrabold text-foreground">{s.wash}</h2>
-            <div className="mt-3 grid grid-cols-3 gap-2.5">
-              {washCards.map((card, i) => {
+              {washOptions.length > 0 && washCards.slice(0, 3).map((card, i) => {
                 const opt = washOptions.find((o) => o.id === card.price_option_id);
                 const img = card.image_url || opt?.image_url || washImage(card.title ?? "");
-                return <ContentCardTile key={i} title={pick(lang, card.title, card.title_mr)} imageUrl={img} price={opt ? Number(opt.price) : null} onClick={() => openDetail("wash", i)} />;
+                return <ContentCardTile key={`w${i}`} title={pick(lang, card.title, card.title_mr)} imageUrl={img} onClick={() => openDetail("wash", i)} />;
               })}
             </div>
           </>

@@ -128,6 +128,7 @@ export type ContentLine = string | { en?: string | null; mr?: string | null };
 export type ContentCard = { title?: string; title_mr?: string; image_url?: string | null; included?: ContentLine[]; not_included?: ContentLine[]; included_mr?: ContentLine[]; not_included_mr?: ContentLine[]; price_option_id?: string | null };
 export type ContentOption = { name?: string; name_mr?: string; price?: number; original_price?: number | null; image_url?: string | null; price_option_id: string };
 export type ServiceContent = {
+  section_title?: string | null; section_title_mr?: string | null;
   hero?: { heading?: string | null; heading_mr?: string | null; subline?: string | null; subline_mr?: string | null; button?: string | null; button_mr?: string | null; image_url?: string | null; bg_color?: string | null; card_title?: string | null; card_title_mr?: string | null };
   cards?: ContentCard[];
   options?: ContentOption[];
