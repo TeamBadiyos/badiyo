@@ -11761,6 +11761,14 @@ export type Database = {
         Args: { _city_id?: string; _kind: string }
         Returns: Json
       }
+      app_checkout_coupons: {
+        Args: {
+          _base_amount: number
+          _category_id?: string
+          _duration_minutes?: number
+        }
+        Returns: Json
+      }
       app_city_for_location: {
         Args: { _lat: number; _lng: number }
         Returns: string

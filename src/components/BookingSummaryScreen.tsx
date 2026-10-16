@@ -3,6 +3,8 @@ import { ArrowLeft, ChevronRight, Droplets, MapPin, Package, Tag, Wallet, X } fr
 import { useQuery } from "@tanstack/react-query";
 import { Switch } from "@/components/ui/switch";
 import { CancellationPolicySheet } from "@/components/CancellationPolicySheet";
+import { CouponSheet } from "@/components/CouponSheet";
+import { ensureSignedIn } from "@/lib/authGate";
 import type { SelectedService, SelectedSlot } from "@/lib/bookingTypes";
 import { useLanguage } from "@/i18n";
 import { hapticImpact } from "@/lib/haptics";
@@ -64,7 +66,7 @@ export function BookingSummaryScreen({
   address: SelectedAddress;
   coupon: AppliedCoupon | null;
   onCouponChange: (coupon: AppliedCoupon | null) => void;
-  onOpenCoupons: () => void;
+  onOpenCoupons?: () => void;
   redeemCoins?: boolean;
   onRedeemCoinsChange?: (on: boolean) => void;
   onBack: () => void;
@@ -79,6 +81,7 @@ export function BookingSummaryScreen({
   const isWash = slot.serviceKey === "wash";
   const { data: content } = useServiceContent(isWash ? "wash" : "clean");
   const [policyOpen, setPolicyOpen] = useState(false);
+  const [couponOpen, setCouponOpen] = useState(false);
 
   const gstPercent = useBookingGstPercent(service.id);
   const price = Number(service.price);
@@ -158,7 +161,7 @@ export function BookingSummaryScreen({
               </button>
             </div>
           ) : (
-            <button type="button" onClick={onOpenCoupons} className="flex w-full items-center gap-3 px-4 py-3.5 text-left">
+            <button type="button" onClick={async () => { if (await ensureSignedIn()) setCouponOpen(true); }} className="flex w-full items-center gap-3 px-4 py-3.5 text-left">
               <Tag className="h-5 w-5 shrink-0 text-primary" />
               <span className="flex-1 text-sm font-extrabold text-foreground">{s.applyCoupon}</span>
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
@@ -222,6 +225,16 @@ export function BookingSummaryScreen({
         </div>
       </div>
 
+      {couponOpen && (
+        <CouponSheet
+          baseAmount={price}
+          durationMinutes={service.duration_minutes}
+          categoryId={service.service_category_id}
+          appliedCode={coupon?.code ?? null}
+          onApplied={(c) => { onCouponChange(c); setCouponOpen(false); }}
+          onClose={() => setCouponOpen(false)}
+        />
+      )}
       <CancellationPolicySheet open={policyOpen} onClose={() => setPolicyOpen(false)} serviceKey={isWash ? "wash" : "clean"} />
     </main>
   );

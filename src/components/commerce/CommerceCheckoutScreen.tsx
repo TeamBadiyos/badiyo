@@ -18,6 +18,7 @@ import { useStoreCart } from "@/lib/storeCart";
 import { invalidateWallet } from "@/lib/wallet";
 import { StoreImage } from "@/components/store/StoreImage";
 import { AddressSelectionScreen } from "@/components/AddressSelectionScreen";
+import { CouponSheet } from "@/components/CouponSheet";
 import {
   attachStorePayment,
   confirmStorePayment,
@@ -91,7 +92,6 @@ export function CommerceCheckoutScreen({
   const [addressId, setAddressId] = useState<string | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [note, setNote] = useState("");
-  const [couponInput, setCouponInput] = useState("");
   const [coupon, setCoupon] = useState<string | null>(null);
   const [couponOpen, setCouponOpen] = useState(false);
   const [useWallet, setUseWallet] = useState(false);
@@ -187,6 +187,15 @@ export function CommerceCheckoutScreen({
   const total = q ? q.to_pay : cart.total;
   const saving = q ? Math.round(q.you_save + q.coupon_discount) : 0;
   const walletOnly = q != null && q.to_pay <= 0 && q.wallet_used > 0;
+
+  const couponSheet = couponOpen ? (
+    <CouponSheet
+      baseAmount={q?.item_total ?? cart.total}
+      appliedCode={coupon}
+      onApplied={(c) => { setCoupon(c.code); setCouponOpen(false); }}
+      onClose={() => setCouponOpen(false)}
+    />
+  ) : null;
 
   if (pickerOpen) {
     return (
@@ -285,22 +294,6 @@ export function CommerceCheckoutScreen({
                     <X className="h-4 w-4" />{s.remove}
                   </button>
                 </div>
-              ) : couponOpen ? (
-                <form
-                  className="flex items-center gap-2 px-4 py-3"
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    const code = couponInput.trim().toUpperCase();
-                    if (code) setCoupon(code);
-                  }}
-                >
-                  <Tag className="h-5 w-5 shrink-0 text-primary" />
-                  <input
-                    autoFocus value={couponInput} onChange={(e) => setCouponInput(e.target.value)} placeholder={s.couponPh}
-                    className="min-w-0 flex-1 rounded-[10px] border border-border bg-background px-3 py-2 text-sm uppercase text-foreground outline-none focus:border-primary"
-                  />
-                  <button type="submit" className="text-sm font-extrabold text-primary">{s.apply}</button>
-                </form>
               ) : (
                 <button
                   type="button"
@@ -384,6 +377,7 @@ export function CommerceCheckoutScreen({
           </div>
         </div>
       )}
+      {couponSheet}
     </main>
   );
 }
