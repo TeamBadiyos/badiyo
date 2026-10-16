@@ -33,6 +33,7 @@ import {
   type LocationHelpKind,
 } from "./LocationHelpDialog";
 import { loadMapsScript } from "@/lib/googleMapsLoader";
+import { supabase } from "@/integrations/supabase/client";
 import {
   checkCourierServiceability,
   checkServiceability,
@@ -112,6 +113,33 @@ export function AddAddressMapScreen({
     (LABELS.find((l) => l === initial?.label) ?? "Home") as (typeof LABELS)[number],
   );
   const [locating, setLocating] = useState(false);
+  // Structured form fields (composed into full_address on save).
+  const [cities, setCities] = useState<string[]>([]);
+  const [cityChoice, setCityChoice] = useState("");
+  const [areaInput, setAreaInput] = useState("");
+  const [pincodeInput, setPincodeInput] = useState("");
+  const [building, setBuilding] = useState("");
+  const [landmark, setLandmark] = useState("");
+  const [touched, setTouched] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    void supabase
+      .from("service_flags")
+      .select("city")
+      .eq("is_active", true)
+      .then(({ data }) => {
+        if (!alive) return;
+        const list = Array.from(
+          new Set((data ?? []).map((r) => (r.city ?? "").trim()).filter(Boolean)),
+        ).sort();
+        setCities(list);
+        setCityChoice((c) => c || (list.length === 1 ? list[0] : ""));
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
   // False while the pin still sits on the city default: saving is blocked
   // until real GPS, a search pick, or a manual drag places it.
   const [pinTrusted, setPinTrusted] = useState<boolean>(
@@ -388,9 +416,32 @@ export function AddAddressMapScreen({
   // address anywhere else stays possible, with just a warning.
   const blockOutsideZone = serviceCheck === "courier";
 
+  useEffect(() => {
+    if (area) setAreaInput(area);
+  }, [area]);
+  useEffect(() => {
+    if (pincode) setPincodeInput(pincode);
+  }, [pincode]);
+  useEffect(() => {
+    if (!city || !cities.length) return;
+    const hit = cities.find((c) => city.toLowerCase().includes(c.toLowerCase()));
+    if (hit) setCityChoice(hit);
+  }, [city, cities]);
+
+  const fieldErrors: Record<string, string> = {};
+  if (!cityChoice) fieldErrors.city = "Choose your city";
+  else if (city && !city.toLowerCase().includes(cityChoice.toLowerCase()) && zoneState === "out")
+    fieldErrors.city = `This pin is not in ${cityChoice}. Move the pin or change the city.`;
+  if (areaInput.trim().length < 2) fieldErrors.area = "Enter your area";
+  if (!/^\d{6}$/.test(pincodeInput.trim())) fieldErrors.pincode = "Enter a 6-digit pincode";
+  else if (pincode && /^\d{6}$/.test(pincode) && pincodeInput.trim().slice(0, 3) !== pincode.slice(0, 3))
+    fieldErrors.pincode = `This pincode is not in ${cityChoice || "this city"}`;
+  if (addressDetails.trim().length < 1) fieldErrors.flat = "Enter flat / house number";
+  const formValid = Object.keys(fieldErrors).length === 0;
+
   const canSave =
     pinTrusted &&
-    addressDetails.trim().length > 0 &&
+    formValid &&
     autoAddress.trim().length > 0 &&
     !geocoding &&
     (!blockOutsideZone || zoneState !== "out") &&
@@ -429,14 +480,29 @@ export function AddAddressMapScreen({
     [searchActive],
   );
 
+  const composedAddress = () =>
+    [
+      addressDetails.trim(),
+      building.trim(),
+      landmark.trim() ? `Near ${landmark.trim()}` : "",
+      autoAddress.trim(),
+      pincodeInput.trim() && !autoAddress.includes(pincodeInput.trim()) ? pincodeInput.trim() : "",
+    ]
+      .filter(Boolean)
+      .join(", ");
   const handleSave = () => {
+    setTouched(true);
     if (!canSave) return;
-    const full = `${addressDetails.trim()}, ${autoAddress.trim()}`;
+    setConfirming(true);
+  };
+  const confirmSave = () => {
+    if (!canSave) return;
+    setConfirming(false);
     onSave({
-      full_address: full,
-      area,
-      city,
-      pincode,
+      full_address: composedAddress(),
+      area: areaInput.trim() || area,
+      city: cityChoice || city,
+      pincode: pincodeInput.trim() || pincode,
       latitude: center.lat,
       longitude: center.lng,
       label,
@@ -469,6 +535,32 @@ export function AddAddressMapScreen({
   return (
     <div className="fixed inset-0 z-30 flex flex-col bg-background pb-[var(--app-safe-bottom)]">
       <LocationHelpDialog kind={locHelp} onClose={() => setLocHelp(null)} />
+      {confirming && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/40" onClick={() => setConfirming(false)}>
+          <div
+            className="w-full max-w-md rounded-t-[24px] bg-card p-5 pb-[calc(var(--app-safe-bottom)+20px)] shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="text-lg font-extrabold text-foreground">Is this the right place?</p>
+            <div className="mt-3 flex items-start gap-2 rounded-[16px] bg-muted p-3">
+              <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-foreground">{label} · {areaInput || cityChoice}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">{composedAddress()}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">{cityChoice} {pincodeInput}</p>
+              </div>
+            </div>
+            <div className="mt-4 flex gap-2">
+              <button type="button" onClick={() => setConfirming(false)} className="flex-1 rounded-[14px] border border-border px-4 py-3 text-sm font-bold text-foreground">
+                Edit
+              </button>
+              <button type="button" onClick={confirmSave} className="flex-[2] rounded-[14px] bg-primary px-4 py-3 text-sm font-bold text-primary-foreground">
+                Confirm this location
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Map area */}
       {/* Map takes the top 70% of the screen so the pin is easy to see and move. */}
       <div className="relative h-[70dvh] shrink-0">
@@ -650,17 +742,45 @@ export function AddAddressMapScreen({
           </div>
 
 
-          <label className="block">
-            <span className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              Address details
-            </span>
-            <input
-              value={addressDetails}
-              onChange={(e) => setAddressDetails(e.target.value)}
-              placeholder="Flat / House no, Floor, Building"
-              className="w-full rounded-[14px] border border-border bg-background px-4 py-3 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-            />
-          </label>
+          <div className="space-y-3">
+            <Field label="City" error={touched ? fieldErrors.city : undefined}>
+              <select
+                value={cityChoice}
+                onChange={(e) => setCityChoice(e.target.value)}
+                className={INPUT_CLS}
+              >
+                <option value="">Select city</option>
+                {cities.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Area" error={touched ? fieldErrors.area : undefined}>
+                <input value={areaInput} onChange={(e) => setAreaInput(e.target.value)} placeholder="Area / locality" className={INPUT_CLS} />
+              </Field>
+              <Field label="Pincode" error={touched ? fieldErrors.pincode : undefined}>
+                <input
+                  value={pincodeInput}
+                  onChange={(e) => setPincodeInput(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  inputMode="numeric"
+                  placeholder="413512"
+                  className={INPUT_CLS}
+                />
+              </Field>
+            </div>
+            <Field label="Flat / House no." error={touched ? fieldErrors.flat : undefined}>
+              <input value={addressDetails} onChange={(e) => setAddressDetails(e.target.value)} placeholder="e.g. Flat 203, 2nd floor" className={INPUT_CLS} />
+            </Field>
+            <Field label="Building / Society (optional)">
+              <input value={building} onChange={(e) => setBuilding(e.target.value)} placeholder="e.g. Sai Residency" className={INPUT_CLS} />
+            </Field>
+            <Field label="Landmark (optional)">
+              <input value={landmark} onChange={(e) => setLandmark(e.target.value)} placeholder="e.g. Behind Cocsit College" className={INPUT_CLS} />
+            </Field>
+          </div>
 
           <div>
             <div className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
@@ -739,7 +859,7 @@ export function AddAddressMapScreen({
           )}
 
           <button
-            disabled={!canSave}
+            disabled={isSaving}
             onClick={handleSave}
             className={`w-full rounded-[14px] px-4 py-3.5 text-sm font-bold transition ${
               canSave
@@ -747,10 +867,23 @@ export function AddAddressMapScreen({
                 : "bg-primary/30 text-primary-foreground/70"
             }`}
           >
-            {isSaving ? "Saving…" : initial ? "Update Address" : "Save Address"}
+            {isSaving ? "Saving…" : "Confirm this location"}
           </button>
         </div>
       </div>
     </div>
+  );
+}
+
+const INPUT_CLS =
+  "w-full rounded-[14px] border border-border bg-background px-4 py-3 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20";
+
+function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <span className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">{label}</span>
+      {children}
+      {error && <span className="mt-1 block text-[11px] font-semibold text-destructive">{error}</span>}
+    </label>
   );
 }
