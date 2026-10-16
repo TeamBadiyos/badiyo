@@ -9,7 +9,6 @@ import type { SegmentService, ServiceCategory } from "@/lib/segments";
 import type { SelectedSlot } from "../SlotSelectionScreen";
 import { CleanBookSheet, type CleanSheetMode } from "./CleanBookSheet";
 
-import maidHero from "@/assets/clean-maid-hero.jpg";
 import jhadu from "@/assets/expert-house-cleaning.jpg";
 import pocha from "@/assets/clean-pocha.jpg";
 import bartan from "@/assets/expert-dishes.jpg";
