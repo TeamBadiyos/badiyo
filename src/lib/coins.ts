@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 
-/** Current customer coin balance (1 coin = Rs 1 off a booking). */
+/** Current customer coin balance (1 coin = ₹1 off a booking). */
 export async function fetchMyCoinBalance(): Promise<number> {
   const { data, error } = await supabase.rpc("my_coin_balance");
   if (error) {

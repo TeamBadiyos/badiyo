@@ -151,7 +151,7 @@ function AmountButton({ amount, onOpen }: { amount: number; onOpen: () => void }
       className="-ml-1 flex items-center gap-1 rounded-full px-1 py-0.5 text-sm font-bold text-primary transition active:scale-[0.97]"
     >
       <ReceiptText className="h-3.5 w-3.5" />
-      Rs {amount}
+      ₹{amount}
       <span className="text-[11px] font-semibold text-muted-foreground underline">breakup</span>
     </button>
   );

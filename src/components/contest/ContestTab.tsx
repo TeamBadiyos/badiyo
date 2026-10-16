@@ -227,7 +227,7 @@ export function ContestTab() {
                   )}
                   <div className="p-2.5">
                     <p className="line-clamp-2 text-sm font-bold text-foreground">{p.name}</p>
-                    {p.value !== null && <p className="text-xs font-semibold text-primary">Worth Rs {p.value}</p>}
+                    {p.value !== null && <p className="text-xs font-semibold text-primary">Worth ₹{p.value}</p>}
                     {p.quantity !== null && <p className="text-xs text-muted-foreground">Qty: {p.quantity}</p>}
                   </div>
                 </div>
@@ -281,7 +281,7 @@ export function ContestTab() {
                       <p className="truncate text-sm font-semibold text-foreground">{p.name}</p>
                       {(p.value !== null || (p.quantity ?? 0) > 1) && (
                         <p className="text-xs text-muted-foreground">
-                          {p.value !== null ? `Worth Rs ${p.value}` : ""}
+                          {p.value !== null ? `Worth ₹${p.value}` : ""}
                           {(p.quantity ?? 0) > 1 ? ` · ${p.quantity} winners` : ""}
                         </p>
                       )}

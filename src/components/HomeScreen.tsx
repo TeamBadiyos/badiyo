@@ -57,6 +57,8 @@ import { StoreListView } from "./store/StoreListView";
 import { StoreShelves } from "./store/storeCatalog";
 import { LiveSearchPanel } from "./home/LiveSearchPanel";
 import { CartBar } from "./store/CartBar";
+import { CleanTab } from "./clean/CleanTab";
+import type { SelectedSlot } from "./SlotSelectionScreen";
 // Shop pages (with their address picker and payment sheet) load only when the
 // customer actually opens a shop, a category or the cart.
 const StoreDetailScreen = lazy(() =>
@@ -214,6 +216,8 @@ export function HomeScreen({
   onOpenContactParcels,
   onOpenWallet,
   onRequireLogin,
+  onCheckout,
+  onOpenReferral,
 }: {
   onBookService?: (service: BookServicePayload) => void;
   onQuickBook?: (service: BookServicePayload) => void;
@@ -228,6 +232,8 @@ export function HomeScreen({
   onOpenContactParcels?: (stopId?: string) => void;
   onOpenWallet?: () => void;
   onRequireLogin?: () => void;
+  onCheckout?: (service: BookServicePayload, slot: SelectedSlot, addressId: string | null) => void;
+  onOpenReferral?: () => void;
 }) {
   const { data: courierEnabled = false } = useQuery({
     queryKey: ["courier_enabled"],
@@ -563,7 +569,8 @@ export function HomeScreen({
           </button>
         </header>
 
-        {/* Search bar */}
+        {/* Search bar (Store/Food only) */}
+        {tab !== "clean" && (
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -582,7 +589,8 @@ export function HomeScreen({
             <Mic className="h-5 w-5 text-muted-foreground" />
           </button>
         </form>
-        {searchQuery.trim().length >= 2 && (
+        )}
+        {tab !== "clean" && searchQuery.trim().length >= 2 && (
           <LiveSearchPanel
             query={searchQuery.trim()}
             coords={homeCoords}
@@ -602,10 +610,23 @@ export function HomeScreen({
 
 
 
-        <ContestHomeBanner onOpen={onOpenContest} />
-        {onOpenDeal && <div className="px-4"><DealsHomeBanner onOpen={onOpenDeal} /></div>}
+        {tab !== "clean" && <ContestHomeBanner onOpen={onOpenContest} />}
+        {tab !== "clean" && onOpenDeal && <div className="px-4"><DealsHomeBanner onOpen={onOpenDeal} /></div>}
 
-        {activeSegment ? (
+        {tab === "clean" && cleanSegment ? (
+          <CleanTab
+            services={servicesFor(cleanSegment)}
+            categories={categories.filter((c) => c.segment_id === cleanSegment.id)}
+            promo={promo?.payload ?? null}
+            addressLine={activeAddress ? `${addressTag}${locationLabel ? ` · ${locationLabel}` : ""}` : null}
+            onChangeAddress={() => setLocationSheetOpen(true)}
+            onOpenPromo={onOpenRewards}
+            onOpenReferral={onOpenReferral ?? onOpenRewards}
+            onCheckout={(o, slot) =>
+              withSingleCart(() => onCheckout?.(toPayload(o, cleanSegment), slot, activeAddress?.id ?? null))
+            }
+          />
+        ) : activeSegment ? (
         <SegmentView
           segment={activeSegment}
           categories={categories.filter((c) => c.segment_id === activeSegment.id)}
@@ -650,7 +671,7 @@ export function HomeScreen({
 
 
         {/* Promo banner — high-emphasis solid brand highlight */}
-        {promo && (
+        {promo && tab !== "clean" && (
           <button
             onClick={onOpenRewards}
             className="promo-texture-on-brand surface-brand mt-6 flex w-full items-center gap-3 overflow-hidden rounded-[18px] p-4 text-left shadow-card-m transition active:scale-[0.98]"

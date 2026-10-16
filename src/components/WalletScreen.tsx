@@ -72,7 +72,7 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
                 Wallet Balance
               </p>
               <p className="mt-2 text-3xl font-extrabold text-foreground">
-                Rs {balance}
+                ₹{balance}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
                 Badiyos coins can be used on your next booking.
@@ -115,7 +115,7 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
                       isCredit ? "text-primary" : "text-muted-foreground"
                     }`}
                   >
-                    {isCredit ? "+" : "−"} Rs {Number(t.amount)}
+                    {isCredit ? "+" : "−"} ₹{Number(t.amount)}
                   </span>
                 </div>
               );

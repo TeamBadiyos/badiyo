@@ -318,7 +318,7 @@ export function BookingSummaryScreen({
             onClick={() => { void hapticImpact("medium"); onProceedToPay(); }}
             className="h-auto flex-1 rounded-[14px] px-4 py-3.5 text-sm font-bold active:scale-[0.99]"
           >
-            {t("summary.proceedToPay")}
+            {t("summary.payAmount", { amount: total })}
           </Button>
         </div>
       </div>

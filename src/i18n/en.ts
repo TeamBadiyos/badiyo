@@ -13,7 +13,7 @@ export const en = {
   "common.total": "Total",
   "common.address": "Address",
   "common.when": "When",
-  "common.rupees": "Rs {amount}",
+  "common.rupees": "₹{amount}",
   "common.profile": "Profile",
   "common.loading": "Loading…",
 
@@ -324,10 +324,11 @@ export const en = {
     "Please enable location for badiyos from your phone's settings.",
 
   // ── Booking summary ──────────────────────────────────────
-  "summary.title": "Booking Summary",
+  "summary.title": "Checkout",
   "summary.priceDetails": "Price details",
   "summary.servicePrice": "Service price",
   "summary.gst": "GST ({percent}%)",
+  "summary.payAmount": "Pay ₹{amount}",
   "summary.proceedToPay": "Proceed to Pay",
   "summary.now": "Now",
   "summary.nowSub": "Expert 30–45 minute mein pahunchenge",

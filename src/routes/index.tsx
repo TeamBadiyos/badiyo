@@ -1,4 +1,4 @@
-import { LOGIN_REQUIRED_EVENT } from "@/lib/authGate";
+import { LOGIN_REQUIRED_EVENT, ensureSignedIn } from "@/lib/authGate";
 import { createFileRoute } from "@tanstack/react-router";
 import { Suspense, lazy, useCallback, useEffect, useRef, useState, type ComponentType } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -999,6 +999,35 @@ function Index() {
             onOpenCourier={() => setPhase("courier")}
             onOpenWallet={() => setPhase("wallet")}
             onRequireLogin={() => setPhase("login")}
+            onOpenReferral={() => setPhase("referrals")}
+            onCheckout={async (s, slot, addressId) => {
+              if (!(await ensureSignedIn())) return;
+              setSelectedService(s);
+              setSelectedSlot(slot);
+              // Straight to the shared checkout when the saved address has a map pin.
+              if (addressId) {
+                const { data: addr } = await supabase
+                  .from("addresses")
+                  .select("id, label, full_address, area, city, is_default, latitude, longitude")
+                  .eq("id", addressId)
+                  .maybeSingle();
+                if (addr?.latitude != null && addr?.longitude != null) {
+                  try {
+                    const res = await checkServiceability(addr.latitude, addr.longitude, s.segment_id ?? null);
+                    if (!res.serviceable) {
+                      setPhase("address");
+                      return;
+                    }
+                  } catch {
+                    // a failed check must not block the booking
+                  }
+                  setSelectedAddress(addr as SelectedAddress);
+                  setPhase("summary");
+                  return;
+                }
+              }
+              setPhase("address");
+            }}
             onOpenContactParcels={openContactParcels}
           />
 

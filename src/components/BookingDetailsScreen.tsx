@@ -17,16 +17,16 @@ function refundLine(b: BookingRow): { label: string; note: string } | null {
     return { label: "No refund applicable", note: "Is booking ke liye koi charge nahi kata tha." };
   }
   if (status === "refunded") {
-    return { label: `Rs ${amount} refunded`, note: "Aapke original payment account mein bhej diya gaya hai." };
+    return { label: `₹${amount} refunded`, note: "Aapke original payment account mein bhej diya gaya hai." };
   }
   if (status === "processing" || status === "pending") {
     return {
-      label: `Rs ${amount} refund in progress`,
+      label: `₹${amount} refund in progress`,
       note: "Aapke account mein 5–7 working days mein refund aa jayega.",
     };
   }
   return {
-    label: `Rs ${amount} refund pending`,
+    label: `₹${amount} refund pending`,
     note: "Refund mein thodi dikkat aayi hai. Hamari team check kar rahi hai — jaldi na aaye toh support se sampark karein.",
   };
 }
@@ -224,17 +224,17 @@ export function BookingDetailsScreen({
         <section className="mt-3 rounded-[18px] border border-border bg-card p-4 shadow-sm">
           <h3 className="text-sm font-bold text-foreground">Price breakdown</h3>
           <div className="mt-3 space-y-2 text-sm">
-            <Row label="Service" value={`Rs ${booking.price}`} />
+            <Row label="Service" value={`₹${booking.price}`} />
             <Row
               label={`GST (${Number(booking.gst_percent ?? 0)}%)`}
-              value={`Rs ${Number(booking.gst_amount ?? 0)}`}
+              value={`₹${Number(booking.gst_amount ?? 0)}`}
               muted
             />
             <div className="my-2 h-px bg-border" />
             <div className="flex items-center justify-between">
               <span className="text-sm font-bold text-foreground">Total paid</span>
               <span className="text-base font-bold text-primary">
-                Rs {booking.total_amount && Number(booking.total_amount) > 0 ? Number(booking.total_amount) : booking.price}
+                ₹{booking.total_amount && Number(booking.total_amount) > 0 ? Number(booking.total_amount) : booking.price}
               </span>
             </div>
           </div>
@@ -249,7 +249,7 @@ export function BookingDetailsScreen({
               <h3 className="text-sm font-bold text-foreground">Refund</h3>
               {Number(booking.cancellation_fee ?? 0) > 0 && (
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Cancellation fee: Rs {Number(booking.cancellation_fee)}
+                  Cancellation fee: ₹{Number(booking.cancellation_fee)}
                 </p>
               )}
               <p className="mt-1 text-sm font-semibold text-foreground">{refund.label}</p>
