@@ -2399,33 +2399,50 @@ export type Database = {
       }
       catalog_categories: {
         Row: {
+          city_id: string | null
           created_at: string
           id: string
           image_path: string | null
           is_active: boolean
+          is_other: boolean
           name: string
+          name_mr: string | null
           service_type: string
           sort_order: number
         }
         Insert: {
+          city_id?: string | null
           created_at?: string
           id?: string
           image_path?: string | null
           is_active?: boolean
+          is_other?: boolean
           name: string
+          name_mr?: string | null
           service_type: string
           sort_order?: number
         }
         Update: {
+          city_id?: string | null
           created_at?: string
           id?: string
           image_path?: string | null
           is_active?: boolean
+          is_other?: boolean
           name?: string
+          name_mr?: string | null
           service_type?: string
           sort_order?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "catalog_categories_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       cities: {
         Row: {
@@ -2600,8 +2617,12 @@ export type Database = {
         Row: {
           city_id: string
           default_accept_timeout_minutes: number | null
+          delivery_base_fare: number
+          delivery_included_km: number
           delivery_min_fare: number | null
           delivery_per_km: number | null
+          delivery_platform_fee: number
+          rider_share_pct: number | null
           service_key: string
           timings: Json | null
           updated_at: string
@@ -2609,8 +2630,12 @@ export type Database = {
         Insert: {
           city_id: string
           default_accept_timeout_minutes?: number | null
+          delivery_base_fare?: number
+          delivery_included_km?: number
           delivery_min_fare?: number | null
           delivery_per_km?: number | null
+          delivery_platform_fee?: number
+          rider_share_pct?: number | null
           service_key: string
           timings?: Json | null
           updated_at?: string
@@ -2618,8 +2643,12 @@ export type Database = {
         Update: {
           city_id?: string
           default_accept_timeout_minutes?: number | null
+          delivery_base_fare?: number
+          delivery_included_km?: number
           delivery_min_fare?: number | null
           delivery_per_km?: number | null
+          delivery_platform_fee?: number
+          rider_share_pct?: number | null
           service_key?: string
           timings?: Json | null
           updated_at?: string
@@ -10010,12 +10039,15 @@ export type Database = {
       }
       store_categories: {
         Row: {
+          city_id: string | null
           icon: string | null
           icon_url: string | null
           id: string
           image_path: string | null
           is_active: boolean
+          is_other: boolean
           name: string
+          name_mr: string | null
           rank: number
           segment_id: string
           slug: string
@@ -10023,12 +10055,15 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          city_id?: string | null
           icon?: string | null
           icon_url?: string | null
           id?: string
           image_path?: string | null
           is_active?: boolean
+          is_other?: boolean
           name: string
+          name_mr?: string | null
           rank?: number
           segment_id: string
           slug: string
@@ -10036,12 +10071,15 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          city_id?: string | null
           icon?: string | null
           icon_url?: string | null
           id?: string
           image_path?: string | null
           is_active?: boolean
+          is_other?: boolean
           name?: string
+          name_mr?: string | null
           rank?: number
           segment_id?: string
           slug?: string
@@ -10049,6 +10087,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "store_categories_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "store_categories_segment_id_fkey"
             columns: ["segment_id"]
@@ -11070,6 +11115,30 @@ export type Database = {
           },
         ]
       }
+      wallet_migration_log: {
+        Row: {
+          created_at: string
+          data: Json | null
+          id: string
+          kind: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          data?: Json | null
+          id?: string
+          kind: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          data?: Json | null
+          id?: string
+          kind?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       wallet_topups: {
         Row: {
           amount: number
@@ -11507,6 +11576,10 @@ export type Database = {
         Args: { _city_id?: string; _service_key: string }
         Returns: Json
       }
+      app_categories: {
+        Args: { _city_id?: string; _kind: string }
+        Returns: Json
+      }
       app_city_for_location: {
         Args: { _lat: number; _lng: number }
         Returns: string
@@ -11546,6 +11619,11 @@ export type Database = {
         Returns: Json
       }
       app_svc_key: { Args: { _k: string }; Returns: string }
+      app_wallet_history: {
+        Args: { _before?: string; _limit?: number }
+        Returns: Json
+      }
+      app_wallet_summary: { Args: never; Returns: Json }
       apply_referral_code: { Args: { _code: string }; Returns: string }
       auto_cancel_minutes: {
         Args: { _city_id: string; _service_key: string }
@@ -11893,6 +11971,7 @@ export type Database = {
         Args: { _audience: string; _targets: string[]; _uid: string }
         Returns: boolean
       }
+      cat_is_admin: { Args: never; Returns: boolean }
       cc_uid: { Args: never; Returns: string }
       cc_visible_cities: { Args: never; Returns: string[] }
       check_booking_capacity: { Args: { _booking_id: string }; Returns: Json }
@@ -12573,6 +12652,17 @@ export type Database = {
       customer_wallet_start_topup: { Args: { _amount: number }; Returns: Json }
       default_cancel_policy: { Args: never; Returns: Json }
       default_city_id: { Args: never; Returns: string }
+      delivery_fee_calc: {
+        Args: {
+          _base: number
+          _incl: number
+          _km: number
+          _min: number
+          _per_km: number
+          _pf: number
+        }
+        Returns: number
+      }
       demand_waiting_count: { Args: { _city: string }; Returns: number }
       dispatch_limit_minutes: {
         Args: { _city: string; _svc: string }
@@ -13618,6 +13708,10 @@ export type Database = {
         Returns: Json
       }
       staff_allowed_city_ids: { Args: never; Returns: string[] }
+      staff_apply_product_category_map: {
+        Args: { _map: Json }
+        Returns: number
+      }
       staff_approve_settlement: {
         Args: { _settlement_id: string }
         Returns: undefined
@@ -13692,6 +13786,22 @@ export type Database = {
           _refund_status: string
         }
         Returns: Json
+      }
+      staff_category_copy_default: {
+        Args: { _city_id: string; _kind: string }
+        Returns: number
+      }
+      staff_category_delete: {
+        Args: { _id: string; _kind: string; _move_to?: string }
+        Returns: Json
+      }
+      staff_category_reorder: {
+        Args: { _ids: string[]; _kind: string }
+        Returns: undefined
+      }
+      staff_category_usage: {
+        Args: { _id: string; _kind: string }
+        Returns: number
       }
       staff_city_template: { Args: { _from: string }; Returns: Json }
       staff_clear_availability_override: {
@@ -15342,6 +15452,28 @@ export type Database = {
           _bucket: string
           _by: string
           _expires: string
+          _reason: string
+          _ref_id: string
+          _ref_type: string
+          _type: string
+          _uid: string
+        }
+        Returns: Json
+      }
+      wallet_return: {
+        Args: {
+          _reason: string
+          _ref_id: string
+          _ref_type: string
+          _uid: string
+        }
+        Returns: number
+      }
+      wallet_spend: {
+        Args: {
+          _amount: number
+          _bonus_first?: boolean
+          _partial?: boolean
           _reason: string
           _ref_id: string
           _ref_type: string
