@@ -54,7 +54,9 @@ export function PaymentScreen({
   onDone,
   onTrackBooking,
   onOpenHelp,
+  note = "",
 }: {
+  note?: string;
   service: SelectedService;
   slot: SelectedSlot;
   address: SelectedAddress;
@@ -144,7 +146,8 @@ export function PaymentScreen({
           razorpay_payment_id: paymentId || null,
           booking_lat,
           booking_lng,
-        })
+          customer_note: note.trim().slice(0, 300) || null,
+        } as never)
         .select(
           "id, service_label, service_duration_minutes, price, slot_type, scheduled_date, scheduled_time_slot, razorpay_payment_id",
         )
@@ -305,6 +308,34 @@ export function PaymentScreen({
         }
       }
 
+      // Wallet covers the whole bill: pay from wallet on the server, no Razorpay.
+      if (redeemCoins) {
+        const { data: w, error: wErr } = await supabase.rpc("app_create_booking_wallet" as never, {
+          _payload: {
+            address_id: address.id ?? null,
+            price_option_id: service.id,
+            service_category_id: service.service_category_id ?? null,
+            service_label: service.duration_label,
+            slot_type: slot.mode === "now" ? "now" : "scheduled",
+            scheduled_date: slot.mode === "later" ? new Date(slot.day).toISOString().slice(0, 10) : null,
+            scheduled_time_slot: slot.mode === "later" ? `${slot.slotLabel} (${slot.slotRange})` : null,
+            booking_lat: address.latitude ?? null,
+            booking_lng: address.longitude ?? null,
+            city_id: getCustomerCityId(),
+            coupon_code: coupon?.code ?? null,
+            customer_note: note.trim().slice(0, 300) || null,
+          },
+        } as never);
+        const wid = (w as { booking_id?: string } | null)?.booking_id;
+        if (!wErr && wid) {
+          void supabase.rpc("system_accept_booking_after_payment", { _booking_id: wid });
+          onTrackBooking(wid);
+          return;
+        }
+        if (wErr && !/INSUFFICIENT_BALANCE/i.test(wErr.message)) throw new Error(wErr.message);
+        // Not enough in the wallet: partial wallet through Razorpay as before.
+      }
+
       const { data, error } = await supabase.functions.invoke(
         "create-razorpay-order",
         {
@@ -334,6 +365,7 @@ export function PaymentScreen({
                   : null,
               booking_lat: address.latitude ?? null,
               booking_lng: address.longitude ?? null,
+              customer_note: note.trim().slice(0, 300) || null,
             },
           },
         },
