@@ -11515,6 +11515,10 @@ export type Database = {
       app_merchant_issue_signup_agreement: { Args: never; Returns: string }
       app_my_agreements: { Args: never; Returns: Json }
       app_ops_value: { Args: { _city: string; _key: string }; Returns: string }
+      app_service_content: {
+        Args: { _city_id: string; _service_key: string }
+        Returns: Json
+      }
       app_service_hours: {
         Args: { _city_id: string; _service_key: string }
         Returns: Json
@@ -13341,6 +13345,16 @@ export type Database = {
         Args: { _at?: string; _service_key: string }
         Returns: boolean
       }
+      service_content_check_key: { Args: { _k: string }; Returns: undefined }
+      service_content_defaults: { Args: { _key: string }; Returns: Json }
+      service_content_options: {
+        Args: { _city: string; _key: string }
+        Returns: Json
+      }
+      service_content_resolve: {
+        Args: { _city: string; _key: string }
+        Returns: Record<string, unknown>
+      }
       service_effective_state: {
         Args: { _at?: string; _city?: string; _service_key: string }
         Returns: Json
@@ -13889,6 +13903,10 @@ export type Database = {
       }
       staff_get_clean_media: { Args: { _city: string }; Returns: Json }
       staff_get_referral_config: { Args: never; Returns: Json }
+      staff_get_service_content: {
+        Args: { _city: string; _service_key: string }
+        Returns: Json
+      }
       staff_handover_booking_expert: {
         Args: {
           _booking_id: string
@@ -14128,6 +14146,10 @@ export type Database = {
         Args: { _reason: string; _receiver_id: string }
         Returns: Json
       }
+      staff_reset_service_content: {
+        Args: { _city: string; _service_key: string }
+        Returns: Json
+      }
       staff_retry_refund: {
         Args: { _id: string; _kind: string }
         Returns: undefined
@@ -14233,6 +14255,10 @@ export type Database = {
         Returns: Json
       }
       staff_save_company_profile: { Args: { _p: Json }; Returns: undefined }
+      staff_save_service_content: {
+        Args: { _city: string; _payload: Json; _service_key: string }
+        Returns: Json
+      }
       staff_save_wallet_bonus_rule: {
         Args: { _id: string; _p: Json }
         Returns: string
