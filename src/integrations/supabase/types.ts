@@ -9541,6 +9541,7 @@ export type Database = {
           default_accept_timeout_minutes: number
           delivery_min_fare: number
           delivery_per_km: number
+          hide_low_item_sections: boolean
           is_live: boolean
           rider_share_pct: number
           service_key: string
@@ -9552,6 +9553,7 @@ export type Database = {
           default_accept_timeout_minutes?: number
           delivery_min_fare?: number
           delivery_per_km?: number
+          hide_low_item_sections?: boolean
           is_live?: boolean
           rider_share_pct?: number
           service_key: string
@@ -9563,6 +9565,7 @@ export type Database = {
           default_accept_timeout_minutes?: number
           delivery_min_fare?: number
           delivery_per_km?: number
+          hide_low_item_sections?: boolean
           is_live?: boolean
           rider_share_pct?: number
           service_key?: string
@@ -10868,40 +10871,52 @@ export type Database = {
       waitlist_requests: {
         Row: {
           address_text: string | null
+          area: string | null
           city: string | null
           created_at: string
           id: string
-          latitude: number
-          longitude: number
+          latitude: number | null
+          longitude: number | null
           notified_at: string | null
           notify_count: number
+          phone: string | null
           segment_id: string | null
+          services: string[]
+          source: string
           status: string
           user_id: string | null
         }
         Insert: {
           address_text?: string | null
+          area?: string | null
           city?: string | null
           created_at?: string
           id?: string
-          latitude: number
-          longitude: number
+          latitude?: number | null
+          longitude?: number | null
           notified_at?: string | null
           notify_count?: number
+          phone?: string | null
           segment_id?: string | null
+          services?: string[]
+          source?: string
           status?: string
           user_id?: string | null
         }
         Update: {
           address_text?: string | null
+          area?: string | null
           city?: string | null
           created_at?: string
           id?: string
-          latitude?: number
-          longitude?: number
+          latitude?: number | null
+          longitude?: number | null
           notified_at?: string | null
           notify_count?: number
+          phone?: string | null
           segment_id?: string | null
+          services?: string[]
+          source?: string
           status?: string
           user_id?: string | null
         }
@@ -12313,7 +12328,16 @@ export type Database = {
         Returns: Json
       }
       customer_lucky_draw_status: { Args: never; Returns: Json }
-      customer_notify_me: { Args: { _service_key: string }; Returns: Json }
+      customer_notify_me: {
+        Args: {
+          _area?: string
+          _city?: string
+          _lat?: number
+          _lng?: number
+          _service_key: string
+        }
+        Returns: Json
+      }
       customer_register_device: {
         Args: { _device_id: string; _device_label?: string }
         Returns: Json
@@ -12362,6 +12386,7 @@ export type Database = {
       }
       customer_wallet_start_topup: { Args: { _amount: number }; Returns: Json }
       default_city_id: { Args: never; Returns: string }
+      demand_waiting_count: { Args: { _city: string }; Returns: number }
       dispatch_limit_minutes: {
         Args: { _city: string; _svc: string }
         Returns: number
@@ -14839,6 +14864,19 @@ export type Database = {
       submit_booking_review: {
         Args: { _booking_id: string; _rating: number; _review: string }
         Returns: undefined
+      }
+      submit_demand_request: {
+        Args: {
+          _address_text?: string
+          _area?: string
+          _city: string
+          _lat?: number
+          _lng?: number
+          _phone?: string
+          _services: string[]
+          _source?: string
+        }
+        Returns: Json
       }
       submit_store_rating: {
         Args: { p_comment?: string; p_order_id: string; p_rating: number }
