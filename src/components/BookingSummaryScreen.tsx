@@ -1,15 +1,16 @@
-import { ArrowLeft, Check, ChevronRight, Clock, Calendar, Coins, Home as HomeIcon, Tag, X } from "lucide-react";
+import { useState } from "react";
+import { ArrowLeft, ChevronRight, Droplets, MapPin, Package, Tag, Wallet, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import type { SelectedService, SelectedSlot } from "@/lib/bookingTypes";
-import { useT, type TFunction } from "@/i18n";
+import { useLanguage } from "@/i18n";
 import { hapticImpact } from "@/lib/haptics";
 import { billBreakdown } from "@/lib/gst";
-import { useBookingGstPercent } from "@/lib/serviceSettings";
-import { fetchMyCoupons, type AppliedCoupon } from "@/lib/coupons";
+import { useBookingGstPercent, useServiceContent } from "@/lib/serviceSettings";
+import type { AppliedCoupon } from "@/lib/coupons";
 import { fetchMyCoinBalance } from "@/lib/coins";
-
+import { useBackHandler } from "@/lib/backHandler";
 
 export type SelectedAddress = {
   id: string;
@@ -22,37 +23,52 @@ export type SelectedAddress = {
   longitude?: number | null;
 };
 
-function formatSlot(slot: SelectedSlot, t: TFunction): { title: string; subtitle: string } {
-  if (slot.mode === "now") {
-    return {
-      title: t("summary.now"),
-      subtitle: t("summary.nowSub"),
-    };
-  }
-  const date = new Date(slot.day);
-  const dateLabel = date.toLocaleDateString("en-US", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-  });
-  return {
-    title: `${dateLabel} · ${slot.slotLabel}`,
-    subtitle: t("summary.between", { range: slot.slotRange }),
-  };
+const TXT = {
+  en: {
+    title: "Checkout", change: "Change", booking: "What you're booking", edit: "Edit", now: "Now",
+    save: "You save ₹{n} on this booking", applyCoupon: "Apply coupon", remove: "Remove",
+    wallet: "Use badiyos Wallet", noteLabel: "Note for expert (optional)", notePh: "E.g. ring the bell twice, pet at home…",
+    bill: "Bill details", price: "Service price", gst: "GST ({p}%)", round: "Round off", coupon: "Coupon",
+    walletLine: "badiyos Wallet", total: "Total", policy: "Cancellation policy", pay: "Pay ₹{n}", payWallet: "Pay with wallet",
+    maidNote: "Our expert brings basic supplies. Please keep a broom, mop and bucket ready if you prefer your own.",
+    washNote: "Please keep a water supply and a plug point ready, and the vehicle parked. Our expert will not drive the vehicle.",
+    policyBody: [
+      "Free cancellation until the expert is assigned.",
+      "Once the expert is on the way, a cancellation fee may apply.",
+      "Refunds go back to your original payment method in 5–7 working days; badiyos Wallet amounts return to your wallet instantly.",
+    ],
+    home: "Home Maid", wash: "Car Wash",
+  },
+  mr: {
+    title: "चेकआउट", change: "बदला", booking: "तुम्ही काय बुक करत आहात", edit: "बदला", now: "आत्ता",
+    save: "या बुकिंगवर तुमची ₹{n} बचत", applyCoupon: "कूपन लावा", remove: "काढा",
+    wallet: "badiyos वॉलेट वापरा", noteLabel: "एक्सपर्टसाठी सूचना (ऐच्छिक)", notePh: "उदा. बेल दोनदा वाजवा, घरी पाळीव प्राणी आहे…",
+    bill: "बिल तपशील", price: "सेवा किंमत", gst: "GST ({p}%)", round: "राउंड ऑफ", coupon: "कूपन",
+    walletLine: "badiyos वॉलेट", total: "एकूण", policy: "रद्द करण्याचे धोरण", pay: "₹{n} भरा", payWallet: "वॉलेटने भरा",
+    maidNote: "आमचा एक्सपर्ट मूलभूत साहित्य आणतो. स्वतःचे हवे असल्यास झाडू, पोछा व बादली तयार ठेवा.",
+    washNote: "कृपया पाणी व प्लग पॉइंट तयार ठेवा आणि वाहन पार्क केलेले असावे. आमचा एक्सपर्ट वाहन चालवणार नाही.",
+    policyBody: [
+      "एक्सपर्ट नेमला जाईपर्यंत मोफत रद्द करता येते.",
+      "एक्सपर्ट निघाल्यानंतर रद्द केल्यास शुल्क लागू शकते.",
+      "परतावा मूळ पेमेंट पद्धतीत ५–७ कामकाजाच्या दिवसांत येतो; badiyos वॉलेटची रक्कम लगेच वॉलेटमध्ये परत येते.",
+    ],
+    home: "होम मेड", wash: "कार वॉश",
+  },
+};
+const fill = (s: string, k: string, v: string | number) => s.replace(`{${k}}`, String(v));
+const rs = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(2));
+
+function whenLabel(slot: SelectedSlot, lang: "en" | "mr", now: string) {
+  if (slot.mode === "now") return now;
+  const d = new Date(slot.day).toLocaleDateString(lang === "mr" ? "mr-IN" : "en-IN", { weekday: "short", day: "numeric", month: "short" });
+  return `${d} · ${slot.slotLabel}`;
 }
 
+/** Shared checkout. Clean uses it today; Store/Food/Parcel will reuse the same layout. */
 export function BookingSummaryScreen({
-  service,
-  slot,
-  address,
-  coupon,
-  onCouponChange,
-  onOpenCoupons,
-  redeemCoins = false,
-  onRedeemCoinsChange,
-  onBack,
-  onEditAddress,
-  onProceedToPay,
+  service, slot, address, coupon, onCouponChange, onOpenCoupons,
+  redeemCoins = false, onRedeemCoinsChange, onBack, onEditAddress, onProceedToPay,
+  note = "", onNoteChange,
 }: {
   service: SelectedService;
   slot: SelectedSlot;
@@ -65,264 +81,168 @@ export function BookingSummaryScreen({
   onBack: () => void;
   onEditAddress: () => void;
   onProceedToPay: () => void;
+  note?: string;
+  onNoteChange?: (v: string) => void;
 }) {
-  const t = useT();
-  const slotInfo = formatSlot(slot, t);
-  const gstPercent = useBookingGstPercent(service.id);
-  const bill = billBreakdown(
-    Number(service.price),
-    gstPercent,
-    coupon?.discount ?? 0,
-  );
-  const tax = bill.gst;
-  const discount = bill.discount;
-  const { data: availableCoupons } = useQuery({
-    queryKey: ["my_coupons"],
-    queryFn: () => fetchMyCoupons(),
-    staleTime: 60_000,
-  });
-  const { data: coinBalance = 0 } = useQuery({
-    queryKey: ["my_coin_balance"],
-    queryFn: fetchMyCoinBalance,
-    staleTime: 30_000,
-  });
-  const maxCoins = Math.max(0, Math.min(coinBalance, bill.total));
-  const coinsApplied = redeemCoins ? maxCoins : 0;
-  const total = Math.max(0, bill.total - coinsApplied);
+  const { lang } = useLanguage();
+  const L = lang === "mr" ? "mr" : "en";
+  const s = TXT[L];
+  const isWash = slot.serviceKey === "wash";
+  const { data: content } = useServiceContent(isWash ? "wash" : "clean");
+  const [policyOpen, setPolicyOpen] = useState(false);
+  useBackHandler(policyOpen, () => setPolicyOpen(false));
 
+  const gstPercent = useBookingGstPercent(service.id);
+  const price = Number(service.price);
+  const bill = billBreakdown(price, gstPercent, coupon?.discount ?? 0);
+  const { data: balance = 0 } = useQuery({ queryKey: ["my_coin_balance"], queryFn: fetchMyCoinBalance, staleTime: 30_000 });
+  const walletUsed = redeemCoins ? Math.max(0, Math.min(balance, bill.total)) : 0;
+  const total = Math.max(0, bill.total - walletUsed);
+  const original = Number(service.strikethrough_price ?? 0);
+  const saving = Math.max(0, Math.round(original - price)) + Math.round(coupon?.discount ?? 0);
+
+  const name = isWash ? s.wash : s.home;
+  const lineTitle = isWash ? `${name} · ${service.duration_label}` : `${name} · ${service.duration_label}`;
+  const ccNote = (L === "mr" && content?.details?.note_mr?.trim()) || content?.details?.note?.trim() || (isWash ? s.washNote : s.maidNote);
+  const NoteIcon = isWash || content?.details?.note_icon === "water" ? Droplets : Package;
+
+  const row = (label: string, value: string, accent = false) => (
+    <div className="mt-2 flex items-center justify-between text-sm">
+      <span className="text-muted-foreground">{label}</span>
+      <span className={accent ? "font-bold text-primary" : "text-foreground"}>{value}</span>
+    </div>
+  );
 
   return (
-    <main className="min-h-screen w-full bg-background pb-28">
-      <div className="mx-auto w-full max-w-md px-5 pt-6">
-        {/* Header */}
+    <main className="min-h-screen w-full bg-surface-soft pb-32">
+      <div className="mx-auto w-full max-w-md px-4 pt-5">
         <div className="flex items-center gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            onClick={onBack}
-            aria-label={t("common.back")}
-            className="rounded-full"
-          >
+          <button type="button" onClick={onBack} aria-label="Back" className="flex h-10 w-10 items-center justify-center rounded-full bg-card shadow-soft">
             <ArrowLeft className="h-5 w-5 text-foreground" />
-          </Button>
-          <h1 className="text-base font-bold text-foreground">
-            {t("summary.title")}
-          </h1>
+          </button>
+          <h1 className="text-lg font-extrabold text-foreground">{s.title}</h1>
         </div>
 
-        {/* Service card */}
-        <section className="mt-6 flex items-start gap-4 rounded-[18px] border border-border bg-card p-5">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10">
-            <Clock className="h-6 w-6 text-primary" />
-          </div>
+        {/* 1. Address */}
+        <section className="mt-4 flex items-center gap-3 rounded-[16px] bg-card px-4 py-3 shadow-soft">
+          <MapPin className="h-5 w-5 shrink-0 text-primary" />
           <div className="min-w-0 flex-1">
-            <div className="text-base font-bold text-foreground">
-              {service.duration_label}
-            </div>
-            {service.subtitle && (
-              <div className="mt-0.5 text-xs text-muted-foreground">
-                {service.subtitle}
-              </div>
-            )}
-            <div className="mt-1 text-sm font-bold text-primary">
-              {t("common.rupees", { amount: service.price })}
-            </div>
+            <p className="truncate text-sm font-extrabold text-foreground">{address.label || address.area || "—"}</p>
+            <p className="truncate text-xs text-muted-foreground">{address.full_address}</p>
           </div>
+          <button type="button" onClick={onEditAddress} className="shrink-0 text-sm font-extrabold text-primary">{s.change}</button>
         </section>
 
-        {/* Slot card */}
-        <section className="mt-4 flex items-start gap-4 rounded-[18px] border border-border bg-card p-5">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10">
-            <Calendar className="h-6 w-6 text-primary" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-              {t("common.when")}
-            </div>
-            <div className="mt-1 text-base font-bold text-foreground">
-              {slotInfo.title}
-            </div>
-            <div className="mt-0.5 text-sm text-muted-foreground">
-              {slotInfo.subtitle}
-            </div>
-          </div>
-        </section>
-
-        {/* Address card */}
-        <section className="mt-4 flex items-start gap-4 rounded-[18px] border border-border bg-card p-5">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10">
-            <HomeIcon className="h-6 w-6 text-primary" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center justify-between gap-3">
-              <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                {t("common.address")}
-              </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={onEditAddress}
-                className="h-8 px-2 text-xs font-bold text-primary"
-              >
-                {t("common.edit")}
-              </Button>
-            </div>
-            <div className="mt-1 text-base font-bold text-foreground">
-              {address.label || t("address.fallbackLabel")}
-            </div>
-            <div className="mt-0.5 text-sm text-muted-foreground">
-              {address.full_address}
-            </div>
-          </div>
-        </section>
-
-        {/* Coupon */}
-        <section className="mt-4 overflow-hidden rounded-[18px] border border-border bg-card">
-          {coupon ? (
-            <div className="flex items-center gap-3 bg-primary/5 px-5 py-4">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/15">
-                <Check className="h-5 w-5 text-primary" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-bold text-foreground">{coupon.title}</p>
-                <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                  {coupon.code} · {t("coupon.saved", { amount: coupon.discount.toFixed(2) })}
-                </p>
-              </div>
-              <span className="shrink-0 text-sm font-extrabold text-primary">−₹{coupon.discount.toFixed(2)}</span>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                aria-label={t("coupon.remove")}
-                onClick={() => onCouponChange(null)}
-                className="h-8 w-8 shrink-0 rounded-full"
-              >
-                <X className="h-4 w-4 text-foreground" />
-              </Button>
-            </div>
-          ) : null}
-          {coupon && <div className="mx-5 border-t border-dashed border-border" />}
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={onOpenCoupons}
-            className="h-auto w-full justify-between rounded-none px-5 py-4 hover:bg-muted"
-          >
-            <span className="flex min-w-0 items-center gap-3">
-              <Tag className="h-5 w-5 shrink-0 text-primary" />
-              <span className="truncate text-sm font-bold text-foreground">
-                {coupon ? t("coupon.change") : t("coupon.viewAll")}
-              </span>
-              {!coupon && availableCoupons && availableCoupons.length > 0 && (
-                <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">
-                  {availableCoupons.length}
-                </span>
-              )}
-            </span>
-            <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-          </Button>
-        </section>
-
-        {/* Redeem coins */}
-        {coinBalance > 0 && (
-          <section className="mt-4 flex items-center gap-3 rounded-[18px] border border-border bg-card px-5 py-4">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/15">
-              <Coins className="h-5 w-5 text-primary" />
+        {/* 2. What you're booking */}
+        <section className="mt-3 rounded-[16px] bg-card p-4 shadow-soft">
+          <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">{s.booking}</p>
+          <div className="mt-2 flex items-center gap-3">
+            <div className="h-14 w-14 shrink-0 overflow-hidden rounded-[12px] bg-muted">
+              {service.image_url && <img src={service.image_url} alt="" className="h-full w-full object-cover" />}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-bold text-foreground">Use Badiyos coins</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                {coinBalance} coins uplabdh hain (₹{coinBalance})
-                {redeemCoins && coinsApplied > 0 ? ` · ${coinsApplied} use ho rahe hain` : ""}
+              <p className="truncate text-base font-extrabold text-foreground">{lineTitle}</p>
+              <p className="mt-0.5 text-sm text-muted-foreground">{whenLabel(slot, L, s.now)}</p>
+              <p className="mt-0.5 text-sm font-extrabold text-foreground">
+                ₹{rs(price)}
+                {original > price && <span className="ml-1.5 text-xs font-semibold text-muted-foreground line-through">₹{rs(original)}</span>}
               </p>
             </div>
-            <Switch
-              checked={redeemCoins}
-              onCheckedChange={(v) => {
-                void hapticImpact("light");
-                onRedeemCoinsChange?.(v);
-              }}
-              aria-label="Use Badiyos coins"
-            />
-          </section>
+            <button type="button" onClick={onBack} className="shrink-0 self-start text-sm font-extrabold text-primary">{s.edit}</button>
+          </div>
+        </section>
+
+        {/* 3. Savings */}
+        {saving > 0 && (
+          <div className="mt-3 rounded-[14px] bg-primary/10 px-4 py-2.5 text-center text-sm font-extrabold text-primary">
+            🎉 {fill(s.save, "n", saving)}
+          </div>
         )}
 
-
-
-        {/* Price breakdown */}
-        <section className="mt-4 rounded-[18px] border border-border bg-card p-5">
-          <div className="text-sm font-bold text-foreground">
-            {t("summary.priceDetails")}
-          </div>
-          <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
-            <span>{t("summary.servicePrice")}</span>
-            <span className="text-foreground">
-              {t("common.rupees", { amount: service.price })}
-            </span>
-          </div>
-          {discount > 0 && (
-            <div className="mt-2 flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">{t("coupon.discount")}</span>
-              <span className="font-bold text-primary">
-                −{t("common.rupees", { amount: Math.round(discount) })}
-              </span>
+        {/* 4. Coupon + wallet */}
+        <section className="mt-3 overflow-hidden rounded-[16px] bg-card shadow-soft">
+          {coupon ? (
+            <div className="flex items-center gap-3 px-4 py-3.5">
+              <Tag className="h-5 w-5 shrink-0 text-primary" />
+              <p className="min-w-0 flex-1 truncate text-sm font-extrabold text-foreground">{coupon.code} · −₹{rs(coupon.discount)}</p>
+              <button type="button" onClick={() => onCouponChange(null)} className="flex items-center gap-1 text-sm font-extrabold text-destructive">
+                <X className="h-4 w-4" />{s.remove}
+              </button>
             </div>
+          ) : (
+            <button type="button" onClick={onOpenCoupons} className="flex w-full items-center gap-3 px-4 py-3.5 text-left">
+              <Tag className="h-5 w-5 shrink-0 text-primary" />
+              <span className="flex-1 text-sm font-extrabold text-foreground">{s.applyCoupon}</span>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            </button>
           )}
-          <div className="mt-2 flex items-center justify-between text-sm text-muted-foreground">
-            <span>{t("summary.gst", { percent: gstPercent })}</span>
-            <span className="text-foreground">
-              {t("common.rupees", { amount: tax })}
-            </span>
-          </div>
-          {bill.roundOff !== 0 && (
-            <div className="mt-2 flex items-center justify-between text-sm text-muted-foreground">
-              <span>{t("summary.roundOff")}</span>
-              <span className="text-foreground">
-                {bill.roundOff > 0 ? "+" : "−"}
-                {t("common.rupees", { amount: Math.abs(bill.roundOff).toFixed(2) })}
-              </span>
-            </div>
+          {balance > 0 && (
+            <>
+              <div className="mx-4 border-t border-border" />
+              <div className="flex items-center gap-3 px-4 py-3.5">
+                <Wallet className="h-5 w-5 shrink-0 text-primary" />
+                <span className="flex-1 text-sm font-extrabold text-foreground">{s.wallet} (₹{balance})</span>
+                <Switch checked={redeemCoins} aria-label={s.wallet}
+                  onCheckedChange={(v) => { void hapticImpact("light"); onRedeemCoinsChange?.(v); }} />
+              </div>
+            </>
           )}
-          {coinsApplied > 0 && (
-            <div className="mt-2 flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Coins redeemed</span>
-              <span className="font-bold text-primary">−₹{coinsApplied}</span>
-            </div>
-          )}
-          <div className="my-4 h-px bg-border" />
+        </section>
 
-
-          <div className="flex items-center justify-between">
-            <span className="text-base font-bold text-foreground">{t("common.total")}</span>
-            <span className="text-base font-bold text-foreground">
-              {t("common.rupees", { amount: total })}
-            </span>
+        {/* 5. Note */}
+        <section className="mt-3 rounded-[16px] bg-card p-4 shadow-soft">
+          <label htmlFor="expert-note" className="text-sm font-extrabold text-foreground">{s.noteLabel}</label>
+          <textarea id="expert-note" value={note} maxLength={200} rows={2} placeholder={s.notePh}
+            onChange={(e) => onNoteChange?.(e.target.value)}
+            className="mt-2 w-full resize-none rounded-[12px] border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary" />
+          <div className="mt-2 flex items-start gap-2.5 rounded-[12px] bg-surface-soft p-3">
+            <NoteIcon className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+            <p className="text-xs font-semibold text-foreground">{ccNote}</p>
           </div>
+        </section>
+
+        {/* 6. Bill */}
+        <section className="mt-3 rounded-[16px] bg-card p-4 shadow-soft">
+          <p className="text-sm font-extrabold text-foreground">{s.bill}</p>
+          {row(s.price, `₹${rs(price)}`)}
+          {bill.discount > 0 && row(s.coupon, `−₹${rs(Math.round(bill.discount))}`, true)}
+          {row(fill(s.gst, "p", gstPercent), `₹${rs(bill.gst)}`)}
+          {bill.roundOff !== 0 && row(s.round, `${bill.roundOff > 0 ? "+" : "−"}₹${Math.abs(bill.roundOff).toFixed(2)}`)}
+          {walletUsed > 0 && row(s.walletLine, `−₹${rs(walletUsed)}`, true)}
+          <div className="my-3 h-px bg-border" />
+          <div className="flex items-center justify-between text-base font-extrabold text-foreground">
+            <span>{s.total}</span><span>₹{rs(total)}</span>
+          </div>
+          <button type="button" onClick={() => setPolicyOpen(true)} className="mt-3 flex items-center gap-1 text-sm font-bold text-primary">
+            {s.policy}<ChevronRight className="h-4 w-4" />
+          </button>
         </section>
       </div>
 
-
-      {/* Fixed pay button */}
-      <div className="fixed inset-x-0 bottom-0 z-10 border-t border-border bg-card safe-bottom">
-        <div className="mx-auto flex w-full max-w-md items-center justify-between gap-4 px-5 py-4">
+      {/* 7. Pay bar */}
+      <div className="fixed inset-x-0 bottom-0 z-10 bg-card shadow-[0_-4px_16px_rgba(0,0,0,0.06)] safe-bottom">
+        <div className="mx-auto flex w-full max-w-md items-center gap-4 px-4 py-3">
           <div className="flex flex-col">
-            <span className="text-xs text-muted-foreground">{t("common.total")}</span>
-            <span className="text-base font-bold text-foreground">
-              {t("common.rupees", { amount: total })}
-            </span>
+            <span className="text-xs text-muted-foreground">{s.total}</span>
+            <span className="text-lg font-extrabold text-foreground">₹{rs(total)}</span>
           </div>
-          <Button
-            type="button"
-            onClick={() => { void hapticImpact("medium"); onProceedToPay(); }}
-            className="h-auto flex-1 rounded-[14px] px-4 py-3.5 text-sm font-bold active:scale-[0.99]"
-          >
-            {t("summary.payAmount", { amount: total })}
-          </Button>
+          <button type="button" onClick={() => { void hapticImpact("medium"); onProceedToPay(); }}
+            className="flex-1 rounded-[14px] bg-primary py-3.5 text-base font-extrabold text-primary-foreground active:scale-[0.99]">
+            {total === 0 && walletUsed > 0 ? s.payWallet : fill(s.pay, "n", rs(total))}
+          </button>
         </div>
       </div>
+
+      <Sheet open={policyOpen} onOpenChange={setPolicyOpen}>
+        <SheetContent side="bottom" className="rounded-t-[24px] px-5 pb-6 safe-bottom">
+          <SheetTitle className="mt-2 text-lg font-extrabold text-foreground">{s.policy}</SheetTitle>
+          <ul className="mt-3 space-y-2 text-sm text-foreground">
+            {s.policyBody.map((x, i) => <li key={i} className="flex gap-2"><span className="text-primary">•</span>{x}</li>)}
+          </ul>
+        </SheetContent>
+      </Sheet>
     </main>
   );
 }
+
+export { BookingSummaryScreen as CheckoutScreen };
