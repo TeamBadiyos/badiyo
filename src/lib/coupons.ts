@@ -25,7 +25,7 @@ export type MyCoupon = {
 
 export type CouponPreview =
   | { ok: true; coupon: AppliedCoupon }
-  | { ok: false; message: string };
+  | { ok: false; message: string; reason?: string; min_order_amount?: number };
 
 function reasonMessage(reason: string, extra?: Record<string, unknown>): string {
   switch (reason) {
@@ -89,7 +89,7 @@ export async function previewCoupon(
       },
     };
   }
-  return { ok: false, message: reasonMessage(String(res.reason ?? ""), res) };
+  return { ok: false, message: reasonMessage(String(res.reason ?? ""), res), reason: String(res.reason ?? ""), min_order_amount: Number(res.min_order_amount ?? 0) };
 }
 
 export async function fetchMyCoupons(options?: { throwOnError?: boolean }): Promise<MyCoupon[]> {
@@ -151,4 +151,25 @@ export function couponValueLabel(c: MyCoupon): string {
     return mins >= 60 ? `${Math.round(mins / 60)} HR FREE` : `${mins} MIN FREE`;
   }
   return `₹${Number(c.discount_value)} OFF`;
+}
+
+export type CheckoutCoupon = {
+  code: string;
+  title: string | null;
+  description: string | null;
+  min_order_amount: number | null;
+  ok: boolean;
+  discount: number | null;
+  reason: string | null;
+};
+
+/** Coupons for this order with savings / reason; browsing doesn't use wrong-code attempts. */
+export async function fetchCheckoutCoupons(baseAmount: number, durationMinutes?: number | null, categoryId?: string | null): Promise<CheckoutCoupon[]> {
+  const { data, error } = await supabase.rpc("app_checkout_coupons" as never, {
+    _base_amount: baseAmount,
+    _duration_minutes: durationMinutes ?? null,
+    _category_id: categoryId ?? null,
+  } as never);
+  if (error) throw error;
+  return (data as CheckoutCoupon[] | null) ?? [];
 }
