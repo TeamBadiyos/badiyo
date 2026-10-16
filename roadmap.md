@@ -56,7 +56,7 @@ drop table if exists public.courier_vehicle_courier_types, public.courier_vehicl
 - [x] "Bring badiyos" outside-city screen with service picker → Demand (waitlist_requests)
 - [x] Removed All/Clean/Store chips and Sell-on-badiyos banner (→ Profile › Partner with badiyos)
 - [x] One cart at a time with "clear and start new" (store cart already enforced)
-- [ ] Browse without login (OTP only on Book/Order/Pay/Wallet)
+- [x] Browse without login (login only for Book/Wallet/Rewards/Orders/Parcel)
 - [ ] First-open Location + Notifications screen; follow phone language on first open
 - [ ] Structured address form (City dropdown, pincode validation, Confirm this location)
 - [ ] Single checkout page for all services
