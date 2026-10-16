@@ -448,7 +448,6 @@ export function HomeScreen({
           onAddMore={() => {
             setCartOpen(false);
             const id = storeCart.cart.merchantId;
-            if (id && openStore?.id !== id) setOpenStore({ id: lastStore?.id === id ? lastStore.distance_km ?? null : null } as never);
             if (id && openStore?.id !== id) setOpenStore({ id, distance_km: lastStore?.id === id ? lastStore.distance_km : null });
           }}
           onAddAddress={() => {
