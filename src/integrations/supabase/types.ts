@@ -12399,6 +12399,7 @@ export type Database = {
         Args: { _user_id: string }
         Returns: undefined
       }
+      courier_apply_wallet: { Args: { _order_id: string }; Returns: Json }
       courier_booking_start_at: {
         Args: { _d: string; _slot: string }
         Returns: string
