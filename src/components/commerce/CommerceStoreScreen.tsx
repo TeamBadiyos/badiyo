@@ -28,7 +28,7 @@ import {
   type CommerceStore,
 } from "@/lib/commerce";
 
-const COPY = {
+export const STORE_COPY = {
   en: {
     recommended: "⭐ Recommended",
     add: "Add",
@@ -360,7 +360,7 @@ function FoodList({ items, ...rest }: ItemProps) {
   );
 }
 
-function OptionsSheet({
+export function OptionsSheet({
   item,
   c,
   onClose,
