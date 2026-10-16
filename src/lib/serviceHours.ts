@@ -94,21 +94,20 @@ export async function notifyMeForService(serviceKey: string): Promise<"added" | 
   return d?.ok ? "added" : "error";
 }
 
-/** Format a timestamptz into a friendly "tomorrow 9 AM" style label (device locale). */
+/** Format a timestamptz into a friendly "tomorrow 9 AM" label, always in Asia/Kolkata. */
 export function formatNextOpen(iso: string | null | undefined): string | null {
   if (!iso) return null;
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return null;
+  const tz = "Asia/Kolkata";
+  const dayKey = (x: Date) => x.toLocaleDateString("en-CA", { timeZone: tz });
   const now = new Date();
-  const sameDay = d.toDateString() === now.toDateString();
-  const tomorrow = new Date(now);
-  tomorrow.setDate(now.getDate() + 1);
-  const isTomorrow = d.toDateString() === tomorrow.toDateString();
-  const time = d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
-  if (sameDay) return time;
-  const day = isTomorrow
+  const tomorrow = new Date(now.getTime() + 86_400_000);
+  const time = d.toLocaleTimeString("en-US", { timeZone: tz, hour: "numeric", minute: "2-digit" });
+  if (dayKey(d) === dayKey(now)) return time;
+  const day = dayKey(d) === dayKey(tomorrow)
     ? "tomorrow"
-    : d.toLocaleDateString([], { day: "numeric", month: "short" });
+    : d.toLocaleDateString("en-US", { timeZone: tz, day: "numeric", month: "short" });
   return `${day} ${time}`;
 }
 

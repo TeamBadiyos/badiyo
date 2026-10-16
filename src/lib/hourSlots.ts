@@ -26,13 +26,14 @@ export function formatMinutes(total: number): string {
   return `${display}:${String(m).padStart(2, "0")} ${suffix}`;
 }
 
-export function getAllHourSlots(): HourSlot[] {
+/** Half-hourly slots between startMins and endMins (defaults to the fixed window). */
+export function getAllHourSlots(
+  startMins: number = BUSINESS_START_HOUR * 60,
+  endMins: number = BUSINESS_END_HOUR * 60,
+): HourSlot[] {
   const slots: HourSlot[] = [];
-  for (
-    let t = BUSINESS_START_HOUR * 60;
-    t <= BUSINESS_END_HOUR * 60;
-    t += SLOT_STEP_MINUTES
-  ) {
+  const first = Math.ceil(startMins / SLOT_STEP_MINUTES) * SLOT_STEP_MINUTES;
+  for (let t = first; t <= endMins; t += SLOT_STEP_MINUTES) {
     slots.push({
       mins: t,
       hour: Math.floor(t / 60),
