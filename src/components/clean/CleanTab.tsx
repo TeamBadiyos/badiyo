@@ -171,7 +171,7 @@ export function CleanTab({
       </section>
 
       <div className="relative -mx-5 -mt-8 rounded-t-[28px] bg-background px-5 pt-6">
-        <div className="grid grid-cols-2 gap-3 pt-14">
+        <div className="grid grid-cols-2 gap-3 pt-16">
           <ServiceCard title={pick(lang, maidContent?.hero?.card_title, maidContent?.hero?.card_title_mr) || s.maid} status={statusLine(maidState)} closed={closed} icon={<Sparkles className="h-4 w-4" />} img={maidContent?.hero?.image_url || maidHero} onClick={() => openBooking(false)} />
           {washOptions.length > 0 && (
             <ServiceCard title={pick(lang, washContent?.hero?.card_title, washContent?.hero?.card_title_mr) || s.washCard} status={statusLine(washState)} closed={washState != null && !washState.can_order} icon={<Car className="h-4 w-4" />} img={washContent?.hero?.image_url || washCar} onClick={() => openBooking(true)} />
@@ -279,12 +279,12 @@ function fill(text: string, vars: Record<string, string>): string {
 
 function ServiceCard({ title, status, closed, icon, img, onClick }: { title: string; status: string; closed: boolean; icon: ReactNode; img: string; onClick: () => void }) {
   return (
-    <button onClick={onClick} className="relative flex min-h-[104px] flex-col justify-end rounded-[18px] bg-card p-3 text-left shadow-soft transition active:scale-[0.98]">
-      <img src={img} alt="" loading="lazy" className={`pointer-events-none absolute bottom-0 right-1 h-[150%] w-[45%] object-contain object-right-bottom ${closed ? "grayscale" : ""}`} />
-      <div className="relative w-[55%] min-w-0">
+    <button onClick={onClick} className="relative flex min-h-[92px] flex-col justify-end overflow-visible rounded-[18px] bg-card p-3 text-left shadow-soft transition active:scale-[0.98]">
+      <img src={img} alt="" loading="lazy" className={`pointer-events-none absolute bottom-0 right-0 h-[150%] w-auto max-w-none object-contain object-bottom ${closed ? "grayscale" : ""}`} />
+      <div className="relative w-[46%] min-w-0">
         <span className="mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">{icon}</span>
         <span className="flex min-w-0 items-center text-sm font-extrabold text-foreground"><span className="truncate">{title}</span><ChevronRight className="h-4 w-4 shrink-0" /></span>
-        <span className={`mt-0.5 block truncate text-[11px] font-semibold ${closed ? "text-muted-foreground" : "text-primary"}`}>{status}</span>
+        <span className={`mt-0.5 block line-clamp-2 text-[11px] leading-tight font-semibold ${closed ? "text-muted-foreground" : "text-primary"}`}>{status}</span>
       </div>
     </button>
   );
