@@ -222,8 +222,6 @@ export function HomeScreen({
     staleTime: 5 * 60_000,
   });
   const { data: segments = [] } = useQuery({ queryKey: ["segments"], queryFn: fetchSegments });
-  // Courier has its own bottom-bar tab, so it never shows as a service chip.
-  const visibleSegments = segments.filter((s) => s.slug !== "courier");
   const { data: services = [] } = useQuery({
     queryKey: ["segment_services"],
     queryFn: fetchSegmentServices,
@@ -410,7 +408,7 @@ export function HomeScreen({
   const addressCity = useResolveAddressCity(activeAddress?.id);
   const [cityDismissedFor, setCityDismissedFor] = useState<string | null>(null);
 
-  const addressTag = activeAddress?.label || t("common.home");
+  const addressTag = activeAddress?.label || t("nav.home");
   const locationLabel = activeAddress?.area || activeAddress?.full_address || activeAddress?.city || "";
 
   const activeSegment =
@@ -617,9 +615,6 @@ export function HomeScreen({
           </section>
         )}
 
-        {storeUnlocked && false && (
-          <StoreShelves coords={homeCoords} onOpenStore={(s) => setOpenStore(s)} />
-        )}
 
         {/* Promo banner — high-emphasis solid brand highlight */}
         {promo && (

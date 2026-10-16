@@ -267,12 +267,10 @@ export function RewardsScreen({
 
 
       <BottomNav
-        activeKey="rewards"
-        onHome={onOpenHome}
-        onOrders={onOpenBookings}
+        activeKey={"rewards"}
+        onHome={() => onOpenHome()}
         onRewards={onOpenRewards}
-        onParcel={onOpenCourier}
-        showParcel={courierEnabled}
+        onParcel={courierEnabled ? onOpenCourier : undefined}
       />
     </main>
   );

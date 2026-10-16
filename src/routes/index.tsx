@@ -941,6 +941,8 @@ function Index() {
               setPhase("search-results");
             }}
             onOpenCourier={() => setPhase("courier")}
+            onOpenWallet={() => setPhase("wallet")}
+            onRequireLogin={() => setPhase("login")}
             onOpenContactParcels={openContactParcels}
           />
 
@@ -1235,6 +1237,7 @@ function Index() {
           <ProfileScreen
             onBack={() => setPhase("home")}
             onOpenBookings={() => setPhase("my-bookings")}
+            onOpenOrders={() => setPhase("orders")}
             onOpenWallet={() => setPhase("wallet")}
             onOpenEditProfile={() => setPhase("edit-profile")}
             onOpenNotifications={() => setPhase("notifications")}

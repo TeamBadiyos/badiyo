@@ -11,7 +11,6 @@ import {
   type PublicStore,
 } from "@/lib/store";
 import { StoreRow } from "./StoreRow";
-import { SellOnBadiyosCard } from "./SellOnBadiyosCard";
 import { CartBar } from "./CartBar";
 import { StoreCategoryGrid } from "./storeCatalog";
 import { buildStoreGroups, type StoreCategoryGroup } from "./storeGroups";
@@ -48,9 +47,6 @@ export function StoreListView({
 
   return (
     <section className="mt-3 pb-36">
-      <div className="mb-3">
-        <SellOnBadiyosCard />
-      </div>
       <div className="mb-4">
         <StoreCategoryGrid coords={coords} />
       </div>
