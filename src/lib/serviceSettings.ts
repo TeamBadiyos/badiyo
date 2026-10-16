@@ -85,6 +85,8 @@ export type ServiceContent = {
   banners?: Partial<Record<BannerKey, ContentBanner>>;
   campaign?: ContentBanner & { active?: boolean; enabled?: boolean; link?: string | null };
   details?: ContentDetails;
+  /** "HH:MM" IST — night banner switches to sunrise banner at this time. */
+  morning_switch_time?: string | null;
 };
 export type BannerKey = "open_available" | "open_busy" | "closed_evening" | "closed_morning" | "holiday";
 export type ContentBanner = { title?: string | null; title_mr?: string | null; subline?: string | null; subline_mr?: string | null; image_url?: string | null };
