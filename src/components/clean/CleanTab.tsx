@@ -227,6 +227,9 @@ export function CleanTab({
           options={draft.auto ? washOptions : maidOptions}
           isAuto={draft.auto}
           serviceKey={draft.auto ? "wash" : "clean"}
+          title={draft.auto
+            ? pick(lang, washContent?.hero?.card_title, washContent?.hero?.card_title_mr) || s.wash
+            : pick(lang, maidContent?.hero?.card_title, maidContent?.hero?.card_title_mr) || s.maid}
           addressLine={addressLine}
           draft={{ optionId: draft.optionId, day: draft.day, slotMins: draft.slotMins }}
           fallbackImage={(o) => ""}

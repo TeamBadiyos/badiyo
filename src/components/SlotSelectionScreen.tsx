@@ -70,15 +70,14 @@ export type SelectedService = {
 };
 
 
-export type SelectedSlot =
-  | { mode: "now" }
+export type SelectedSlot = ({ mode: "now" }
   | {
       mode: "later";
       day: string;
       slotId: number; // start time, minutes since midnight (e.g. 630 = 10:30 AM)
       slotLabel: string;
       slotRange: string;
-    };
+    }) & { serviceKey?: "clean" | "wash" };
 
 type Mode = "now" | "later";
 
