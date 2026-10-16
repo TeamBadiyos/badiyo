@@ -495,6 +495,13 @@ function Index() {
         _setPhase(prev);
         return;
       }
+      // Any non-home screen with no history falls back to Home, never exits.
+      if (cur !== "home" && !isAtRootPhase(cur)) {
+        historyRef.current = [];
+        phaseRef.current = "home";
+        _setPhase("home");
+        return;
+      }
       if (!allowExit) return;
       // At root — require a second back press within 2s to exit.
       const now = Date.now();
