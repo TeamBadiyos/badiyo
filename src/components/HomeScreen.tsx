@@ -10,6 +10,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useStoreCart } from "@/lib/storeCart";
+import { ComingSoonService } from "./ComingSoonService";
 import { getCoordsIfPermitted } from "@/lib/nativeGeolocation";
 import { ActiveOrdersStrip } from "@/components/home/ActiveOrdersStrip";
 import { getAuthUser } from "@/lib/authUser";
@@ -605,29 +606,13 @@ export function HomeScreen({
               coords={addressCity?.lat != null && addressCity?.lng != null ? { lat: addressCity.lat, lng: addressCity.lng } : homeCoords}
               onOpenStore={(s) => setOpenStore(s, "browse")}
               emptyFallback={tab === "food" ? (
-          <section className="mt-6 flex flex-col items-center rounded-[20px] bg-surface-soft px-6 py-12 text-center">
-            <div className="text-6xl">🍱</div>
-            <h2 className="mt-4 text-2xl font-extrabold">{t("home.comingSoonTitle")}</h2>
-            <p className="mt-2 text-sm text-muted-foreground">{t("home.foodSoonSub")}</p>
-            <button
-              onClick={async () => {
-                if (!(await ensureSignedIn())) return;
-                const { error } = await supabase.rpc("customer_notify_me" as never, {
-                  _service_key: "food",
-                  _city: activeAddress?.city?.split(",")[0]?.trim() || null,
-                  _area: activeAddress?.area ?? null,
-                  _lat: addressCity?.lat ?? homeCoords?.lat ?? null,
-                  _lng: addressCity?.lng ?? homeCoords?.lng ?? null,
-                } as never);
-                if (error) toast.error(t("notServiceable.joinFailed"));
-                else toast.success(t("notServiceable.onTheList"));
-              }}
-              className="mt-6 flex items-center gap-2 rounded-[20px] bg-primary px-6 py-3.5 text-base font-extrabold text-primary-foreground shadow-soft"
-            >
-              <BellRing className="h-5 w-5" />
-              {t("bring.notify")}
-            </button>
-          </section>
+                <ComingSoonService
+                  service="food"
+                  cityId={addressCity?.cityId ?? null}
+                  cityName={activeAddress?.city ?? null}
+                  area={activeAddress?.area ?? null}
+                  coords={addressCity?.lat != null && addressCity?.lng != null ? { lat: addressCity.lat, lng: addressCity.lng } : homeCoords}
+                />
               ) : undefined}
             />
           </Suspense>
