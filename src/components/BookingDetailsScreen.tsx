@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Clock, Calendar, Home as HomeIcon, Star, X } from "lucide-react";
+import { ArrowLeft, Clock, Calendar, Home as HomeIcon, Star } from "lucide-react";
 import { toast } from "sonner";
 import type { BookingRow } from "./MyBookingsScreen";
 import { supabase } from "@/integrations/supabase/client";
