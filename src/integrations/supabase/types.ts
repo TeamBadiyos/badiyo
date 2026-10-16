@@ -2444,6 +2444,90 @@ export type Database = {
           },
         ]
       }
+      category_suggestions: {
+        Row: {
+          category_id: string | null
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          id: string
+          merchant_id: string
+          product_id: string | null
+          reason: string | null
+          service_type: string
+          status: string
+          submitted_by: string | null
+          suggested_name: string
+          updated_at: string
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          id?: string
+          merchant_id: string
+          product_id?: string | null
+          reason?: string | null
+          service_type: string
+          status?: string
+          submitted_by?: string | null
+          suggested_name: string
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          id?: string
+          merchant_id?: string
+          product_id?: string | null
+          reason?: string | null
+          service_type?: string
+          status?: string
+          submitted_by?: string | null
+          suggested_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "category_suggestions_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "category_suggestions_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "category_suggestions_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "public_stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "category_suggestions_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "category_suggestions_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "public_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cities: {
         Row: {
           created_at: string
@@ -11603,6 +11687,16 @@ export type Database = {
         Args: { _approve: boolean; _reason?: string; _request_id: string }
         Returns: undefined
       }
+      admin_decide_category_suggestion: {
+        Args: {
+          _approve: boolean
+          _category_id?: string
+          _id: string
+          _new_name?: string
+          _reason?: string
+        }
+        Returns: Json
+      }
       advance_booking_status: {
         Args: { _booking_id: string; _new_status: string }
         Returns: undefined
@@ -13266,6 +13360,10 @@ export type Database = {
         Returns: Json
       }
       merchant_submit_application: { Args: never; Returns: undefined }
+      merchant_suggest_category: {
+        Args: { _name: string; _product_id: string }
+        Returns: Json
+      }
       merchant_verify_pin_internal: {
         Args: { p_phone: string; p_pin: string }
         Returns: Json
