@@ -242,7 +242,33 @@ export function SlotSelectionScreen({
     }
   }, [instantPaused, mode]);
 
-  const nowBlocked = (cleanState != null && !cleanState.can_order) || instantPaused;
+  // Server says every expert is busy for Book Now → offer Notify me / Schedule.
+  const { data: instantGate } = useQuery({
+    queryKey: ["instant-allowed", durationMinutes],
+    queryFn: async () => {
+      const { data } = await supabase.rpc(
+        "service_instant_allowed" as never,
+        { _service_key: "clean", _duration_minutes: durationMinutes || 60 } as never,
+      );
+      return (data as { ok?: boolean; reason_code?: string } | null) ?? null;
+    },
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+  });
+  const allBusy = instantGate?.ok === false && instantGate.reason_code === "all_busy";
+  const [notifyDone, setNotifyDone] = useState(false);
+  const notifyMe = async () => {
+    const { data: u } = await supabase.auth.getUser();
+    if (!u.user) return toast("Please log in first");
+    const { error } = await supabase
+      .from("service_notify_requests")
+      .insert({ user_id: u.user.id, service_key: "clean" } as never);
+    if (error) return toast("Abhi request save nahi hui, dobara try karein");
+    setNotifyDone(true);
+    toast("Expert free hote hi hum aapko batayenge");
+  };
+
+  const nowBlocked = (cleanState != null && !cleanState.can_order) || instantPaused || allBusy;
 
   // Per-day slot availability from the server (holidays, weekly off, window fit).
   const { data: dayAllowed } = useQuery({
@@ -417,13 +443,42 @@ export function SlotSelectionScreen({
               </button>
             ))}
           </div>
-          {instantPaused && (
+          {instantPaused && !allBusy && (
             <p className="mt-3 rounded-[14px] border border-border bg-muted px-4 py-3 text-sm font-semibold text-foreground">
               {instantPausedMsg}
             </p>
           )}
 
-          {mode === "now" && (
+          {allBusy && (
+            <div className="mt-3 rounded-[18px] border border-border bg-card p-4">
+              <div className="text-base font-bold text-foreground">All experts are busy right now</div>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Hum aapko batayenge jaise hi koi expert free hota hai, ya aage ka time schedule karein.
+              </p>
+              <div className="mt-3 flex gap-2">
+                <button
+                  type="button"
+                  disabled={notifyDone}
+                  onClick={() => void notifyMe()}
+                  className="flex-1 rounded-[12px] border border-primary px-3 py-2.5 text-sm font-bold text-primary disabled:opacity-60"
+                >
+                  {notifyDone ? "We'll notify you ✓" : "Notify me"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode("later");
+                    setSelectedDay((d) => d ?? firstOpenDayRef.current());
+                  }}
+                  className="flex-1 rounded-[12px] bg-primary px-3 py-2.5 text-sm font-bold text-primary-foreground"
+                >
+                  Schedule
+                </button>
+              </div>
+            </div>
+          )}
+
+          {mode === "now" && !allBusy && (
             <div className="mt-5 flex items-start gap-4 rounded-[18px] border border-border bg-card p-5">
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] bg-primary/10">
                 <Clock className="h-6 w-6 text-primary" />
