@@ -8,7 +8,7 @@ export const guestLuckyDrawStatus = createServerFn({ method: "GET" }).handler(as
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data, error } = await supabaseAdmin.rpc("customer_lucky_draw_status");
   if (error) throw new Error("Could not load the contest");
-  return (data ?? null) as unknown;
+  return JSON.stringify(data ?? null);
 });
 
 export const guestLuckyDrawLeaderboard = createServerFn({ method: "POST" })
@@ -19,5 +19,5 @@ export const guestLuckyDrawLeaderboard = createServerFn({ method: "POST" })
       _limit: data.limit,
     });
     if (error) throw new Error("Could not load the leaderboard");
-    return (rows ?? null) as unknown;
+    return JSON.stringify(rows ?? null);
   });

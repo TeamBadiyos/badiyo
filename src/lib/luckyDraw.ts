@@ -73,7 +73,7 @@ export async function fetchLuckyDrawStatus(): Promise<LdStatus | null> {
   const { data: sess } = await supabase.auth.getSession();
   let data: unknown;
   if (!sess.session) {
-    data = await guestLuckyDrawStatus();
+    data = JSON.parse(await guestLuckyDrawStatus());
   } else {
     const res = await supabase.rpc("customer_lucky_draw_status");
     if (res.error) throw res.error;
@@ -141,7 +141,7 @@ export async function fetchLeaderboard(limit: number): Promise<{ rows: LdRow[]; 
   const { data: sess } = await supabase.auth.getSession();
   let data: unknown;
   if (!sess.session) {
-    data = await guestLuckyDrawLeaderboard({ data: { limit } });
+    data = JSON.parse(await guestLuckyDrawLeaderboard({ data: { limit } }));
   } else {
     const res = await supabase.rpc("customer_lucky_draw_leaderboard", { _limit: limit });
     if (res.error) throw res.error;
