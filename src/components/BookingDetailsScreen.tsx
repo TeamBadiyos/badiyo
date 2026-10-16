@@ -292,7 +292,7 @@ export function BookingDetailsScreen({
           setConfirmingCancel(false);
           setStatus("cancelled");
           await qc.invalidateQueries({ queryKey: ["my-bookings"] });
-          void qc.invalidateQueries({ queryKey: ["wallet_transactions"] });
+          void qc.invalidateQueries({ queryKey: ["wallet_transactions"] }); void qc.invalidateQueries({ queryKey: ["wallet"] }); void qc.invalidateQueries({ queryKey: ["my_coin_balance"] });
           onBack();
         }}
       />
