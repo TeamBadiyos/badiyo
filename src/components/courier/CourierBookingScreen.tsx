@@ -1,5 +1,6 @@
 // Customer parcel booking: guided locations, vehicle, parcel and review flow.
 // Fare and payment remain server-authoritative.
+import { ensureSignedIn } from "@/lib/authGate";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -312,9 +313,19 @@ export function CourierBookingScreen({
     setErr(null);
     setQuoting(true);
     try {
+      const { data: sess } = await supabase.auth.getSession();
+      const guest = !sess.session;
+      if (guest && isMulti) {
+        await ensureSignedIn();
+        return;
+      }
       if (!isMulti) {
         setPlanned(null);
-        setQuote((await courierQuote({ data: payload })) as Quote);
+        setQuote(
+          (guest
+            ? await courierGuestQuote({ data: payload })
+            : await courierQuote({ data: payload })) as Quote,
+        );
       } else {
         const order = await courierPlanStops({
           data: {
@@ -347,6 +358,7 @@ export function CourierBookingScreen({
   };
 
   const pay = async () => {
+    if (!(await ensureSignedIn())) return;
     if (!confirmed) {
       setErr(t("courier.confirmRequired"));
       return;
