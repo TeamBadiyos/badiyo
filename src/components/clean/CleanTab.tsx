@@ -121,19 +121,16 @@ export function CleanTab({
   });
   const againOption = lastBooking ? services.find((x) => x.id === lastBooking.price_option_id) : null;
 
-  // Command Center: homepage_sections row with section_type "clean_media".
-  // payload { maid_url, heading, heading_mr, tiles: [{ title, title_mr, url, enabled }] } (legacy tile_urls also read).
+  // Command Center content via public RPC app_clean_media(_city) — no login needed.
+  // { maid_url, heading, heading_mr, tiles: [{ title, title_mr, url, enabled }] }; fallbacks below.
+  const cityId = useCustomerCityId();
   const { data: mediaRow } = useQuery({
-    queryKey: ["clean_media"],
+    queryKey: ["clean_media", cityId],
     staleTime: 5 * 60_000,
     queryFn: async () => {
-      const { data } = await supabase
-        .from("homepage_sections")
-        .select("payload")
-        .eq("section_type", "clean_media")
-        .eq("is_active", true)
-        .limit(1);
-      return (data?.[0]?.payload ?? null) as CleanMedia | null;
+      const { data, error } = await (supabase.rpc as any)("app_clean_media", { _city: cityId });
+      if (error) return null;
+      return (data ?? null) as CleanMedia | null;
     },
   });
   const maid = mediaRow?.maid_url || null;
