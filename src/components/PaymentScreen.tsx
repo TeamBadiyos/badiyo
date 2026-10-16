@@ -8,7 +8,8 @@ import type { SelectedAddress } from "./BookingSummaryScreen";
 import { getErrorMessage } from "@/lib/errorMessage";
 import { useT } from "@/i18n";
 import { hapticImpact } from "@/lib/haptics";
-import { billBreakdown, useGstPercent } from "@/lib/gst";
+import { billBreakdown } from "@/lib/gst";
+import { useBookingGstPercent } from "@/lib/serviceSettings";
 import type { AppliedCoupon } from "@/lib/coupons";
 import { releaseMyCoins, releaseMyCoupon } from "@/lib/coins";
 
@@ -63,7 +64,7 @@ export function PaymentScreen({
   onOpenHelp?: () => void;
 }) {
   const t = useT();
-  const gstPercent = useGstPercent();
+  const gstPercent = useBookingGstPercent(service.id);
   const [status, setStatus] = useState<Status>("loading");
   const [errCategory, setErrCategory] = useState<RazorpayErrorCategory>("unknown");
   const [refId, setRefId] = useState<string | null>(null);

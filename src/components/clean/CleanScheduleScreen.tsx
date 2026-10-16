@@ -6,7 +6,8 @@ import { useCustomerCityId } from "@/lib/customerCity";
 import { ensureSignedIn } from "@/lib/authGate";
 import { useLanguage } from "@/i18n";
 import { getAllHourSlots, getNext7DayOptions, isHourBookable } from "@/lib/hourSlots";
-import { fetchFullyBookedSlots, fetchSlotAllowed, notifyMeForService, slotFitsWindow, timeToMinutes, useServiceState } from "@/lib/serviceHours";
+import { fetchSlotAllowed, notifyMeForService, slotFitsWindow, timeToMinutes } from "@/lib/serviceHours";
+import { fetchAppFullySlots, useServiceHours, type CleanServiceKey } from "@/lib/serviceSettings";
 import type { SegmentService } from "@/lib/segments";
 import type { SelectedSlot } from "../SlotSelectionScreen";
 import { CL } from "./CleanBookSheet";
@@ -15,10 +16,11 @@ import { AddressLine, DayCard, DurationCard, FullCalendarArt } from "./parts";
 export type ScheduleDraft = { optionId: string | null; day: string | null; slotMins: number | null };
 
 export function CleanScheduleScreen({
-  options, isAuto, addressLine, draft, onDraftChange, onChangeAddress, onBack, onContinue,
+  options, isAuto, serviceKey, addressLine, draft, onDraftChange, onChangeAddress, onBack, onContinue,
 }: {
   options: SegmentService[];
   isAuto?: boolean;
+  serviceKey: CleanServiceKey;
   addressLine: string | null;
   draft: ScheduleDraft;
   onDraftChange: (d: ScheduleDraft) => void;
@@ -38,7 +40,7 @@ export function CleanScheduleScreen({
   const option = options.find((o) => o.id === optionId) ?? null;
   const mins = Number(option?.duration_minutes) || 60;
 
-  const { data: state } = useServiceState("clean");
+  const { data: state } = useServiceHours(serviceKey);
   const openM = timeToMinutes(state?.open_time);
   const closeM = timeToMinutes(state?.close_time);
   const allSlots = useMemo(
@@ -47,16 +49,16 @@ export function CleanScheduleScreen({
   );
 
   const { data: fullSlots } = useQuery({
-    queryKey: ["fully-booked-slots", days[0].key, days[6].key, cityId],
+    queryKey: ["app-fully-booked", serviceKey, days[0].key, days[6].key, cityId],
     staleTime: 30_000,
-    queryFn: () => fetchFullyBookedSlots("clean", days[0].key, days[6].key),
+    queryFn: () => fetchAppFullySlots(serviceKey, days[0].key, days[6].key),
   });
   const { data: dayAllowed, isFetching } = useQuery({
-    queryKey: ["service-slots", day, mins, allSlots.length],
+    queryKey: ["service-slots", serviceKey, day, mins, allSlots.length],
     enabled: !!option,
     staleTime: 60_000,
     queryFn: async () =>
-      new Map(await Promise.all(allSlots.map(async (x) => [x.mins, await fetchSlotAllowed("clean", day, x.range, mins)] as const))),
+      new Map(await Promise.all(allSlots.map(async (x) => [x.mins, await fetchSlotAllowed(serviceKey, day, x.range, mins)] as const))),
   });
 
   const visible = allSlots.filter((x) => isHourBookable(day, x.mins) && slotFitsWindow(state, x.mins, mins));
@@ -85,7 +87,7 @@ export function CleanScheduleScreen({
   };
   const notify = async () => {
     if (!(await ensureSignedIn())) return;
-    const r = await notifyMeForService("clean");
+    const r = await notifyMeForService(serviceKey);
     if (r === "error") toast.error("Please try again");
     else toast.success(s.notified);
   };

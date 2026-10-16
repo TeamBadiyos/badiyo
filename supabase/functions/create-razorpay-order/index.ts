@@ -315,6 +315,13 @@ Deno.serve(async (req) => {
     } catch (gstErr) {
       console.error("gst_percent lookup failed", gstErr);
     }
+    // Per-service GST (Clean Home vs Car & Bike Wash) — same rate as the booking quote and DB trigger.
+    if (purpose === "booking" && couponCategoryId) {
+      const { data: svcGst, error: svcGstErr } = await supabase.rpc("booking_gst_percent", { _category_id: couponCategoryId });
+      const g = Number(svcGst);
+      if (!svcGstErr && svcGst != null && Number.isFinite(g) && g >= 0 && g <= 100) gstPercent = g;
+      else if (svcGstErr) console.error("booking_gst_percent failed", svcGstErr);
+    }
 
     // Who is paying (needed for coupons and for the payment-intent safety net).
     const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");

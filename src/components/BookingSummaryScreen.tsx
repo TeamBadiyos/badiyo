@@ -5,7 +5,8 @@ import { Switch } from "@/components/ui/switch";
 import type { SelectedService, SelectedSlot } from "./SlotSelectionScreen";
 import { useT, type TFunction } from "@/i18n";
 import { hapticImpact } from "@/lib/haptics";
-import { billBreakdown, useGstPercent } from "@/lib/gst";
+import { billBreakdown } from "@/lib/gst";
+import { useBookingGstPercent } from "@/lib/serviceSettings";
 import { fetchMyCoupons, type AppliedCoupon } from "@/lib/coupons";
 import { fetchMyCoinBalance } from "@/lib/coins";
 
@@ -67,7 +68,7 @@ export function BookingSummaryScreen({
 }) {
   const t = useT();
   const slotInfo = formatSlot(slot, t);
-  const gstPercent = useGstPercent();
+  const gstPercent = useBookingGstPercent(service.id);
   const bill = billBreakdown(
     Number(service.price),
     gstPercent,
