@@ -58,7 +58,7 @@ export function CleanScheduleScreen({
   const [optionId, setOptionId] = useState<string | null>(
     draft.optionId ?? (options.find((o) => Number(o.duration_minutes) === 120) ?? options[0])?.id ?? null,
   );
-  const [day, setDay] = useState<string>(draft.day ?? days[0].key);
+  const [day, setDay] = useState<string>(draft.day && days.some((d) => d.key === draft.day) ? draft.day : days[0].key);
   const [slotMins, setSlotMins] = useState<number | null>(draft.slotMins);
   useEffect(() => onDraftChange({ optionId, day, slotMins }), [optionId, day, slotMins]); // eslint-disable-line react-hooks/exhaustive-deps
 
