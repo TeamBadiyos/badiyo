@@ -178,23 +178,27 @@ function Header({ title, onBack }: { title: string; onBack: () => void }) {
 function ContactFields({
   name,
   phone,
+  namePh,
+  phonePh,
   onChange,
 }: {
   name: string;
   phone: string;
+  namePh?: string;
+  phonePh?: string;
   onChange: (name: string, phone: string) => void;
 }) {
   const c = useParcelCopy();
   const input = "w-full rounded-[12px] border border-border bg-background px-3 py-2.5 text-sm text-foreground outline-none focus:border-primary";
   return (
     <div className="mt-2 grid gap-2">
-      <input value={name} maxLength={80} placeholder={c.receiverName} onChange={(e) => onChange(e.target.value, phone)} className={input} />
+      <input value={name} maxLength={80} placeholder={namePh ?? c.receiverName} onChange={(e) => onChange(e.target.value, phone)} className={input} />
       <div className="flex gap-2">
         <input
           value={phone}
           inputMode="numeric"
           maxLength={10}
-          placeholder={c.receiverPhone}
+          placeholder={phonePh ?? c.receiverPhone}
           onChange={(e) => onChange(name, e.target.value.replace(/\D/g, "").slice(0, 10))}
           className={input}
         />
@@ -280,7 +284,13 @@ function PlaceStep({
         </button>
         <section className="mt-3 rounded-[16px] bg-card p-4 shadow-soft">
           <p className="text-sm font-extrabold text-foreground">{kind === "pickup" ? c.sender : c.receiver}</p>
-          <ContactFields name={stop.name} phone={stop.phone} onChange={(name, phone) => update({ name, phone })} />
+          <ContactFields
+            name={stop.name}
+            phone={stop.phone}
+            namePh={kind === "pickup" ? c.senderName : c.receiverName}
+            phonePh={kind === "pickup" ? c.senderPhone : c.receiverPhone}
+            onChange={(name, phone) => update({ name, phone })}
+          />
         </section>
       </div>
       <BottomBar>
