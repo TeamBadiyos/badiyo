@@ -127,3 +127,19 @@ export function addrTitle(a: ParcelAddr | null | undefined): string {
 }
 
 export const phone10 = (v: string) => v.replace(/\D/g, "").slice(-10);
+
+/** Where the full-screen flow should open: the vehicle page or the multi-stop editor. */
+let entry: "vehicle" | "multi" = "vehicle";
+export const setParcelEntry = (e: "vehicle" | "multi") => {
+  entry = e;
+};
+export const takeParcelEntry = () => entry;
+
+/** Signed-in customer's own name + 10-digit phone (pickup contact default). */
+export async function fetchMe() {
+  const { data: auth } = await getAuthUser();
+  const uid = auth.user?.id;
+  if (!uid) return { name: "", phone: "" };
+  const { data } = await supabase.from("users").select("full_name, phone").eq("id", uid).maybeSingle();
+  return { name: data?.full_name?.trim() ?? "", phone: phone10(data?.phone ?? auth.user?.phone ?? "") };
+}

@@ -2,11 +2,10 @@
 // Fares, coupons, wallet and payment stay server-side (courier.functions).
 import { useEffect, useMemo, useState } from "react";
 import { keepPreviousData, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowDown, ArrowLeft, ArrowUp, ArrowUpDown, Ban, Check, ChevronDown, ChevronRight, ChevronUp, Info, Loader2, Pencil, PlusCircle, Tag, Trash2, Wallet, X } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowUp, ArrowUpDown, Ban, Check, ChevronRight, Info, Loader2, Pencil, PlusCircle, Tag, Trash2, Wallet, X } from "lucide-react";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { useT } from "@/i18n";
-import { supabase } from "@/integrations/supabase/client";
 import { getAuthUser } from "@/lib/authUser";
 import { ensureSignedIn } from "@/lib/authGate";
 import { useBackHandler } from "@/lib/backHandler";
@@ -37,6 +36,8 @@ import {
   phone10,
   pushRecentDrop,
   readDraft,
+  takeParcelEntry,
+  fetchMe,
   writeDraft,
   type ParcelDraft,
   type ParcelStop,
@@ -55,7 +56,7 @@ type Quote = {
   coupon_ok?: boolean;
 };
 
-type Step = "pickup" | "drop" | "multi" | "vehicle" | "goods" | "checkout";
+type Step = "multi" | "vehicle" | "checkout";
 
 function useSignedIn() {
   const { data } = useQuery({
@@ -64,14 +65,6 @@ function useSignedIn() {
     staleTime: 30_000,
   });
   return Boolean(data);
-}
-
-async function fetchMe() {
-  const { data: auth } = await getAuthUser();
-  const uid = auth.user?.id;
-  if (!uid) return { name: "", phone: "" };
-  const { data } = await supabase.from("users").select("full_name, phone").eq("id", uid).maybeSingle();
-  return { name: data?.full_name?.trim() ?? "", phone: phone10(data?.phone ?? auth.user?.phone ?? "") };
 }
 
 function vehicleIcon(v: CourierVehicle) {
@@ -133,32 +126,24 @@ export function ParcelFlow({ onBack, onBooked }: { onBack: () => void; onBooked:
       writeDraft(n);
       return n;
     });
-  const [step, setStep] = useState<Step>(() => {
-    if (draft.mode !== "single") return "multi";
-    const p = draft.stops.find((s) => s.key === "P1");
-    const dr = draft.stops.find((s) => s.type === "drop");
-    if (!hasCoords(p?.addr)) return "pickup";
-    if (!hasCoords(dr?.addr)) return "drop";
-    return "vehicle";
-  });
+  // Parcel home → Vehicle → Checkout. The multi-stop editor returns to where it was opened.
+  const [multiFrom, setMultiFrom] = useState<"home" | "vehicle">("home");
+  const [step, setStep] = useState<Step>(() => (takeParcelEntry() === "multi" ? "multi" : "vehicle"));
   const back = () => {
-    if (step === "checkout") setStep("goods");
-    else if (step === "goods") setStep("vehicle");
-    else if (step === "vehicle") setStep(draft.mode === "single" ? "drop" : "multi");
-    else if (step === "drop") setStep("pickup");
+    if (step === "checkout") setStep("vehicle");
+    else if (step === "multi" && multiFrom === "vehicle") setStep("vehicle");
     else onBack();
   };
+  const openMulti = () => {
+    setDraft((d) => (d.mode === "single" ? { ...d, mode: "multiDrop" } : d));
+    setMultiFrom("vehicle");
+    setStep("multi");
+  };
 
-  if (step === "pickup")
-    return <PlaceStep key="pickup" kind="pickup" draft={draft} setDraft={setDraft} onBack={back} onNext={() => setStep("drop")} />;
-  if (step === "drop")
-    return <PlaceStep key="drop" kind="drop" draft={draft} setDraft={setDraft} onBack={back} onNext={() => setStep("vehicle")} />;
   if (step === "multi")
     return <MultiStopStep draft={draft} setDraft={setDraft} onBack={back} onNext={() => setStep("vehicle")} />;
   if (step === "vehicle")
-    return <VehicleStep draft={draft} setDraft={setDraft} onBack={back} onNext={() => setStep("goods")} onEdit={() => setStep(draft.mode === "single" ? "pickup" : "multi")} onAddStop={() => { setDraft((d) => ({ ...d, mode: "multiDrop" })); setStep("multi"); }} />;
-  if (step === "goods")
-    return <GoodsStep draft={draft} setDraft={setDraft} onBack={back} onNext={() => setStep("checkout")} />;
+    return <VehicleStep draft={draft} setDraft={setDraft} onBack={back} onNext={() => setStep("checkout")} onEdit={() => (draft.stops.length > 2 ? openMulti() : onBack())} onAddStop={openMulti} />;
   return (
     <CheckoutStep
       draft={draft}
@@ -213,135 +198,6 @@ function ContactFields({
         />
       </div>
     </div>
-  );
-}
-
-/* ---------------- Pickup / Drop step (single action per page) ---------------- */
-
-function PlaceStep({
-  kind,
-  draft,
-  setDraft,
-  onBack,
-  onNext,
-}: {
-  kind: "pickup" | "drop";
-  draft: ParcelDraft;
-  setDraft: (fn: (d: ParcelDraft) => ParcelDraft) => void;
-  onBack: () => void;
-  onNext: () => void;
-}) {
-  const c = useParcelCopy();
-  useBackHandler(true, onBack);
-  const signedIn = useSignedIn();
-  const stop = kind === "pickup" ? draft.stops.find((s) => s.key === "P1")! : draft.stops.find((s) => s.type === "drop")!;
-  const [picking, setPicking] = useState(() => !hasCoords(stop.addr));
-
-  const { data: me } = useQuery({ queryKey: ["parcel-me", signedIn], queryFn: fetchMe, enabled: signedIn });
-  useEffect(() => {
-    if (kind !== "pickup" || !me) return;
-    setDraft((d) => ({
-      ...d,
-      stops: d.stops.map((s) => (s.key === "P1" ? { ...s, name: s.name || me.name, phone: s.phone || me.phone } : s)),
-    }));
-  }, [me]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const update = (patch: Partial<ParcelStop>) =>
-    setDraft((d) => ({ ...d, stops: d.stops.map((s) => (s.key === stop.key ? { ...s, ...patch } : s)) }));
-
-  const myPhone = me?.phone ?? "";
-  const usingMine = myPhone.length === 10 && phone10(stop.phone) === myPhone;
-  const valid = hasCoords(stop.addr) && stop.name.trim().length > 0 && phone10(stop.phone).length === 10;
-  const isPick = kind === "pickup";
-  const Arrow = isPick ? ArrowUp : ArrowDown;
-  const field = "w-full rounded-[14px] border border-border bg-muted/50 px-4 text-base text-foreground outline-none focus:border-primary";
-
-  return (
-    <main className="min-h-screen w-full bg-card pb-32">
-      <div className="relative">
-        <ParcelMap
-          pins={hasCoords(stop.addr) ? [{ lat: Number(stop.addr.latitude), lng: Number(stop.addr.longitude), kind: stop.type }] : []}
-          showMyLocation={!hasCoords(stop.addr)}
-          className="h-[44vh] min-h-[260px]"
-        />
-        <div className="absolute inset-x-0 top-0 px-4 pt-[calc(var(--app-safe-top,0px)+16px)]">
-          <button type="button" onClick={onBack} aria-label="Back" className="flex h-11 w-11 items-center justify-center rounded-full bg-card shadow-soft">
-            <ArrowLeft className="h-5 w-5 text-foreground" />
-          </button>
-        </div>
-        {hasCoords(stop.addr) && (
-          <div className="pointer-events-none absolute left-1/2 top-[34%] -translate-x-1/2 -translate-y-full">
-            <div className="relative whitespace-nowrap rounded-[10px] bg-foreground px-3 py-2 text-xs font-bold text-background">
-              {isPick ? c.pickedHere : c.droppedHere}
-              <span className="absolute left-1/2 top-full -translate-x-1/2 border-x-[6px] border-t-[6px] border-x-transparent border-t-foreground" />
-            </div>
-          </div>
-        )}
-        <div className="absolute inset-x-4 bottom-4 flex items-center gap-3 rounded-[18px] bg-card p-3.5 shadow-soft">
-          <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${isPick ? "bg-primary" : "bg-destructive"}`}>
-            <Arrow className="h-4 w-4 text-primary-foreground" strokeWidth={3} />
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block truncate text-base font-extrabold text-foreground">{stop.addr ? stop.addr.area || stop.addr.label || addrTitle(stop.addr) : c.chooseAddr}</span>
-            {stop.addr && <span className="block truncate text-sm text-muted-foreground">{stop.addr.full_address}</span>}
-          </span>
-          <button type="button" onClick={() => setPicking(true)} className="shrink-0 rounded-[10px] border-2 border-primary px-3 py-1.5 text-sm font-extrabold text-primary">
-            {c.changePlace}
-          </button>
-        </div>
-      </div>
-
-      <div className="relative -mt-2 mx-auto w-full max-w-md space-y-3 rounded-t-[24px] bg-card px-4 pt-5">
-        <input value={stop.flat ?? ""} maxLength={120} placeholder={c.flat} onChange={(e) => update({ flat: e.target.value })} className={`${field} py-4`} />
-        <label className={`${field} block py-2.5`}>
-          <span className="block text-xs text-muted-foreground">{isPick ? c.senderName : c.receiverName}</span>
-          <input value={stop.name} maxLength={80} onChange={(e) => update({ name: e.target.value })} className="w-full bg-transparent text-base outline-none" />
-        </label>
-        <label className={`${field} block py-2.5`}>
-          <span className="block text-xs text-muted-foreground">{isPick ? c.senderPhone : c.receiverPhone}</span>
-          <input
-            value={stop.phone}
-            inputMode="numeric"
-            maxLength={10}
-            onChange={(e) => update({ phone: e.target.value.replace(/\D/g, "").slice(0, 10) })}
-            className="w-full bg-transparent text-base outline-none"
-          />
-        </label>
-        {myPhone.length === 10 && (
-          <button
-            type="button"
-            onClick={() => update(usingMine ? { phone: "" } : { phone: myPhone, name: stop.name || (isPick ? me?.name ?? "" : "") })}
-            className="flex items-center gap-3 py-1 text-left text-sm font-bold text-foreground"
-          >
-            <span className={`flex h-5 w-5 items-center justify-center rounded-[5px] border-2 ${usingMine ? "border-primary bg-primary" : "border-muted-foreground"}`}>
-              {usingMine && <Check className="h-3.5 w-3.5 text-primary-foreground" strokeWidth={3} />}
-            </span>
-            {fill(c.useMine, { n: myPhone })}
-          </button>
-        )}
-      </div>
-      <BottomBar>
-        <button
-          type="button"
-          onClick={() => (valid ? onNext() : !hasCoords(stop.addr) ? setPicking(true) : toast(isPick ? c.needSender : c.needReceiver))}
-          className="flex flex-1 items-center justify-center rounded-[14px] bg-primary py-4 text-base font-extrabold text-primary-foreground"
-        >
-          {valid || isPick ? c.confirmProceed : c.enterContact}
-        </button>
-      </BottomBar>
-      <LocationPickerSheet
-        open={picking}
-        activeId={stop.addr?.id ?? null}
-        onClose={() => {
-          setPicking(false);
-          if (!hasCoords(stop.addr)) onBack();
-        }}
-        onSelect={(a) => {
-          if (hasCoords(a)) update({ addr: a });
-          setPicking(false);
-        }}
-      />
-    </main>
   );
 }
 
@@ -509,7 +365,8 @@ function VehicleStep({
   }, [vehicles, draft.vehicleId]); // eslint-disable-line react-hooks/exhaustive-deps
   const types = draft.vehicleId ? typesFor(draft.vehicleId) : [];
   useEffect(() => {
-    if (types.length && !types.some((x) => x.id === draft.typeId)) setDraft((d) => ({ ...d, typeId: types[0].id }));
+    // Parcel type is a required customer choice: drop one the new vehicle does not offer.
+    if (types.length && draft.typeId && !types.some((x) => x.id === draft.typeId)) setDraft((d) => ({ ...d, typeId: null }));
   }, [types, draft.typeId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const typeFor = (vid: string) => {
@@ -553,6 +410,7 @@ function VehicleStep({
     if (!ready) return toast(c.needDrop);
     if (over && limits) return toast(fill(c.overLimit, { p: limits.max_pickups, d: limits.max_drops }));
     if (price == null) return;
+    if (!draft.typeId) return toast(c.chooseGoods);
     onNext();
   };
   const swap = () =>
@@ -579,7 +437,9 @@ function VehicleStep({
           {km != null && <span className="ml-auto rounded-full bg-card px-3 py-1 text-xs font-extrabold text-foreground shadow-soft">{fill(c.km, { n: rs(Number(km)) })}</span>}
         </div>
 
-        <div className="mt-4 rounded-[18px] bg-card p-4 shadow-soft">
+        <ParcelMap pins={pinsOf(draft)} className="mt-4 h-[26vh] min-h-[180px] overflow-hidden rounded-[18px]" />
+
+        <div className="mt-3 rounded-[18px] bg-card p-4 shadow-soft">
           <div className="flex items-center gap-2">
             <div className="min-w-0 flex-1">
               {draft.stops.map((s, i) => (
@@ -669,16 +529,37 @@ function VehicleStep({
           })}
           {sel?.error && <p className="text-xs font-semibold text-destructive">{courierErrorMessage(sel.error, c.priceError)}</p>}
         </div>
+        {types.length > 0 && (
+          <div className="mt-4">
+            <p className="text-sm font-extrabold text-foreground">{c.goodsType}</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {types.map((ty) => {
+                const on = ty.id === draft.typeId;
+                return (
+                  <button
+                    key={ty.id}
+                    type="button"
+                    onClick={() => setDraft((d) => ({ ...d, typeId: ty.id }))}
+                    className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-bold ${on ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-foreground"}`}
+                  >
+                    <span aria-hidden>{ty.icon && [...ty.icon].length <= 3 ? ty.icon : "📦"}</span>
+                    {ty.name}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       <BottomBar>
         <button
           type="button"
           onClick={next}
-          disabled={price == null}
+          disabled={price == null || !draft.typeId}
           className="flex flex-1 items-center justify-center gap-2 rounded-[14px] bg-primary py-4 text-base font-extrabold text-primary-foreground disabled:opacity-60"
         >
-          {price != null && selV ? fill(c.proceedWith, { v: selV.name }) : t("common.loading")}
+          {price == null ? t("common.loading") : !draft.typeId ? c.chooseGoods : fill(c.proceedPrice, { n: rs(Number(price)) })}
         </button>
       </BottomBar>
 
@@ -723,100 +604,11 @@ function VehicleStep({
 
 /* ---------------- Goods type ---------------- */
 
-const RESTRICTED = [
+export const RESTRICTED = [
   "Pornographic Materials", "Dry Ice", "Human Body Parts", "Explosives", "Fire Arms", "Flammables", "Livestock", "Pets & Animals",
   "Dangerous Goods", "Hazardous Goods", "Illegal Goods", "Radioactive Materials", "Precious Jewelleries", "Currencies & Coins",
   "Stones and Gems", "Gambling Devices", "Lottery Tickets", "Fire Extinguishers", "Cigarettes & Alcohols", "Narcotics and Illegal Drugs",
 ];
-
-function GoodsStep({
-  draft,
-  setDraft,
-  onBack,
-  onNext,
-}: {
-  draft: ParcelDraft;
-  setDraft: (fn: (d: ParcelDraft) => ParcelDraft) => void;
-  onBack: () => void;
-  onNext: () => void;
-}) {
-  const c = useParcelCopy();
-  useBackHandler(true, onBack);
-  const [open, setOpen] = useState(false);
-  const [picked, setPicked] = useState<string | null>(draft.typeId);
-  const { data: types = [], isLoading } = useQuery({
-    queryKey: ["courier_types", draft.vehicleId],
-    queryFn: () => fetchCourierTypes(draft.vehicleId!),
-    enabled: Boolean(draft.vehicleId),
-    staleTime: 5 * 60_000,
-  });
-  return (
-    <main className="min-h-screen w-full bg-surface-soft pb-32">
-      <div className="mx-auto w-full max-w-md px-4 pt-[calc(var(--app-safe-top,0px)+16px)]">
-        <div className="flex items-center gap-4">
-          <button type="button" onClick={onBack} aria-label="Back" className="p-1">
-            <ArrowLeft className="h-6 w-6 text-foreground" />
-          </button>
-          <h1 className="text-xl font-extrabold text-foreground">{c.reviewBooking}</h1>
-        </div>
-        <h2 className="mt-6 text-lg font-extrabold text-foreground">{c.goodsType}</h2>
-        <div className="mt-3 rounded-[18px] bg-warning/20 p-4">
-          <button type="button" onClick={() => setOpen((o) => !o)} className="flex w-full items-center gap-3 text-left">
-            <Ban className="h-7 w-7 shrink-0 text-destructive" />
-            <span className="min-w-0 flex-1">
-              <span className="block text-base font-extrabold text-foreground">{c.restricted}</span>
-              <span className="block text-sm text-muted-foreground">{c.restrictedSub}</span>
-            </span>
-            <span className="flex items-center gap-1 text-sm font-extrabold text-primary">
-              {open ? c.hide : c.seeAll}
-              {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-            </span>
-          </button>
-          {open && (
-            <ul className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1.5 border-t border-dashed border-muted-foreground/40 pt-3 text-sm text-muted-foreground">
-              {RESTRICTED.map((r) => <li key={r}>• {r}</li>)}
-            </ul>
-          )}
-        </div>
-        <div className="mt-3 space-y-2.5">
-          {isLoading && <Loader2 className="mx-auto h-5 w-5 animate-spin text-muted-foreground" />}
-          {types.map((ty) => {
-            const on = ty.id === picked;
-            return (
-              <button
-                key={ty.id}
-                type="button"
-                onClick={() => setPicked(ty.id)}
-                className={`flex w-full items-center gap-3 rounded-[16px] border-2 bg-card px-4 py-4 text-left ${on ? "border-primary bg-primary/10" : "border-border"}`}
-              >
-                <span className="w-6 text-center text-xl" aria-hidden>{ty.icon && [...ty.icon].length <= 3 ? ty.icon : "📦"}</span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-base text-foreground">{ty.name}</span>
-                  {ty.instructions && <span className="block text-xs text-muted-foreground">{ty.instructions}</span>}
-                </span>
-                {on && <Check className="h-5 w-5 text-primary" />}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-      <BottomBar>
-        <button
-          type="button"
-          disabled={!picked}
-          onClick={() => {
-            if (!picked) return toast(c.chooseGoods);
-            setDraft((d) => ({ ...d, typeId: picked }));
-            onNext();
-          }}
-          className="flex flex-1 items-center justify-center rounded-[14px] bg-primary py-4 text-base font-extrabold text-primary-foreground disabled:bg-muted disabled:text-muted-foreground"
-        >
-          {c.confirm}
-        </button>
-      </BottomBar>
-    </main>
-  );
-}
 
 /* ---------------- Checkout ---------------- */
 
@@ -835,9 +627,11 @@ function CheckoutStep({
   const t = useT();
   const qc = useQueryClient();
   const [couponOpen, setCouponOpen] = useState(false);
-  const [confirmed, setConfirmed] = useState(true);
+  const [confirmed, setConfirmed] = useState(false);
+  const [listOpen, setListOpen] = useState(false);
   const [paying, setPaying] = useState(false);
-  useBackHandler(!couponOpen, onBack);
+  useBackHandler(!couponOpen && !listOpen, onBack);
+  useBackHandler(listOpen, () => setListOpen(false));
   const signedIn = useSignedIn();
   const city = useCity(draft);
   const multi = draft.stops.length > 2;
@@ -1080,10 +874,14 @@ function CheckoutStep({
           )}
         </section>
 
-        <label className="mt-3 flex items-start gap-2 px-1 text-xs text-muted-foreground">
-          <input type="checkbox" checked={confirmed} onChange={(e) => setConfirmed(e.target.checked)} className="mt-0.5 accent-primary" />
-          {c.confirmItems}
-        </label>
+        <div className="mt-3 flex items-start gap-2 rounded-[16px] bg-card p-4 text-sm shadow-soft">
+          <input id="parcel-confirm" type="checkbox" checked={confirmed} onChange={(e) => setConfirmed(e.target.checked)} className="mt-0.5 h-5 w-5 shrink-0 accent-primary" />
+          <span>
+            <label htmlFor="parcel-confirm" className="font-bold text-foreground">{c.confirmShort}</label>
+            {" · "}
+            <button type="button" onClick={() => setListOpen(true)} className="font-extrabold text-primary">{c.seeList} ›</button>
+          </span>
+        </div>
       </div>
       <BottomBar>
         <div className="flex flex-col">
@@ -1093,13 +891,34 @@ function CheckoutStep({
         <button
           type="button"
           onClick={() => void pay()}
-          disabled={paying || !quote || isFetching}
+          disabled={paying || !quote || isFetching || !confirmed}
           className="flex flex-1 items-center justify-center gap-2 rounded-[14px] bg-primary py-3.5 text-base font-extrabold text-primary-foreground active:scale-[0.99] disabled:opacity-60"
         >
           {paying && <Loader2 className="h-4 w-4 animate-spin" />}
           {walletOnly ? c.payWallet : fill(c.pay, { n: rs(toPay) })}
         </button>
       </BottomBar>
+      {listOpen && (
+        <div className="fixed inset-0 z-50 flex flex-col justify-end bg-foreground/40" onClick={() => setListOpen(false)}>
+          <div className="mx-auto max-h-[80vh] w-full max-w-md overflow-y-auto rounded-t-[24px] bg-card px-4 pb-4 pt-5 safe-bottom" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-2">
+              <Ban className="h-6 w-6 text-destructive" />
+              <h3 className="flex-1 text-lg font-extrabold text-foreground">{c.restricted}</h3>
+              <button type="button" onClick={() => setListOpen(false)} aria-label="Close"><X className="h-5 w-5 text-muted-foreground" /></button>
+            </div>
+            <ul className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1.5 text-sm text-muted-foreground">
+              {RESTRICTED.map((r) => <li key={r}>• {r}</li>)}
+            </ul>
+            <button
+              type="button"
+              onClick={() => { setConfirmed(true); setListOpen(false); }}
+              className="mt-5 w-full rounded-[14px] bg-primary py-3.5 text-base font-extrabold text-primary-foreground"
+            >
+              {c.confirmShort}
+            </button>
+          </div>
+        </div>
+      )}
       {couponOpen && (
         <CouponSheet
           baseAmount={Number(quote?.base_amount ?? fare)}
