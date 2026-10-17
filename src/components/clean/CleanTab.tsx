@@ -1,3 +1,4 @@
+import { BrandWatermark } from "@/components/BrandWatermark";
 import { localSrc, syncImages } from "@/lib/imageStore";
 import { useEffect, useState } from "react";
 import { ChevronRight, Gift } from "lucide-react";
