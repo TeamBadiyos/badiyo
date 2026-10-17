@@ -217,7 +217,7 @@ export function CleanTab({
         {washOptions.length > 0 && washCards.length > 0 && (
           <>
             {/* Keeps wash cards below the first screen on every phone */}
-            <div className="flex h-[22vh] min-h-[96px] items-center justify-center">
+            <div className="flex h-[calc(11vh+18px)] min-h-[66px] items-center justify-center">
               <BrandWatermark className="!pt-0 !pb-0" />
             </div>
             <h2 className="text-lg font-extrabold text-foreground">
