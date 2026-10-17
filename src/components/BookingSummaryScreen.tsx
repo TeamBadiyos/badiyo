@@ -31,8 +31,11 @@ const TXT = {
     wallet: "Use badiyos Wallet", noteLabel: "Note for expert (optional)", notePh: "E.g. ring the bell twice, pet at home…",
     bill: "Bill details", price: "Service price", gst: "GST ({p}%)", round: "Round off", coupon: "Coupon",
     walletLine: "badiyos Wallet", total: "Total", policy: "Cancellation policy", pay: "Pay ₹{n}", payWallet: "Pay with wallet",
-    maidNote: "Our expert brings basic supplies. Please keep a broom, mop and bucket ready if you prefer your own.",
-    washNote: "Please keep a water supply and a plug point ready, and the vehicle parked. Our expert will not drive the vehicle.",
+    address: "Service address",
+    maidNoteTitle: "Please Keep Ready Before the Cleaning",
+    maidNote: "Please keep a broom, mop, bucket and cleaning liquid ready, and ensure water supply at home. Our expert will clean using your household supplies.",
+    washNoteTitle: "Please Keep Ready Before the Wash",
+    washNote: "Please ensure a water supply or 2-3 buckets of water, an electric plug point nearby, and an open parking space where your vehicle can be washed. Our washing expert will not drive or move your vehicle.",
     home: "Home Maid", wash: "Car Wash",
   },
   mr: {
@@ -41,8 +44,11 @@ const TXT = {
     wallet: "badiyos वॉलेट वापरा", noteLabel: "एक्सपर्टसाठी सूचना (ऐच्छिक)", notePh: "उदा. बेल दोनदा वाजवा, घरी पाळीव प्राणी आहे…",
     bill: "बिल तपशील", price: "सेवा किंमत", gst: "GST ({p}%)", round: "राउंड ऑफ", coupon: "कूपन",
     walletLine: "badiyos वॉलेट", total: "एकूण", policy: "रद्द करण्याचे धोरण", pay: "₹{n} भरा", payWallet: "वॉलेटने भरा",
-    maidNote: "आमचा एक्सपर्ट मूलभूत साहित्य आणतो. स्वतःचे हवे असल्यास झाडू, पोछा व बादली तयार ठेवा.",
-    washNote: "कृपया पाणी व प्लग पॉइंट तयार ठेवा आणि वाहन पार्क केलेले असावे. आमचा एक्सपर्ट वाहन चालवणार नाही.",
+    address: "सेवेचा पत्ता",
+    maidNoteTitle: "स्वच्छतेपूर्वी हे तयार ठेवा",
+    maidNote: "कृपया झाडू, पोछा, बादली व क्लीनिंग लिक्विड तयार ठेवा आणि घरी पाण्याची सोय असावी. आमचा एक्सपर्ट तुमच्या घरातील साहित्य वापरून स्वच्छता करेल.",
+    washNoteTitle: "वॉशपूर्वी हे तयार ठेवा",
+    washNote: "कृपया पाण्याची सोय किंवा 2-3 बादल्या पाणी, जवळ इलेक्ट्रिक प्लग पॉइंट आणि वाहन धुता येईल अशी मोकळी पार्किंग जागा असावी. आमचा वॉशिंग एक्सपर्ट तुमचे वाहन चालवणार किंवा हलवणार नाही.",
     home: "होम मेड", wash: "कार वॉश",
   },
 };
@@ -114,14 +120,19 @@ export function BookingSummaryScreen({
           <h1 className="text-lg font-extrabold text-foreground">{s.title}</h1>
         </div>
 
-        {/* 1. Address */}
-        <section className="mt-4 flex items-center gap-3 rounded-[16px] bg-card px-4 py-3 shadow-soft">
-          <MapPin className="h-5 w-5 shrink-0 text-primary" />
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-extrabold text-foreground">{address.label || address.area || "—"}</p>
-            <p className="truncate text-xs text-muted-foreground">{address.full_address}</p>
+        {/* 1. Address — same size as the booking card */}
+        <section className="mt-4 rounded-[16px] bg-card p-4 shadow-soft">
+          <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">{s.address}</p>
+          <div className="mt-2 flex items-center gap-3">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[12px] bg-primary/10">
+              <MapPin className="h-6 w-6 text-primary" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-base font-extrabold text-foreground">{address.label || address.area || "—"}</p>
+              <p className="mt-0.5 line-clamp-2 text-sm text-muted-foreground">{address.full_address}</p>
+            </div>
+            <button type="button" onClick={onEditAddress} className="shrink-0 self-start text-sm font-extrabold text-primary">{s.change}</button>
           </div>
-          <button type="button" onClick={onEditAddress} className="shrink-0 text-sm font-extrabold text-primary">{s.change}</button>
         </section>
 
         {/* 2. What you're booking */}
@@ -140,6 +151,15 @@ export function BookingSummaryScreen({
               </p>
             </div>
             <button type="button" onClick={onBack} className="shrink-0 self-start text-sm font-extrabold text-primary">{s.edit}</button>
+          </div>
+        </section>
+
+        {/* 2b. Keep ready notice — right below the booking */}
+        <section className="mt-3 flex items-start gap-3 rounded-[16px] bg-primary/10 p-4">
+          <NoteIcon className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+          <div>
+            <p className="text-sm font-extrabold text-foreground">{isWash ? s.washNoteTitle : s.maidNoteTitle}</p>
+            <p className="mt-1 text-xs font-semibold leading-relaxed text-foreground">{ccNote}</p>
           </div>
         </section>
 
@@ -180,19 +200,6 @@ export function BookingSummaryScreen({
           )}
         </section>
 
-        {/* 5. Note */}
-        <section className="mt-3 rounded-[16px] bg-card p-4 shadow-soft">
-          <label htmlFor="expert-note" className="text-sm font-extrabold text-foreground">{s.noteLabel}</label>
-          <textarea id="expert-note" value={note} maxLength={300} rows={2} placeholder={s.notePh}
-            onChange={(e) => onNoteChange?.(e.target.value.slice(0, 300))}
-            className="mt-2 w-full resize-none rounded-[12px] border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary" />
-          <p className="text-right text-[11px] text-muted-foreground">{note.length}/300</p>
-          <div className="mt-2 flex items-start gap-2.5 rounded-[12px] bg-surface-soft p-3">
-            <NoteIcon className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-            <p className="text-xs font-semibold text-foreground">{ccNote}</p>
-          </div>
-        </section>
-
         {/* 6. Bill */}
         <section className="mt-3 rounded-[16px] bg-card p-4 shadow-soft">
           <p className="text-sm font-extrabold text-foreground">{s.bill}</p>
@@ -208,6 +215,15 @@ export function BookingSummaryScreen({
           <button type="button" onClick={() => setPolicyOpen(true)} className="mt-3 flex items-center gap-1 text-sm font-bold text-primary">
             {s.policy}<ChevronRight className="h-4 w-4" />
           </button>
+        </section>
+
+        {/* 7. Note for expert — always last */}
+        <section className="mt-3 rounded-[16px] bg-card p-4 shadow-soft">
+          <label htmlFor="expert-note" className="text-sm font-extrabold text-foreground">{s.noteLabel}</label>
+          <textarea id="expert-note" value={note} maxLength={300} rows={2} placeholder={s.notePh}
+            onChange={(e) => onNoteChange?.(e.target.value.slice(0, 300))}
+            className="mt-2 w-full resize-none rounded-[12px] border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary" />
+          <p className="text-right text-[11px] text-muted-foreground">{note.length}/300</p>
         </section>
       </div>
 
