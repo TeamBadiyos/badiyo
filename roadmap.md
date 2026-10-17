@@ -1,5 +1,11 @@
 # Roadmap
 
+## Coupon + wallet booking fix
+- [ ] Create coupon-covered/full-wallet bookings atomically with retry protection
+- [ ] Prevent legacy free orders from spending reserved wallet funds twice
+- [ ] Validate scheduled slots before payment and preserve free-order recovery
+- [ ] Run focused regression checks; authenticated live test requires an external Supabase session
+
 ## Checkout coupons — DONE
 
 - [x] Replace inline code box with coupon summary row
