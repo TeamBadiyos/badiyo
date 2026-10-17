@@ -225,8 +225,8 @@ function PlaceStep({
   const c = useParcelCopy();
   useBackHandler(true, onBack);
   const signedIn = useSignedIn();
-  const [picking, setPicking] = useState(false);
   const stop = kind === "pickup" ? draft.stops.find((s) => s.key === "P1")! : draft.stops.find((s) => s.type === "drop")!;
+  const [picking, setPicking] = useState(() => !hasCoords(stop.addr));
   const other = kind === "drop" ? draft.stops.find((s) => s.key === "P1") : null;
 
   // Pickup contact is prefilled from the customer's profile, still editable.

@@ -76,47 +76,34 @@ export function ParcelHome({
         />
       </div>
       <section className="relative -mt-5 rounded-t-[24px] bg-card px-5 pb-4 pt-5 shadow-card-m">
-        <div className="relative space-y-2.5">
-          <span className="absolute left-[21px] top-[30px] bottom-[30px] w-px border-l-2 border-dashed border-border" />
-          <button
-            type="button"
-            onClick={() => guard() && start(null, "single")}
-            className="relative flex w-full items-center gap-3 rounded-[16px] border border-border bg-surface-soft px-4 py-4 text-left"
-          >
-            <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-primary ring-4 ring-primary/20" />
-            <span className="min-w-0 flex-1">
-              <span className="block text-[11px] font-bold uppercase tracking-wide text-muted-foreground">{c.pickup}</span>
-              <span className="block truncate text-base font-extrabold text-foreground">
-                {pickupAddr ? addrTitle(pickupAddr) : c.wherePickup}
+        <div className="grid grid-cols-2 gap-3">
+          {(["pickup", "drop"] as const).map((k) => (
+            <button
+              key={k}
+              type="button"
+              onClick={() => guard() && start(null, "single")}
+              className="flex aspect-square flex-col justify-between rounded-[18px] border border-border bg-surface-soft p-4 text-left"
+            >
+              <span className={`h-3 w-3 rounded-full ${k === "pickup" ? "bg-primary ring-4 ring-primary/20" : "bg-destructive ring-4 ring-destructive/20"}`} />
+              <span className="min-w-0">
+                <span className="block text-xs font-bold uppercase tracking-wide text-muted-foreground">{k === "pickup" ? c.pickup : c.drop}</span>
+                <span className="mt-1 line-clamp-2 block text-base font-extrabold text-foreground">
+                  {k === "pickup" ? (pickupAddr ? addrTitle(pickupAddr) : c.wherePickup) : c.whereTo}
+                </span>
               </span>
-            </span>
-            <Pencil className="h-4 w-4 shrink-0 text-muted-foreground" />
-          </button>
-          <button
-            type="button"
-            onClick={() => guard() && start(null, "single")}
-            className="relative flex w-full items-center gap-3 rounded-[16px] border border-border bg-surface-soft px-4 py-4 text-left"
-          >
-            <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-destructive ring-4 ring-destructive/20" />
-            <span className="flex-1 text-base font-extrabold text-foreground">{c.whereTo}</span>
-            <Search className="h-5 w-5 text-muted-foreground" />
-          </button>
+            </button>
+          ))}
         </div>
-        {chips.length > 0 && (
-          <div className="no-scrollbar -mx-5 mt-3 flex gap-2 overflow-x-auto px-5">
+        {false && chips.length > 0 && (
+          <div>
             {chips.map((a) => (
-              <button
-                key={a.id + a.full_address}
-                type="button"
-                onClick={() => guard() && start(a, "single")}
-                className="max-w-[180px] shrink-0 truncate rounded-full border border-border bg-card px-3.5 py-2 text-xs font-bold text-foreground"
-              >
-                {a.label || a.area || a.full_address}
+              <button key={a.id + a.full_address} type="button" onClick={() => start(a, "single")}>
+                {a.label}
               </button>
             ))}
           </div>
         )}
-        <button type="button" onClick={() => guard() && start(null, "multiDrop")} className="mt-4 text-sm font-extrabold text-primary">
+        <button type="button" onClick={() => guard() && start(null, "multiDrop")} className="mt-4 hidden text-sm font-extrabold text-primary">
           {c.sendMany}
         </button>
       </section>
