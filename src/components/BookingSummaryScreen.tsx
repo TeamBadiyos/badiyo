@@ -214,10 +214,6 @@ export function BookingSummaryScreen({
       {/* 7. Pay bar */}
       <div className="fixed inset-x-0 bottom-0 z-10 bg-card shadow-[0_-4px_16px_rgba(0,0,0,0.06)] safe-bottom">
         <div className="mx-auto flex w-full max-w-md items-center gap-4 px-4 py-3">
-          <div className="flex flex-col">
-            <span className="text-xs text-muted-foreground">{s.total}</span>
-            <span className="text-lg font-extrabold text-foreground">₹{rs(total)}</span>
-          </div>
           <button type="button" onClick={() => { void hapticImpact("medium"); onProceedToPay(); }}
             className="flex-1 rounded-[14px] bg-primary py-3.5 text-base font-extrabold text-primary-foreground active:scale-[0.99]">
             {total === 0 && walletUsed > 0 ? s.payWallet : fill(s.pay, "n", rs(total))}

@@ -313,25 +313,6 @@ function AddControl({ item, c, cart, canAdd, onAdd, onDec, wide }: Omit<ItemProp
   );
 }
 
-function GridItems({ items, ...rest }: ItemProps) {
-  return (
-    <div className="grid grid-cols-3 gap-2.5">
-      {items.map((it) => (
-        <div key={it.id} className={`flex flex-col rounded-[14px] border border-border bg-card p-2 ${it.in_stock ? "" : "opacity-50 grayscale"}`}>
-          <StoreImage path={it.photo_url} alt={it.name} className="aspect-square w-full rounded-[10px]" />
-          <p className="mt-1.5 line-clamp-2 min-h-[2.4em] text-[12px] font-bold leading-tight text-foreground">{it.name}</p>
-          <p className="truncate text-[11px] text-muted-foreground">{it.size ?? "\u00a0"}</p>
-          <div className="mt-1">
-            <Price item={it} />
-          </div>
-          <div className="mt-1.5">
-            <AddControl item={it} {...rest} />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
 
 function ItemDesc({ text, lang }: { text: string; lang: string }) {
   const [open, setOpen] = useState(false);

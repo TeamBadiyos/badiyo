@@ -447,7 +447,12 @@ export function HomeScreen({
     return (
       <Suspense fallback={<ScreenSkeleton />}>
         <StoreCartScreen
-          onBack={() => setCartOpen(false)}
+          onBack={() => {
+            setCartOpen(false);
+            // Back from the cart returns to the shop the items came from.
+            const id = storeCart.cart.merchantId;
+            if (id && openStore?.id !== id) setOpenStore({ id, distance_km: lastStore?.id === id ? lastStore.distance_km : null });
+          }}
           onAddMore={() => {
             setCartOpen(false);
             const id = storeCart.cart.merchantId;
