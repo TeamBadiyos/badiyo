@@ -1,3 +1,4 @@
+/// <reference types="bun" />
 import { afterEach, describe, expect, it, setSystemTime } from "bun:test";
 import { isHourBookable } from "./hourSlots";
 
