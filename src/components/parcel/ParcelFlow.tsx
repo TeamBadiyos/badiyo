@@ -37,6 +37,8 @@ import {
   phone10,
   pushRecentDrop,
   readDraft,
+  takeParcelEntry,
+  fetchMe,
   writeDraft,
   type ParcelDraft,
   type ParcelStop,
@@ -55,7 +57,7 @@ type Quote = {
   coupon_ok?: boolean;
 };
 
-type Step = "pickup" | "drop" | "multi" | "vehicle" | "goods" | "checkout";
+type Step = "multi" | "vehicle" | "checkout";
 
 function useSignedIn() {
   const { data } = useQuery({
@@ -64,14 +66,6 @@ function useSignedIn() {
     staleTime: 30_000,
   });
   return Boolean(data);
-}
-
-async function fetchMe() {
-  const { data: auth } = await getAuthUser();
-  const uid = auth.user?.id;
-  if (!uid) return { name: "", phone: "" };
-  const { data } = await supabase.from("users").select("full_name, phone").eq("id", uid).maybeSingle();
-  return { name: data?.full_name?.trim() ?? "", phone: phone10(data?.phone ?? auth.user?.phone ?? "") };
 }
 
 function vehicleIcon(v: CourierVehicle) {
@@ -133,32 +127,24 @@ export function ParcelFlow({ onBack, onBooked }: { onBack: () => void; onBooked:
       writeDraft(n);
       return n;
     });
-  const [step, setStep] = useState<Step>(() => {
-    if (draft.mode !== "single") return "multi";
-    const p = draft.stops.find((s) => s.key === "P1");
-    const dr = draft.stops.find((s) => s.type === "drop");
-    if (!hasCoords(p?.addr)) return "pickup";
-    if (!hasCoords(dr?.addr)) return "drop";
-    return "vehicle";
-  });
+  // Parcel home → Vehicle → Checkout. The multi-stop editor returns to where it was opened.
+  const [multiFrom, setMultiFrom] = useState<"home" | "vehicle">("home");
+  const [step, setStep] = useState<Step>(() => (takeParcelEntry() === "multi" ? "multi" : "vehicle"));
   const back = () => {
-    if (step === "checkout") setStep("goods");
-    else if (step === "goods") setStep("vehicle");
-    else if (step === "vehicle") setStep(draft.mode === "single" ? "drop" : "multi");
-    else if (step === "drop") setStep("pickup");
+    if (step === "checkout") setStep("vehicle");
+    else if (step === "multi" && multiFrom === "vehicle") setStep("vehicle");
     else onBack();
   };
+  const openMulti = () => {
+    setDraft((d) => (d.mode === "single" ? { ...d, mode: "multiDrop" } : d));
+    setMultiFrom("vehicle");
+    setStep("multi");
+  };
 
-  if (step === "pickup")
-    return <PlaceStep key="pickup" kind="pickup" draft={draft} setDraft={setDraft} onBack={back} onNext={() => setStep("drop")} />;
-  if (step === "drop")
-    return <PlaceStep key="drop" kind="drop" draft={draft} setDraft={setDraft} onBack={back} onNext={() => setStep("vehicle")} />;
   if (step === "multi")
     return <MultiStopStep draft={draft} setDraft={setDraft} onBack={back} onNext={() => setStep("vehicle")} />;
   if (step === "vehicle")
-    return <VehicleStep draft={draft} setDraft={setDraft} onBack={back} onNext={() => setStep("goods")} onEdit={() => setStep(draft.mode === "single" ? "pickup" : "multi")} onAddStop={() => { setDraft((d) => ({ ...d, mode: "multiDrop" })); setStep("multi"); }} />;
-  if (step === "goods")
-    return <GoodsStep draft={draft} setDraft={setDraft} onBack={back} onNext={() => setStep("checkout")} />;
+    return <VehicleStep draft={draft} setDraft={setDraft} onBack={back} onNext={() => setStep("checkout")} onEdit={() => (draft.stops.length > 2 ? openMulti() : onBack())} onAddStop={openMulti} />;
   return (
     <CheckoutStep
       draft={draft}
@@ -213,135 +199,6 @@ function ContactFields({
         />
       </div>
     </div>
-  );
-}
-
-/* ---------------- Pickup / Drop step (single action per page) ---------------- */
-
-function PlaceStep({
-  kind,
-  draft,
-  setDraft,
-  onBack,
-  onNext,
-}: {
-  kind: "pickup" | "drop";
-  draft: ParcelDraft;
-  setDraft: (fn: (d: ParcelDraft) => ParcelDraft) => void;
-  onBack: () => void;
-  onNext: () => void;
-}) {
-  const c = useParcelCopy();
-  useBackHandler(true, onBack);
-  const signedIn = useSignedIn();
-  const stop = kind === "pickup" ? draft.stops.find((s) => s.key === "P1")! : draft.stops.find((s) => s.type === "drop")!;
-  const [picking, setPicking] = useState(() => !hasCoords(stop.addr));
-
-  const { data: me } = useQuery({ queryKey: ["parcel-me", signedIn], queryFn: fetchMe, enabled: signedIn });
-  useEffect(() => {
-    if (kind !== "pickup" || !me) return;
-    setDraft((d) => ({
-      ...d,
-      stops: d.stops.map((s) => (s.key === "P1" ? { ...s, name: s.name || me.name, phone: s.phone || me.phone } : s)),
-    }));
-  }, [me]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const update = (patch: Partial<ParcelStop>) =>
-    setDraft((d) => ({ ...d, stops: d.stops.map((s) => (s.key === stop.key ? { ...s, ...patch } : s)) }));
-
-  const myPhone = me?.phone ?? "";
-  const usingMine = myPhone.length === 10 && phone10(stop.phone) === myPhone;
-  const valid = hasCoords(stop.addr) && stop.name.trim().length > 0 && phone10(stop.phone).length === 10;
-  const isPick = kind === "pickup";
-  const Arrow = isPick ? ArrowUp : ArrowDown;
-  const field = "w-full rounded-[14px] border border-border bg-muted/50 px-4 text-base text-foreground outline-none focus:border-primary";
-
-  return (
-    <main className="min-h-screen w-full bg-card pb-32">
-      <div className="relative">
-        <ParcelMap
-          pins={hasCoords(stop.addr) ? [{ lat: Number(stop.addr.latitude), lng: Number(stop.addr.longitude), kind: stop.type }] : []}
-          showMyLocation={!hasCoords(stop.addr)}
-          className="h-[44vh] min-h-[260px]"
-        />
-        <div className="absolute inset-x-0 top-0 px-4 pt-[calc(var(--app-safe-top,0px)+16px)]">
-          <button type="button" onClick={onBack} aria-label="Back" className="flex h-11 w-11 items-center justify-center rounded-full bg-card shadow-soft">
-            <ArrowLeft className="h-5 w-5 text-foreground" />
-          </button>
-        </div>
-        {hasCoords(stop.addr) && (
-          <div className="pointer-events-none absolute left-1/2 top-[34%] -translate-x-1/2 -translate-y-full">
-            <div className="relative whitespace-nowrap rounded-[10px] bg-foreground px-3 py-2 text-xs font-bold text-background">
-              {isPick ? c.pickedHere : c.droppedHere}
-              <span className="absolute left-1/2 top-full -translate-x-1/2 border-x-[6px] border-t-[6px] border-x-transparent border-t-foreground" />
-            </div>
-          </div>
-        )}
-        <div className="absolute inset-x-4 bottom-4 flex items-center gap-3 rounded-[18px] bg-card p-3.5 shadow-soft">
-          <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${isPick ? "bg-primary" : "bg-destructive"}`}>
-            <Arrow className="h-4 w-4 text-primary-foreground" strokeWidth={3} />
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block truncate text-base font-extrabold text-foreground">{stop.addr ? stop.addr.area || stop.addr.label || addrTitle(stop.addr) : c.chooseAddr}</span>
-            {stop.addr && <span className="block truncate text-sm text-muted-foreground">{stop.addr.full_address}</span>}
-          </span>
-          <button type="button" onClick={() => setPicking(true)} className="shrink-0 rounded-[10px] border-2 border-primary px-3 py-1.5 text-sm font-extrabold text-primary">
-            {c.changePlace}
-          </button>
-        </div>
-      </div>
-
-      <div className="relative -mt-2 mx-auto w-full max-w-md space-y-3 rounded-t-[24px] bg-card px-4 pt-5">
-        <input value={stop.flat ?? ""} maxLength={120} placeholder={c.flat} onChange={(e) => update({ flat: e.target.value })} className={`${field} py-4`} />
-        <label className={`${field} block py-2.5`}>
-          <span className="block text-xs text-muted-foreground">{isPick ? c.senderName : c.receiverName}</span>
-          <input value={stop.name} maxLength={80} onChange={(e) => update({ name: e.target.value })} className="w-full bg-transparent text-base outline-none" />
-        </label>
-        <label className={`${field} block py-2.5`}>
-          <span className="block text-xs text-muted-foreground">{isPick ? c.senderPhone : c.receiverPhone}</span>
-          <input
-            value={stop.phone}
-            inputMode="numeric"
-            maxLength={10}
-            onChange={(e) => update({ phone: e.target.value.replace(/\D/g, "").slice(0, 10) })}
-            className="w-full bg-transparent text-base outline-none"
-          />
-        </label>
-        {myPhone.length === 10 && (
-          <button
-            type="button"
-            onClick={() => update(usingMine ? { phone: "" } : { phone: myPhone, name: stop.name || (isPick ? me?.name ?? "" : "") })}
-            className="flex items-center gap-3 py-1 text-left text-sm font-bold text-foreground"
-          >
-            <span className={`flex h-5 w-5 items-center justify-center rounded-[5px] border-2 ${usingMine ? "border-primary bg-primary" : "border-muted-foreground"}`}>
-              {usingMine && <Check className="h-3.5 w-3.5 text-primary-foreground" strokeWidth={3} />}
-            </span>
-            {fill(c.useMine, { n: myPhone })}
-          </button>
-        )}
-      </div>
-      <BottomBar>
-        <button
-          type="button"
-          onClick={() => (valid ? onNext() : !hasCoords(stop.addr) ? setPicking(true) : toast(isPick ? c.needSender : c.needReceiver))}
-          className="flex flex-1 items-center justify-center rounded-[14px] bg-primary py-4 text-base font-extrabold text-primary-foreground"
-        >
-          {valid || isPick ? c.confirmProceed : c.enterContact}
-        </button>
-      </BottomBar>
-      <LocationPickerSheet
-        open={picking}
-        activeId={stop.addr?.id ?? null}
-        onClose={() => {
-          setPicking(false);
-          if (!hasCoords(stop.addr)) onBack();
-        }}
-        onSelect={(a) => {
-          if (hasCoords(a)) update({ addr: a });
-          setPicking(false);
-        }}
-      />
-    </main>
   );
 }
 
@@ -723,100 +580,11 @@ function VehicleStep({
 
 /* ---------------- Goods type ---------------- */
 
-const RESTRICTED = [
+export const RESTRICTED = [
   "Pornographic Materials", "Dry Ice", "Human Body Parts", "Explosives", "Fire Arms", "Flammables", "Livestock", "Pets & Animals",
   "Dangerous Goods", "Hazardous Goods", "Illegal Goods", "Radioactive Materials", "Precious Jewelleries", "Currencies & Coins",
   "Stones and Gems", "Gambling Devices", "Lottery Tickets", "Fire Extinguishers", "Cigarettes & Alcohols", "Narcotics and Illegal Drugs",
 ];
-
-function GoodsStep({
-  draft,
-  setDraft,
-  onBack,
-  onNext,
-}: {
-  draft: ParcelDraft;
-  setDraft: (fn: (d: ParcelDraft) => ParcelDraft) => void;
-  onBack: () => void;
-  onNext: () => void;
-}) {
-  const c = useParcelCopy();
-  useBackHandler(true, onBack);
-  const [open, setOpen] = useState(false);
-  const [picked, setPicked] = useState<string | null>(draft.typeId);
-  const { data: types = [], isLoading } = useQuery({
-    queryKey: ["courier_types", draft.vehicleId],
-    queryFn: () => fetchCourierTypes(draft.vehicleId!),
-    enabled: Boolean(draft.vehicleId),
-    staleTime: 5 * 60_000,
-  });
-  return (
-    <main className="min-h-screen w-full bg-surface-soft pb-32">
-      <div className="mx-auto w-full max-w-md px-4 pt-[calc(var(--app-safe-top,0px)+16px)]">
-        <div className="flex items-center gap-4">
-          <button type="button" onClick={onBack} aria-label="Back" className="p-1">
-            <ArrowLeft className="h-6 w-6 text-foreground" />
-          </button>
-          <h1 className="text-xl font-extrabold text-foreground">{c.reviewBooking}</h1>
-        </div>
-        <h2 className="mt-6 text-lg font-extrabold text-foreground">{c.goodsType}</h2>
-        <div className="mt-3 rounded-[18px] bg-warning/20 p-4">
-          <button type="button" onClick={() => setOpen((o) => !o)} className="flex w-full items-center gap-3 text-left">
-            <Ban className="h-7 w-7 shrink-0 text-destructive" />
-            <span className="min-w-0 flex-1">
-              <span className="block text-base font-extrabold text-foreground">{c.restricted}</span>
-              <span className="block text-sm text-muted-foreground">{c.restrictedSub}</span>
-            </span>
-            <span className="flex items-center gap-1 text-sm font-extrabold text-primary">
-              {open ? c.hide : c.seeAll}
-              {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-            </span>
-          </button>
-          {open && (
-            <ul className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1.5 border-t border-dashed border-muted-foreground/40 pt-3 text-sm text-muted-foreground">
-              {RESTRICTED.map((r) => <li key={r}>• {r}</li>)}
-            </ul>
-          )}
-        </div>
-        <div className="mt-3 space-y-2.5">
-          {isLoading && <Loader2 className="mx-auto h-5 w-5 animate-spin text-muted-foreground" />}
-          {types.map((ty) => {
-            const on = ty.id === picked;
-            return (
-              <button
-                key={ty.id}
-                type="button"
-                onClick={() => setPicked(ty.id)}
-                className={`flex w-full items-center gap-3 rounded-[16px] border-2 bg-card px-4 py-4 text-left ${on ? "border-primary bg-primary/10" : "border-border"}`}
-              >
-                <span className="w-6 text-center text-xl" aria-hidden>{ty.icon && [...ty.icon].length <= 3 ? ty.icon : "📦"}</span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-base text-foreground">{ty.name}</span>
-                  {ty.instructions && <span className="block text-xs text-muted-foreground">{ty.instructions}</span>}
-                </span>
-                {on && <Check className="h-5 w-5 text-primary" />}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-      <BottomBar>
-        <button
-          type="button"
-          disabled={!picked}
-          onClick={() => {
-            if (!picked) return toast(c.chooseGoods);
-            setDraft((d) => ({ ...d, typeId: picked }));
-            onNext();
-          }}
-          className="flex flex-1 items-center justify-center rounded-[14px] bg-primary py-4 text-base font-extrabold text-primary-foreground disabled:bg-muted disabled:text-muted-foreground"
-        >
-          {c.confirm}
-        </button>
-      </BottomBar>
-    </main>
-  );
-}
 
 /* ---------------- Checkout ---------------- */
 
