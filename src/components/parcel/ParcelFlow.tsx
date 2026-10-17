@@ -499,7 +499,6 @@ function VehicleStep({
   const sel = idx >= 0 ? quotes[idx] : null;
   const price = sel?.data?.total_amount;
   const km = sel?.data?.distance_km ?? quotes.find((q) => q.data)?.data?.distance_km;
-  const drop = draft.stops.find((s) => s.type === "drop")!;
   const pickups = draft.stops.filter((s) => s.type === "pickup").length;
   const drops = draft.stops.length - pickups;
   const over = limits ? pickups > limits.max_pickups || drops > limits.max_drops : false;
@@ -586,18 +585,6 @@ function VehicleStep({
           </>
         )}
 
-        {!multi && (
-          <section className="mt-5 rounded-[16px] bg-card p-4 shadow-soft">
-            <p className="text-sm font-extrabold text-foreground">{c.receiver}</p>
-            <ContactFields
-              name={drop.name}
-              phone={drop.phone}
-              onChange={(name, phone) =>
-                setDraft((d) => ({ ...d, stops: d.stops.map((s) => (s.key === drop.key ? { ...s, name, phone } : s)) }))
-              }
-            />
-          </section>
-        )}
       </div>
       <BottomBar>
         <button
