@@ -184,7 +184,7 @@ export function CleanTab({
   return (
     <div>
       <section
-        className="bleed-safe-top relative -mx-5 flex min-h-[42vh] flex-col items-center justify-center overflow-hidden px-6 pb-14 text-center"
+        className="bleed-safe-top relative -mx-5 flex min-h-[calc(42vh-10px)] flex-col items-center justify-center overflow-hidden px-6 pb-14 text-center"
         style={{ "--bleed-top-extra": "72px", background: heroImg ? `center/cover no-repeat url("${localSrc(heroImg)}"), ${slab.sky}` : slab.sky } as React.CSSProperties}
       >
         <h1 className={`text-2xl font-extrabold leading-tight ${tone === "light" ? "text-hero-title hero-shadow" : "text-hero-title-dark"}`}>{bTitle}</h1>
@@ -217,7 +217,7 @@ export function CleanTab({
         {washOptions.length > 0 && washCards.length > 0 && (
           <>
             {/* Keeps wash cards below the first screen on every phone */}
-            <div className="flex h-[calc(11vh+18px)] min-h-[66px] items-center justify-center">
+            <div className="flex h-[calc(11vh+8px)] min-h-[56px] items-center justify-center">
               <BrandWatermark className="!pt-0 !pb-0" />
             </div>
             <h2 className="text-lg font-extrabold text-foreground">
