@@ -11846,6 +11846,11 @@ export type Database = {
         Returns: Json
       }
       app_set_offer_notifications: { Args: { _on: boolean }; Returns: Json }
+      app_store_cancel_order: {
+        Args: { _destination?: string; _order_id: string; _reason?: string }
+        Returns: Json
+      }
+      app_store_cancel_quote: { Args: { _order_id: string }; Returns: Json }
       app_store_card: {
         Args: { _lat: number; _lng: number; _m: string }
         Returns: Json
@@ -12897,6 +12902,7 @@ export type Database = {
       customer_wallet_start_topup: { Args: { _amount: number }; Returns: Json }
       default_cancel_policy: { Args: never; Returns: Json }
       default_city_id: { Args: never; Returns: string }
+      default_store_cancel_policy: { Args: never; Returns: Json }
       delivery_fee_calc: {
         Args: {
           _base: number
@@ -15088,7 +15094,12 @@ export type Database = {
         Returns: undefined
       }
       staff_store_cancel_refund: {
-        Args: { _order_id: string; _reason: string }
+        Args: {
+          _amount?: number
+          _mode?: string
+          _order_id: string
+          _reason: string
+        }
         Returns: Json
       }
       staff_store_reassign: { Args: { _order_id: string }; Returns: Json }
@@ -15513,6 +15524,10 @@ export type Database = {
       }
       store_quote_delivery: {
         Args: { _address_id: string; _merchant_id: string }
+        Returns: Json
+      }
+      store_refund_full: {
+        Args: { _cause: string; _destination: string; _order_id: string }
         Returns: Json
       }
       store_restock: { Args: { _order_id: string }; Returns: undefined }
