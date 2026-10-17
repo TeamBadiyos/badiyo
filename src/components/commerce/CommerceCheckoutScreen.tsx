@@ -97,6 +97,7 @@ export function CommerceCheckoutScreen({
   const [couponOpen, setCouponOpen] = useState(false);
   const [useWallet, setUseWallet] = useState(false);
   const [placing, setPlacing] = useState(false);
+  const [policyOpen, setPolicyOpen] = useState(false);
   useBackHandler(true, () => (pickerOpen ? setPickerOpen(false) : onBack()));
 
   const { data: addresses = [] } = useQuery({ queryKey: ["my-addresses"], queryFn: fetchAddresses, staleTime: 60_000 });
