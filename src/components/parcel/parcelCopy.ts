@@ -60,6 +60,16 @@ const en = {
   you: "You",
   stops: "{n} stops",
   overLimit: "This vehicle allows up to {p} pickups and {d} drops",
+  searchPlace: "Search a place, shop or area",
+  selectOnMap: "Select on map",
+  addStops: "Add stops",
+  sender: "Sender",
+  senderName: "Sender name",
+  senderPhone: "Sender phone",
+  needSender: "Enter the sender's name and 10-digit phone",
+  confirmPlace: "Next",
+  changePlace: "Change",
+  recentSaved: "Saved & recent",
 };
 type Copy = typeof en;
 const mr: Copy = {
@@ -122,6 +132,16 @@ const mr: Copy = {
   you: "तुम्ही",
   stops: "{n} थांबे",
   overLimit: "या वाहनात जास्तीत जास्त {p} पिकअप आणि {d} ड्रॉप",
+  searchPlace: "जागा, दुकान किंवा भाग शोधा",
+  selectOnMap: "नकाशावर निवडा",
+  addStops: "थांबे जोडा",
+  sender: "पाठवणारा",
+  senderName: "पाठवणाऱ्याचं नाव",
+  senderPhone: "पाठवणाऱ्याचा फोन",
+  needSender: "पाठवणाऱ्याचं नाव आणि 10 अंकी फोन टाका",
+  confirmPlace: "पुढे",
+  changePlace: "बदला",
+  recentSaved: "जतन केलेले आणि अलीकडचे",
 };
 
 export function useParcelCopy() {
