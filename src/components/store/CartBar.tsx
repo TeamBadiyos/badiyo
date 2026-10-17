@@ -25,7 +25,7 @@ export function CartBar({
 
   // Above-nav cart must clear the raised centre "Send Parcel" button.
   const bottom = aboveNav
-    ? "bottom-[calc(var(--app-safe-bottom,0px)+98px)]"
+    ? "bottom-[calc(var(--app-safe-bottom,0px)+88px)]"
     : "bottom-[calc(var(--app-safe-bottom,0px)+16px)]";
 
   return (

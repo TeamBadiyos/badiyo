@@ -483,7 +483,7 @@ export function HomeScreen({
   }
 
   return (
-    <main className="min-h-screen w-full bg-background pb-28 momentum-scroll">
+    <main className="min-h-screen w-full bg-background pb-nav momentum-scroll">
       <PullToRefreshIndicator pull={pull} refreshing={refreshing} />
       <div className="relative mx-auto w-full max-w-md px-5 pt-2">
         {/* Header: address on the left, wallet + profile on the right */}

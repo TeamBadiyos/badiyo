@@ -1,21 +1,21 @@
+import { Gift, Package, ShoppingBasket, Sparkles, UtensilsCrossed, type LucideIcon } from "lucide-react";
 import { useT } from "@/i18n";
 import { hapticSelection } from "@/lib/haptics";
 import { writeHomeTab, type HomeTab, type NavTab } from "@/lib/homeTab";
 
 type LabelKey = "nav.clean" | "nav.store" | "nav.food" | "nav.parcelTab" | "nav.rewards";
 
-// Pictures live in public/brand/nav so the native build works offline.
-const TABS: { key: NavTab; labelKey: LabelKey; img: string; tile: string }[] = [
-  { key: "clean", labelKey: "nav.clean", img: "/brand/nav/clean.webp", tile: "bg-[var(--tile-clean)]" },
-  { key: "store", labelKey: "nav.store", img: "/brand/nav/store.webp", tile: "bg-[var(--tile-store)]" },
-  { key: "food", labelKey: "nav.food", img: "/brand/nav/food.webp", tile: "bg-[var(--tile-food)]" },
-  { key: "parcel", labelKey: "nav.parcelTab", img: "/brand/nav/parcel.webp", tile: "bg-[var(--tile-parcel)]" },
-  { key: "rewards", labelKey: "nav.rewards", img: "/brand/nav/rewards.webp", tile: "bg-[var(--tile-rewards)]" },
+const TABS: { key: NavTab; labelKey: LabelKey; Icon: LucideIcon }[] = [
+  { key: "clean", labelKey: "nav.clean", Icon: Sparkles },
+  { key: "store", labelKey: "nav.store", Icon: ShoppingBasket },
+  { key: "food", labelKey: "nav.food", Icon: UtensilsCrossed },
+  { key: "parcel", labelKey: "nav.parcelTab", Icon: Package },
+  { key: "rewards", labelKey: "nav.rewards", Icon: Gift },
 ];
 
 /**
- * Five main tabs: Clean · Store · Food · Parcel · Rewards.
- * Clean/Store/Food/Parcel live inside Home; `onHome(tab)` opens Home on that tab.
+ * Floating dark pill with five tabs: Clean · Store · Food · Parcel · Rewards.
+ * The selected tab grows into a white pill (icon + label); flex-grow animates the slide.
  */
 export function BottomNav({
   activeKey,
@@ -38,38 +38,25 @@ export function BottomNav({
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-10 px-3"
-      style={{ paddingBottom: "max(8px, var(--app-safe-bottom))" }}
+      className="fixed inset-x-4 z-10 mx-auto max-w-md"
+      style={{ bottom: "calc(var(--app-safe-bottom, 0px) + 12px)" }}
     >
-      <div className="nav-glow mx-auto flex h-[72px] w-full max-w-md items-stretch justify-around rounded-[28px] bg-card px-1">
-        {TABS.map(({ key, labelKey, img, tile }) => {
-          const isActive = activeKey === key;
+      <div className="nav-float flex h-16 w-full items-center gap-1 rounded-full bg-[var(--nav-charcoal)] px-2">
+        {TABS.map(({ key, labelKey, Icon }) => {
+          const on = activeKey === key;
           return (
             <button
               key={key}
               onClick={() => select(key)}
               aria-label={t(labelKey)}
-              aria-current={isActive ? "page" : undefined}
-              className={`relative flex flex-1 flex-col items-center justify-end gap-0.5 pb-2 text-[11px] transition active:scale-90 ${
-                isActive ? "font-extrabold text-primary" : "font-bold text-foreground/80"
+              aria-current={on ? "page" : undefined}
+              style={{ flexGrow: on ? 2.4 : 1 }}
+              className={`flex h-12 min-w-0 basis-0 items-center justify-center gap-1.5 overflow-hidden rounded-full transition-all duration-300 ease-out active:scale-95 ${
+                on ? "bg-card text-[var(--nav-active)]" : "bg-transparent text-[var(--nav-inactive)]"
               }`}
             >
-              {isActive && (
-                <span className="absolute -top-4 left-1/2 h-16 w-16 -translate-x-1/2 rounded-full bg-card" aria-hidden />
-              )}
-              <span
-                className={`relative flex items-center justify-center rounded-full transition-all duration-200 ${
-                  isActive ? "-mt-6 h-14 w-14 bg-gradient-to-br from-primary to-primary/80 nav-active-glow" : `h-10 w-10 ${tile}`
-                }`}
-              >
-                <img
-                  src={img}
-                  alt=""
-                  draggable={false}
-                  className={isActive ? "h-9 w-9 object-contain" : "h-7 w-7 object-contain"}
-                />
-              </span>
-              <span className="relative">{t(labelKey)}</span>
+              <Icon className="h-[22px] w-[22px] shrink-0" strokeWidth={on ? 2.4 : 2} />
+              {on && <span className="truncate text-[13px] font-extrabold animate-fade-in">{t(labelKey)}</span>}
             </button>
           );
         })}
