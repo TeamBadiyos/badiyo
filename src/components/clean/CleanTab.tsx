@@ -376,7 +376,7 @@ function istHHMM(): string {
 }
 
 /** Current India time (HH:MM); updates every minute and when the app returns to the foreground. */
-function useIstMinute(): string {
+export function useIstMinute(): string {
   const [now, setNow] = useState(istHHMM);
   useEffect(() => {
     const tick = () => setNow(istHHMM());
@@ -389,7 +389,7 @@ function useIstMinute(): string {
   return now;
 }
 
-function pickSlab(slabs: BannerSlab[] | null | undefined, now: string): { image: string | null; sky: string; tone: "light" | "dark" } {
+export function pickSlab(slabs: BannerSlab[] | null | undefined, now: string): { image: string | null; sky: string; tone: "light" | "dark" } {
   const def = DEFAULT_SLABS.find((d) => inSlab(now, d.from, d.to)) ?? DEFAULT_SLABS[1];
   const cc = (slabs ?? []).find((x) => inSlab(now, x.from, x.to));
   return { image: cc?.image_url || null, sky: def.sky, tone: (cc?.text_color as "light" | "dark") || def.tone };
