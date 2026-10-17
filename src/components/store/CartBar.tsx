@@ -1,5 +1,5 @@
-import { ShoppingCart } from "lucide-react";
-import { useT } from "@/i18n";
+import { ShoppingCart, X } from "lucide-react";
+import { useLanguage, useT } from "@/i18n";
 import { useStoreCart } from "@/lib/storeCart";
 import { StoreOrderingBar } from "./StoreOrderingBar";
 
@@ -18,7 +18,8 @@ export function CartBar({
   disabled?: boolean;
 }) {
   const t = useT();
-  const { count, total } = useStoreCart();
+  const { lang } = useLanguage();
+  const { count, total, cart, clear } = useStoreCart();
 
   if (disabled) return <StoreOrderingBar aboveNav={aboveNav} />;
   if (count === 0) return null;
@@ -29,18 +30,33 @@ export function CartBar({
     : "bottom-[calc(var(--app-safe-bottom,0px)+16px)]";
 
   return (
-    <div className={`fixed inset-x-0 z-40 px-5 ${bottom}`}>
-      <button
-        type="button"
-        onClick={onOpenCart}
-        className="mx-auto flex w-full max-w-md items-center justify-between gap-3 rounded-[18px] bg-primary px-4 py-3.5 text-primary-foreground shadow-lg transition active:scale-[0.99]"
-      >
-        <span className="flex items-center gap-2 text-sm font-bold">
-          <ShoppingCart className="h-4 w-4" />
-          {t("store.cartCount", { count: String(count) })} · ₹{total.toFixed(0)}
-        </span>
-        <span className="text-sm font-extrabold">{t("store.viewCart")} →</span>
-      </button>
+    <div className={`fixed inset-x-0 z-40 px-4 ${bottom}`}>
+      <div className="mx-auto flex w-full max-w-md items-center gap-2">
+        <button
+          type="button"
+          onClick={onOpenCart}
+          className="flex min-w-0 flex-1 items-center justify-between gap-3 rounded-[16px] bg-primary px-4 py-3 text-primary-foreground shadow-lg transition active:scale-[0.99]"
+        >
+          <span className="flex min-w-0 flex-col text-left">
+            <span className="flex items-center gap-1.5 text-sm font-extrabold">
+              <ShoppingCart className="h-4 w-4" />
+              {t("store.cartCount", { count: String(count) })} · ₹{total.toFixed(0)}
+            </span>
+            {cart.storeName && <span className="truncate text-[11px] opacity-90">{cart.storeName}</span>}
+          </span>
+          <span className="shrink-0 text-sm font-extrabold">{t("store.viewCart")} →</span>
+        </button>
+        <button
+          type="button"
+          aria-label="Clear cart"
+          onClick={() => {
+            if (window.confirm(lang === "mr" ? "कार्ट रिकामी करायची?" : "Clear your cart?")) clear();
+          }}
+          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-card text-foreground shadow-lg active:scale-95"
+        >
+          <X className="h-5 w-5" />
+        </button>
+      </div>
     </div>
   );
 }
