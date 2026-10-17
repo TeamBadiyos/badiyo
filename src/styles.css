@@ -541,3 +541,9 @@ select,
 .cs-bell { animation: cs-bell .8s ease-in-out 1; }
 .cs-confetti { animation: cs-confetti 1.1s ease-out forwards; }
 @media (prefers-reduced-motion: reduce) { .cs-steam, .cs-bob, .cs-bell, .cs-confetti { animation: none; } }
+
+.parcel-hero {
+  background:
+    radial-gradient(120% 80% at 85% 10%, color-mix(in oklab, var(--primary) 28%, transparent), transparent 60%),
+    linear-gradient(180deg, color-mix(in oklab, var(--primary) 16%, var(--background)), var(--background));
+}
