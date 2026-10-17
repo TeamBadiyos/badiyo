@@ -25,6 +25,7 @@ import { logPaymentFailure } from "@/lib/paymentLog.functions";
 import { toast } from "sonner";
 import { readLangOutsideReact, translateCatalog } from "@/lib/catalogI18n";
 import { formatClockLabel } from "@/lib/serviceHours";
+import { isHourBookable } from "@/lib/hourSlots";
 
 
 type Status = "loading" | "success" | "failed";
@@ -80,6 +81,7 @@ export function PaymentScreen({
   const [saveFailed, setSaveFailed] = useState(false);
   const [retrying, setRetrying] = useState(false);
   const startedRef = useRef(false);
+  const walletRequestRef = useRef<string | null>(null);
   const paymentRef = useRef<{ paymentId: string; orderId: string } | null>(null);
 
   
@@ -291,6 +293,11 @@ export function PaymentScreen({
         } else {
           const day = new Date(slot.day).toISOString().slice(0, 10);
           const mins = Number(slot.slotId); // minutes since midnight
+          if (!Number.isFinite(mins) || !isHourBookable(day, mins)) {
+            toast(lang === "mr" ? "कृपया पुढील उपलब्ध वेळ निवडा." : "Please select a later available slot.");
+            (onSlotUnavailable ?? onBack)();
+            return;
+          }
           const full = await fetchAppFullySlots(svcKey, day, day);
           if (
             Number.isFinite(mins) &&
@@ -309,9 +316,11 @@ export function PaymentScreen({
       }
 
       // Wallet covers the whole bill: pay from wallet on the server, no Razorpay.
-      if (redeemCoins) {
+      if (redeemCoins || (coupon?.discount ?? 0) >= service.price) {
+        walletRequestRef.current ??= crypto.randomUUID();
         const { data: w, error: wErr } = await supabase.rpc("app_create_booking_wallet" as never, {
           _payload: {
+            request_id: walletRequestRef.current,
             address_id: address.id ?? null,
             price_option_id: service.id,
             service_category_id: service.service_category_id ?? null,
@@ -333,6 +342,7 @@ export function PaymentScreen({
           return;
         }
         if (wErr && !/INSUFFICIENT_BALANCE/i.test(wErr.message)) throw new Error(wErr.message);
+        if (!wErr) throw new Error("Booking could not be confirmed. Please retry.");
         // Not enough in the wallet: partial wallet through Razorpay as before.
       }
 
@@ -347,6 +357,7 @@ export function PaymentScreen({
             purpose: "booking",
             coupon_code: coupon?.code ?? null,
             redeem_coins: redeemCoins === true,
+            request_id: walletRequestRef.current,
             // Saved server-side so the booking can be recovered automatically
             // if this device fails to write it after a successful payment.
             booking_draft: {
@@ -381,6 +392,10 @@ export function PaymentScreen({
       // still record a payment reference so the order counts as paid
       // (dispatch, Command Center board, tracking).
       if (data.free === true || Number(data.amount) === 0) {
+        if (typeof data.booking_id === "string") {
+          onTrackBooking(data.booking_id);
+          return;
+        }
         paymentRef.current = { paymentId: rzpOrderId, orderId: rzpOrderId };
         setStatus("success");
         void createBooking(rzpOrderId, rzpOrderId);
