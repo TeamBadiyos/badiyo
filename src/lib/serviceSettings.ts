@@ -7,6 +7,7 @@ import { localSrc, syncImages } from "@/lib/imageStore";
 
 /** Clean Home = 'clean', Car & Bike Wash = 'wash'. Public RPCs, city-aware. */
 export type CleanServiceKey = "clean" | "wash";
+export type ContentServiceKey = CleanServiceKey | "courier";
 
 const rpc = ((fn: string, args: Record<string, unknown>) =>
   (supabase.rpc as unknown as (f: string, a: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>).call(supabase, fn, args));
@@ -158,7 +159,7 @@ function writeCache(kind: string, key: string, city: string | null, v: unknown) 
   try { window.localStorage.setItem(cacheKey(kind, key, city), JSON.stringify(v)); } catch { /* full */ }
 }
 
-async function fetchServiceContent(key: CleanServiceKey, cityId: string | null): Promise<ServiceContent | null> {
+async function fetchServiceContent(key: ContentServiceKey, cityId: string | null): Promise<ServiceContent | null> {
   const { data, error } = await rpc("app_service_content", { _service_key: key, _city_id: cityId });
   if (error) throw error;
   const v = (data ?? null) as ServiceContent | null;
@@ -166,7 +167,7 @@ async function fetchServiceContent(key: CleanServiceKey, cityId: string | null):
   return v;
 }
 
-export function useServiceContent(key: CleanServiceKey) {
+export function useServiceContent(key: ContentServiceKey) {
   const cityId = useCustomerCityId();
   return useQuery({
     queryKey: ["app-service-content", key, cityId],

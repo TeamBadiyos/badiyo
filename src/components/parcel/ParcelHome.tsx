@@ -49,9 +49,16 @@ export function ParcelHome({
   const { data: enabled = true } = useQuery({ queryKey: ["courier_enabled"], queryFn: () => fetchCourierEnabled(), staleTime: 5 * 60_000 });
   const { data: state } = useServiceState("courier");
   const opensAt = state && !state.open ? formatNextOpen(state.next_open_at ?? state.resume_at) : null;
-  // Same photos as the Clean home banner for now (by India time slab); a Parcel CC entry can replace this later.
-  const { data: heroContent } = useServiceContent("clean");
-  const slab = pickSlab(heroContent?.banner?.slabs, useIstMinute());
+  // Parcel banner photos/text from Command Center (courier); built-in sky fallback.
+  const { data: heroContent } = useServiceContent("courier");
+  const baseSlab = pickSlab(heroContent?.banner?.slabs, useIstMinute());
+  const camp = heroContent?.campaign;
+  const campOn = !!(camp?.active && (camp.title || camp.image_url));
+  const slab = campOn ? { ...baseSlab, image: camp?.image_url || baseSlab.image } : baseSlab;
+  const hero = heroContent?.hero;
+  const isMr = lang === "mr";
+  const title = (campOn ? (isMr && camp?.title_mr) || camp?.title : (isMr && hero?.heading_mr) || hero?.heading) || s.title;
+  const sub = (campOn ? (isMr && camp?.subline_mr) || camp?.subline : (isMr && hero?.subline_mr) || hero?.subline) || s.sub;
   const heroImg = slab.image;
   const tone = slab.tone;
 
