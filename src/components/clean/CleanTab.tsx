@@ -1,4 +1,4 @@
-import { localSrc } from "@/lib/imageStore";
+import { localSrc, syncImages } from "@/lib/imageStore";
 import { useEffect, useState } from "react";
 import { ChevronRight, Gift } from "lucide-react";
 import type { ServiceState } from "@/lib/serviceHours";
@@ -164,7 +164,12 @@ export function CleanTab({
   };
   const bTitle = fill(pick(lang, banner?.title, banner?.title_mr), vars) || s.maidHero;
   const bSub = fill(pick(lang, banner?.subline, banner?.subline_mr), vars);
-  const slab = pickSlab(maidContent?.banner?.slabs);
+  const istNow = useIstMinute();
+  const slab = pickSlab(maidContent?.banner?.slabs, istNow);
+  useEffect(() => {
+    const urls = (maidContent?.banner?.slabs ?? []).map((x) => x.image_url).filter((u): u is string => !!u);
+    if (urls.length) void syncImages(urls);
+  }, [maidContent?.banner?.slabs]);
   const heroImg = bannerKey === "campaign" ? (banner?.image_url || slab.image) : slab.image;
   const tone = slab.tone;
   useEffect(() => { onHeroTone?.(tone); }, [tone, onHeroTone]);
@@ -351,8 +356,25 @@ function inSlab(now: string, from?: string | null, to?: string | null): boolean 
   return f <= t ? now >= f && now < t : now >= f || now < t;
 }
 
-function pickSlab(slabs: BannerSlab[] | null | undefined): { image: string | null; sky: string; tone: "light" | "dark" } {
-  const now = new Date().toLocaleTimeString("en-GB", { timeZone: "Asia/Kolkata", hour12: false }).slice(0, 5).replace(/^24/, "00");
+function istHHMM(): string {
+  return new Date().toLocaleTimeString("en-GB", { timeZone: "Asia/Kolkata", hour12: false }).slice(0, 5).replace(/^24/, "00");
+}
+
+/** Current India time (HH:MM); updates every minute and when the app returns to the foreground. */
+function useIstMinute(): string {
+  const [now, setNow] = useState(istHHMM);
+  useEffect(() => {
+    const tick = () => setNow(istHHMM());
+    const id = window.setInterval(tick, 20_000);
+    const onVis = () => { if (document.visibilityState === "visible") tick(); };
+    document.addEventListener("visibilitychange", onVis);
+    window.addEventListener("focus", tick);
+    return () => { window.clearInterval(id); document.removeEventListener("visibilitychange", onVis); window.removeEventListener("focus", tick); };
+  }, []);
+  return now;
+}
+
+function pickSlab(slabs: BannerSlab[] | null | undefined, now: string): { image: string | null; sky: string; tone: "light" | "dark" } {
   const def = DEFAULT_SLABS.find((d) => inSlab(now, d.from, d.to)) ?? DEFAULT_SLABS[1];
   const cc = (slabs ?? []).find((x) => inSlab(now, x.from, x.to));
   return { image: cc?.image_url || null, sky: def.sky, tone: (cc?.text_color as "light" | "dark") || def.tone };
