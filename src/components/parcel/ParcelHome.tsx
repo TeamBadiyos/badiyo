@@ -1,16 +1,18 @@
 // Parcel tab home: premium hero (like Clean), Porter-style pickup/drop card,
-// service cards, "what can you send" tiles and trust row. Tapping starts the
-// full-screen step flow (Pickup → Drop → Vehicle → Goods → Checkout).
+// service cards, "what can you send" tiles and trust row. Pickup and Drop each
+// open the shared address sheet and come back here with the choice shown;
+// the full-screen step flow starts only from Bike Delivery / Multi-Stop.
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Bike, ChevronRight, Clock, FileText, Gift, Pill, Route, ShieldCheck, Shirt, ShoppingBasket, Soup, MapPin } from "lucide-react";
 import { toast } from "sonner";
-import type { SavedAddress } from "@/components/LocationPickerSheet";
+import { LocationPickerSheet, type SavedAddress } from "@/components/LocationPickerSheet";
 import { BrandWatermark } from "@/components/BrandWatermark";
 import { useLanguage } from "@/i18n";
 import { formatNextOpen, useServiceState } from "@/lib/serviceHours";
 import { fetchCourierEnabled } from "@/components/courier/courierData";
 import { fill, useParcelCopy } from "./parcelCopy";
-import { addrTitle, emptyDraft, hasCoords, writeDraft, type ParcelAddr } from "./parcelDraft";
+import { addrTitle, emptyDraft, hasCoords, readDraft, writeDraft, type ParcelAddr, type ParcelDraft } from "./parcelDraft";
 
 const T = {
   en: {
@@ -18,12 +20,14 @@ const T = {
     bike: "Bike Delivery", bikeSub: "Fast single drop", multi: "Multi-Stop", multiSub: "Send to many places",
     what: "What can you send?", items: ["Documents", "Tiffin & Food", "Medicines", "Groceries", "Clothes", "Gifts"],
     trust: ["OTP verified", "Live GPS", "Safe handling"],
+    pickupTitle: "Select pickup location", dropTitle: "Select drop location",
   },
   mr: {
     title: "शहरात कुठेही, काहीही पाठवा", sub: "दारातून पिकअप · लाईव्ह ट्रॅकिंग · OTP डिलिव्हरी",
     bike: "बाईक डिलिव्हरी", bikeSub: "जलद एक ड्रॉप", multi: "मल्टी-स्टॉप", multiSub: "अनेक ठिकाणी पाठवा",
     what: "तुम्ही काय पाठवू शकता?", items: ["कागदपत्रे", "डबा आणि जेवण", "औषधे", "किराणा", "कपडे", "भेटवस्तू"],
     trust: ["OTP सत्यापित", "लाईव्ह GPS", "सुरक्षित हाताळणी"],
+    pickupTitle: "पिकअप लोकेशन निवडा", dropTitle: "ड्रॉप लोकेशन निवडा",
   },
 };
 const ICONS = [FileText, Soup, Pill, ShoppingBasket, Shirt, Gift];
@@ -42,21 +46,50 @@ export function ParcelHome({
   const { data: enabled = true } = useQuery({ queryKey: ["courier_enabled"], queryFn: () => fetchCourierEnabled(), staleTime: 5 * 60_000 });
   const { data: state } = useServiceState("courier");
   const opensAt = state && !state.open ? formatNextOpen(state.next_open_at ?? state.resume_at) : null;
-  const pickupAddr: ParcelAddr | null = hasCoords(defaultPickup) ? defaultPickup : null;
+
+  // Local draft: survives navigation so Home always shows the latest choices.
+  const [draft, setDraft] = useState<ParcelDraft>(() => {
+    const existing = readDraft();
+    if (existing) return existing;
+    return emptyDraft(hasCoords(defaultPickup) ? defaultPickup : null);
+  });
+  const [sheet, setSheet] = useState<"pickup" | "drop" | null>(null);
+
+  const pickupStop = draft.stops.find((x) => x.type === "pickup");
+  const dropStop = draft.stops.find((x) => x.type === "drop");
+  const pickupAddr = pickupStop?.addr ?? null;
+  const dropAddr = dropStop?.addr ?? null;
+
+  const setAddr = (which: "pickup" | "drop", a: ParcelAddr) => {
+    const next: ParcelDraft = {
+      ...draft,
+      stops: draft.stops.map((st) => (st.type === which ? { ...st, addr: a } : st)),
+    };
+    writeDraft(next);
+    setDraft(next);
+    setSheet(null);
+  };
 
   const start = (mode: "single" | "multiDrop") => {
     if (!enabled) {
       toast(c.comingSoon);
       return;
     }
-    const d = emptyDraft(pickupAddr);
-    d.mode = mode;
+    const d = { ...draft, mode };
     writeDraft(d);
     onStart();
   };
 
   return (
     <div>
+      <LocationPickerSheet
+        open={sheet !== null}
+        activeId={sheet === "pickup" ? (pickupAddr?.id ?? null) : (dropAddr?.id ?? null)}
+        title={sheet === "pickup" ? s.pickupTitle : s.dropTitle}
+        onClose={() => setSheet(null)}
+        onSelect={(a) => sheet && setAddr(sheet, a)}
+      />
+
       <section
         className="bleed-safe-top relative -mx-5 flex min-h-[calc(30vh)] flex-col justify-end overflow-hidden px-6 pb-14 parcel-hero"
         style={{ "--bleed-top-extra": "72px" } as React.CSSProperties}
@@ -73,20 +106,26 @@ export function ParcelHome({
       <div className="relative -mx-5 -mt-8 rounded-t-[28px] bg-background px-5 pt-5">
         {/* Porter-style unified pickup / drop card */}
         <div className="service-glow rounded-[20px] border border-primary/20 p-4 shadow-soft">
-          <button type="button" onClick={() => start("single")} className="flex w-full items-center gap-3 text-left">
+          <button type="button" onClick={() => setSheet("pickup")} className="flex w-full items-center gap-3 text-left">
             <span className="h-3 w-3 shrink-0 rounded-full bg-primary ring-4 ring-primary/20" />
             <span className="min-w-0 flex-1">
               <span className="block text-[11px] font-bold uppercase tracking-wide text-muted-foreground">{c.pickup}</span>
               <span className="block truncate text-[15px] font-extrabold text-foreground">{pickupAddr ? addrTitle(pickupAddr) : c.wherePickup}</span>
+              {pickupAddr && (
+                <span className="block truncate text-xs font-semibold text-muted-foreground">{pickupAddr.full_address}</span>
+              )}
             </span>
             <ChevronRight className="h-5 w-5 text-muted-foreground" />
           </button>
           <div className="my-2 ml-[5px] h-5 border-l-2 border-dashed border-border" />
-          <button type="button" onClick={() => start("single")} className="flex w-full items-center gap-3 rounded-[14px] bg-card px-3 py-3 text-left shadow-soft">
+          <button type="button" onClick={() => setSheet("drop")} className="flex w-full items-center gap-3 rounded-[14px] bg-card px-3 py-3 text-left shadow-soft">
             <span className="h-3 w-3 shrink-0 rounded-full bg-destructive ring-4 ring-destructive/20" />
             <span className="min-w-0 flex-1">
               <span className="block text-[11px] font-bold uppercase tracking-wide text-muted-foreground">{c.drop}</span>
-              <span className="block truncate text-[15px] font-extrabold text-foreground">{c.whereTo}</span>
+              <span className="block truncate text-[15px] font-extrabold text-foreground">{dropAddr ? addrTitle(dropAddr) : c.whereTo}</span>
+              {dropAddr && (
+                <span className="block truncate text-xs font-semibold text-muted-foreground">{dropAddr.full_address}</span>
+              )}
             </span>
             <MapPin className="h-5 w-5 text-primary" />
           </button>
