@@ -13,6 +13,9 @@ import { formatNextOpen, useServiceState } from "@/lib/serviceHours";
 import { fetchCourierEnabled } from "@/components/courier/courierData";
 import { fill, useParcelCopy } from "./parcelCopy";
 import { addrTitle, emptyDraft, hasCoords, readDraft, writeDraft, type ParcelAddr, type ParcelDraft } from "./parcelDraft";
+import { useServiceContent } from "@/lib/serviceSettings";
+import { localSrc } from "@/lib/imageStore";
+import { pickSlab, useIstMinute } from "@/components/clean/CleanTab";
 
 const T = {
   en: {
@@ -46,6 +49,11 @@ export function ParcelHome({
   const { data: enabled = true } = useQuery({ queryKey: ["courier_enabled"], queryFn: () => fetchCourierEnabled(), staleTime: 5 * 60_000 });
   const { data: state } = useServiceState("courier");
   const opensAt = state && !state.open ? formatNextOpen(state.next_open_at ?? state.resume_at) : null;
+  // Same photos as the Clean home banner for now (by India time slab); a Parcel CC entry can replace this later.
+  const { data: heroContent } = useServiceContent("clean");
+  const slab = pickSlab(heroContent?.banner?.slabs, useIstMinute());
+  const heroImg = slab.image;
+  const tone = slab.tone;
 
   // Local draft: survives navigation so Home always shows the latest choices.
   const [draft, setDraft] = useState<ParcelDraft>(() => {
@@ -91,11 +99,11 @@ export function ParcelHome({
       />
 
       <section
-        className="bleed-safe-top relative -mx-5 flex min-h-[calc(30vh)] flex-col justify-end overflow-hidden px-6 pb-14 parcel-hero"
-        style={{ "--bleed-top-extra": "72px" } as React.CSSProperties}
+        className="bleed-safe-top relative -mx-5 flex min-h-[calc(42vh-10px)] flex-col items-center justify-center overflow-hidden px-6 pb-14 text-center"
+        style={{ "--bleed-top-extra": "72px", background: heroImg ? `center/cover no-repeat url("${localSrc(heroImg)}"), ${slab.sky}` : slab.sky } as React.CSSProperties}
       >
-        <h1 className="text-2xl font-extrabold leading-tight text-foreground">{s.title}</h1>
-        <p className="mt-1.5 text-sm font-semibold text-muted-foreground">{s.sub}</p>
+        <h1 className={`text-2xl font-extrabold leading-tight ${tone === "light" ? "text-hero-title hero-shadow" : "text-hero-title-dark"}`}>{s.title}</h1>
+        <p className={`mt-1.5 text-sm font-semibold ${tone === "light" ? "text-primary-foreground hero-shadow" : "text-hero-title-dark opacity-80"}`}>{s.sub}</p>
         {opensAt && (
           <p className="mt-3 inline-flex w-fit items-center gap-1.5 rounded-full bg-card/80 px-3 py-1 text-xs font-bold text-muted-foreground">
             <Clock className="h-3.5 w-3.5" /> {fill(c.opens, { t: opensAt })}
@@ -136,7 +144,7 @@ export function ParcelHome({
             { t: s.bike, sub: s.bikeSub, Icon: Bike, mode: "single" as const },
             { t: s.multi, sub: s.multiSub, Icon: Route, mode: "multiDrop" as const },
           ]).map(({ t, sub, Icon, mode }) => (
-            <button key={t} type="button" onClick={() => start(mode)} className="service-glow relative flex min-h-[110px] flex-col justify-between overflow-hidden rounded-[18px] border border-primary/20 p-3 text-left transition active:scale-[0.98]">
+            <button key={t} type="button" onClick={() => start(mode)} className="relative flex min-h-[110px] flex-col justify-between overflow-hidden rounded-[18px] border border-border bg-card p-3 text-left shadow-soft transition active:scale-[0.98]">
               <span className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary"><Icon className="h-6 w-6" /></span>
               <span>
                 <span className="block text-[17px] font-extrabold leading-tight text-foreground">{t} ›</span>
