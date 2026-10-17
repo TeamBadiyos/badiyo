@@ -82,12 +82,12 @@ export function ParcelHome({
               key={k}
               type="button"
               onClick={() => guard() && start(null, "single")}
-              className="flex aspect-square flex-col justify-between rounded-[18px] border border-border bg-surface-soft p-4 text-left"
+              className="service-glow flex aspect-square flex-col justify-between rounded-[18px] border border-primary/20 p-4 text-left shadow-soft"
             >
               <span className={`h-3 w-3 rounded-full ${k === "pickup" ? "bg-primary ring-4 ring-primary/20" : "bg-destructive ring-4 ring-destructive/20"}`} />
               <span className="min-w-0">
                 <span className="block text-xs font-bold uppercase tracking-wide text-muted-foreground">{k === "pickup" ? c.pickup : c.drop}</span>
-                <span className="mt-1 line-clamp-2 block text-base font-extrabold text-foreground">
+                <span className="mt-1 line-clamp-2 block min-h-[2.75rem] text-base font-extrabold leading-[1.375rem] text-foreground">
                   {k === "pickup" ? (pickupAddr ? addrTitle(pickupAddr) : c.wherePickup) : c.whereTo}
                 </span>
               </span>

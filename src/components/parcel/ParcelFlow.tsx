@@ -2,7 +2,7 @@
 // Fares, coupons, wallet and payment stay server-side (courier.functions).
 import { useEffect, useMemo, useState } from "react";
 import { keepPreviousData, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, ChevronRight, Loader2, Tag, Trash2, Wallet, X } from "lucide-react";
+import { ArrowLeft, Check, ChevronRight, Loader2, Tag, Trash2, Wallet, X } from "lucide-react";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { useT } from "@/i18n";
@@ -305,7 +305,11 @@ function PlaceStep({
       <LocationPickerSheet
         open={picking}
         activeId={null}
-        onClose={() => setPicking(false)}
+        onClose={() => {
+          setPicking(false);
+          // Closing without any address goes straight back — no half-empty step.
+          if (!hasCoords(stop.addr)) onBack();
+        }}
         onSelect={(a) => {
           if (hasCoords(a)) update({ addr: a });
           setPicking(false);
@@ -558,18 +562,44 @@ function VehicleStep({
                   void hapticImpact("light");
                   setDraft((d) => ({ ...d, vehicleId: v.id }));
                 }}
-                className={`flex w-full items-center gap-3 rounded-[16px] border-2 px-4 py-3 text-left transition ${on ? "border-primary bg-primary/10" : "border-transparent bg-card shadow-soft"}`}
+                className={`block w-full rounded-[16px] border-2 p-4 text-left transition ${on ? "border-primary bg-primary/10" : "border-transparent bg-card shadow-soft"}`}
               >
-                <span className="text-3xl" aria-hidden>{vehicleIcon(v)}</span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-extrabold text-foreground">{v.name}</span>
-                  {v.max_weight_kg != null && (
-                    <span className="block text-xs text-muted-foreground">{fill(c.upTo, { n: Number(v.max_weight_kg) })}</span>
-                  )}
+                <span className="flex items-start gap-3">
+                  <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[14px] bg-primary/10 text-3xl" aria-hidden>{vehicleIcon(v)}</span>
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-center gap-1.5">
+                      <span className="truncate text-base font-extrabold text-foreground">{v.name}</span>
+                      {on && <Check className="h-4 w-4 shrink-0 text-primary" />}
+                    </span>
+                    {v.max_weight_kg != null && (
+                      <span className="mt-1 inline-block rounded-full bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">{fill(c.upTo, { n: Number(v.max_weight_kg) })}</span>
+                    )}
+                    <span className="mt-1 block text-xs text-muted-foreground">{c.doorstep}</span>
+                  </span>
+                  <span className="text-lg font-extrabold text-foreground">
+                    {q?.data?.total_amount != null ? `₹${rs(Number(q.data.total_amount))}` : q?.isFetching ? <Loader2 className="h-4 w-4 animate-spin" /> : "—"}
+                  </span>
                 </span>
-                <span className="text-base font-extrabold text-foreground">
-                  {q?.data?.total_amount != null ? `₹${rs(Number(q.data.total_amount))}` : q?.isFetching ? <Loader2 className="h-4 w-4 animate-spin" /> : "—"}
-                </span>
+                {!!v.inclusions?.length && (
+                  <span className="mt-3 block border-t border-border pt-2">
+                    <span className="block text-[11px] font-extrabold uppercase tracking-wide text-primary">{c.included}</span>
+                    {v.inclusions.map((it) => (
+                      <span key={it} className="mt-1 flex items-start gap-1.5 text-xs text-muted-foreground">
+                        <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />{it}
+                      </span>
+                    ))}
+                  </span>
+                )}
+                {!!v.exclusions?.length && (
+                  <span className="mt-2 block">
+                    <span className="block text-[11px] font-extrabold uppercase tracking-wide text-destructive">{c.notIncluded}</span>
+                    {v.exclusions.map((it) => (
+                      <span key={it} className="mt-1 flex items-start gap-1.5 text-xs text-muted-foreground">
+                        <X className="mt-0.5 h-3.5 w-3.5 shrink-0 text-destructive" />{it}
+                      </span>
+                    ))}
+                  </span>
+                )}
               </button>
             );
           })}
