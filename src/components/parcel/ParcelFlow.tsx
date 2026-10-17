@@ -55,7 +55,7 @@ type Quote = {
   coupon_ok?: boolean;
 };
 
-type Step = "multi" | "vehicle" | "checkout";
+type Step = "pickup" | "drop" | "multi" | "vehicle" | "checkout";
 
 function useSignedIn() {
   const { data } = useQuery({
@@ -127,13 +127,25 @@ export function ParcelFlow({ onBack, onBooked }: { onBack: () => void; onBooked:
       writeDraft(n);
       return n;
     });
-  const [step, setStep] = useState<Step>(draft.mode === "single" ? "vehicle" : "multi");
+  const [step, setStep] = useState<Step>(() => {
+    if (draft.mode !== "single") return "multi";
+    const p = draft.stops.find((s) => s.key === "P1");
+    const dr = draft.stops.find((s) => s.type === "drop");
+    if (!hasCoords(p?.addr)) return "pickup";
+    if (!hasCoords(dr?.addr)) return "drop";
+    return "vehicle";
+  });
   const back = () => {
     if (step === "checkout") setStep("vehicle");
-    else if (step === "vehicle" && draft.mode !== "single") setStep("multi");
+    else if (step === "vehicle") setStep(draft.mode === "single" ? "drop" : "multi");
+    else if (step === "drop") setStep("pickup");
     else onBack();
   };
 
+  if (step === "pickup")
+    return <PlaceStep kind="pickup" draft={draft} setDraft={setDraft} onBack={back} onNext={() => setStep("drop")} />;
+  if (step === "drop")
+    return <PlaceStep kind="drop" draft={draft} setDraft={setDraft} onBack={back} onNext={() => setStep("vehicle")} />;
   if (step === "multi")
     return <MultiStopStep draft={draft} setDraft={setDraft} onBack={back} onNext={() => setStep("vehicle")} />;
   if (step === "vehicle")
@@ -166,28 +178,140 @@ function Header({ title, onBack }: { title: string; onBack: () => void }) {
 function ContactFields({
   name,
   phone,
+  namePh,
+  phonePh,
   onChange,
 }: {
   name: string;
   phone: string;
+  namePh?: string;
+  phonePh?: string;
   onChange: (name: string, phone: string) => void;
 }) {
   const c = useParcelCopy();
   const input = "w-full rounded-[12px] border border-border bg-background px-3 py-2.5 text-sm text-foreground outline-none focus:border-primary";
   return (
     <div className="mt-2 grid gap-2">
-      <input value={name} maxLength={80} placeholder={c.receiverName} onChange={(e) => onChange(e.target.value, phone)} className={input} />
+      <input value={name} maxLength={80} placeholder={namePh ?? c.receiverName} onChange={(e) => onChange(e.target.value, phone)} className={input} />
       <div className="flex gap-2">
         <input
           value={phone}
           inputMode="numeric"
           maxLength={10}
-          placeholder={c.receiverPhone}
+          placeholder={phonePh ?? c.receiverPhone}
           onChange={(e) => onChange(name, e.target.value.replace(/\D/g, "").slice(0, 10))}
           className={input}
         />
       </div>
     </div>
+  );
+}
+
+/* ---------------- Pickup / Drop step (single action per page) ---------------- */
+
+function PlaceStep({
+  kind,
+  draft,
+  setDraft,
+  onBack,
+  onNext,
+}: {
+  kind: "pickup" | "drop";
+  draft: ParcelDraft;
+  setDraft: (fn: (d: ParcelDraft) => ParcelDraft) => void;
+  onBack: () => void;
+  onNext: () => void;
+}) {
+  const c = useParcelCopy();
+  useBackHandler(true, onBack);
+  const signedIn = useSignedIn();
+  const [picking, setPicking] = useState(false);
+  const stop = kind === "pickup" ? draft.stops.find((s) => s.key === "P1")! : draft.stops.find((s) => s.type === "drop")!;
+  const other = kind === "drop" ? draft.stops.find((s) => s.key === "P1") : null;
+
+  // Pickup contact is prefilled from the customer's profile, still editable.
+  const { data: me } = useQuery({ queryKey: ["parcel-me", signedIn], queryFn: fetchMe, enabled: signedIn && kind === "pickup" });
+  useEffect(() => {
+    if (kind !== "pickup" || !me) return;
+    setDraft((d) => ({
+      ...d,
+      stops: d.stops.map((s) =>
+        s.key === "P1" ? { ...s, name: s.name || me.name, phone: s.phone || me.phone } : s,
+      ),
+    }));
+  }, [me]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const update = (patch: Partial<ParcelStop>) =>
+    setDraft((d) => ({ ...d, stops: d.stops.map((s) => (s.key === stop.key ? { ...s, ...patch } : s)) }));
+
+  const needContact = kind === "drop" ? c.needReceiver : c.needSender;
+  const valid =
+    hasCoords(stop.addr) && stop.name.trim().length > 0 && phone10(stop.phone).length === 10;
+
+  return (
+    <main className="min-h-screen w-full bg-surface-soft pb-32">
+      <ParcelMap
+        pins={[
+          ...(other && hasCoords(other.addr) ? [{ lat: Number(other.addr.latitude), lng: Number(other.addr.longitude), kind: other.type }] : []),
+          ...(hasCoords(stop.addr) ? [{ lat: Number(stop.addr.latitude), lng: Number(stop.addr.longitude), kind: stop.type }] : []),
+        ]}
+        showMyLocation={!hasCoords(stop.addr)}
+        className="h-[32vh] min-h-[200px]"
+      />
+      <div className="relative -mt-4 mx-auto w-full max-w-md rounded-t-[24px] bg-surface-soft px-4 pb-6 pt-5">
+        <Header title={kind === "pickup" ? c.pickup : c.drop} onBack={onBack} />
+        {kind === "drop" && other?.addr && (
+          <p className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+            <span className="h-2 w-2 shrink-0 rounded-full bg-primary" />
+            <span className="truncate font-semibold">{addrTitle(other.addr)}</span>
+          </p>
+        )}
+        <button
+          type="button"
+          onClick={() => setPicking(true)}
+          className="mt-3 flex w-full items-center gap-3 rounded-[16px] bg-card p-4 text-left shadow-soft"
+        >
+          <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${kind === "pickup" ? "bg-primary ring-4 ring-primary/20" : "bg-destructive ring-4 ring-destructive/20"}`} />
+          <span className="min-w-0 flex-1">
+            <span className={`block truncate text-sm font-extrabold ${stop.addr ? "text-foreground" : "text-primary"}`}>
+              {stop.addr ? addrTitle(stop.addr) : c.chooseAddr}
+            </span>
+            {stop.addr && (
+              <span className="block truncate text-xs text-muted-foreground">{stop.addr.full_address}</span>
+            )}
+          </span>
+          <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+        </button>
+        <section className="mt-3 rounded-[16px] bg-card p-4 shadow-soft">
+          <p className="text-sm font-extrabold text-foreground">{kind === "pickup" ? c.sender : c.receiver}</p>
+          <ContactFields
+            name={stop.name}
+            phone={stop.phone}
+            namePh={kind === "pickup" ? c.senderName : c.receiverName}
+            phonePh={kind === "pickup" ? c.senderPhone : c.receiverPhone}
+            onChange={(name, phone) => update({ name, phone })}
+          />
+        </section>
+      </div>
+      <BottomBar>
+        <button
+          type="button"
+          onClick={() => (valid ? onNext() : toast(!hasCoords(stop.addr) ? c.needDrop : needContact))}
+          className="flex flex-1 items-center justify-center rounded-[14px] bg-primary py-3.5 text-base font-extrabold text-primary-foreground"
+        >
+          {c.continue}
+        </button>
+      </BottomBar>
+      <LocationPickerSheet
+        open={picking}
+        activeId={null}
+        onClose={() => setPicking(false)}
+        onSelect={(a) => {
+          if (hasCoords(a)) update({ addr: a });
+          setPicking(false);
+        }}
+      />
+    </main>
   );
 }
 
@@ -385,14 +509,12 @@ function VehicleStep({
   const sel = idx >= 0 ? quotes[idx] : null;
   const price = sel?.data?.total_amount;
   const km = sel?.data?.distance_km ?? quotes.find((q) => q.data)?.data?.distance_km;
-  const drop = draft.stops.find((s) => s.type === "drop")!;
   const pickups = draft.stops.filter((s) => s.type === "pickup").length;
   const drops = draft.stops.length - pickups;
   const over = limits ? pickups > limits.max_pickups || drops > limits.max_drops : false;
 
   const next = () => {
     if (!ready) return toast(c.needDrop);
-    if (!multi && (!drop.name.trim() || phone10(drop.phone).length !== 10)) return toast(c.needReceiver);
     if (over && limits) return toast(fill(c.overLimit, { p: limits.max_pickups, d: limits.max_drops }));
     if (price == null) return;
     onNext();
@@ -473,18 +595,6 @@ function VehicleStep({
           </>
         )}
 
-        {!multi && (
-          <section className="mt-5 rounded-[16px] bg-card p-4 shadow-soft">
-            <p className="text-sm font-extrabold text-foreground">{c.receiver}</p>
-            <ContactFields
-              name={drop.name}
-              phone={drop.phone}
-              onChange={(name, phone) =>
-                setDraft((d) => ({ ...d, stops: d.stops.map((s) => (s.key === drop.key ? { ...s, name, phone } : s)) }))
-              }
-            />
-          </section>
-        )}
       </div>
       <BottomBar>
         <button
