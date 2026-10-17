@@ -6117,6 +6117,75 @@ export type Database = {
           },
         ]
       }
+      merchant_location_change_requests: {
+        Row: {
+          address: string
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          id: string
+          latitude: number
+          longitude: number
+          merchant_id: string
+          old_address: string | null
+          old_latitude: number | null
+          old_longitude: number | null
+          rejection_reason: string | null
+          status: string
+          submitted_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          id?: string
+          latitude: number
+          longitude: number
+          merchant_id: string
+          old_address?: string | null
+          old_latitude?: number | null
+          old_longitude?: number | null
+          rejection_reason?: string | null
+          status?: string
+          submitted_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          id?: string
+          latitude?: number
+          longitude?: number
+          merchant_id?: string
+          old_address?: string | null
+          old_latitude?: number | null
+          old_longitude?: number | null
+          rejection_reason?: string | null
+          status?: string
+          submitted_by?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merchant_location_change_requests_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "merchant_location_change_requests_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "public_stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       merchant_order_items: {
         Row: {
           addons: Json | null
@@ -11712,6 +11781,10 @@ export type Database = {
         }
         Returns: Json
       }
+      admin_decide_location_change: {
+        Args: { _approve: boolean; _reason?: string; _request_id: string }
+        Returns: undefined
+      }
       advance_booking_status: {
         Args: { _booking_id: string; _new_status: string }
         Returns: undefined
@@ -13355,6 +13428,15 @@ export type Database = {
           _types?: string[]
         }
         Returns: Json
+      }
+      merchant_location_change_submit: {
+        Args: {
+          _address: string
+          _lat: number
+          _lng: number
+          _store_id: string
+        }
+        Returns: string
       }
       merchant_my_context: { Args: never; Returns: Json }
       merchant_my_referrals: { Args: never; Returns: Json }
