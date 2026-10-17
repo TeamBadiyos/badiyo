@@ -493,11 +493,11 @@ export function HomeScreen({
       <div className="relative mx-auto w-full max-w-md px-5 pt-2">
         {/* Header: address on the left, wallet + profile on the right */}
         <header
-          className={`bleed-safe-top z-30 flex items-center justify-between gap-3 px-5 pb-3 ${tab === "clean" ? "absolute inset-x-0 top-0 bg-transparent" : "sticky top-0 -mx-5 bg-background"}`}
+          className={`bleed-safe-top z-30 flex items-center justify-between gap-3 px-5 pb-3 ${tab === "clean" || tab === "parcel" ? "absolute inset-x-0 top-0 bg-transparent" : "sticky top-0 -mx-5 bg-background"}`}
           style={{ "--bleed-top-extra": "16px" } as React.CSSProperties}
         >
           {(() => {
-            const onClean = tab === "clean";
+            const onClean = tab === "clean" || tab === "parcel";
             const tc = onClean ? (heroTone === "light" ? "header-on-dark" : "header-on-light") : "";
             return (
               <>
