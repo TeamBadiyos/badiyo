@@ -1,13 +1,15 @@
 // Parcel tab home (inside the app shell): map, pickup card, "Where to send?",
 // saved/recent chips and the multi-stop link. Booking steps open full-screen.
+// Service hours only show a notice here; the closed check happens at payment.
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Clock, Pencil, Search } from "lucide-react";
 import { toast } from "sonner";
-import { LocationPickerSheet, type SavedAddress } from "@/components/LocationPickerSheet";
+import type { SavedAddress } from "@/components/LocationPickerSheet";
 import { formatNextOpen, useServiceState } from "@/lib/serviceHours";
 import { fetchCourierEnabled } from "@/components/courier/courierData";
 import { ParcelMap } from "./ParcelMap";
+import { ParcelPlacePicker, type PickedPlace } from "./ParcelPlacePicker";
 import { fill, useParcelCopy } from "./parcelCopy";
 import {
   addrTitle,
@@ -20,56 +22,56 @@ import {
 } from "./parcelDraft";
 
 export function ParcelHome({
-  pickup,
-  onChangePickup,
+  pickup: defaultPickup,
   onStart,
 }: {
   pickup: SavedAddress | null;
-  onChangePickup: () => void;
+  onChangePickup?: () => void;
   onStart: () => void;
 }) {
   const c = useParcelCopy();
-  const [dropOpen, setDropOpen] = useState(false);
+  const [picker, setPicker] = useState<"pickup" | "drop" | null>(null);
+  const [pick, setPick] = useState<PickedPlace | null>(null);
   const [recent, setRecent] = useState<ParcelAddr[]>([]);
   useEffect(() => setRecent(readRecentDrops()), []);
   const { data: enabled = true } = useQuery({ queryKey: ["courier_enabled"], queryFn: () => fetchCourierEnabled(), staleTime: 5 * 60_000 });
   const { data: state } = useServiceState("courier");
   const { data: saved = [] } = useQuery({ queryKey: ["parcel-addresses"], queryFn: fetchParcelAddresses, staleTime: 60_000 });
   const opensAt = state && !state.open ? formatNextOpen(state.next_open_at ?? state.resume_at) : null;
+  const pickupAddr: ParcelAddr | null = pick?.addr ?? (hasCoords(defaultPickup) ? defaultPickup : null);
 
   const guard = () => {
     if (!enabled) {
       toast(c.comingSoon);
       return false;
     }
-    if (state && !state.can_order) {
-      toast(fill(c.closedNow, { t: opensAt ?? "" }));
-      return false;
-    }
-    if (!hasCoords(pickup)) {
-      onChangePickup();
-      return false;
-    }
     return true;
   };
 
-  const startWithDrop = (drop: ParcelAddr) => {
-    if (!guard()) return;
-    const d = emptyDraft(pickup);
-    d.stops[1].addr = drop;
-    writeDraft(d);
-    onStart();
-  };
-  const startMulti = () => {
-    if (!guard()) return;
-    const d = emptyDraft(pickup);
-    d.mode = "multiDrop";
+  const start = (drop: PickedPlace | null, mode: "single" | "multiDrop") => {
+    const d = emptyDraft(pickupAddr);
+    d.mode = mode;
+    if (pick) {
+      d.stops[0].name = pick.name;
+      d.stops[0].phone = pick.phone;
+    }
+    if (drop) {
+      d.stops[1].addr = drop.addr;
+      d.stops[1].name = drop.name;
+      d.stops[1].phone = drop.phone;
+    }
     writeDraft(d);
     onStart();
   };
 
+  const openDrop = () => {
+    if (!guard()) return;
+    if (!pickupAddr) return setPicker("pickup");
+    setPicker("drop");
+  };
+
   const chips: ParcelAddr[] = [
-    ...saved.filter((a) => hasCoords(a) && a.id !== pickup?.id).slice(0, 4),
+    ...saved.filter((a) => hasCoords(a) && a.id !== pickupAddr?.id).slice(0, 4),
     ...recent.filter((r) => !saved.some((s) => s.id === r.id)),
   ];
 
@@ -81,7 +83,7 @@ export function ParcelHome({
         </p>
       )}
       <ParcelMap
-        pins={hasCoords(pickup) ? [{ lat: pickup.latitude, lng: pickup.longitude, kind: "pickup" }] : []}
+        pins={pickupAddr ? [{ lat: Number(pickupAddr.latitude), lng: Number(pickupAddr.longitude), kind: "pickup" }] : []}
         showMyLocation
         className="h-[48vh] min-h-[260px]"
       />
@@ -90,21 +92,21 @@ export function ParcelHome({
           <span className="absolute left-[21px] top-[30px] bottom-[30px] w-px border-l-2 border-dashed border-border" />
           <button
             type="button"
-            onClick={onChangePickup}
+            onClick={() => guard() && setPicker("pickup")}
             className="relative flex w-full items-center gap-3 rounded-[16px] border border-border bg-surface-soft px-4 py-4 text-left"
           >
             <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-primary ring-4 ring-primary/20" />
             <span className="min-w-0 flex-1">
               <span className="block text-[11px] font-bold uppercase tracking-wide text-muted-foreground">{c.pickup}</span>
               <span className="block truncate text-base font-extrabold text-foreground">
-                {pickup ? addrTitle(pickup) : c.wherePickup}
+                {pickupAddr ? addrTitle(pickupAddr) : c.wherePickup}
               </span>
             </span>
             <Pencil className="h-4 w-4 shrink-0 text-muted-foreground" />
           </button>
           <button
             type="button"
-            onClick={() => guard() && setDropOpen(true)}
+            onClick={openDrop}
             className="relative flex w-full items-center gap-3 rounded-[16px] border border-border bg-surface-soft px-4 py-4 text-left"
           >
             <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-destructive ring-4 ring-destructive/20" />
@@ -118,7 +120,7 @@ export function ParcelHome({
               <button
                 key={a.id + a.full_address}
                 type="button"
-                onClick={() => startWithDrop(a)}
+                onClick={openDrop}
                 className="max-w-[180px] shrink-0 truncate rounded-full border border-border bg-card px-3.5 py-2 text-xs font-bold text-foreground"
               >
                 {a.label || a.area || a.full_address}
@@ -126,20 +128,31 @@ export function ParcelHome({
             ))}
           </div>
         )}
-        <button type="button" onClick={startMulti} className="mt-4 text-sm font-extrabold text-primary">
+        <button type="button" onClick={() => guard() && pickupAddr && start(null, "multiDrop")} className="mt-4 text-sm font-extrabold text-primary">
           {c.sendMany}
         </button>
       </section>
-      <LocationPickerSheet
-        open={dropOpen}
-        activeId={null}
-        onClose={() => setDropOpen(false)}
-        onSelect={(a) => {
-          setDropOpen(false);
-          if (!hasCoords(a)) return;
-          startWithDrop(a);
-        }}
-      />
+      {picker && (
+        <ParcelPlacePicker
+          kind={picker}
+          other={picker === "drop" ? pickupAddr : null}
+          initial={picker === "pickup" ? pick ?? (pickupAddr ? { addr: pickupAddr, name: "", phone: "" } : null) : null}
+          onClose={() => setPicker(null)}
+          onAddStops={() => {
+            setPicker(null);
+            start(null, "multiDrop");
+          }}
+          onDone={(p) => {
+            if (picker === "pickup") {
+              setPick(p);
+              setPicker("drop");
+            } else {
+              setPicker(null);
+              start(p, "single");
+            }
+          }}
+        />
+      )}
     </div>
   );
 }

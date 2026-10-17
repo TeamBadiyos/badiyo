@@ -216,7 +216,9 @@ export function CleanTab({
         {washOptions.length > 0 && washCards.length > 0 && (
           <>
             {/* Keeps wash cards below the first screen on every phone */}
-            <div aria-hidden className="h-[22vh] min-h-[96px]" />
+            <div className="flex h-[22vh] min-h-[96px] items-center justify-center">
+              <BrandWatermark className="!pt-0 !pb-0" />
+            </div>
             <h2 className="text-lg font-extrabold text-foreground">
               {pick(lang, washContent?.hero?.card_title, washContent?.hero?.card_title_mr) || s.washCard}
             </h2>
@@ -239,9 +241,6 @@ export function CleanTab({
           </div>
           <ChevronRight className="h-5 w-5 text-muted-foreground" />
         </button>
-        <div className="flex justify-center py-10">
-          <img src="/brand/badiyos-wordmark-green.webp" alt="Badiyos" className="h-8 w-auto opacity-60" loading="lazy" />
-        </div>
       </div>
 
       {detail && (

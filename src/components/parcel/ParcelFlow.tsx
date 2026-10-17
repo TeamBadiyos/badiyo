@@ -595,7 +595,9 @@ function CheckoutStep({
       const p1 = draft.stops.find((s) => s.type === "pickup")!;
       const d1 = draft.stops.find((s) => s.type === "drop")!;
       const contact = (s: ParcelStop) =>
-        s.key === "P1" && s.type === "pickup" ? { name: profile.name || "Customer", phone: profile.phone } : { name: s.name.trim(), phone: phone10(s.phone) };
+        s.key === "P1" && s.type === "pickup"
+          ? { name: s.name.trim() || profile.name || "Customer", phone: phone10(s.phone).length === 10 ? phone10(s.phone) : profile.phone }
+          : { name: s.name.trim(), phone: phone10(s.phone) };
       const pc = contact(p1);
       const dc = contact(d1);
       let stops: Record<string, unknown>[] | undefined;
