@@ -68,10 +68,10 @@ Deno.serve(async (req) => {
       : "booking";
 
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!supabaseUrl || !serviceRoleKey) return json({ error: "Payment service unavailable" }, 500);
+    const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     // The catalogue item is the single source of truth for how long the job
     // takes. Resolved up front so the slot-fit check uses the real length.
@@ -298,7 +298,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    if (!Number.isFinite(price!) || price! <= 0) {
+    if (price === null || !Number.isFinite(price) || price <= 0) {
       return json({ error: "Invalid service price" }, 400);
     }
 
@@ -341,7 +341,7 @@ Deno.serve(async (req) => {
       const { data: quote, error: quoteErr } = await supabase.rpc("coupon_quote", {
         _user_id: userId,
         _code: couponCode,
-        _base_amount: price!,
+        _base_amount: price,
         _duration_minutes: effectiveMinutes,
         _category_id: couponCategoryId,
       });
@@ -354,7 +354,7 @@ Deno.serve(async (req) => {
 
     // GST applies to the taxable value left AFTER the discount, and the
     // payable amount is rounded to the nearest whole rupee.
-    const basePaise = Math.round(price! * 100);
+    const basePaise = Math.round(price * 100);
     const discountPaise = Math.min(
       Math.max(Math.round(discount * 100), 0),
       basePaise,
@@ -371,42 +371,49 @@ Deno.serve(async (req) => {
     let coinsToUse = 0;
     if (body?.redeem_coins === true && userId && purpose === "booking") {
       const { data: balRow } = await supabase
-        .from("users")
-        .select("total_coins_earned")
-        .eq("id", userId)
+        .from("customer_wallets")
+        .select("cash_balance, bonus_balance")
+        .eq("user_id", userId)
         .maybeSingle();
-      const balance = Math.max(0, Math.floor(Number(balRow?.total_coins_earned ?? 0)));
+      const balance = Math.max(0, Math.floor(Number(balRow?.cash_balance ?? 0) + Number(balRow?.bonus_balance ?? 0)));
       coinsToUse = Math.min(balance, Math.floor(grossAmount / 100));
     }
     const amount = grossAmount - coinsToUse * 100;
 
     // Fully discounted bill: no gateway payment at all.
     if (amount === 0) {
-      const freeOrderId = `free_${crypto.randomUUID()}`;
-      if (discountPaise > 0 && couponCode && userId) {
-        const { error: reserveErr } = await supabase.rpc("system_coupon_reserve", {
-          _user_id: userId,
-          _code: couponCode,
-          _order_id: freeOrderId,
-          _base_amount: price!,
-          _duration_minutes: effectiveMinutes ?? 0,
-          _category_id: couponCategoryId,
-        });
-        if (reserveErr) {
-          console.error("system_coupon_reserve failed", reserveErr);
-          return json({ error: "Coupon could not be applied" }, 400);
-        }
+      // No gateway webhook exists for free orders. Commit the booking and
+      // payment together BEFORE replying, rather than leaving a client insert.
+      if (purpose !== "booking" || !userId || !body?.booking_draft) {
+        return json({ error: "A signed-in booking is required" }, 400);
       }
-      if (coinsToUse > 0 && userId) {
-        const { error: coinErr } = await supabase.rpc("system_coins_reserve", {
-          _user_id: userId,
-          _order_id: freeOrderId,
-          _coins: coinsToUse,
-        });
-        if (coinErr) console.error("system_coins_reserve failed", coinErr);
+      const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+      if (!anonKey) return json({ error: "Payment service unavailable" }, 500);
+      const payer = createClient(supabaseUrl, anonKey, {
+        global: { headers: { Authorization: `Bearer ${token}` } },
+        auth: { persistSession: false },
+      });
+      const requestId = typeof body.request_id === "string" && /^[0-9a-f-]{36}$/i.test(body.request_id)
+        ? body.request_id : crypto.randomUUID();
+      const { data: booked, error: bookingErr } = await payer.rpc("app_create_booking_wallet", {
+        _payload: { ...body.booking_draft, request_id: requestId, price_option_id: itemId, coupon_code: couponCode },
+      });
+      if (bookingErr || !booked?.booking_id) {
+        console.error("Free booking failed", bookingErr);
+        return json({ error: "Booking could not be confirmed. No payment was taken." }, 409);
       }
+      const freeOrderId = `wallet_${requestId}`;
+      // This receipt is already fulfilled: a lost client response cannot lose
+      // the booking, and the standard intent lookup can recover its identity.
+      const { error: intentErr } = await supabase.from("payment_intents").upsert({
+        user_id: userId, razorpay_order_id: freeOrderId, razorpay_payment_id: freeOrderId,
+        amount: 0, currency, payload: body.booking_draft,
+        status: "fulfilled", booking_id: booked.booking_id,
+      }, { onConflict: "razorpay_order_id" });
+      if (intentErr) console.error("Free booking receipt failed", intentErr);
       return json({
         free: true,
+        booking_id: booked.booking_id,
         order_id: freeOrderId,
         amount: 0,
         currency,
@@ -469,6 +476,7 @@ Deno.serve(async (req) => {
             booking_lat: draft.booking_lat ?? null,
             booking_lng: draft.booking_lng ?? null,
             item_id: itemId || null,
+            customer_note: typeof draft.customer_note === "string" ? draft.customer_note.trim().slice(0, 300) : null,
           },
         });
         if (intentErr) console.error("payment_intents insert failed", intentErr);
@@ -483,7 +491,7 @@ Deno.serve(async (req) => {
         _user_id: userId,
         _code: couponCode,
         _order_id: order.id,
-        _base_amount: price!,
+        _base_amount: price,
         _duration_minutes: effectiveMinutes ?? 0,
         _category_id: couponCategoryId,
       });
