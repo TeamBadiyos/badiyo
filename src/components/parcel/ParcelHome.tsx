@@ -51,7 +51,14 @@ export function ParcelHome({
   const opensAt = state && !state.open ? formatNextOpen(state.next_open_at ?? state.resume_at) : null;
   // Parcel banner photos/text from Command Center (courier); built-in sky fallback.
   const { data: heroContent } = useServiceContent("courier");
-  const slab = pickSlab(heroContent?.banner?.slabs, useIstMinute());
+  const baseSlab = pickSlab(heroContent?.banner?.slabs, useIstMinute());
+  const camp = heroContent?.campaign;
+  const campOn = !!(camp?.active && (camp.title || camp.image_url));
+  const slab = campOn ? { ...baseSlab, image: camp?.image_url || baseSlab.image } : baseSlab;
+  const hero = heroContent?.hero;
+  const isMr = lang === "mr";
+  const title = (campOn ? (isMr && camp?.title_mr) || camp?.title : (isMr && hero?.heading_mr) || hero?.heading) || s.title;
+  const sub = (campOn ? (isMr && camp?.subline_mr) || camp?.subline : (isMr && hero?.subline_mr) || hero?.subline) || s.sub;
   const heroImg = slab.image;
   const tone = slab.tone;
 
