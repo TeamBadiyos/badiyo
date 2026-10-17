@@ -6225,6 +6225,7 @@ export type Database = {
           delivery_lat: number | null
           delivery_lng: number | null
           delivery_quote: Json | null
+          failure_cause: string | null
           gst_delivery: number
           gst_items: number
           gst_platform: number
@@ -6234,6 +6235,8 @@ export type Database = {
           items_total: number
           merchant_id: string
           merchant_net: number
+          merchant_pay_off_reason: string | null
+          merchant_pay_on_failure: boolean
           needs_attention: boolean
           order_number: string
           paid_at: string | null
@@ -6292,6 +6295,7 @@ export type Database = {
           delivery_lat?: number | null
           delivery_lng?: number | null
           delivery_quote?: Json | null
+          failure_cause?: string | null
           gst_delivery?: number
           gst_items?: number
           gst_platform?: number
@@ -6301,6 +6305,8 @@ export type Database = {
           items_total?: number
           merchant_id: string
           merchant_net?: number
+          merchant_pay_off_reason?: string | null
+          merchant_pay_on_failure?: boolean
           needs_attention?: boolean
           order_number: string
           paid_at?: string | null
@@ -6359,6 +6365,7 @@ export type Database = {
           delivery_lat?: number | null
           delivery_lng?: number | null
           delivery_quote?: Json | null
+          failure_cause?: string | null
           gst_delivery?: number
           gst_items?: number
           gst_platform?: number
@@ -6368,6 +6375,8 @@ export type Database = {
           items_total?: number
           merchant_id?: string
           merchant_net?: number
+          merchant_pay_off_reason?: string | null
+          merchant_pay_on_failure?: boolean
           needs_attention?: boolean
           order_number?: string
           paid_at?: string | null
@@ -13852,6 +13861,13 @@ export type Database = {
         }
         Returns: string
       }
+      settlement_eligible: {
+        Args: {
+          _cutoff: string
+          o: Database["public"]["Tables"]["merchant_orders"]["Row"]
+        }
+        Returns: boolean
+      }
       settlement_next_invoice: { Args: { _d: string }; Returns: string[] }
       slot_band_capacity:
         | {
@@ -14962,6 +14978,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      staff_set_merchant_pay_on_failure: {
+        Args: { _on: boolean; _order_id: string; _reason: string }
+        Returns: Json
+      }
       staff_set_merchant_status: {
         Args: { _merchant_id: string; _reason: string; _status: string }
         Returns: undefined
@@ -15511,6 +15531,10 @@ export type Database = {
       }
       store_max_radius_km: { Args: never; Returns: number }
       store_my_orders: { Args: never; Returns: Json }
+      store_no_rider_minutes: {
+        Args: { _store_order_id: string }
+        Returns: number
+      }
       store_place_order: {
         Args: {
           _address_id: string
