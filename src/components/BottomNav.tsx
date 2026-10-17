@@ -52,22 +52,26 @@ export function BottomNav({
               onClick={() => select(key)}
               aria-label={t(labelKey)}
               aria-current={isActive ? "page" : undefined}
-              className={`flex flex-1 flex-col items-center justify-center gap-[3px] text-[11px] font-bold transition ${
-                isActive ? "text-primary" : "text-muted-foreground"
+              className={`relative flex flex-1 flex-col items-center justify-center gap-1 text-[11px] transition active:scale-90 ${
+                isActive ? "font-extrabold text-primary" : "font-semibold text-muted-foreground"
               }`}
             >
               <span
-                className={`flex h-9 w-[52px] items-center justify-center rounded-full transition ${
-                  isActive ? "bg-primary shadow-soft" : "bg-transparent"
+                className={`absolute top-0 h-[3px] w-8 rounded-b-full bg-primary transition-opacity ${isActive ? "opacity-100" : "opacity-0"}`}
+              />
+              <span
+                className={`flex h-10 w-10 items-center justify-center rounded-[14px] transition-all duration-200 ${
+                  isActive ? "-translate-y-0.5 bg-gradient-to-br from-primary to-primary/75 shadow-soft" : "bg-muted/70"
                 }`}
               >
                 <Icon
-                  className={`h-[26px] w-[26px] ${isActive ? "text-primary-foreground" : ""}`}
-                  strokeWidth={isActive ? 2.3 : 1.9}
+                  className={`h-[22px] w-[22px] ${isActive ? "text-primary-foreground" : "text-foreground/70"}`}
+                  strokeWidth={isActive ? 2.4 : 2}
+                  fill={isActive ? "currentColor" : "none"}
+                  fillOpacity={isActive ? 0.2 : 0}
                 />
               </span>
               {t(labelKey)}
-            </button>
           );
         })}
       </div>
