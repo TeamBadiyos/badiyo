@@ -1,25 +1,26 @@
-import { Gift, Package, ShoppingBasket, Sparkles, UtensilsCrossed, type LucideIcon } from "lucide-react";
 import { useT } from "@/i18n";
 import { hapticSelection } from "@/lib/haptics";
 import { writeHomeTab, type HomeTab, type NavTab } from "@/lib/homeTab";
 
-const TABS: { key: NavTab; labelKey: "nav.clean" | "nav.store" | "nav.food" | "nav.parcelTab" | "nav.rewards"; Icon: LucideIcon }[] = [
-  { key: "clean", labelKey: "nav.clean", Icon: Sparkles },
-  { key: "store", labelKey: "nav.store", Icon: ShoppingBasket },
-  { key: "food", labelKey: "nav.food", Icon: UtensilsCrossed },
-  { key: "parcel", labelKey: "nav.parcelTab", Icon: Package },
-  { key: "rewards", labelKey: "nav.rewards", Icon: Gift },
+type LabelKey = "nav.clean" | "nav.store" | "nav.food" | "nav.parcelTab" | "nav.rewards";
+
+// Pictures live in public/brand/nav so the native build works offline.
+const TABS: { key: NavTab; labelKey: LabelKey; img: string; tile: string }[] = [
+  { key: "clean", labelKey: "nav.clean", img: "/brand/nav/clean.webp", tile: "bg-[var(--tile-clean)]" },
+  { key: "store", labelKey: "nav.store", img: "/brand/nav/store.webp", tile: "bg-[var(--tile-store)]" },
+  { key: "food", labelKey: "nav.food", img: "/brand/nav/food.webp", tile: "bg-[var(--tile-food)]" },
+  { key: "parcel", labelKey: "nav.parcelTab", img: "/brand/nav/parcel.webp", tile: "bg-[var(--tile-parcel)]" },
+  { key: "rewards", labelKey: "nav.rewards", img: "/brand/nav/rewards.webp", tile: "bg-[var(--tile-rewards)]" },
 ];
 
 /**
  * Five main tabs: Clean · Store · Food · Parcel · Rewards.
- * Clean/Store/Food live inside Home; `onHome(tab)` opens Home on that tab.
+ * Clean/Store/Food/Parcel live inside Home; `onHome(tab)` opens Home on that tab.
  */
 export function BottomNav({
   activeKey,
   onHome,
   onRewards,
-  onParcel,
 }: {
   activeKey: NavTab | null;
   onHome: (tab: HomeTab) => void;
@@ -37,14 +38,11 @@ export function BottomNav({
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-10 border-t border-border/70 bg-card shadow-nav"
-      style={{
-        paddingBottom: "max(2px, var(--app-safe-bottom))",
-        height: "calc(70px + var(--app-safe-bottom))",
-      }}
+      className="fixed inset-x-0 bottom-0 z-10 px-3"
+      style={{ paddingBottom: "max(8px, var(--app-safe-bottom))" }}
     >
-      <div className="mx-auto flex h-full w-full max-w-md items-stretch justify-around px-1">
-        {TABS.map(({ key, labelKey, Icon }) => {
+      <div className="nav-glow mx-auto flex h-[72px] w-full max-w-md items-stretch justify-around rounded-[28px] bg-card px-1">
+        {TABS.map(({ key, labelKey, img, tile }) => {
           const isActive = activeKey === key;
           return (
             <button
@@ -52,26 +50,26 @@ export function BottomNav({
               onClick={() => select(key)}
               aria-label={t(labelKey)}
               aria-current={isActive ? "page" : undefined}
-              className={`relative flex flex-1 flex-col items-center justify-center gap-1 text-[11px] transition active:scale-90 ${
-                isActive ? "font-extrabold text-primary" : "font-semibold text-muted-foreground"
+              className={`relative flex flex-1 flex-col items-center justify-end gap-0.5 pb-2 text-[11px] transition active:scale-90 ${
+                isActive ? "font-extrabold text-primary" : "font-bold text-foreground/80"
               }`}
             >
+              {isActive && (
+                <span className="absolute -top-4 left-1/2 h-16 w-16 -translate-x-1/2 rounded-full bg-card" aria-hidden />
+              )}
               <span
-                className={`absolute top-0 h-[3px] w-8 rounded-b-full bg-primary transition-opacity ${isActive ? "opacity-100" : "opacity-0"}`}
-              />
-              <span
-                className={`flex h-10 w-10 items-center justify-center rounded-[14px] transition-all duration-200 ${
-                  isActive ? "-translate-y-0.5 bg-gradient-to-br from-primary to-primary/75 shadow-soft" : "bg-muted/70"
+                className={`relative flex items-center justify-center rounded-full transition-all duration-200 ${
+                  isActive ? "-mt-6 h-14 w-14 bg-gradient-to-br from-primary to-primary/80 nav-active-glow" : `h-10 w-10 ${tile}`
                 }`}
               >
-                <Icon
-                  className={`h-[22px] w-[22px] ${isActive ? "text-primary-foreground" : "text-foreground/70"}`}
-                  strokeWidth={isActive ? 2.4 : 2}
-                  fill={isActive ? "currentColor" : "none"}
-                  fillOpacity={isActive ? 0.2 : 0}
+                <img
+                  src={img}
+                  alt=""
+                  draggable={false}
+                  className={isActive ? "h-9 w-9 object-contain" : "h-7 w-7 object-contain"}
                 />
               </span>
-              {t(labelKey)}
+              <span className="relative">{t(labelKey)}</span>
             </button>
           );
         })}

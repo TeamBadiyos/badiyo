@@ -491,37 +491,45 @@ export function HomeScreen({
           className={`bleed-safe-top z-30 flex items-center justify-between gap-3 px-5 pb-3 ${tab === "clean" ? "absolute inset-x-0 top-0 bg-transparent" : "sticky top-0 -mx-5 bg-background"}`}
           style={{ "--bleed-top-extra": "16px" } as React.CSSProperties}
         >
-          <button
-            onClick={() => setLocationSheetOpen(true)}
-            className={`min-w-0 flex-1 text-left ${tab === "clean" ? "max-w-[62%] rounded-[16px] bg-card/90 px-3 py-1.5 shadow-soft backdrop-blur-md" : ""}`}
-          >
-            <span className="flex items-center gap-1 text-[16px] font-extrabold leading-tight text-foreground">
-              <MapPin className="h-4 w-4 shrink-0 text-primary" />
-              <span className="truncate">{addressTag}</span>
-              <ChevronDown className="h-4 w-4 shrink-0 text-primary" />
-            </span>
-            {locationLabel && (
-              <span className="mt-0.5 block truncate text-xs text-muted-foreground">{locationLabel}</span>
-            )}
-          </button>
-          <button
-            onClick={onOpenWallet}
-            aria-label={t("home.walletAria")}
-            className={`flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3 text-sm font-extrabold text-primary ${tab === "clean" ? "bg-card shadow-soft" : "bg-primary/10"}`}
-          >
-            <WalletIcon className="h-4 w-4" />₹{coinBalance ?? 0}
-          </button>
-          <button
-            onClick={onOpenProfile}
-            aria-label={t("common.profile")}
-            className={`flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full ${tab === "clean" ? "bg-card shadow-soft" : "bg-primary/10"}`}
-          >
-            {avatarUrl ? (
-              <img src={avatarUrl} alt={t("common.profile")} className="h-full w-full object-cover" decoding="async" />
-            ) : (
-              <User className="h-5 w-5 text-primary" />
-            )}
-          </button>
+          {(() => {
+            const onClean = tab === "clean";
+            const tc = onClean ? (heroTone === "light" ? "header-on-dark" : "header-on-light") : "";
+            return (
+              <>
+                <button
+                  onClick={() => setLocationSheetOpen(true)}
+                  className={`min-w-0 flex-1 text-left ${onClean ? "max-w-[62%]" : ""}`}
+                >
+                  <span className={`flex items-center gap-1 text-[16px] font-extrabold leading-tight ${onClean ? tc : "text-foreground"}`}>
+                    <MapPin className={`h-4 w-4 shrink-0 ${onClean ? "" : "text-primary"}`} />
+                    <span className="truncate">{addressTag}</span>
+                    <ChevronDown className={`h-4 w-4 shrink-0 ${onClean ? "" : "text-primary"}`} />
+                  </span>
+                  {locationLabel && (
+                    <span className={`mt-0.5 block truncate text-xs ${onClean ? `${tc} font-semibold opacity-90` : "text-muted-foreground"}`}>{locationLabel}</span>
+                  )}
+                </button>
+                <button
+                  onClick={onOpenWallet}
+                  aria-label={t("home.walletAria")}
+                  className={`flex h-9 shrink-0 items-center gap-1.5 rounded-full text-sm font-extrabold ${onClean ? `px-1 ${tc}` : "bg-primary/10 px-3 text-primary"}`}
+                >
+                  <WalletIcon className="h-4 w-4" />₹{coinBalance ?? 0}
+                </button>
+                <button
+                  onClick={onOpenProfile}
+                  aria-label={t("common.profile")}
+                  className={`flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full ${onClean ? tc : "bg-primary/10 text-primary"}`}
+                >
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt={t("common.profile")} className="h-full w-full object-cover" decoding="async" />
+                  ) : (
+                    <User className="h-6 w-6" />
+                  )}
+                </button>
+              </>
+            );
+          })()}
         </header>
 
         {/* Old search bar — Store/Food now have their own inside the tab */}
