@@ -86,22 +86,32 @@ export function ParcelHome({
         className="h-[48vh] min-h-[260px]"
       />
       <section className="relative -mt-5 rounded-t-[24px] bg-card px-5 pb-4 pt-5 shadow-card-m">
-        <button type="button" onClick={onChangePickup} className="flex w-full items-center gap-3 text-left">
-          <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-primary" />
-          <span className="min-w-0 flex-1 truncate text-sm font-bold text-foreground">
-            {pickup ? `${c.pickup}: ${addrTitle(pickup)}` : c.addPickup}
-          </span>
-          <Pencil className="h-4 w-4 shrink-0 text-muted-foreground" />
-        </button>
-        <button
-          type="button"
-          onClick={() => guard() && setDropOpen(true)}
-          className="mt-4 flex w-full items-center gap-3 rounded-[16px] border border-border bg-surface-soft px-4 py-4 text-left"
-        >
-          <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-destructive" />
-          <span className="flex-1 text-base font-extrabold text-foreground">{c.whereTo}</span>
-          <Search className="h-5 w-5 text-muted-foreground" />
-        </button>
+        <div className="relative space-y-2.5">
+          <span className="absolute left-[21px] top-[30px] bottom-[30px] w-px border-l-2 border-dashed border-border" />
+          <button
+            type="button"
+            onClick={onChangePickup}
+            className="relative flex w-full items-center gap-3 rounded-[16px] border border-border bg-surface-soft px-4 py-4 text-left"
+          >
+            <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-primary ring-4 ring-primary/20" />
+            <span className="min-w-0 flex-1">
+              <span className="block text-[11px] font-bold uppercase tracking-wide text-muted-foreground">{c.pickup}</span>
+              <span className="block truncate text-base font-extrabold text-foreground">
+                {pickup ? addrTitle(pickup) : c.wherePickup}
+              </span>
+            </span>
+            <Pencil className="h-4 w-4 shrink-0 text-muted-foreground" />
+          </button>
+          <button
+            type="button"
+            onClick={() => guard() && setDropOpen(true)}
+            className="relative flex w-full items-center gap-3 rounded-[16px] border border-border bg-surface-soft px-4 py-4 text-left"
+          >
+            <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-destructive ring-4 ring-destructive/20" />
+            <span className="flex-1 text-base font-extrabold text-foreground">{c.whereTo}</span>
+            <Search className="h-5 w-5 text-muted-foreground" />
+          </button>
+        </div>
         {chips.length > 0 && (
           <div className="no-scrollbar -mx-5 mt-3 flex gap-2 overflow-x-auto px-5">
             {chips.map((a) => (

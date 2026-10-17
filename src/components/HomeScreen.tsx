@@ -404,7 +404,7 @@ export function HomeScreen({
   const addressTag = activeAddress?.label || t("nav.home");
   const locationLabel = activeAddress?.area || activeAddress?.full_address || activeAddress?.city || "";
   const [heroTone, setHeroTone] = useState<"light" | "dark">("light");
-  const onLight = tab === "clean" && heroTone === "light";
+  void heroTone;
 
   const activeSegment =
     tab === "food"
@@ -493,16 +493,15 @@ export function HomeScreen({
         >
           <button
             onClick={() => setLocationSheetOpen(true)}
-            className="min-w-0 flex-1 text-left"
-            style={onLight ? { textShadow: "0 1px 4px color-mix(in oklab, var(--foreground) 45%, transparent)" } : undefined}
+            className={`min-w-0 flex-1 text-left ${tab === "clean" ? "max-w-[62%] rounded-[16px] bg-card/90 px-3 py-1.5 shadow-soft backdrop-blur-md" : ""}`}
           >
-            <span className={`flex items-center gap-1 text-[17px] font-extrabold leading-tight ${onLight ? "text-primary-foreground" : "text-foreground"}`}>
-              <MapPin className={`h-4 w-4 shrink-0 ${onLight ? "text-primary-foreground" : "text-primary"}`} />
+            <span className="flex items-center gap-1 text-[16px] font-extrabold leading-tight text-foreground">
+              <MapPin className="h-4 w-4 shrink-0 text-primary" />
               <span className="truncate">{addressTag}</span>
-              <ChevronDown className="h-4 w-4 shrink-0" />
+              <ChevronDown className="h-4 w-4 shrink-0 text-primary" />
             </span>
             {locationLabel && (
-              <span className={`mt-0.5 block truncate text-xs ${onLight ? "text-primary-foreground/80" : "text-muted-foreground"}`}>{locationLabel}</span>
+              <span className="mt-0.5 block truncate text-xs text-muted-foreground">{locationLabel}</span>
             )}
           </button>
           <button

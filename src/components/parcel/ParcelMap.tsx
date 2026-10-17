@@ -39,6 +39,7 @@ export function ParcelMap({
   const overlays = useRef<any[]>([]);
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
+  const meRef = useRef<any>(null);
   const key = pins.map((p) => `${p.kind}:${p.lat.toFixed(5)},${p.lng.toFixed(5)}`).join("|");
 
   const first = pins.find((p) => p.kind === "pickup");
@@ -98,8 +99,21 @@ export function ParcelMap({
   const locate = async () => {
     try {
       const c = await getCurrentCoords();
-      mapRef.current?.panTo(c);
-      mapRef.current?.setZoom(16);
+      const map = mapRef.current;
+      if (!map) return;
+      const pos = { lat: c.lat, lng: c.lng };
+      const g = window.google.maps;
+      if (meRef.current) meRef.current.setPosition(pos);
+      else
+        meRef.current = new g.Marker({
+          position: pos,
+          map,
+          clickable: false,
+          zIndex: 999,
+          icon: { path: g.SymbolPath.CIRCLE, scale: 9, fillColor: "#2563EB", fillOpacity: 1, strokeColor: "#ffffff", strokeWeight: 3 },
+        });
+      map.panTo(pos);
+      map.setZoom(16);
     } catch {
       /* permission denied: keep current view */
     }
