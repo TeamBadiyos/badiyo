@@ -55,7 +55,7 @@ type Quote = {
   coupon_ok?: boolean;
 };
 
-type Step = "pickup" | "drop" | "multi" | "vehicle" | "checkout";
+type Step = "pickup" | "drop" | "multi" | "vehicle" | "goods" | "checkout";
 
 function useSignedIn() {
   const { data } = useQuery({
@@ -78,6 +78,12 @@ function vehicleIcon(v: CourierVehicle) {
   const i = (v.icon ?? "").trim();
   if (i && [...i].length <= 3) return i;
   return /truck|tempo|van|pickup/i.test(v.name) ? "🚚" : /auto|rick/i.test(v.name) ? "🛺" : "🛵";
+}
+
+function fullLine(s: ParcelStop) {
+  const f = (s.flat ?? "").trim();
+  const a = s.addr?.full_address ?? "";
+  return f ? `${f}, ${a}` : a;
 }
 
 function stopsComplete(stops: ParcelStop[]) {
@@ -136,7 +142,8 @@ export function ParcelFlow({ onBack, onBooked }: { onBack: () => void; onBooked:
     return "vehicle";
   });
   const back = () => {
-    if (step === "checkout") setStep("vehicle");
+    if (step === "checkout") setStep("goods");
+    else if (step === "goods") setStep("vehicle");
     else if (step === "vehicle") setStep(draft.mode === "single" ? "drop" : "multi");
     else if (step === "drop") setStep("pickup");
     else onBack();
@@ -149,7 +156,9 @@ export function ParcelFlow({ onBack, onBooked }: { onBack: () => void; onBooked:
   if (step === "multi")
     return <MultiStopStep draft={draft} setDraft={setDraft} onBack={back} onNext={() => setStep("vehicle")} />;
   if (step === "vehicle")
-    return <VehicleStep draft={draft} setDraft={setDraft} onBack={back} onNext={() => setStep("checkout")} />;
+    return <VehicleStep draft={draft} setDraft={setDraft} onBack={back} onNext={() => setStep("goods")} onEdit={() => setStep(draft.mode === "single" ? "pickup" : "multi")} onAddStop={() => { setDraft((d) => ({ ...d, mode: "multiDrop" })); setStep("multi"); }} />;
+  if (step === "goods")
+    return <GoodsStep draft={draft} setDraft={setDraft} onBack={back} onNext={() => setStep("checkout")} />;
   return (
     <CheckoutStep
       draft={draft}
@@ -724,7 +733,7 @@ function CheckoutStep({
         stops = order.map((o) => {
           const s = draft.stops.find((x) => x.key === o.key)!;
           const ct = contact(s);
-          return { key: s.key, type: s.type, lat: Number(s.addr?.latitude), lng: Number(s.addr?.longitude), address: s.addr?.full_address ?? "", contact_name: ct.name, contact_phone: ct.phone };
+          return { key: s.key, type: s.type, lat: Number(s.addr?.latitude), lng: Number(s.addr?.longitude), address: fullLine(s), contact_name: ct.name, contact_phone: ct.phone };
         });
         const pickups = draft.stops.filter((s) => s.type === "pickup");
         parcels =
@@ -735,10 +744,10 @@ function CheckoutStep({
       const order = await courierCreateOrder({
         data: {
           ...quoteInput(draft, city, draft.vehicleId!, draft.typeId!, draft.coupon),
-          pickup_address: p1.addr!.full_address,
+          pickup_address: fullLine(p1),
           pickup_contact_name: pc.name,
           pickup_contact_phone: pc.phone,
-          drop_address: d1.addr!.full_address,
+          drop_address: fullLine(d1),
           drop_contact_name: dc.name,
           drop_contact_phone: dc.phone,
           package_description: draft.note.trim() || undefined,
