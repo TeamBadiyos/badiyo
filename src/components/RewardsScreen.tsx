@@ -73,7 +73,7 @@ export function RewardsScreen({
   const otherTotals = (data?.totals ?? []).filter((t) => t.type !== "coins");
 
   return (
-    <main className="min-h-screen w-full bg-background pb-28 momentum-scroll">
+    <main className="min-h-screen w-full bg-background pb-nav momentum-scroll">
       <PullToRefreshIndicator pull={pull} refreshing={refreshing} />
       <div className="mx-auto w-full max-w-md px-5 pt-6">
         <h1 className="text-lg font-bold text-foreground">{tr("Rewards", "रिवॉर्ड्स")}</h1>

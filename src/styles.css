@@ -490,16 +490,15 @@ select,
 :root {
   --header-on-light: oklch(0.38 0.1 160);
   --header-on-dark: oklch(0.88 0.13 160);
-  --tile-clean: oklch(0.95 0.04 160);
-  --tile-store: oklch(0.96 0.04 85);
-  --tile-food: oklch(0.95 0.035 30);
-  --tile-parcel: oklch(0.94 0.035 240);
-  --tile-rewards: oklch(0.94 0.04 300);
+  --nav-charcoal: oklch(0.27 0.015 255);
+  --nav-inactive: oklch(0.84 0.012 255);
+  --nav-active: oklch(0.69 0.16 162);
+  --nav-bar-space: calc(64px + 12px + var(--app-safe-bottom, 0px) + 24px);
 }
 @utility header-on-light { color: var(--header-on-light); }
 @utility header-on-dark { color: var(--header-on-dark); text-shadow: 0 1px 6px color-mix(in oklab, var(--foreground) 45%, transparent); }
-@utility nav-glow { box-shadow: 0 8px 28px -8px color-mix(in oklab, var(--primary) 40%, transparent), 0 2px 10px -4px color-mix(in oklab, var(--foreground) 15%, transparent); }
-@utility nav-active-glow { box-shadow: 0 8px 18px -4px color-mix(in oklab, var(--primary) 60%, transparent); }
+@utility nav-float { box-shadow: 0 10px 30px -8px color-mix(in oklab, var(--nav-charcoal) 55%, transparent); }
+@utility pb-nav { padding-bottom: var(--nav-bar-space); }
 
 @utility shadow-soft {
   box-shadow: 0 8px 24px -14px color-mix(in oklab, var(--foreground) 28%, transparent);
