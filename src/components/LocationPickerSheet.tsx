@@ -52,11 +52,14 @@ async function fetchAddresses(): Promise<SavedAddress[]> {
 export function LocationPickerSheet({
   open,
   activeId,
+  title,
   onClose,
   onSelect,
 }: {
   open: boolean;
   activeId: string | null;
+  /** Optional heading override (e.g. "Select pickup location"). */
+  title?: string;
   onClose: () => void;
   onSelect: (a: SavedAddress) => void;
 }) {
@@ -380,7 +383,7 @@ export function LocationPickerSheet({
         <div className="mx-auto h-1.5 w-10 rounded-full bg-border" />
         <div className="mt-4 flex items-center justify-between">
           <h2 className="text-base font-extrabold text-foreground">
-            Select delivery location
+            {title ?? "Select delivery location"}
           </h2>
           <button
             aria-label="Close"
