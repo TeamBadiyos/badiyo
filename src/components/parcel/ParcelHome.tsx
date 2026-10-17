@@ -82,11 +82,13 @@ export function ParcelHome({
           <Clock className="h-3.5 w-3.5" /> {fill(c.opens, { t: opensAt })}
         </p>
       )}
+      <div role="button" tabIndex={0} onClick={() => guard() && setPicker(pickupAddr ? "drop" : "pickup")}>
       <ParcelMap
         pins={pickupAddr ? [{ lat: Number(pickupAddr.latitude), lng: Number(pickupAddr.longitude), kind: "pickup" }] : []}
         showMyLocation
         className="h-[48vh] min-h-[260px]"
       />
+      </div>
       <section className="relative -mt-5 rounded-t-[24px] bg-card px-5 pb-4 pt-5 shadow-card-m">
         <div className="relative space-y-2.5">
           <span className="absolute left-[21px] top-[30px] bottom-[30px] w-px border-l-2 border-dashed border-border" />
@@ -135,6 +137,7 @@ export function ParcelHome({
       {picker && (
         <ParcelPlacePicker
           kind={picker}
+          startOnMap
           other={picker === "drop" ? pickupAddr : null}
           initial={picker === "pickup" ? pick ?? (pickupAddr ? { addr: pickupAddr, name: "", phone: "" } : null) : null}
           onClose={() => setPicker(null)}

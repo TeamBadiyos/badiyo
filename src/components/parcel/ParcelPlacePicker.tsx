@@ -43,6 +43,7 @@ export function ParcelPlacePicker({
   onClose,
   onDone,
   onAddStops,
+  startOnMap,
 }: {
   kind: "pickup" | "drop";
   other: ParcelAddr | null;
@@ -50,9 +51,10 @@ export function ParcelPlacePicker({
   onClose: () => void;
   onDone: (p: PickedPlace) => void;
   onAddStops?: () => void;
+  startOnMap?: boolean;
 }) {
   const c = useParcelCopy();
-  const [mapOpen, setMapOpen] = useState(false);
+  const [mapOpen, setMapOpen] = useState(Boolean(startOnMap && !initial?.addr));
   const [chosen, setChosen] = useState<ParcelAddr | null>(initial?.addr ?? null);
   const [name, setName] = useState(initial?.name ?? "");
   const [phone, setPhone] = useState(initial?.phone ?? "");

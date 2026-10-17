@@ -2,7 +2,7 @@
 // Fares, coupons, wallet and payment stay server-side (courier.functions).
 import { useEffect, useMemo, useState } from "react";
 import { keepPreviousData, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, BookUser, ChevronRight, Loader2, Tag, Trash2, Wallet, X } from "lucide-react";
+import { ArrowLeft, ChevronRight, Loader2, Tag, Trash2, Wallet, X } from "lucide-react";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { useT } from "@/i18n";
@@ -163,19 +163,6 @@ function Header({ title, onBack }: { title: string; onBack: () => void }) {
   );
 }
 
-const canPickContacts = () =>
-  typeof navigator !== "undefined" && "contacts" in navigator && typeof (navigator as any).contacts?.select === "function";
-
-async function pickContact(): Promise<{ name: string; phone: string } | null> {
-  try {
-    const [c] = await (navigator as any).contacts.select(["name", "tel"], { multiple: false });
-    if (!c) return null;
-    return { name: String(c.name?.[0] ?? ""), phone: phone10(String(c.tel?.[0] ?? "")) };
-  } catch {
-    return null;
-  }
-}
-
 function ContactFields({
   name,
   phone,
@@ -199,18 +186,6 @@ function ContactFields({
           onChange={(e) => onChange(name, e.target.value.replace(/\D/g, "").slice(0, 10))}
           className={input}
         />
-        {canPickContacts() && (
-          <button
-            type="button"
-            onClick={async () => {
-              const r = await pickContact();
-              if (r) onChange(r.name || name, r.phone || phone);
-            }}
-            className="flex shrink-0 items-center gap-1.5 rounded-[12px] border border-primary px-3 text-xs font-extrabold text-primary"
-          >
-            <BookUser className="h-4 w-4" /> {c.fromContacts}
-          </button>
-        )}
       </div>
     </div>
   );
