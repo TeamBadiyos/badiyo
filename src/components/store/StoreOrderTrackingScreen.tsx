@@ -244,7 +244,7 @@ export function StoreOrderTrackingScreen({ orderId, onBack, onOpenHelp }: { orde
           <div className="animate-fade-in overflow-hidden rounded-[22px] border border-primary/20 bg-gradient-to-br from-primary/10 via-card to-card p-5">
             <div className="flex items-start gap-3">
               <span className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/15">
-                {!delivered && (
+                {!delivered && !cancelled && (
                   <span className="absolute inline-flex h-12 w-12 animate-ping rounded-2xl bg-primary/15" />
                 )}
                 <active.icon className="relative h-6 w-6 text-primary" />
@@ -396,7 +396,7 @@ export function StoreOrderTrackingScreen({ orderId, onBack, onOpenHelp }: { orde
           </div>
         )}
 
-        {!delivered && (
+        {!delivered && !cancelled && (
           <StoreCancelPanel orderId={order.id} orderNumber={order.order_number} serviceKey="store" onOpenHelp={onOpenHelp} />
         )}
 
