@@ -143,9 +143,9 @@ export function ParcelFlow({ onBack, onBooked }: { onBack: () => void; onBooked:
   };
 
   if (step === "pickup")
-    return <PlaceStep kind="pickup" draft={draft} setDraft={setDraft} onBack={back} onNext={() => setStep("drop")} />;
+    return <PlaceStep key="pickup" kind="pickup" draft={draft} setDraft={setDraft} onBack={back} onNext={() => setStep("drop")} />;
   if (step === "drop")
-    return <PlaceStep kind="drop" draft={draft} setDraft={setDraft} onBack={back} onNext={() => setStep("vehicle")} />;
+    return <PlaceStep key="drop" kind="drop" draft={draft} setDraft={setDraft} onBack={back} onNext={() => setStep("vehicle")} />;
   if (step === "multi")
     return <MultiStopStep draft={draft} setDraft={setDraft} onBack={back} onNext={() => setStep("vehicle")} />;
   if (step === "vehicle")
@@ -225,8 +225,8 @@ function PlaceStep({
   const c = useParcelCopy();
   useBackHandler(true, onBack);
   const signedIn = useSignedIn();
-  const [picking, setPicking] = useState(false);
   const stop = kind === "pickup" ? draft.stops.find((s) => s.key === "P1")! : draft.stops.find((s) => s.type === "drop")!;
+  const [picking, setPicking] = useState(() => !hasCoords(stop.addr));
   const other = kind === "drop" ? draft.stops.find((s) => s.key === "P1") : null;
 
   // Pickup contact is prefilled from the customer's profile, still editable.
