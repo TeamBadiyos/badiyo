@@ -20,6 +20,7 @@ export type ParcelStop = {
   addr: ParcelAddr | null;
   name: string;
   phone: string;
+  flat?: string;
 };
 
 export type ParcelDraft = {
