@@ -183,7 +183,7 @@ export function CleanTab({
   return (
     <div>
       <section
-        className="bleed-safe-top relative -mx-5 flex min-h-[35vh] flex-col items-center justify-center overflow-hidden px-6 pb-14 text-center"
+        className="bleed-safe-top relative -mx-5 flex min-h-[42vh] flex-col items-center justify-center overflow-hidden px-6 pb-14 text-center"
         style={{ "--bleed-top-extra": "72px", background: heroImg ? `center/cover no-repeat url("${localSrc(heroImg)}"), ${slab.sky}` : slab.sky } as React.CSSProperties}
       >
         <h1 className={`text-2xl font-extrabold leading-tight ${tone === "light" ? "text-hero-title hero-shadow" : "text-hero-title-dark"}`}>{bTitle}</h1>
@@ -199,9 +199,9 @@ export function CleanTab({
           )}
         </div>
 
-        {(maidCards.length > 0 || (washOptions.length > 0 && washCards.length > 0)) && (
+        {maidCards.length > 0 && (
           <>
-            <h2 className="mt-7 text-lg font-extrabold text-foreground">
+            <h2 className="mt-10 text-lg font-extrabold text-foreground">
               {pick(lang, maidContent?.section_title, maidContent?.section_title_mr) || (lang === "mr" ? "आमचे एक्सपर्ट काय करतात" : "What our experts do")}
             </h2>
             <div className="mt-3 grid grid-cols-3 gap-2.5">
@@ -209,7 +209,19 @@ export function CleanTab({
                 const img = card.image_url || MAID_IMG[i % MAID_IMG.length];
                 return <ContentCardTile key={`m${i}`} title={pick(lang, card.title, card.title_mr)} imageUrl={img} onClick={() => openDetail("clean", i)} />;
               })}
-              {washOptions.length > 0 && washCards.slice(0, 3).map((card, i) => {
+            </div>
+          </>
+        )}
+
+        {washOptions.length > 0 && washCards.length > 0 && (
+          <>
+            {/* Keeps wash cards below the first screen on every phone */}
+            <div aria-hidden className="h-[22vh] min-h-[96px]" />
+            <h2 className="text-lg font-extrabold text-foreground">
+              {pick(lang, washContent?.hero?.card_title, washContent?.hero?.card_title_mr) || s.washCard}
+            </h2>
+            <div className="mt-3 grid grid-cols-3 gap-2.5">
+              {washCards.slice(0, 3).map((card, i) => {
                 const opt = washOptions.find((o) => o.id === card.price_option_id);
                 const img = card.image_url || opt?.image_url || washImage(card.title ?? "");
                 return <ContentCardTile key={`w${i}`} title={pick(lang, card.title, card.title_mr)} imageUrl={img} onClick={() => openDetail("wash", i)} />;
@@ -219,7 +231,7 @@ export function CleanTab({
         )}
 
         </>)}
-        <button onClick={onOpenReferral} className="mt-7 flex w-full items-center gap-3 rounded-[18px] bg-card p-4 text-left shadow-soft">
+        <button onClick={onOpenReferral} className="mt-8 flex w-full items-center gap-3 rounded-[18px] bg-card p-4 text-left shadow-soft">
           <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary"><Gift className="h-5 w-5" /></span>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-extrabold text-foreground">{s.refer}</p>
@@ -227,6 +239,9 @@ export function CleanTab({
           </div>
           <ChevronRight className="h-5 w-5 text-muted-foreground" />
         </button>
+        <div className="flex justify-center py-10">
+          <img src="/brand/badiyos-wordmark-green.webp" alt="Badiyos" className="h-8 w-auto opacity-60" loading="lazy" />
+        </div>
       </div>
 
       {detail && (
