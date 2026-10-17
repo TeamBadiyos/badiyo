@@ -72,6 +72,7 @@ export function BottomNav({
                 />
               </span>
               {t(labelKey)}
+            </button>
           );
         })}
       </div>

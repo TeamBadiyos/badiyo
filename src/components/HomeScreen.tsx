@@ -404,7 +404,7 @@ export function HomeScreen({
   const addressTag = activeAddress?.label || t("nav.home");
   const locationLabel = activeAddress?.area || activeAddress?.full_address || activeAddress?.city || "";
   const [heroTone, setHeroTone] = useState<"light" | "dark">("light");
-  const onLight = tab === "clean" && heroTone === "light";
+  void heroTone;
 
   const activeSegment =
     tab === "food"
