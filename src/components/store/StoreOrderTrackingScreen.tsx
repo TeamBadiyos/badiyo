@@ -28,6 +28,7 @@ import { refreshCourierOtp } from "@/lib/courierOtp.functions";
 import { fetchStoreOrder } from "@/lib/storeOrders";
 import { CourierLiveMap } from "../courier/CourierLiveMap";
 import { fetchCourierOrder, fetchCourierOtp, fetchRiderInfo } from "../courier/courierData";
+import { StoreCancelPanel } from "./StoreCancelPanel";
 
 type Step = {
   key: string;
@@ -97,7 +98,7 @@ function stepIndex(status: string): number {
   }
 }
 
-export function StoreOrderTrackingScreen({ orderId, onBack }: { orderId: string; onBack: () => void }) {
+export function StoreOrderTrackingScreen({ orderId, onBack, onOpenHelp }: { orderId: string; onBack: () => void; onOpenHelp?: (ref: string) => void }) {
   useBackHandler(true, () => onBack());
   const qc = useQueryClient();
   const [billOpen, setBillOpen] = useState(false);
@@ -393,6 +394,10 @@ export function StoreOrderTrackingScreen({ orderId, onBack }: { orderId: string;
               <p className="mt-0.5 text-sm text-foreground">{order.delivery_address}</p>
             </div>
           </div>
+        )}
+
+        {!delivered && (
+          <StoreCancelPanel orderId={order.id} orderNumber={order.order_number} serviceKey="store" onOpenHelp={onOpenHelp} />
         )}
 
         {/* Bill */}
