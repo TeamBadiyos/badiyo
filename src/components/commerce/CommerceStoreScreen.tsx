@@ -229,11 +229,11 @@ export function CommerceStoreScreen({
         </div>
       </div>
 
-      {shown.length > 1 && (
+      {shown.length >= 1 && (
         <button
           type="button"
           onClick={() => setMenuOpen(true)}
-          className="fixed bottom-[calc(var(--app-safe-bottom,0px)+96px)] right-1/2 z-30 flex translate-x-1/2 items-center gap-2 rounded-full bg-foreground px-5 py-3 text-sm font-extrabold text-background shadow-lg"
+          className="fixed bottom-[calc(var(--app-safe-bottom,0px)+96px)] right-4 z-30 flex items-center gap-2 rounded-full bg-foreground px-5 py-3 text-sm font-extrabold text-background shadow-lg"
         >
           <UtensilsCrossed className="h-4 w-4" /> {c.menu}
         </button>
