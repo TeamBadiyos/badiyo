@@ -143,9 +143,9 @@ export function ParcelFlow({ onBack, onBooked }: { onBack: () => void; onBooked:
   };
 
   if (step === "pickup")
-    return <PlaceStep kind="pickup" draft={draft} setDraft={setDraft} onBack={back} onNext={() => setStep("drop")} />;
+    return <PlaceStep key="pickup" kind="pickup" draft={draft} setDraft={setDraft} onBack={back} onNext={() => setStep("drop")} />;
   if (step === "drop")
-    return <PlaceStep kind="drop" draft={draft} setDraft={setDraft} onBack={back} onNext={() => setStep("vehicle")} />;
+    return <PlaceStep key="drop" kind="drop" draft={draft} setDraft={setDraft} onBack={back} onNext={() => setStep("vehicle")} />;
   if (step === "multi")
     return <MultiStopStep draft={draft} setDraft={setDraft} onBack={back} onNext={() => setStep("vehicle")} />;
   if (step === "vehicle")
