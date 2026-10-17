@@ -13,10 +13,7 @@ const TABS: { key: NavTab; labelKey: LabelKey; Icon: LucideIcon }[] = [
   { key: "rewards", labelKey: "nav.rewards", Icon: Gift },
 ];
 
-/**
- * Floating dark pill with five tabs: Clean · Store · Food · Parcel · Rewards.
- * The selected tab grows into a white pill (icon + label); flex-grow animates the slide.
- */
+/** Blinkit-style fixed white bottom bar: icon + label, green top indicator on the selected tab. */
 export function BottomNav({
   activeKey,
   onHome,
@@ -38,25 +35,24 @@ export function BottomNav({
 
   return (
     <nav
-      className="fixed inset-x-4 z-10 mx-auto max-w-md"
-      style={{ bottom: "calc(var(--app-safe-bottom, 0px) + 12px)" }}
+      className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--nav-border)] bg-card"
+      style={{ paddingBottom: "var(--app-safe-bottom, 0px)" }}
     >
-      <div className="nav-float flex h-16 w-full items-center gap-1 rounded-full bg-[var(--nav-charcoal)] px-2">
+      <div className="mx-auto flex h-16 w-full max-w-md">
         {TABS.map(({ key, labelKey, Icon }) => {
           const on = activeKey === key;
           return (
             <button
               key={key}
               onClick={() => select(key)}
-              aria-label={t(labelKey)}
               aria-current={on ? "page" : undefined}
-              style={{ flexGrow: on ? 2.4 : 1 }}
-              className={`flex h-12 min-w-0 basis-0 items-center justify-center gap-1.5 overflow-hidden rounded-full transition-all duration-300 ease-out active:scale-95 ${
-                on ? "bg-card text-[var(--nav-active)]" : "bg-transparent text-[var(--nav-inactive)]"
+              className={`relative flex min-w-0 flex-1 flex-col items-center justify-center gap-1 transition-colors duration-150 ${
+                on ? "text-[var(--nav-active)]" : "text-[var(--nav-inactive)]"
               }`}
             >
-              <Icon className="h-[22px] w-[22px] shrink-0" strokeWidth={on ? 2.4 : 2} />
-              {on && <span className="truncate text-[13px] font-extrabold animate-fade-in">{t(labelKey)}</span>}
+              {on && <span className="absolute top-0 h-[3px] w-8 rounded-b-full bg-[var(--nav-active)]" />}
+              <Icon className="h-6 w-6" strokeWidth={2} />
+              <span className={`truncate text-[12px] leading-none ${on ? "font-bold" : "font-medium"}`}>{t(labelKey)}</span>
             </button>
           );
         })}
