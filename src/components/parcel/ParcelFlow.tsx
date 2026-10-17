@@ -55,7 +55,7 @@ type Quote = {
   coupon_ok?: boolean;
 };
 
-type Step = "multi" | "vehicle" | "checkout";
+type Step = "pickup" | "drop" | "multi" | "vehicle" | "checkout";
 
 function useSignedIn() {
   const { data } = useQuery({
@@ -127,13 +127,25 @@ export function ParcelFlow({ onBack, onBooked }: { onBack: () => void; onBooked:
       writeDraft(n);
       return n;
     });
-  const [step, setStep] = useState<Step>(draft.mode === "single" ? "vehicle" : "multi");
+  const [step, setStep] = useState<Step>(() => {
+    if (draft.mode !== "single") return "multi";
+    const p = draft.stops.find((s) => s.key === "P1");
+    const dr = draft.stops.find((s) => s.type === "drop");
+    if (!hasCoords(p?.addr)) return "pickup";
+    if (!hasCoords(dr?.addr)) return "drop";
+    return "vehicle";
+  });
   const back = () => {
     if (step === "checkout") setStep("vehicle");
-    else if (step === "vehicle" && draft.mode !== "single") setStep("multi");
+    else if (step === "vehicle") setStep(draft.mode === "single" ? "drop" : "multi");
+    else if (step === "drop") setStep("pickup");
     else onBack();
   };
 
+  if (step === "pickup")
+    return <PlaceStep kind="pickup" draft={draft} setDraft={setDraft} onBack={back} onNext={() => setStep("drop")} />;
+  if (step === "drop")
+    return <PlaceStep kind="drop" draft={draft} setDraft={setDraft} onBack={back} onNext={() => setStep("vehicle")} />;
   if (step === "multi")
     return <MultiStopStep draft={draft} setDraft={setDraft} onBack={back} onNext={() => setStep("vehicle")} />;
   if (step === "vehicle")
