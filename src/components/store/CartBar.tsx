@@ -23,9 +23,9 @@ export function CartBar({
   if (disabled) return <StoreOrderingBar aboveNav={aboveNav} />;
   if (count === 0) return null;
 
-  // Above-nav cart must clear the raised centre "Send Parcel" button.
+  // Sits just above the fixed tab bar.
   const bottom = aboveNav
-    ? "bottom-[calc(var(--app-safe-bottom,0px)+88px)]"
+    ? "bottom-[calc(var(--nav-height)+8px)]"
     : "bottom-[calc(var(--app-safe-bottom,0px)+16px)]";
 
   return (

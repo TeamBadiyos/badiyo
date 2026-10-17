@@ -490,14 +490,14 @@ select,
 :root {
   --header-on-light: oklch(0.38 0.1 160);
   --header-on-dark: oklch(0.88 0.13 160);
-  --nav-charcoal: oklch(0.27 0.015 255);
-  --nav-inactive: oklch(0.84 0.012 255);
-  --nav-active: oklch(0.69 0.16 162);
-  --nav-bar-space: calc(64px + 12px + var(--app-safe-bottom, 0px) + 24px);
+  --nav-inactive: #6B7280;
+  --nav-active: #00B97A;
+  --nav-border: #E5E7EB;
+  --nav-height: calc(64px + var(--app-safe-bottom, 0px));
+  --nav-bar-space: calc(var(--nav-height) + 16px);
 }
 @utility header-on-light { color: var(--header-on-light); }
 @utility header-on-dark { color: var(--header-on-dark); text-shadow: 0 1px 6px color-mix(in oklab, var(--foreground) 45%, transparent); }
-@utility nav-float { box-shadow: 0 10px 30px -8px color-mix(in oklab, var(--nav-charcoal) 55%, transparent); }
 @utility pb-nav { padding-bottom: var(--nav-bar-space); }
 
 @utility shadow-soft {
