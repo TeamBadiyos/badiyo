@@ -203,6 +203,108 @@ function ContactFields({
   );
 }
 
+/* ---------------- Pickup / Drop step (single action per page) ---------------- */
+
+function PlaceStep({
+  kind,
+  draft,
+  setDraft,
+  onBack,
+  onNext,
+}: {
+  kind: "pickup" | "drop";
+  draft: ParcelDraft;
+  setDraft: (fn: (d: ParcelDraft) => ParcelDraft) => void;
+  onBack: () => void;
+  onNext: () => void;
+}) {
+  const c = useParcelCopy();
+  useBackHandler(true, onBack);
+  const signedIn = useSignedIn();
+  const [picking, setPicking] = useState(false);
+  const stop = kind === "pickup" ? draft.stops.find((s) => s.key === "P1")! : draft.stops.find((s) => s.type === "drop")!;
+  const other = kind === "drop" ? draft.stops.find((s) => s.key === "P1") : null;
+
+  // Pickup contact is prefilled from the customer's profile, still editable.
+  const { data: me } = useQuery({ queryKey: ["parcel-me", signedIn], queryFn: fetchMe, enabled: signedIn && kind === "pickup" });
+  useEffect(() => {
+    if (kind !== "pickup" || !me) return;
+    setDraft((d) => ({
+      ...d,
+      stops: d.stops.map((s) =>
+        s.key === "P1" ? { ...s, name: s.name || me.name, phone: s.phone || me.phone } : s,
+      ),
+    }));
+  }, [me]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const update = (patch: Partial<ParcelStop>) =>
+    setDraft((d) => ({ ...d, stops: d.stops.map((s) => (s.key === stop.key ? { ...s, ...patch } : s)) }));
+
+  const needContact = kind === "drop" ? c.needReceiver : c.needSender;
+  const valid =
+    hasCoords(stop.addr) && stop.name.trim().length > 0 && phone10(stop.phone).length === 10;
+
+  return (
+    <main className="min-h-screen w-full bg-surface-soft pb-32">
+      <ParcelMap
+        pins={[
+          ...(other && hasCoords(other.addr) ? [{ lat: Number(other.addr.latitude), lng: Number(other.addr.longitude), kind: other.type }] : []),
+          ...(hasCoords(stop.addr) ? [{ lat: Number(stop.addr.latitude), lng: Number(stop.addr.longitude), kind: stop.type }] : []),
+        ]}
+        showMyLocation={!hasCoords(stop.addr)}
+        className="h-[32vh] min-h-[200px]"
+      />
+      <div className="relative -mt-4 mx-auto w-full max-w-md rounded-t-[24px] bg-surface-soft px-4 pb-6 pt-5">
+        <Header title={kind === "pickup" ? c.pickup : c.drop} onBack={onBack} />
+        {kind === "drop" && other?.addr && (
+          <p className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+            <span className="h-2 w-2 shrink-0 rounded-full bg-primary" />
+            <span className="truncate font-semibold">{addrTitle(other.addr)}</span>
+          </p>
+        )}
+        <button
+          type="button"
+          onClick={() => setPicking(true)}
+          className="mt-3 flex w-full items-center gap-3 rounded-[16px] bg-card p-4 text-left shadow-soft"
+        >
+          <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${kind === "pickup" ? "bg-primary ring-4 ring-primary/20" : "bg-destructive ring-4 ring-destructive/20"}`} />
+          <span className="min-w-0 flex-1">
+            <span className={`block truncate text-sm font-extrabold ${stop.addr ? "text-foreground" : "text-primary"}`}>
+              {stop.addr ? addrTitle(stop.addr) : c.chooseAddr}
+            </span>
+            {stop.addr && (
+              <span className="block truncate text-xs text-muted-foreground">{stop.addr.full_address}</span>
+            )}
+          </span>
+          <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+        </button>
+        <section className="mt-3 rounded-[16px] bg-card p-4 shadow-soft">
+          <p className="text-sm font-extrabold text-foreground">{kind === "pickup" ? c.sender : c.receiver}</p>
+          <ContactFields name={stop.name} phone={stop.phone} onChange={(name, phone) => update({ name, phone })} />
+        </section>
+      </div>
+      <BottomBar>
+        <button
+          type="button"
+          onClick={() => (valid ? onNext() : toast(!hasCoords(stop.addr) ? c.needDrop : needContact))}
+          className="flex flex-1 items-center justify-center rounded-[14px] bg-primary py-3.5 text-base font-extrabold text-primary-foreground"
+        >
+          {c.continue}
+        </button>
+      </BottomBar>
+      <LocationPickerSheet
+        open={picking}
+        activeId={null}
+        onClose={() => setPicking(false)}
+        onSelect={(a) => {
+          if (hasCoords(a)) update({ addr: a });
+          setPicking(false);
+        }}
+      />
+    </main>
+  );
+}
+
 /* ---------------- Send to many places ---------------- */
 
 function MultiStopStep({
@@ -404,7 +506,6 @@ function VehicleStep({
 
   const next = () => {
     if (!ready) return toast(c.needDrop);
-    if (!multi && (!drop.name.trim() || phone10(drop.phone).length !== 10)) return toast(c.needReceiver);
     if (over && limits) return toast(fill(c.overLimit, { p: limits.max_pickups, d: limits.max_drops }));
     if (price == null) return;
     onNext();
