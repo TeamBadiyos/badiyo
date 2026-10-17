@@ -6,7 +6,7 @@ import type { ServiceState } from "@/lib/serviceHours";
 import { localSrc, syncImages } from "@/lib/imageStore";
 
 /** Clean Home = 'clean', Car & Bike Wash = 'wash'. Public RPCs, city-aware. */
-export type CleanServiceKey = "clean" | "wash";
+export type CleanServiceKey = "clean" | "wash" | "courier";
 
 const rpc = ((fn: string, args: Record<string, unknown>) =>
   (supabase.rpc as unknown as (f: string, a: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>).call(supabase, fn, args));

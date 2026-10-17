@@ -49,8 +49,8 @@ export function ParcelHome({
   const { data: enabled = true } = useQuery({ queryKey: ["courier_enabled"], queryFn: () => fetchCourierEnabled(), staleTime: 5 * 60_000 });
   const { data: state } = useServiceState("courier");
   const opensAt = state && !state.open ? formatNextOpen(state.next_open_at ?? state.resume_at) : null;
-  // Same photos as the Clean home banner for now (by India time slab); a Parcel CC entry can replace this later.
-  const { data: heroContent } = useServiceContent("clean");
+  // Parcel banner photos/text from Command Center (courier); built-in sky fallback.
+  const { data: heroContent } = useServiceContent("courier");
   const slab = pickSlab(heroContent?.banner?.slabs, useIstMinute());
   const heroImg = slab.image;
   const tone = slab.tone;
