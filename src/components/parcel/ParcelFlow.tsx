@@ -2,11 +2,10 @@
 // Fares, coupons, wallet and payment stay server-side (courier.functions).
 import { useEffect, useMemo, useState } from "react";
 import { keepPreviousData, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowDown, ArrowLeft, ArrowUp, ArrowUpDown, Ban, Check, ChevronDown, ChevronRight, ChevronUp, Info, Loader2, Pencil, PlusCircle, Tag, Trash2, Wallet, X } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowUp, ArrowUpDown, Ban, Check, ChevronRight, Info, Loader2, Pencil, PlusCircle, Tag, Trash2, Wallet, X } from "lucide-react";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { useT } from "@/i18n";
-import { supabase } from "@/integrations/supabase/client";
 import { getAuthUser } from "@/lib/authUser";
 import { ensureSignedIn } from "@/lib/authGate";
 import { useBackHandler } from "@/lib/backHandler";
@@ -366,7 +365,8 @@ function VehicleStep({
   }, [vehicles, draft.vehicleId]); // eslint-disable-line react-hooks/exhaustive-deps
   const types = draft.vehicleId ? typesFor(draft.vehicleId) : [];
   useEffect(() => {
-    if (types.length && !types.some((x) => x.id === draft.typeId)) setDraft((d) => ({ ...d, typeId: types[0].id }));
+    // Parcel type is a required customer choice: drop one the new vehicle does not offer.
+    if (types.length && draft.typeId && !types.some((x) => x.id === draft.typeId)) setDraft((d) => ({ ...d, typeId: null }));
   }, [types, draft.typeId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const typeFor = (vid: string) => {
@@ -410,6 +410,7 @@ function VehicleStep({
     if (!ready) return toast(c.needDrop);
     if (over && limits) return toast(fill(c.overLimit, { p: limits.max_pickups, d: limits.max_drops }));
     if (price == null) return;
+    if (!draft.typeId) return toast(c.chooseGoods);
     onNext();
   };
   const swap = () =>
@@ -436,7 +437,9 @@ function VehicleStep({
           {km != null && <span className="ml-auto rounded-full bg-card px-3 py-1 text-xs font-extrabold text-foreground shadow-soft">{fill(c.km, { n: rs(Number(km)) })}</span>}
         </div>
 
-        <div className="mt-4 rounded-[18px] bg-card p-4 shadow-soft">
+        <ParcelMap pins={pinsOf(draft)} className="mt-4 h-[26vh] min-h-[180px] overflow-hidden rounded-[18px]" />
+
+        <div className="mt-3 rounded-[18px] bg-card p-4 shadow-soft">
           <div className="flex items-center gap-2">
             <div className="min-w-0 flex-1">
               {draft.stops.map((s, i) => (
@@ -526,16 +529,37 @@ function VehicleStep({
           })}
           {sel?.error && <p className="text-xs font-semibold text-destructive">{courierErrorMessage(sel.error, c.priceError)}</p>}
         </div>
+        {types.length > 0 && (
+          <div className="mt-4">
+            <p className="text-sm font-extrabold text-foreground">{c.goodsType}</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {types.map((ty) => {
+                const on = ty.id === draft.typeId;
+                return (
+                  <button
+                    key={ty.id}
+                    type="button"
+                    onClick={() => setDraft((d) => ({ ...d, typeId: ty.id }))}
+                    className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-bold ${on ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-foreground"}`}
+                  >
+                    <span aria-hidden>{ty.icon && [...ty.icon].length <= 3 ? ty.icon : "📦"}</span>
+                    {ty.name}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       <BottomBar>
         <button
           type="button"
           onClick={next}
-          disabled={price == null}
+          disabled={price == null || !draft.typeId}
           className="flex flex-1 items-center justify-center gap-2 rounded-[14px] bg-primary py-4 text-base font-extrabold text-primary-foreground disabled:opacity-60"
         >
-          {price != null && selV ? fill(c.proceedWith, { v: selV.name }) : t("common.loading")}
+          {price == null ? t("common.loading") : !draft.typeId ? c.chooseGoods : fill(c.proceedPrice, { n: rs(Number(price)) })}
         </button>
       </BottomBar>
 
@@ -603,9 +627,11 @@ function CheckoutStep({
   const t = useT();
   const qc = useQueryClient();
   const [couponOpen, setCouponOpen] = useState(false);
-  const [confirmed, setConfirmed] = useState(true);
+  const [confirmed, setConfirmed] = useState(false);
+  const [listOpen, setListOpen] = useState(false);
   const [paying, setPaying] = useState(false);
-  useBackHandler(!couponOpen, onBack);
+  useBackHandler(!couponOpen && !listOpen, onBack);
+  useBackHandler(listOpen, () => setListOpen(false));
   const signedIn = useSignedIn();
   const city = useCity(draft);
   const multi = draft.stops.length > 2;
@@ -848,10 +874,14 @@ function CheckoutStep({
           )}
         </section>
 
-        <label className="mt-3 flex items-start gap-2 px-1 text-xs text-muted-foreground">
-          <input type="checkbox" checked={confirmed} onChange={(e) => setConfirmed(e.target.checked)} className="mt-0.5 accent-primary" />
-          {c.confirmItems}
-        </label>
+        <div className="mt-3 flex items-start gap-2 rounded-[16px] bg-card p-4 text-sm shadow-soft">
+          <input id="parcel-confirm" type="checkbox" checked={confirmed} onChange={(e) => setConfirmed(e.target.checked)} className="mt-0.5 h-5 w-5 shrink-0 accent-primary" />
+          <span>
+            <label htmlFor="parcel-confirm" className="font-bold text-foreground">{c.confirmShort}</label>
+            {" · "}
+            <button type="button" onClick={() => setListOpen(true)} className="font-extrabold text-primary">{c.seeList} ›</button>
+          </span>
+        </div>
       </div>
       <BottomBar>
         <div className="flex flex-col">
@@ -861,13 +891,34 @@ function CheckoutStep({
         <button
           type="button"
           onClick={() => void pay()}
-          disabled={paying || !quote || isFetching}
+          disabled={paying || !quote || isFetching || !confirmed}
           className="flex flex-1 items-center justify-center gap-2 rounded-[14px] bg-primary py-3.5 text-base font-extrabold text-primary-foreground active:scale-[0.99] disabled:opacity-60"
         >
           {paying && <Loader2 className="h-4 w-4 animate-spin" />}
           {walletOnly ? c.payWallet : fill(c.pay, { n: rs(toPay) })}
         </button>
       </BottomBar>
+      {listOpen && (
+        <div className="fixed inset-0 z-50 flex flex-col justify-end bg-foreground/40" onClick={() => setListOpen(false)}>
+          <div className="mx-auto max-h-[80vh] w-full max-w-md overflow-y-auto rounded-t-[24px] bg-card px-4 pb-4 pt-5 safe-bottom" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-2">
+              <Ban className="h-6 w-6 text-destructive" />
+              <h3 className="flex-1 text-lg font-extrabold text-foreground">{c.restricted}</h3>
+              <button type="button" onClick={() => setListOpen(false)} aria-label="Close"><X className="h-5 w-5 text-muted-foreground" /></button>
+            </div>
+            <ul className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1.5 text-sm text-muted-foreground">
+              {RESTRICTED.map((r) => <li key={r}>• {r}</li>)}
+            </ul>
+            <button
+              type="button"
+              onClick={() => { setConfirmed(true); setListOpen(false); }}
+              className="mt-5 w-full rounded-[14px] bg-primary py-3.5 text-base font-extrabold text-primary-foreground"
+            >
+              {c.confirmShort}
+            </button>
+          </div>
+        </div>
+      )}
       {couponOpen && (
         <CouponSheet
           baseAmount={Number(quote?.base_amount ?? fare)}
