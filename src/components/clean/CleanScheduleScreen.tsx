@@ -54,7 +54,7 @@ export function CleanScheduleScreen({
   const { lang } = useLanguage();
   const s = lang === "mr" ? CL.mr : CL.en;
   const cityId = useCustomerCityId();
-  const days = useMemo(getNext7DayOptions, []);
+  const days = useMemo(() => getNext7DayOptions().slice(0, 3), []);
   const [optionId, setOptionId] = useState<string | null>(
     draft.optionId ?? (options.find((o) => Number(o.duration_minutes) === 120) ?? options[0])?.id ?? null,
   );
@@ -78,9 +78,9 @@ export function CleanScheduleScreen({
   );
 
   const { data: fullSlots, isFetching } = useQuery({
-    queryKey: ["app-fully-booked", serviceKey, days[0].key, days[6].key, cityId],
+    queryKey: ["app-fully-booked", serviceKey, days[0].key, days[days.length - 1].key, cityId],
     staleTime: 30_000,
-    queryFn: () => fetchAppFullySlots(serviceKey, days[0].key, days[6].key),
+    queryFn: () => fetchAppFullySlots(serviceKey, days[0].key, days[days.length - 1].key),
   });
   const visible = allSlots.filter((x) => isHourBookable(day, x.mins) && slotFitsWindow(state, x.mins, mins));
   const isFull = (m: number) => m !== NOW && (fullSlots?.has(`${day}|${m}`) ?? false);
