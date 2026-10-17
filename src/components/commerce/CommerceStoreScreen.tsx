@@ -191,12 +191,12 @@ export function CommerceStoreScreen({
         <div className={`px-5 ${closed ? "opacity-60 grayscale" : ""}`}>
           {recommended.length > 0 && (
             <Section title={c.recommended}>
-              {isFood ? <FoodList items={recommended} {...props} /> : <GridItems items={recommended} {...props} />}
+              <FoodList items={recommended} {...props} />
             </Section>
           )}
           {menu.map((g, i) => (
-            <Section key={g.category.id ?? `g${i}`} title={biName(g.category, lang)}>
-              {isFood ? <FoodList items={g.items} {...props} /> : <GridItems items={g.items} {...props} />}
+            <Section key={g.category.id ?? `g${i}`} title={`${biName(g.category, lang)} (${g.items.length})`}>
+              <FoodList items={g.items} {...props} />
             </Section>
           ))}
         </div>
@@ -333,20 +333,36 @@ function GridItems({ items, ...rest }: ItemProps) {
   );
 }
 
+function ItemDesc({ text, lang }: { text: string; lang: string }) {
+  const [open, setOpen] = useState(false);
+  const long = text.length > 80;
+  return (
+    <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
+      {open || !long ? text : `${text.slice(0, 80).trimEnd()}…`}
+      {long && (
+        <button type="button" onClick={() => setOpen(!open)} className="ml-1 font-extrabold text-foreground">
+          {open ? (lang === "mr" ? "कमी दाखवा" : "less") : lang === "mr" ? "अधिक पहा" : "more"}
+        </button>
+      )}
+    </p>
+  );
+}
+
 function FoodList({ items, ...rest }: ItemProps) {
   return (
-    <div className="divide-y divide-border">
+    <div className="divide-y divide-dashed divide-border">
       {items.map((it) => (
-        <div key={it.id} className={`flex gap-3 py-3.5 ${it.in_stock ? "" : "opacity-50 grayscale"}`}>
+        <div key={it.id} className={`flex gap-3 py-4 ${it.in_stock ? "" : "opacity-50 grayscale"}`}>
           <div className="min-w-0 flex-1">
-            <p className="text-[15px] font-extrabold text-foreground">{it.name}</p>
-            <div className="mt-0.5">
+            <p className="text-[16px] font-extrabold leading-snug text-foreground">{it.name}</p>
+            {it.size && <p className="text-[12px] text-muted-foreground">{it.size}</p>}
+            <div className="mt-1">
               <Price item={it} />
             </div>
-            {it.description && <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{it.description}</p>}
+            {it.description && <ItemDesc text={it.description} lang={rest.lang} />}
           </div>
-          <div className="flex w-28 shrink-0 flex-col items-center">
-            {it.photo_url ? <StoreImage path={it.photo_url} alt={it.name} className="h-24 w-28 rounded-[14px]" /> : null}
+          <div className="flex w-[118px] shrink-0 flex-col items-center">
+            {it.photo_url ? <StoreImage path={it.photo_url} alt={it.name} className="h-[110px] w-[118px] rounded-[16px]" /> : null}
             <div className={it.photo_url ? "-mt-4" : "mt-2"}>
               <AddControl item={it} {...rest} wide />
             </div>

@@ -300,22 +300,22 @@ function StoreCard({ store, lang, onClick }: { store: CommerceStore; lang: strin
   return (
     <button
       onClick={onClick}
-      className={`flex w-full items-center gap-3 rounded-[18px] border border-border bg-card p-2.5 text-left transition active:scale-[0.99] ${store.is_open ? "" : "opacity-50 grayscale"}`}
+      className={`block w-full overflow-hidden rounded-[20px] border border-border bg-card text-left shadow-soft transition active:scale-[0.99] ${store.is_open ? "" : "opacity-50 grayscale"}`}
     >
-      <StoreImage path={store.photo_url} variant="store" alt={store.name} className="h-20 w-20 shrink-0 rounded-[14px]" />
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-[15px] font-extrabold text-foreground">{store.name}</p>
-        <p className="mt-0.5 truncate text-xs text-muted-foreground">
+      <StoreImage path={store.photo_url} variant="store" alt={store.name} size="full" className="h-44 w-full" />
+      <div className="px-3.5 py-3">
+        <div className="flex items-start justify-between gap-2">
+          <p className="min-w-0 truncate text-[17px] font-extrabold text-foreground">{store.name}</p>
+          {store.rating != null && (
+            <span className="flex shrink-0 items-center gap-0.5 rounded-[8px] bg-primary px-1.5 py-0.5 text-xs font-extrabold text-primary-foreground">
+              {Number(store.rating).toFixed(1)} <Star className="h-3 w-3 fill-current" />
+            </span>
+          )}
+        </div>
+        <p className="mt-0.5 truncate text-[13px] text-muted-foreground">
           {[biName(store.store_type, lang), km].filter(Boolean).join(" · ")}
         </p>
-        {store.rating != null && (
-          <p className="mt-1 flex items-center gap-1 text-xs font-bold text-foreground">
-            <Star className="h-3.5 w-3.5 fill-primary text-primary" />
-            {Number(store.rating).toFixed(1)}
-            {store.rating_count ? <span className="font-normal text-muted-foreground">({store.rating_count})</span> : null}
-          </p>
-        )}
-        {store.offer_text && <p className="mt-1 truncate text-xs font-extrabold text-primary">{store.offer_text}</p>}
+        {store.offer_text && <p className="mt-1.5 truncate text-xs font-extrabold text-primary">{store.offer_text}</p>}
       </div>
     </button>
   );
