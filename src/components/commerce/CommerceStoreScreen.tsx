@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Check, Minus, Plus, Star, X } from "lucide-react";
+import { ArrowLeft, Check, Minus, Plus, Search, Star, UtensilsCrossed, X } from "lucide-react";
 import { toast } from "sonner";
 import { useLanguage } from "@/i18n";
 import { supabase } from "@/integrations/supabase/client";
@@ -46,6 +46,9 @@ export const STORE_COPY = {
     addItem: "Add item · ₹{p}",
     needMin: "Please choose {n} in {g}",
     customisable: "Customisable",
+    search: "Search in this store",
+    menu: "Menu",
+    noMatch: "No items match",
   },
   mr: {
     recommended: "⭐ शिफारस केलेले",
@@ -64,6 +67,9 @@ export const STORE_COPY = {
     addItem: "वस्तू जोडा · ₹{p}",
     needMin: "{g} मध्ये {n} निवडा",
     customisable: "बदल करता येते",
+    search: "या दुकानात शोधा",
+    menu: "मेनू",
+    noMatch: "जुळणारी वस्तू नाही",
   },
 };
 
@@ -90,6 +96,9 @@ export function CommerceStoreScreen({
   const [sheetItem, setSheetItem] = useState<CommerceItem | null>(null);
   const [pending, setPending] = useState<null | { item: CommerceItem; opts?: CartOptions }>(null);
   useBackHandler(!!sheetItem, () => setSheetItem(null));
+  const [q, setQ] = useState("");
+  const [menuOpen, setMenuOpen] = useState(false);
+  useBackHandler(menuOpen, () => setMenuOpen(false));
 
   useEffect(() => {
     void (async () => {
@@ -116,6 +125,16 @@ export function CommerceStoreScreen({
       })),
     [data?.menu],
   );
+  const words = q.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  const shown = words.length
+    ? menu
+        .map((g) => ({ ...g, items: g.items.filter((it) => { const h = `${it.name} ${it.description ?? ""}`.toLowerCase(); return words.every((w) => h.includes(w)); }) }))
+        .filter((g) => g.items.length > 0)
+    : menu;
+  const jump = (i: number) => {
+    setMenuOpen(false);
+    document.getElementById(`cat-${i}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   const opensText = () => {
     const when = formatOpensAt(store?.next_open_at ?? null, lang);
@@ -188,19 +207,49 @@ export function CommerceStoreScreen({
           </div>
         )}
 
+        <div className="sticky top-0 z-20 bg-background px-5 pb-2 pt-[calc(var(--app-safe-top,0px)+8px)]">
+          <label className="flex items-center gap-2 rounded-[14px] border border-border bg-card px-3.5 py-2.5 shadow-sm">
+            <Search className="h-4 w-4 text-muted-foreground" />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={c.search} className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground" />
+            {q && <button type="button" aria-label="Clear" onClick={() => setQ("")}><X className="h-4 w-4 text-muted-foreground" /></button>}
+          </label>
+        </div>
         <div className={`px-5 ${closed ? "opacity-60 grayscale" : ""}`}>
-          {recommended.length > 0 && (
+          {!words.length && recommended.length > 0 && (
             <Section title={c.recommended}>
               <FoodList items={recommended} {...props} />
             </Section>
           )}
-          {menu.map((g, i) => (
-            <Section key={g.category.id ?? `g${i}`} title={`${biName(g.category, lang)} (${g.items.length})`}>
+          {words.length > 0 && shown.length === 0 && <p className="mt-10 text-center text-sm text-muted-foreground">{c.noMatch}</p>}
+          {shown.map((g, i) => (
+            <Section id={`cat-${i}`} key={g.category.id ?? `g${i}`} title={`${biName(g.category, lang)} (${g.items.length})`}>
               <FoodList items={g.items} {...props} />
             </Section>
           ))}
         </div>
       </div>
+
+      {shown.length > 1 && (
+        <button
+          type="button"
+          onClick={() => setMenuOpen(true)}
+          className="fixed bottom-[calc(var(--app-safe-bottom,0px)+96px)] right-1/2 z-30 flex translate-x-1/2 items-center gap-2 rounded-full bg-foreground px-5 py-3 text-sm font-extrabold text-background shadow-lg"
+        >
+          <UtensilsCrossed className="h-4 w-4" /> {c.menu}
+        </button>
+      )}
+      {menuOpen && (
+        <div className="fixed inset-0 z-40 flex items-end justify-center bg-foreground/40" onClick={() => setMenuOpen(false)}>
+          <div className="mb-[calc(var(--app-safe-bottom,0px)+150px)] max-h-[60vh] w-[85%] max-w-sm overflow-y-auto rounded-[20px] bg-card p-4 shadow-lg" onClick={(e) => e.stopPropagation()}>
+            {shown.map((g, i) => (
+              <button key={g.category.id ?? `m${i}`} type="button" onClick={() => jump(i)} className="flex w-full items-center justify-between py-2.5 text-left">
+                <span className="text-[15px] font-bold text-foreground">{biName(g.category, lang)}</span>
+                <span className="text-sm text-muted-foreground">{g.items.length}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <CartBar onOpenCart={onOpenCart} />
 
@@ -254,10 +303,10 @@ function BackBtn({ onBack }: { onBack: () => void }) {
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ id, title, children }: { id?: string; title: string; children: React.ReactNode }) {
   return (
-    <section className="mt-6">
-      <h2 className="mb-2.5 text-base font-extrabold text-foreground">{title}</h2>
+    <section id={id} className="mt-6 scroll-mt-20">
+      <h2 className="mb-2.5 text-base font-extrabold text-primary">{title}</h2>
       {children}
     </section>
   );
