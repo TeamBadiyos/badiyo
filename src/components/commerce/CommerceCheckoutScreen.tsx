@@ -19,6 +19,7 @@ import { invalidateWallet } from "@/lib/wallet";
 import { StoreImage } from "@/components/store/StoreImage";
 import { AddressSelectionScreen } from "@/components/AddressSelectionScreen";
 import { CouponSheet } from "@/components/CouponSheet";
+import { CancellationPolicySheet } from "@/components/CancellationPolicySheet";
 import {
   attachStorePayment,
   confirmStorePayment,
@@ -96,6 +97,7 @@ export function CommerceCheckoutScreen({
   const [couponOpen, setCouponOpen] = useState(false);
   const [useWallet, setUseWallet] = useState(false);
   const [placing, setPlacing] = useState(false);
+  const [policyOpen, setPolicyOpen] = useState(false);
   useBackHandler(true, () => (pickerOpen ? setPickerOpen(false) : onBack()));
 
   const { data: addresses = [] } = useQuery({ queryKey: ["my-addresses"], queryFn: fetchAddresses, staleTime: 60_000 });
@@ -354,6 +356,11 @@ export function CommerceCheckoutScreen({
                 row(s.itemTotal, `₹${rs(cart.total)}`)
               )}
             </section>
+            <button type="button" onClick={() => setPolicyOpen(true)}
+              className="mt-3 flex w-full items-center justify-between rounded-[16px] bg-card px-4 py-3.5 text-sm font-bold text-primary shadow-soft">
+              {lang === "mr" ? "रद्द करण्याचे धोरण" : "Cancellation policy"} <ChevronRight className="h-4 w-4" />
+            </button>
+            <CancellationPolicySheet open={policyOpen} onClose={() => setPolicyOpen(false)} serviceKey={isFood ? "food" : "store"} />
           </>
         )}
       </div>

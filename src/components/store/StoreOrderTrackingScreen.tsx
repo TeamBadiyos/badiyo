@@ -28,6 +28,7 @@ import { refreshCourierOtp } from "@/lib/courierOtp.functions";
 import { fetchStoreOrder } from "@/lib/storeOrders";
 import { CourierLiveMap } from "../courier/CourierLiveMap";
 import { fetchCourierOrder, fetchCourierOtp, fetchRiderInfo } from "../courier/courierData";
+import { StoreCancelPanel } from "./StoreCancelPanel";
 
 type Step = {
   key: string;
@@ -97,7 +98,7 @@ function stepIndex(status: string): number {
   }
 }
 
-export function StoreOrderTrackingScreen({ orderId, onBack }: { orderId: string; onBack: () => void }) {
+export function StoreOrderTrackingScreen({ orderId, onBack, onOpenHelp }: { orderId: string; onBack: () => void; onOpenHelp?: (ref: string) => void }) {
   useBackHandler(true, () => onBack());
   const qc = useQueryClient();
   const [billOpen, setBillOpen] = useState(false);
@@ -243,7 +244,7 @@ export function StoreOrderTrackingScreen({ orderId, onBack }: { orderId: string;
           <div className="animate-fade-in overflow-hidden rounded-[22px] border border-primary/20 bg-gradient-to-br from-primary/10 via-card to-card p-5">
             <div className="flex items-start gap-3">
               <span className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/15">
-                {!delivered && (
+                {!delivered && !cancelled && (
                   <span className="absolute inline-flex h-12 w-12 animate-ping rounded-2xl bg-primary/15" />
                 )}
                 <active.icon className="relative h-6 w-6 text-primary" />
@@ -393,6 +394,10 @@ export function StoreOrderTrackingScreen({ orderId, onBack }: { orderId: string;
               <p className="mt-0.5 text-sm text-foreground">{order.delivery_address}</p>
             </div>
           </div>
+        )}
+
+        {!delivered && !cancelled && (
+          <StoreCancelPanel orderId={order.id} orderNumber={order.order_number} serviceKey="store" onOpenHelp={onOpenHelp} />
         )}
 
         {/* Bill */}

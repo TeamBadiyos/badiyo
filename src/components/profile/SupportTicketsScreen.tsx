@@ -78,14 +78,17 @@ async function fetchTickets(): Promise<SupportTicket[]> {
 export function SupportTicketsScreen({
   onBack,
   onOpenTicket,
+  prefillSubject,
 }: {
   onBack: () => void;
   onOpenTicket: (ticketId: string) => void;
+  /** Opens the composer with this order attached as the subject. */
+  prefillSubject?: string | null;
 }) {
   const queryClient = useQueryClient();
-  const [composing, setComposing] = useState(false);
-  const [subject, setSubject] = useState("");
-  const [category, setCategory] = useState("booking");
+  const [composing, setComposing] = useState(!!prefillSubject);
+  const [subject, setSubject] = useState(prefillSubject ?? "");
+  const [category, setCategory] = useState(prefillSubject ? "other" : "booking");
   const [message, setMessage] = useState("");
 
   const { data: tickets = [], isLoading } = useQuery({

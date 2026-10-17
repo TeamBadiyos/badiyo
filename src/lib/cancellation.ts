@@ -32,6 +32,28 @@ export async function cancelBookingTo(bookingId: string, destination: RefundDest
   return (data ?? {}) as Record<string, unknown>;
 }
 
+export type StoreCancelQuote = {
+  can_cancel: boolean;
+  reason_code?: string | null;
+  message_en?: string;
+  message_mr?: string;
+  refund_total?: number;
+};
+
+export async function fetchStoreCancelQuote(orderId: string): Promise<StoreCancelQuote> {
+  const { data, error } = await rpc("app_store_cancel_quote", { _order_id: orderId });
+  if (error) throw error;
+  return (data ?? { can_cancel: false }) as StoreCancelQuote;
+}
+
+export async function cancelStoreOrderTo(orderId: string, destination: RefundDestination, reason?: string) {
+  const { data, error } = await rpc("app_store_cancel_order", { _order_id: orderId, _destination: destination, _reason: reason ?? null });
+  if (error) throw error;
+  const r = (data ?? {}) as { ok?: boolean; code?: string; refund_total?: number };
+  if (r.ok !== true) throw new Error(r.code ?? "cancel_failed");
+  return r;
+}
+
 /** Numeric field from a quote, trying several possible key names. */
 export function num(q: Record<string, unknown> | null | undefined, ...keys: string[]): number | null {
   for (const k of keys) {

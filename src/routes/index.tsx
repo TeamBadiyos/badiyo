@@ -360,6 +360,7 @@ function Index() {
   const [searchQuery, setSearchQuery] = useState("");
   const [courierOrderId, setCourierOrderId] = useState<string | null>(null);
   const [storeOrderId, setStoreOrderId] = useState<string | null>(null);
+  const [helpOrderRef, setHelpOrderRef] = useState<string | null>(null);
   const [contactStopId, setContactStopId] = useState<string | null>(null);
   // Where the "parcels for you" screen was opened from, so Back returns there.
   const [parcelsFrom, _setParcelsFrom] = useState<Phase>("home");
@@ -1057,7 +1058,11 @@ function Index() {
       )}
       {phase === "store-track" && storeOrderId && (
         <div className="animate-fade-slide-in">
-          <StoreOrderTrackingScreen orderId={storeOrderId} onBack={() => setPhase("orders")} />
+          <StoreOrderTrackingScreen
+            orderId={storeOrderId}
+            onBack={() => setPhase("orders")}
+            onOpenHelp={(ref) => { setHelpOrderRef(ref); setPhase("support-tickets"); }}
+          />
         </div>
       )}
       {phase === "courier-track" && courierOrderId && (
@@ -1301,7 +1306,8 @@ function Index() {
       {phase === "support-tickets" && (
         <div className="animate-fade-slide-in">
           <SupportTicketsScreen
-            onBack={() => setPhase("profile")}
+            prefillSubject={helpOrderRef}
+            onBack={() => { setHelpOrderRef(null); setPhase("profile"); }}
             onOpenTicket={(id) => {
               setActiveTicketId(id);
               setPhase("support-ticket");
