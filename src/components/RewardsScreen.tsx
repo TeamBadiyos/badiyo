@@ -1,3 +1,4 @@
+import { SpinDealsCard } from "@/components/spin/SpinWin";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { usePullToRefresh, PullToRefreshIndicator } from "@/lib/usePullToRefresh";
@@ -96,7 +97,7 @@ export function RewardsScreen({
         </div>
 
         {tab === "contest" && <ContestTab />}
-        {tab === "deals" && <DealsTab focusId={focusDealId} />}
+        {tab === "deals" && <><SpinDealsCard /><DealsTab focusId={focusDealId} /></>}
 
         {tab === "rewards" && (
           <>
