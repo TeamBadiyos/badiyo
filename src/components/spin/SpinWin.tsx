@@ -191,36 +191,55 @@ export function SpinDealsCard() {
     not_eligible: ["Spin & Win is only for new customers who joined during the event.", "फिरवा आणि जिंका फक्त कार्यक्रमादरम्यान जोडलेल्या नवीन ग्राहकांसाठी आहे."],
     sign_in: ["Sign in to spin the wheel.", "चाक फिरवण्यासाठी साइन इन करा."],
   };
+  const st = s?.status;
+  const signedOut = !s || st === "sign_in";
+  const onTap = () => {
+    if (st === "eligible" || (status.isLoading && !signedOut)) setOpen(true);
+    else if (signedOut) void ensureSignedIn();
+  };
+  const labels = ev.slices.filter((x) => !x.sold_out).map((x) => (mr ? x.label_mr : x.label));
+  const uniq = Array.from(new Set(labels)).slice(0, 2);
+  const preview = uniq.length
+    ? mr ? `जिंका ${uniq.join(", ")} आणि बरेच काही!` : `Win ${uniq.join(", ")} & more!`
+    : mr ? "मोफत ड्रिंक्स, ₹100 वॉलेट आणि बरेच काही जिंका!" : "Win Free Drinks, ₹100 Wallet & more!";
+  const cta = st === "eligible" ? (mr ? "🎡 चाक फिरवा" : "🎡 Spin the Wheel")
+    : signedOut ? (mr ? "🎡 फिरवण्यासाठी साइन इन करा" : "🎡 Sign in to Spin") : null;
   return (
-    <div className="mt-4 rounded-2xl border bg-card p-4">
-      <p className="text-lg font-extrabold">{mr ? "🎡 फिरवा आणि जिंका!" : "🎡 Spin & Win!"}</p>
-      <p className="text-xs text-muted-foreground">{mr ? ev.name_mr : ev.name}</p>
+    <div role="button" tabIndex={0} onClick={onTap} onKeyDown={(e) => e.key === "Enter" && onTap()}
+      className="festive-card relative mt-4 cursor-pointer overflow-hidden rounded-3xl p-4 transition-transform active:scale-[0.98]">
+      {["top-2 left-1/3", "top-10 right-24", "bottom-6 left-6", "bottom-14 right-8"].map((pos, k) => (
+        <span key={k} aria-hidden className={`festive-sparkle pointer-events-none absolute ${pos} text-sm`} style={{ animationDelay: `${k * 0.5}s` }}>✨</span>
+      ))}
+      <span aria-hidden className="festive-spin pointer-events-none absolute -right-6 -top-6 text-7xl opacity-90">🎡</span>
+      <span className="festive-live festive-cta inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-black tracking-wider">
+        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-current" /> {mr ? "थेट सुरू" : "LIVE NOW"}
+      </span>
+      <p className="mt-2 text-xl font-black">{mr ? "🎉 फिरवा आणि जिंका!" : "🎉 Spin & Win!"}</p>
+      <p className="text-xs opacity-85">{mr ? ev.name_mr : ev.name}</p>
+      <p className="mt-2 max-w-[80%] text-sm font-bold">{preview}</p>
       {s?.status === "already_spun" ? (
-        <div className="mt-3">
-          <p className="font-bold">{mr ? "तुम्ही जिंकलात" : "You won"} {mr ? s.prize.label_mr : s.prize.label}</p>
-          <p className="text-sm text-muted-foreground">{prizeMessage(s.prize, mr)}</p>
+        <div className="mt-3 rounded-2xl bg-background/15 p-3">
+          <p className="font-bold">🏆 {mr ? "तुम्ही जिंकलात" : "You won"} {mr ? s.prize.label_mr : s.prize.label}</p>
+          <p className="text-sm opacity-90">{prizeMessage(s.prize, mr)}</p>
           {s.prize.type === "physical" && s.prize.redemption_code && (
-            <div className="mt-3 rounded-xl bg-muted p-3 text-center">
-              <p className="text-xs text-muted-foreground">{s.prize.redeemed ? (mr ? "घेतले" : "Collected") : mr ? "काउंटरवर हा कोड दाखवा" : "Show this code at the counter"}</p>
+            <div className="mt-2 rounded-xl bg-background/20 p-2 text-center">
+              <p className="text-xs opacity-85">{s.prize.redeemed ? (mr ? "घेतले" : "Collected") : mr ? "काउंटरवर हा कोड दाखवा" : "Show this code at the counter"}</p>
               <p className={`text-2xl font-black tracking-widest ${s.prize.redeemed ? "line-through opacity-50" : ""}`}>{s.prize.redemption_code}</p>
             </div>
           )}
         </div>
-      ) : s?.status === "eligible" ? (
-        <button onClick={() => setOpen(true)} className="mt-3 w-full rounded-full bg-primary py-3 font-bold text-primary-foreground">
-          {mr ? "आता फिरवा" : "Spin now"}
-        </button>
-      ) : s && msg[s.status] ? (
-        <>
-          <p className="mt-2 text-sm text-muted-foreground">{mr ? msg[s.status][1] : msg[s.status][0]}</p>
-          {s.status === "sign_in" && (
-            <button onClick={() => void ensureSignedIn()} className="mt-3 w-full rounded-full bg-primary py-3 font-bold text-primary-foreground">
-              {mr ? "साइन इन" : "Sign in"}
-            </button>
-          )}
-        </>
+      ) : cta ? (
+        <div className="festive-cta mt-3 w-full rounded-full py-3 text-center font-black shadow-lg">{cta}</div>
+      ) : status.isLoading ? (
+        <div className="festive-cta mt-3 w-full animate-pulse rounded-full py-3 text-center font-black opacity-80">{mr ? "🎡 चाक फिरवा" : "🎡 Spin the Wheel"}</div>
+      ) : st && msg[st] ? (
+        <p className="mt-3 rounded-xl bg-background/15 p-2 text-sm">{mr ? msg[st][1] : msg[st][0]}</p>
       ) : null}
-      {open && <SpinModal ev={ev} onClose={() => setOpen(false)} />}
+      {open && (
+        <div onClick={(e) => e.stopPropagation()}>
+          <SpinModal ev={ev} onClose={() => setOpen(false)} />
+        </div>
+      )}
     </div>
   );
 }

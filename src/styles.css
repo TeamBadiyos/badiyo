@@ -547,3 +547,20 @@ select,
     radial-gradient(120% 80% at 85% 10%, color-mix(in oklab, var(--primary) 28%, transparent), transparent 60%),
     linear-gradient(180deg, color-mix(in oklab, var(--primary) 16%, var(--background)), var(--background));
 }
+
+/* Spin & Win festive card */
+:root {
+  --festive-a: oklch(0.55 0.22 25);
+  --festive-b: oklch(0.62 0.2 45);
+  --festive-c: oklch(0.45 0.2 350);
+  --festive-gold: oklch(0.86 0.16 88);
+  --festive-ink: oklch(0.99 0.01 90);
+}
+.festive-card { background: radial-gradient(circle at 85% 15%, color-mix(in oklab, var(--festive-gold) 45%, transparent), transparent 45%), linear-gradient(135deg, var(--festive-c), var(--festive-a) 50%, var(--festive-b)); color: var(--festive-ink); box-shadow: 0 12px 30px -12px color-mix(in oklab, var(--festive-a) 70%, transparent); }
+.festive-cta { background: var(--festive-gold); color: var(--festive-c); }
+.festive-live { animation: festive-glow 1.6s ease-in-out infinite; }
+@keyframes festive-glow { 0%,100% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--festive-gold) 80%, transparent); } 50% { box-shadow: 0 0 14px 3px color-mix(in oklab, var(--festive-gold) 70%, transparent); } }
+.festive-sparkle { animation: festive-twinkle 2.2s ease-in-out infinite; }
+@keyframes festive-twinkle { 0%,100% { opacity: .3; transform: scale(.8); } 50% { opacity: 1; transform: scale(1.15); } }
+.festive-spin { animation: festive-rot 9s linear infinite; }
+@keyframes festive-rot { to { transform: rotate(360deg); } }
