@@ -2401,6 +2401,7 @@ export type Database = {
         Row: {
           city_id: string | null
           created_at: string
+          icon: string | null
           id: string
           image_path: string | null
           is_active: boolean
@@ -2413,6 +2414,7 @@ export type Database = {
         Insert: {
           city_id?: string | null
           created_at?: string
+          icon?: string | null
           id?: string
           image_path?: string | null
           is_active?: boolean
@@ -2425,6 +2427,7 @@ export type Database = {
         Update: {
           city_id?: string | null
           created_at?: string
+          icon?: string | null
           id?: string
           image_path?: string | null
           is_active?: boolean
@@ -6186,6 +6189,27 @@ export type Database = {
           },
         ]
       }
+      merchant_onboarding_settings: {
+        Row: {
+          id: boolean
+          require_signed_agreement: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          id?: boolean
+          require_signed_agreement?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          id?: boolean
+          require_signed_agreement?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       merchant_order_items: {
         Row: {
           addons: Json | null
@@ -7195,6 +7219,9 @@ export type Database = {
         Row: {
           accept_timeout_minutes: number | null
           address: string | null
+          agreement_deposit_amount: number
+          agreement_fee_amount: number
+          agreement_required: boolean
           approved_at: string | null
           approved_by: string | null
           auth_user_id: string | null
@@ -7270,6 +7297,9 @@ export type Database = {
         Insert: {
           accept_timeout_minutes?: number | null
           address?: string | null
+          agreement_deposit_amount?: number
+          agreement_fee_amount?: number
+          agreement_required?: boolean
           approved_at?: string | null
           approved_by?: string | null
           auth_user_id?: string | null
@@ -7281,7 +7311,7 @@ export type Database = {
           city?: string | null
           city_id?: string | null
           commission_mode?: string
-          commission_pct: number
+          commission_pct?: number
           commission_type?: string
           commission_value?: number
           country?: string | null
@@ -7345,6 +7375,9 @@ export type Database = {
         Update: {
           accept_timeout_minutes?: number | null
           address?: string | null
+          agreement_deposit_amount?: number
+          agreement_fee_amount?: number
+          agreement_required?: boolean
           approved_at?: string | null
           approved_by?: string | null
           auth_user_id?: string | null
@@ -9934,6 +9967,206 @@ export type Database = {
           },
         ]
       }
+      spin_draws: {
+        Row: {
+          created_at: string
+          device_id: string
+          event_id: string
+          id: string
+          phone: string
+          prize_id: string
+          prize_type: string
+          redeemed_at: string | null
+          redeemed_by: string | null
+          redemption_code: string | null
+          ref_id: string | null
+          request_id: string
+          slice_index: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_id: string
+          event_id: string
+          id?: string
+          phone: string
+          prize_id: string
+          prize_type: string
+          redeemed_at?: string | null
+          redeemed_by?: string | null
+          redemption_code?: string | null
+          ref_id?: string | null
+          request_id: string
+          slice_index: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          device_id?: string
+          event_id?: string
+          id?: string
+          phone?: string
+          prize_id?: string
+          prize_type?: string
+          redeemed_at?: string | null
+          redeemed_by?: string | null
+          redemption_code?: string | null
+          ref_id?: string | null
+          request_id?: string
+          slice_index?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spin_draws_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "spin_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "spin_draws_prize_id_fkey"
+            columns: ["prize_id"]
+            isOneToOne: false
+            referencedRelation: "spin_prizes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      spin_events: {
+        Row: {
+          city_id: string | null
+          created_at: string
+          created_by: string | null
+          eligibility: string
+          ends_at: string
+          id: string
+          is_active: boolean
+          name: string
+          name_mr: string | null
+          starts_at: string
+          updated_at: string
+        }
+        Insert: {
+          city_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          eligibility?: string
+          ends_at: string
+          id?: string
+          is_active?: boolean
+          name: string
+          name_mr?: string | null
+          starts_at: string
+          updated_at?: string
+        }
+        Update: {
+          city_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          eligibility?: string
+          ends_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          name_mr?: string | null
+          starts_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spin_events_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      spin_prizes: {
+        Row: {
+          color: string
+          coupon_id: string | null
+          created_at: string
+          event_id: string
+          given: number
+          icon: string | null
+          id: string
+          is_deleted: boolean
+          is_fallback: boolean
+          label: string
+          label_mr: string | null
+          max_discount: number | null
+          min_order: number
+          prize_type: string
+          services: string[]
+          sort_order: number
+          stock_limit: number | null
+          valid_days: number
+          value: number
+          weight: number
+        }
+        Insert: {
+          color?: string
+          coupon_id?: string | null
+          created_at?: string
+          event_id: string
+          given?: number
+          icon?: string | null
+          id?: string
+          is_deleted?: boolean
+          is_fallback?: boolean
+          label: string
+          label_mr?: string | null
+          max_discount?: number | null
+          min_order?: number
+          prize_type: string
+          services?: string[]
+          sort_order?: number
+          stock_limit?: number | null
+          valid_days?: number
+          value?: number
+          weight?: number
+        }
+        Update: {
+          color?: string
+          coupon_id?: string | null
+          created_at?: string
+          event_id?: string
+          given?: number
+          icon?: string | null
+          id?: string
+          is_deleted?: boolean
+          is_fallback?: boolean
+          label?: string
+          label_mr?: string | null
+          max_discount?: number | null
+          min_order?: number
+          prize_type?: string
+          services?: string[]
+          sort_order?: number
+          stock_limit?: number | null
+          valid_days?: number
+          value?: number
+          weight?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spin_prizes_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "spin_prizes_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "spin_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sponsored_slots: {
         Row: {
           category_id: string | null
@@ -11460,7 +11693,12 @@ export type Database = {
           created_at: string
           geom: unknown
           id: string
+          is_off: boolean
+          live_zone_id: string | null
           name: string
+          off_by: string | null
+          off_reason: string | null
+          off_until: string | null
           updated_at: string
         }
         Insert: {
@@ -11469,7 +11707,12 @@ export type Database = {
           created_at?: string
           geom: unknown
           id?: string
+          is_off?: boolean
+          live_zone_id?: string | null
           name: string
+          off_by?: string | null
+          off_reason?: string | null
+          off_until?: string | null
           updated_at?: string
         }
         Update: {
@@ -11478,7 +11721,12 @@ export type Database = {
           created_at?: string
           geom?: unknown
           id?: string
+          is_off?: boolean
+          live_zone_id?: string | null
           name?: string
+          off_by?: string | null
+          off_reason?: string | null
+          off_until?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -11487,6 +11735,13 @@ export type Database = {
             columns: ["city_id"]
             isOneToOne: false
             referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "zone_draft_cells_live_zone_id_fkey"
+            columns: ["live_zone_id"]
+            isOneToOne: false
+            referencedRelation: "zones"
             referencedColumns: ["id"]
           },
         ]
@@ -11538,7 +11793,11 @@ export type Database = {
           deleted_by: string | null
           geom: unknown
           id: string
+          is_off: boolean
           name: string
+          off_by: string | null
+          off_reason: string | null
+          off_until: string | null
           segment_id: string
           status: string
           version: number
@@ -11554,7 +11813,11 @@ export type Database = {
           deleted_by?: string | null
           geom?: unknown
           id?: string
+          is_off?: boolean
           name: string
+          off_by?: string | null
+          off_reason?: string | null
+          off_until?: string | null
           segment_id: string
           status?: string
           version?: number
@@ -11570,7 +11833,11 @@ export type Database = {
           deleted_by?: string | null
           geom?: unknown
           id?: string
+          is_off?: boolean
           name?: string
+          off_by?: string | null
+          off_reason?: string | null
+          off_until?: string | null
           segment_id?: string
           status?: string
           version?: number
@@ -11732,6 +11999,7 @@ export type Database = {
       }
     }
     Functions: {
+      _send_action_otp: { Args: { _digits: string }; Returns: undefined }
       admin_alert_claim_batch: {
         Args: { _limit?: number }
         Returns: {
@@ -11916,6 +12184,7 @@ export type Database = {
         Returns: Json
       }
       app_merchant_issue_signup_agreement: { Args: never; Returns: string }
+      app_merchant_onboarding_state: { Args: never; Returns: Json }
       app_my_agreements: { Args: never; Returns: Json }
       app_ops_value: { Args: { _city: string; _key: string }; Returns: string }
       app_order_again: { Args: { _service_key: string }; Returns: Json }
@@ -11928,6 +12197,15 @@ export type Database = {
         Returns: Json
       }
       app_set_offer_notifications: { Args: { _on: boolean }; Returns: Json }
+      app_spin: {
+        Args: { _device_id: string; _event_id: string; _request_id: string }
+        Returns: Json
+      }
+      app_spin_event: { Args: { _city_id?: string }; Returns: Json }
+      app_spin_status: {
+        Args: { _device_id: string; _event_id: string }
+        Returns: Json
+      }
       app_store_cancel_order: {
         Args: { _destination?: string; _order_id: string; _reason?: string }
         Returns: Json
@@ -11950,6 +12228,16 @@ export type Database = {
         Returns: Json
       }
       app_wallet_summary: { Args: never; Returns: Json }
+      app_zone_off_notify: {
+        Args: {
+          _lat: number
+          _lng: number
+          _phone?: string
+          _services?: string[]
+        }
+        Returns: Json
+      }
+      app_zone_status: { Args: { _lat: number; _lng: number }; Returns: Json }
       apply_referral_code: { Args: { _code: string }; Returns: string }
       auto_cancel_minutes: {
         Args: { _city_id: string; _service_key: string }
@@ -12901,6 +13189,7 @@ export type Database = {
       cron_fast_tick: { Args: never; Returns: undefined }
       cron_minute_tick: { Args: never; Returns: undefined }
       current_merchant_id: { Args: never; Returns: string }
+      current_user_phone_digits: { Args: never; Returns: string }
       customer_cancel_booking_apply: {
         Args: {
           _booking_id: string
@@ -13370,6 +13659,7 @@ export type Database = {
         Args: { _new_status: string; _order_id: string }
         Returns: undefined
       }
+      merchant_agreement_ok: { Args: { _m: string }; Returns: boolean }
       merchant_bank_change_request_otp: {
         Args: { _store_id: string }
         Returns: Json
@@ -14038,6 +14328,11 @@ export type Database = {
           last_min: number
         }[]
       }
+      spin_draw_json: {
+        Args: { _d: Database["public"]["Tables"]["spin_draws"]["Row"] }
+        Returns: Json
+      }
+      spin_slice_index: { Args: { _prize: string }; Returns: number }
       staff_accept_booking: {
         Args: { _booking_id: string }
         Returns: undefined
@@ -15035,6 +15330,14 @@ export type Database = {
         Args: { _kind: string; _lead_id: string; _status: string }
         Returns: boolean
       }
+      staff_set_merchant_agreement_setting: {
+        Args: { _require: boolean }
+        Returns: undefined
+      }
+      staff_set_merchant_agreement_terms: {
+        Args: { _deposit: number; _fee: number; _merchant_id: string }
+        Returns: undefined
+      }
       staff_set_merchant_commission: {
         Args: { _merchant_id: string; _pct: number }
         Returns: Json
@@ -15178,6 +15481,15 @@ export type Database = {
         Args: { _days: number }
         Returns: undefined
       }
+      staff_set_zone_off: {
+        Args: {
+          _cell: string
+          _off: boolean
+          _reason?: string
+          _until?: string
+        }
+        Returns: Json
+      }
       staff_slot_band_summary:
         | { Args: { _date: string; _service_key: string }; Returns: Json }
         | {
@@ -15196,6 +15508,24 @@ export type Database = {
         Args: { _reason: string; _zone_id: string }
         Returns: undefined
       }
+      staff_spin_export: {
+        Args: { _event_id: string }
+        Returns: {
+          name: string
+          phone: string
+          prize: string
+          prize_type: string
+          redeemed_at: string
+          redemption_code: string
+          won_at: string
+        }[]
+      }
+      staff_spin_redeem: { Args: { _code: string }; Returns: Json }
+      staff_spin_save: {
+        Args: { _event: Json; _prizes: Json }
+        Returns: string
+      }
+      staff_spin_stats: { Args: { _event_id: string }; Returns: Json }
       staff_store_cancel_refund: {
         Args: {
           _amount?: number
@@ -15931,10 +16261,31 @@ export type Database = {
         Returns: Json
       }
       zone_delete_impact: { Args: { _zone_id: string }; Returns: Json }
+      zone_is_off_at: { Args: { _lat: number; _lng: number }; Returns: boolean }
       zone_lookup: { Args: { _lat: number; _lng: number }; Returns: Json }
       zv2_assert_no_overlap: { Args: { _city: string }; Returns: undefined }
+      zv2_cell_refs: { Args: { _cell: string }; Returns: Json }
+      zv2_cities: { Args: never; Returns: Json }
       zv2_clean: { Args: { _g: unknown }; Returns: unknown }
+      zv2_delete_cell: {
+        Args: { _cell: string; _move_to?: string }
+        Returns: Json
+      }
+      zv2_fill_gaps_apply: {
+        Args: { _as_new?: number[]; _city: string }
+        Returns: Json
+      }
+      zv2_fill_gaps_preview: { Args: { _city: string }; Returns: Json }
       zv2_from_jsonb: { Args: { _b: Json }; Returns: unknown }
+      zv2_gap_pieces: {
+        Args: { _city: string }
+        Returns: {
+          area_m2: number
+          geom: unknown
+          idx: number
+          target: string
+        }[]
+      }
       zv2_merge: { Args: { _a: string; _b: string }; Returns: Json }
       zv2_move_point: {
         Args: {
@@ -15947,6 +16298,10 @@ export type Database = {
         Returns: Json
       }
       zv2_normalize: { Args: { _city: string }; Returns: number }
+      zv2_remap_zone: {
+        Args: { _new: string; _old: string }
+        Returns: undefined
+      }
       zv2_require: {
         Args: { _city: string; _super?: boolean }
         Returns: undefined
@@ -15957,6 +16312,16 @@ export type Database = {
           _geojson: Json
           _reset: boolean
           _source: string
+        }
+        Returns: Json
+      }
+      zv2_save_zone: {
+        Args: {
+          _cell: string
+          _city: string
+          _colour: string
+          _geojson: Json
+          _name: string
         }
         Returns: Json
       }
@@ -15972,6 +16337,7 @@ export type Database = {
         Returns: Json
       }
       zv2_switchover_preview: { Args: { _city: string }; Returns: Json }
+      zv2_sync_live: { Args: { _cell: string }; Returns: undefined }
       zv2_to_jsonb: { Args: { _g: unknown }; Returns: Json }
       zv2_undo: { Args: { _city: string }; Returns: Json }
       zv2_update_cell: {
