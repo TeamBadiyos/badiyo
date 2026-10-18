@@ -480,6 +480,7 @@ function Index() {
   const isAtRootPhase = useCallback((p: Phase) => {
     return (
       p === "home" ||
+      (p === "login" && !signedInRef.current && historyRef.current.length === 0) ||
       p === "otp-verify" ||
       p === "pin-login" ||
       p === "pin-set" ||
@@ -749,8 +750,8 @@ function Index() {
         void cleanReady.then(() => {
           if (cancelled) return;
           setPhase("splash-out");
-          // Guests land on the tabs; login is asked only when an action needs it.
-          setTimeout(() => !cancelled && setPhase("home"), 220);
+          // Signed-out users must log in first, before reaching Home.
+          setTimeout(() => !cancelled && setPhase("login"), 220);
         });
       }, wait);
     };
@@ -1289,7 +1290,11 @@ function Index() {
             onOpenTickets={() => setPhase("support-tickets")}
             onOpenSuggestions={() => setPhase("suggestions")}
             onOpenAddresses={() => setPhase("manage-addresses")}
-            onLogout={() => setPhase("login")}
+            onLogout={() => {
+              historyRef.current = [];
+              phaseRef.current = "login";
+              _setPhase("login");
+            }}
           />
         </div>
       )}
