@@ -231,7 +231,8 @@ export function prefetchCleanTab(qc: import("@tanstack/react-query").QueryClient
     return contentImageUrls(content);
   })).then(async (lists) => {
     const all = lists.flat();
-    await syncImages(all, all);
+    const courierNow = readCache<ServiceContent>("content", "courier", cityId);
+    await syncImages(all, [...all, ...contentImageUrls(courierNow)]);
     await preloadImages(all);
   });
   void network.catch(() => {});
