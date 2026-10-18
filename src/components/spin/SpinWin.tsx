@@ -217,7 +217,7 @@ export function SpinDealsCard() {
       <p className="mt-2 text-xl font-black">{mr ? "🎉 फिरवा आणि जिंका!" : "🎉 Spin & Win!"}</p>
       <p className="text-xs opacity-85">{mr ? ev.name_mr : ev.name}</p>
       <p className="mt-2 max-w-[80%] text-sm font-bold">{preview}</p>
-      {st === "already_spun" ? (
+      {s?.status === "already_spun" ? (
         <div className="mt-3 rounded-2xl bg-background/15 p-3">
           <p className="font-bold">🏆 {mr ? "तुम्ही जिंकलात" : "You won"} {mr ? s.prize.label_mr : s.prize.label}</p>
           <p className="text-sm opacity-90">{prizeMessage(s.prize, mr)}</p>
