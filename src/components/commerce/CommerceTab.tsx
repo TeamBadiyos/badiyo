@@ -331,7 +331,7 @@ function CategoryChip({
           <Icon className="h-6 w-6" strokeWidth={active ? 2.2 : 1.7} />
         )}
       </span>
-      <span className={`line-clamp-1 whitespace-nowrap text-center text-[12px] leading-tight ${active ? "font-extrabold text-foreground" : "font-medium"}`}>
+      <span className={`line-clamp-2 text-center text-[12px] leading-tight ${active ? "font-extrabold text-foreground" : "font-medium"}`}>
         {label}
       </span>
       <span className={`absolute inset-x-2 bottom-0 h-[3px] rounded-t-full ${active ? "bg-foreground" : "bg-transparent"}`} />
