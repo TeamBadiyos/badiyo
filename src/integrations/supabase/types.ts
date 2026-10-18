@@ -13476,6 +13476,7 @@ export type Database = {
         Args: { _limit?: number; _offset?: number; _store_id: string }
         Returns: Json
       }
+      merchant_start_fresh: { Args: never; Returns: string }
       merchant_submit_application: { Args: never; Returns: undefined }
       merchant_suggest_category: {
         Args: { _name: string; _product_id: string }
