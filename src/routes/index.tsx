@@ -1,3 +1,4 @@
+import { SpinAutoPopup } from "@/components/spin/SpinWin";
 import { LOGIN_REQUIRED_EVENT, ensureSignedIn } from "@/lib/authGate";
 import { createFileRoute } from "@tanstack/react-router";
 import { Suspense, lazy, useCallback, useEffect, useRef, useState, type ComponentType } from "react";
@@ -1487,6 +1488,7 @@ function Index() {
         </div>
       )}
       </Suspense>
+      <SpinAutoPopup onOpenDeals={() => { setRewardsTab("deals"); setPhase("rewards"); }} />
       <CompleteProfileSheet
         enabled={phase === "home" || phase === "orders" || phase === "rewards"}
       />
