@@ -61,3 +61,32 @@ export async function doSpin(eventId: string): Promise<SpinPrize> {
   }
   throw lastErr ?? new Error("network");
 }
+
+export type MySpinPrize = {
+  draw_id: string; event_name: string; event_name_mr: string | null; event_starts_at: string | null;
+  prize: string; prize_mr: string | null; color: string | null; icon: string | null;
+  code: string | null; qr: string | null; won_at: string; expires_at: string | null;
+  status: "won" | "pending_undo" | "redeemed" | "expired";
+  redeemed_at: string | null; undo_deadline: string | null;
+  customer_name: string | null; phone_masked: string | null;
+};
+
+export async function fetchMySpinPrizes(): Promise<MySpinPrize[]> {
+  const { data: s } = await supabase.auth.getSession();
+  if (!s.session) return [];
+  const { data, error } = await rpc("app_my_spin_prizes", {});
+  if (error) throw error;
+  return (data as MySpinPrize[]) ?? [];
+}
+
+export async function redeemSpinPrize(drawId: string) {
+  const { data, error } = await rpc("app_spin_prize_redeem", { _draw_id: drawId });
+  if (error) throw error;
+  return data as { ok: boolean; status: string; undo_deadline: string };
+}
+
+export async function undoSpinPrize(drawId: string) {
+  const { data, error } = await rpc("app_spin_prize_undo", { _draw_id: drawId });
+  if (error) throw error;
+  return data as { ok: boolean; status: string };
+}

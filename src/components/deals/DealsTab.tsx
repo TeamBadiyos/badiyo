@@ -32,7 +32,7 @@ const ERR: Record<string, string> = {
 const fmtTime = (iso?: string | null) =>
   iso ? new Date(iso).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "";
 
-function useNow(ms = 1000) {
+export function useNow(ms = 1000) {
   const [n, setN] = useState(() => Date.now());
   useEffect(() => {
     const t = setInterval(() => setN(Date.now()), ms);
@@ -260,7 +260,7 @@ function DealCard({ offer, mine, focus }: { offer: EventOffer; mine: MyRedemptio
   );
 }
 
-function LiveClock({ now, light }: { now: number; light?: boolean }) {
+export function LiveClock({ now, light }: { now: number; light?: boolean }) {
   const t = new Date(now).toLocaleTimeString("en-GB", { hour12: false, timeZone: "Asia/Kolkata" });
   return (
     <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-mono text-xs font-bold tabular-nums ${light ? "bg-primary-foreground/20" : "bg-background text-foreground"}`}>
@@ -269,7 +269,7 @@ function LiveClock({ now, light }: { now: number; light?: boolean }) {
   );
 }
 
-function SwipeSlider({ label, disabled, onDone }: { label: string; disabled?: boolean; onDone: () => void }) {
+export function SwipeSlider({ label, disabled, onDone }: { label: string; disabled?: boolean; onDone: () => void }) {
   const track = useRef<HTMLDivElement>(null);
   const [x, setX] = useState(0);
   const start = useRef<number | null>(null);
