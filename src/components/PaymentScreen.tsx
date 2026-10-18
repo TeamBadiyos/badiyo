@@ -381,7 +381,31 @@ export function PaymentScreen({
           },
         },
       );
-      if (error) throw new Error(error.message);
+      if (error) {
+        // Slot / service closed on the server: send the customer back to pick
+        // another time instead of a generic "Payment failed" loop.
+        let body: { error?: string; reason_code?: string; message_en?: string | null; message_mr?: string | null } | null = null;
+        try {
+          const ctx = (error as { context?: Response }).context;
+          if (ctx && typeof ctx.clone === "function") body = await ctx.clone().json();
+        } catch {
+          /* not JSON */
+        }
+        if (body?.error === "SERVICE_CLOSED") {
+          const lang = readLangOutsideReact();
+          const msg =
+            body.reason_code === "slot_full"
+              ? lang === "mr"
+                ? "हा स्लॉट नुकताच पूर्ण भरला. कृपया पुढील वेळ निवडा. पैसे कापले गेले नाहीत."
+                : "This slot just got fully booked. Please select a later slot. No money was charged."
+              : (lang === "mr" ? body.message_mr : body.message_en) ||
+                (lang === "mr" ? "ही वेळ उपलब्ध नाही. कृपया दुसरी वेळ निवडा." : "This time is not available. Please select another slot.");
+          toast(msg, { position: "top-center" });
+          (onSlotUnavailable ?? onBack)();
+          return;
+        }
+        throw new Error(error.message);
+      }
       if (!data?.order_id || (!data?.key_id && data?.free !== true)) {
         throw new Error("Invalid order response");
       }

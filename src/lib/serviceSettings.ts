@@ -94,9 +94,12 @@ export function useBookNowAllowed(key: CleanServiceKey, enabled = true) {
 export async function fetchAppFullySlots(key: CleanServiceKey, from: string, to: string): Promise<Set<string>> {
   const { data, error } = await rpc("app_fully_booked_slots", { _service_key: key, _city_id: getCustomerCityId(), _from: from, _to: to });
   if (error || !Array.isArray(data)) return new Set();
+  // Backend returns { date, hour, minute }; older shape was { slot_date, start_hour, start_minute }.
+  type Row = { date?: string; hour?: number; minute?: number; slot_date?: string; start_hour?: number; start_minute?: number };
   return new Set(
-    (data as { slot_date: string; start_hour: number; start_minute?: number }[]).map(
-      (r) => `${String(r.slot_date).slice(0, 10)}|${Number(r.start_hour) * 60 + Number(r.start_minute ?? 0)}`,
+    (data as Row[]).map(
+      (r) =>
+        `${String(r.date ?? r.slot_date).slice(0, 10)}|${Number(r.hour ?? r.start_hour) * 60 + Number(r.minute ?? r.start_minute ?? 0)}`,
     ),
   );
 }
