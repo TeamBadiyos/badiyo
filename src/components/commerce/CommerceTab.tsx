@@ -235,9 +235,17 @@ export function CommerceTab({
       {!query && recommended.length > 0 && (
         <section className="mt-5">
           <h2 className="text-base font-extrabold text-foreground">{c.recommended}</h2>
-          <div className="mt-2 space-y-2.5">
+          <div className="mt-2 grid grid-cols-3 gap-2.5">
             {recommended.map((s) => (
-              <StoreCard key={`r-${s.id}`} store={s} lang={lang} onClick={() => tapStore(s)} />
+              <button
+                key={`r-${s.id}`}
+                type="button"
+                onClick={() => tapStore(s)}
+                className={`min-w-0 rounded-[14px] border border-border bg-card p-2 text-left active:scale-[0.98] ${s.is_open ? "" : "opacity-50 grayscale"}`}
+              >
+                <StoreImage path={s.photo_url} variant="store" alt={s.name} className="aspect-square h-auto w-full rounded-[10px]" />
+                <p className="mt-1.5 line-clamp-2 text-[12px] font-bold leading-tight text-foreground">{s.name}</p>
+              </button>
             ))}
           </div>
         </section>

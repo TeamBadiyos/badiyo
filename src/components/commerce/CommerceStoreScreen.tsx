@@ -217,7 +217,16 @@ export function CommerceStoreScreen({
         <div className={`px-5 ${closed ? "opacity-60 grayscale" : ""}`}>
           {!words.length && recommended.length > 0 && (
             <Section title={c.recommended}>
-              <FoodList items={recommended} {...props} />
+              <div className="grid grid-cols-3 gap-2.5">
+                {recommended.map((it) => (
+                  <div key={`r-${it.id}`} className={`flex min-w-0 flex-col rounded-[14px] border border-border bg-card p-2 ${it.in_stock ? "" : "opacity-50 grayscale"}`}>
+                    <StoreImage path={it.photo_url} alt={it.name} className="aspect-square h-auto w-full rounded-[10px]" />
+                    <p className="mt-1.5 line-clamp-2 text-[12px] font-bold leading-tight text-foreground">{it.name}</p>
+                    <div className="mt-0.5 text-[12px]"><Price item={it} /></div>
+                    <div className="mt-auto flex justify-center pt-1.5"><AddControl item={it} {...props} /></div>
+                  </div>
+                ))}
+              </div>
             </Section>
           )}
           {words.length > 0 && shown.length === 0 && <p className="mt-10 text-center text-sm text-muted-foreground">{c.noMatch}</p>}
