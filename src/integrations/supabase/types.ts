@@ -13979,6 +13979,10 @@ export type Database = {
         Args: { _items: Json; _lat: number; _lng: number; _merchant_id: string }
         Returns: Json
       }
+      otp_global_cap_alert: {
+        Args: { _cap: number; _count: number }
+        Returns: undefined
+      }
       pan_key: { Args: never; Returns: string }
       partner_assert_draft: { Args: { _batch_id: string }; Returns: undefined }
       partner_decide_extension: {

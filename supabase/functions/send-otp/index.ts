@@ -1,6 +1,8 @@
 // Supabase Edge Function: send-otp
 // Generates a 4-digit code, stores it in otp_codes, and sends via AiSensy WhatsApp.
-// Enforces rate limits: max 3 sends per phone per 10 minutes, 10 per IP per hour.
+// Limits: 3 sends per phone per 10 min; per IP 300/hour (2,000/hour in event
+// mode window from ops_settings or OTP_EVENT_MODE_START/END secrets); global
+// cap 3,000/hour raises a Command Center alert. All editable in ops_settings.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -12,7 +14,9 @@ const corsHeaders = {
 
 const PHONE_LIMIT = 3;
 const PHONE_WINDOW_MIN = 10;
-const IP_LIMIT = 10;
+const IP_LIMIT = 300;
+const EVENT_IP_LIMIT = 2000;
+const GLOBAL_CAP = 3000;
 const IP_WINDOW_MIN = 60;
 
 Deno.serve(async (req) => {
@@ -36,12 +40,34 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
+    // Rate-limit settings (Command Center → ops_settings; secrets as fallback)
+    const { data: settingRows } = await supabase
+      .from("ops_settings")
+      .select("key, value")
+      .in("key", [
+        "otp_ip_limit_per_hour",
+        "otp_event_ip_limit_per_hour",
+        "otp_event_mode_start",
+        "otp_event_mode_end",
+        "otp_global_cap_per_hour",
+      ]);
+    const s = new Map((settingRows ?? []).map((r: { key: string; value: string }) => [r.key, r.value]));
+    const num = (k: string, d: number) => {
+      const n = Number(s.get(k));
+      return Number.isFinite(n) && n > 0 ? n : d;
+    };
+    const evStart = Date.parse(s.get("otp_event_mode_start") || Deno.env.get("OTP_EVENT_MODE_START") || "");
+    const evEnd = Date.parse(s.get("otp_event_mode_end") || Deno.env.get("OTP_EVENT_MODE_END") || "");
+    const eventMode = Number.isFinite(evStart) && Number.isFinite(evEnd) && Date.now() >= evStart && Date.now() <= evEnd;
+    const ipLimit = eventMode ? num("otp_event_ip_limit_per_hour", EVENT_IP_LIMIT) : num("otp_ip_limit_per_hour", IP_LIMIT);
+    const globalCap = num("otp_global_cap_per_hour", GLOBAL_CAP);
+
     // Rate-limit checks
     const nowIso = new Date().toISOString();
     const phoneSince = new Date(Date.now() - PHONE_WINDOW_MIN * 60_000).toISOString();
     const ipSince = new Date(Date.now() - IP_WINDOW_MIN * 60_000).toISOString();
 
-    const [{ count: phoneCount }, { count: ipCount }] = await Promise.all([
+    const [{ count: phoneCount }, { count: ipCount }, { count: globalCount }] = await Promise.all([
       supabase
         .from("otp_rate_limits")
         .select("id", { head: true, count: "exact" })
@@ -52,9 +78,19 @@ Deno.serve(async (req) => {
         .select("id", { head: true, count: "exact" })
         .eq("ip", ip)
         .gte("created_at", ipSince),
+      supabase
+        .from("otp_rate_limits")
+        .select("id", { head: true, count: "exact" })
+        .gte("created_at", ipSince),
     ]);
 
-    if ((phoneCount ?? 0) >= PHONE_LIMIT || (ipCount ?? 0) >= IP_LIMIT) {
+    if ((globalCount ?? 0) >= globalCap) {
+      console.error("send-otp GLOBAL CAP reached", { count: globalCount, cap: globalCap, eventMode });
+      const { error: alertErr } = await supabase.rpc("otp_global_cap_alert", { _count: globalCount ?? 0, _cap: globalCap });
+      if (alertErr) console.error("otp_global_cap_alert failed", alertErr);
+      return json({ error: "We're getting a lot of sign-ins right now. Please try again in a few minutes." }, 429);
+    }
+    if ((phoneCount ?? 0) >= PHONE_LIMIT || (ipCount ?? 0) >= ipLimit) {
       return json({ error: "Too many attempts, please try again later" }, 429);
     }
 
