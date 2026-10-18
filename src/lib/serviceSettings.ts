@@ -212,6 +212,13 @@ export function preloadImages(urls: string[]): Promise<void> {
  */
 export function prefetchCleanTab(qc: import("@tanstack/react-query").QueryClient, maxMs = 1500): Promise<void> {
   const cityId = getCustomerCityId();
+  // Parcel banner photos: warm from cache now, then refresh, so the Parcel tab
+  // opens with its photo instead of the plain sky colour.
+  const cachedCourier = readCache<ServiceContent>("content", "courier", cityId);
+  if (cachedCourier) void syncImages(contentImageUrls(cachedCourier)).then(() => preloadImages(contentImageUrls(cachedCourier)));
+  void qc.fetchQuery({ queryKey: ["app-service-content", "courier", cityId], queryFn: () => fetchServiceContent("courier", cityId), staleTime: 0 })
+    .then(async (c) => { const u = contentImageUrls(c); await syncImages(u); await preloadImages(u); })
+    .catch(() => {});
   const keys: CleanServiceKey[] = ["clean", "wash"];
   const cached = keys.map((k) => readCache<ServiceContent>("content", k, cityId));
   const warm = cached.every(Boolean) && keys.every((k) => readCache("hours", k, cityId) !== undefined);
@@ -224,7 +231,8 @@ export function prefetchCleanTab(qc: import("@tanstack/react-query").QueryClient
     return contentImageUrls(content);
   })).then(async (lists) => {
     const all = lists.flat();
-    await syncImages(all, all);
+    const courierNow = readCache<ServiceContent>("content", "courier", cityId);
+    await syncImages(all, [...all, ...contentImageUrls(courierNow)]);
     await preloadImages(all);
   });
   void network.catch(() => {});

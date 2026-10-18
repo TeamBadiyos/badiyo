@@ -11,6 +11,7 @@ import { ImageIcon, Store as StoreIcon } from "lucide-react";
  *   full  → legacy proxy → placeholder
  */
 const CATALOG_BASE = "https://api.badiyos.com/storage/v1/object/public/catalog-images";
+const RENDER_BASE = "https://api.badiyos.com/storage/v1/render/image/public/catalog-images";
 
 export function StoreImage({
   path,
@@ -44,21 +45,18 @@ export function StoreImage({
     );
   }
 
-  // External URLs pass through untouched.
+  // Catalog photos (full URL or bucket path) go through the resize CDN: small
+  // WebP for lists (~20–100 KB instead of multi-MB originals).
   const external = /^https?:\/\//i.test(path);
-  const clean = path.replace(/^\/+/, "");
-  const sources: string[] = external
+  const catalogPrefix = `${CATALOG_BASE}/`;
+  const isCatalogUrl = external && path.startsWith(catalogPrefix);
+  const clean = (isCatalogUrl ? path.slice(catalogPrefix.length) : path).replace(/^\/+/, "");
+  const resized = (w: number) => `${RENDER_BASE}/${clean}?width=${w}&height=${w}&resize=contain&quality=70`;
+  const sources: string[] = external && !isCatalogUrl
     ? [path]
     : size === "full"
-      ? [
-          `${CATALOG_BASE}/${clean}`,
-          `/api/public/store-image?kind=${variant}&path=${encodeURIComponent(clean)}`,
-        ]
-      : [
-          `${CATALOG_BASE}/_thumbs/${clean}.webp`,
-          `${CATALOG_BASE}/${clean}`,
-          `/api/public/store-image?kind=${variant}&path=${encodeURIComponent(clean)}`,
-        ];
+      ? [resized(800), `${CATALOG_BASE}/${clean}`]
+      : [resized(300), `${CATALOG_BASE}/${clean}`];
 
   if (step >= sources.length) {
     return (
