@@ -10121,6 +10121,38 @@ export type Database = {
           },
         ]
       }
+      spin_prize_tokens: {
+        Row: {
+          claimed_at: string | null
+          draw_id: string | null
+          event_id: string
+          id: number
+          prize_id: string
+        }
+        Insert: {
+          claimed_at?: string | null
+          draw_id?: string | null
+          event_id: string
+          id?: number
+          prize_id: string
+        }
+        Update: {
+          claimed_at?: string | null
+          draw_id?: string | null
+          event_id?: string
+          id?: number
+          prize_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spin_prize_tokens_prize_id_fkey"
+            columns: ["prize_id"]
+            isOneToOne: false
+            referencedRelation: "spin_prizes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       spin_prizes: {
         Row: {
           color: string
@@ -14389,6 +14421,8 @@ export type Database = {
       }
       spin_is_staff: { Args: never; Returns: boolean }
       spin_mask_phone: { Args: { _p: string }; Returns: string }
+      spin_prize_given: { Args: { _prize_id: string }; Returns: number }
+      spin_refresh_given: { Args: { _event_id: string }; Returns: undefined }
       spin_send_prize_reminders: { Args: never; Returns: number }
       spin_slice_index: { Args: { _prize: string }; Returns: number }
       staff_accept_booking: {
