@@ -9972,48 +9972,60 @@ export type Database = {
           created_at: string
           device_id: string
           event_id: string
+          gate_label: string | null
           id: string
           phone: string
           prize_id: string
           prize_type: string
+          redeem_method: string | null
+          redeem_reason: string | null
           redeemed_at: string | null
           redeemed_by: string | null
           redemption_code: string | null
           ref_id: string | null
           request_id: string
           slice_index: number
+          undo_deadline: string | null
           user_id: string
         }
         Insert: {
           created_at?: string
           device_id: string
           event_id: string
+          gate_label?: string | null
           id?: string
           phone: string
           prize_id: string
           prize_type: string
+          redeem_method?: string | null
+          redeem_reason?: string | null
           redeemed_at?: string | null
           redeemed_by?: string | null
           redemption_code?: string | null
           ref_id?: string | null
           request_id: string
           slice_index: number
+          undo_deadline?: string | null
           user_id: string
         }
         Update: {
           created_at?: string
           device_id?: string
           event_id?: string
+          gate_label?: string | null
           id?: string
           phone?: string
           prize_id?: string
           prize_type?: string
+          redeem_method?: string | null
+          redeem_reason?: string | null
           redeemed_at?: string | null
           redeemed_by?: string | null
           redemption_code?: string | null
           ref_id?: string | null
           request_id?: string
           slice_index?: number
+          undo_deadline?: string | null
           user_id?: string
         }
         Relationships: [
@@ -10083,12 +10095,39 @@ export type Database = {
           },
         ]
       }
+      spin_prize_reminders: {
+        Row: {
+          draw_id: string
+          kind: string
+          sent_at: string
+        }
+        Insert: {
+          draw_id: string
+          kind: string
+          sent_at?: string
+        }
+        Update: {
+          draw_id?: string
+          kind?: string
+          sent_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spin_prize_reminders_draw_id_fkey"
+            columns: ["draw_id"]
+            isOneToOne: false
+            referencedRelation: "spin_draws"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       spin_prizes: {
         Row: {
           color: string
           coupon_id: string | null
           created_at: string
           event_id: string
+          expires_at: string | null
           given: number
           icon: string | null
           id: string
@@ -10111,6 +10150,7 @@ export type Database = {
           coupon_id?: string | null
           created_at?: string
           event_id: string
+          expires_at?: string | null
           given?: number
           icon?: string | null
           id?: string
@@ -10133,6 +10173,7 @@ export type Database = {
           coupon_id?: string | null
           created_at?: string
           event_id?: string
+          expires_at?: string | null
           given?: number
           icon?: string | null
           id?: string
@@ -12186,6 +12227,7 @@ export type Database = {
       app_merchant_issue_signup_agreement: { Args: never; Returns: string }
       app_merchant_onboarding_state: { Args: never; Returns: Json }
       app_my_agreements: { Args: never; Returns: Json }
+      app_my_spin_prizes: { Args: never; Returns: Json }
       app_ops_value: { Args: { _city: string; _key: string }; Returns: string }
       app_order_again: { Args: { _service_key: string }; Returns: Json }
       app_service_content: {
@@ -12202,6 +12244,8 @@ export type Database = {
         Returns: Json
       }
       app_spin_event: { Args: { _city_id?: string }; Returns: Json }
+      app_spin_prize_redeem: { Args: { _draw_id: string }; Returns: Json }
+      app_spin_prize_undo: { Args: { _draw_id: string }; Returns: Json }
       app_spin_status: {
         Args: { _device_id: string; _event_id: string }
         Returns: Json
@@ -14332,6 +14376,16 @@ export type Database = {
         Args: { _d: Database["public"]["Tables"]["spin_draws"]["Row"] }
         Returns: Json
       }
+      spin_draw_status: {
+        Args: {
+          _d: Database["public"]["Tables"]["spin_draws"]["Row"]
+          _exp: string
+        }
+        Returns: string
+      }
+      spin_is_staff: { Args: never; Returns: boolean }
+      spin_mask_phone: { Args: { _p: string }; Returns: string }
+      spin_send_prize_reminders: { Args: never; Returns: number }
       spin_slice_index: { Args: { _prize: string }; Returns: number }
       staff_accept_booking: {
         Args: { _booking_id: string }
@@ -15520,10 +15574,24 @@ export type Database = {
           won_at: string
         }[]
       }
+      staff_spin_mark_redeemed: {
+        Args: { _draw_id: string; _gate: string; _reason: string }
+        Returns: Json
+      }
       staff_spin_redeem: { Args: { _code: string }; Returns: Json }
+      staff_spin_redemptions: { Args: { _event_id: string }; Returns: Json }
       staff_spin_save: {
         Args: { _event: Json; _prizes: Json }
         Returns: string
+      }
+      staff_spin_scan_check: { Args: { _code: string }; Returns: Json }
+      staff_spin_scan_redeem: {
+        Args: { _code: string; _gate: string }
+        Returns: Json
+      }
+      staff_spin_set_prize_expiry: {
+        Args: { _expires_at: string; _prize_id: string }
+        Returns: undefined
       }
       staff_spin_stats: { Args: { _event_id: string }; Returns: Json }
       staff_store_cancel_refund: {
