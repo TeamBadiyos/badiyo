@@ -1,5 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
-import { RotateCcw, Search, Star } from "lucide-react";
+import {
+  Apple,
+  BookOpen,
+  Cookie,
+  Gift,
+  Headphones,
+  Package,
+  Pill,
+  RotateCcw,
+  Search,
+  ShoppingBag,
+  ShoppingBasket,
+  Sparkles,
+  Star,
+  Store,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useLanguage } from "@/i18n";
 import { supabase } from "@/integrations/supabase/client";
@@ -165,8 +180,8 @@ export function CommerceTab({
       )}
 
       {(home?.categories.length ?? 0) > 0 && (
-        <div className="-mx-5 mt-4 flex gap-3 overflow-x-auto px-5 pb-1 no-scrollbar">
-          <CategoryChip label={c.all} active={!categoryId} onClick={() => setCategoryId(null)} />
+        <div className="-mx-5 mt-3 flex gap-2 overflow-x-auto border-b border-border px-4 no-scrollbar">
+          <CategoryChip label={c.all} all active={!categoryId} onClick={() => setCategoryId(null)} />
           {home!.categories.map((cat) => (
             <CategoryChip
               key={cat.id}
@@ -276,21 +291,50 @@ export function CommerceTab({
   );
 }
 
-function CategoryChip({ label, icon, active, onClick }: { label: string; icon?: string | null; active: boolean; onClick: () => void }) {
+function categoryIcon(label: string) {
+  const l = label.toLowerCase();
+  if (/grocer|किराणा/.test(l)) return ShoppingBasket;
+  if (/sweet|namkeen|मिठा|snack/.test(l)) return Cookie;
+  if (/station|book|पुस्त/.test(l)) return BookOpen;
+  if (/pack/.test(l)) return Package;
+  if (/beauty|cosmet/.test(l)) return Sparkles;
+  if (/fruit|veg|भाजी/.test(l)) return Apple;
+  if (/gift/.test(l)) return Gift;
+  if (/electr/.test(l)) return Headphones;
+  if (/medic|pharm/.test(l)) return Pill;
+  return Store;
+}
+
+function CategoryChip({
+  label,
+  icon,
+  active,
+  all,
+  onClick,
+}: {
+  label: string;
+  icon?: string | null;
+  active: boolean;
+  all?: boolean;
+  onClick: () => void;
+}) {
+  const Icon = all ? ShoppingBag : categoryIcon(label);
   return (
-    <button onClick={onClick} className="flex w-[68px] shrink-0 flex-col items-center gap-1">
-      <span
-        className={`flex h-14 w-14 items-center justify-center overflow-hidden rounded-[16px] border-2 bg-card ${active ? "border-primary" : "border-transparent shadow-sm"}`}
-      >
+    <button
+      onClick={onClick}
+      className={`relative flex min-w-[64px] max-w-[84px] shrink-0 flex-col items-center gap-1 px-1 pb-2.5 pt-1 transition-colors ${active ? "text-primary" : "text-muted-foreground"}`}
+    >
+      <span className="flex h-8 w-8 items-center justify-center">
         {icon ? (
-          <img src={icon} alt="" className="h-10 w-10 object-contain" loading="lazy" decoding="async" />
+          <img src={icon} alt="" className="h-8 w-8 object-contain" loading="lazy" decoding="async" />
         ) : (
-          <span className="text-lg font-extrabold text-primary">{label.slice(0, 1)}</span>
+          <Icon className="h-6 w-6" strokeWidth={active ? 2.2 : 1.7} />
         )}
       </span>
-      <span className={`line-clamp-2 text-center text-[11px] leading-tight ${active ? "font-extrabold text-primary" : "font-semibold text-foreground"}`}>
+      <span className={`line-clamp-2 text-center text-[12px] leading-tight ${active ? "font-extrabold text-foreground" : "font-medium"}`}>
         {label}
       </span>
+      <span className={`absolute inset-x-2 bottom-0 h-[3px] rounded-t-full ${active ? "bg-foreground" : "bg-transparent"}`} />
     </button>
   );
 }
