@@ -1,6 +1,7 @@
 import { useBackHandler } from "@/lib/backHandler";
 import { useState } from "react";
-import { Minus, Plus, Store as StoreIcon } from "lucide-react";
+import { Minus, Plus, Store as StoreIcon, ZoomIn } from "lucide-react";
+import { ImageViewer } from "./ImageViewer";
 import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
 import { toast } from "sonner";
 import { useT } from "@/i18n";
@@ -47,7 +48,8 @@ export function ProductCard({
   const cart = useStoreCart();
   const [askSwitch, setAskSwitch] = useState(false);
   const [detail, setDetail] = useState(false);
-  useBackHandler(detail, () => setDetail(false));
+  const [zoom, setZoom] = useState(false);
+  useBackHandler(detail && !zoom, () => setDetail(false));
   const open = () => (onOpen ? onOpen() : setDetail(true));
   const out = !product.in_stock;
   const { title, size } = splitProductName(product.name);
@@ -156,9 +158,11 @@ export function ProductCard({
       <Drawer open={detail} onOpenChange={setDetail}>
         <DrawerContent onClick={stop} className="mx-auto max-h-[92vh] max-w-md rounded-t-[24px]">
           <div className="overflow-y-auto px-5 pb-6 pt-2">
-            <div className="rounded-[20px] bg-primary/5 p-4">
+            <button type="button" onClick={() => setZoom(true)} className="relative block w-full rounded-[20px] bg-primary/5 p-4">
               <StoreImage path={product.photo_url} variant="product" alt={product.name} size="full" className="mx-auto aspect-square h-auto w-full max-w-[300px]" />
-            </div>
+              <span className="absolute bottom-3 right-3 flex h-8 w-8 items-center justify-center rounded-full bg-card shadow-md"><ZoomIn className="h-4 w-4 text-foreground" /></span>
+            </button>
+            <ImageViewer path={product.photo_url} alt={product.name} open={zoom} onClose={() => setZoom(false)} />
             <DrawerTitle className="mt-4 text-lg font-extrabold leading-snug text-foreground">{product.name}</DrawerTitle>
             {(size || product.unit) && (
               <span className="mt-1.5 inline-block rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">
