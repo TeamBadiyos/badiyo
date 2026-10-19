@@ -361,7 +361,22 @@ Deno.serve(async (req) => {
     );
     const taxablePaise = basePaise - discountPaise;
     const gstPaise = Math.round((taxablePaise * gstPercent) / 100);
-    const grossAmount = Math.round((taxablePaise + gstPaise) / 100) * 100;
+    // Outer-zone travel fee: same server rule as the bookings_travel_fee trigger.
+    let travelPaise = 0;
+    if (purpose === "booking") {
+      const d = body?.booking_draft;
+      const lat = Number(d?.booking_lat), lng = Number(d?.booking_lng);
+      if (Number.isFinite(lat) && Number.isFinite(lng)) {
+        const { data: z } = await supabase.rpc("resolve_zone", { _lat: lat, _lng: lng });
+        const { data: grp } = await supabase.rpc("booking_capacity_group", { _category_id: couponCategoryId, _label: d?.service_label ?? null }).then((r) => r, () => ({ data: null }));
+        const svc = grp === "wash" ? "auto_care" : "clean";
+        if (z?.zone_type === "outer" && Array.isArray(z?.travel_fee_services) && z.travel_fee_services.includes(svc)) {
+          const fee = Number(z.travel_fee ?? 0);
+          if (Number.isFinite(fee) && fee > 0) travelPaise = Math.round(fee * 100) + Math.round(fee * gstPercent);
+        }
+      }
+    }
+    const grossAmount = Math.round((taxablePaise + taxablePaise * gstPercent / 100 + travelPaise) / 100) * 100;
     if (!Number.isInteger(grossAmount) || grossAmount < 0) {
       return json({ error: "Invalid service price" }, 400);
     }
