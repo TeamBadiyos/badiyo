@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { ArrowLeft, ChevronRight, Droplets, MapPin, Package, Tag, Wallet, X } from "lucide-react";
+import { ArrowLeft, ChevronRight, Droplets, Info, MapPin, Package, Tag, Wallet, X } from "lucide-react";
+import { travelFeeFor, useZone } from "@/lib/zoneFee";
 import { useQuery } from "@tanstack/react-query";
 import { Switch } from "@/components/ui/switch";
 import { CancellationPolicySheet } from "@/components/CancellationPolicySheet";
@@ -37,6 +38,8 @@ const TXT = {
     washNoteTitle: "Please Keep Ready Before the Wash",
     washNote: "Please ensure a water supply or 2-3 buckets of water, an electric plug point nearby, and an open parking space where your vehicle can be washed. Our washing expert will not drive or move your vehicle.",
     home: "Home Maid", wash: "Car Wash",
+    travel: "Travel Fee", soon: "Jaldi aapke area mein aa rahe hain", changeAddr: "Address badlein",
+    travelInfo: "Aapka area thoda door hai. Ye fee poori Expert ko jaati hai, jo aapke ghar tak aane ke liye extra travel karti hain.",
   },
   mr: {
     title: "चेकआउट", change: "बदला", booking: "तुम्ही काय बुक करत आहात", edit: "बदला", now: "आत्ता",
@@ -50,6 +53,8 @@ const TXT = {
     washNoteTitle: "वॉशपूर्वी हे तयार ठेवा",
     washNote: "कृपया पाण्याची सोय किंवा 2-3 बादल्या पाणी, जवळ इलेक्ट्रिक प्लग पॉइंट आणि वाहन धुता येईल अशी मोकळी पार्किंग जागा असावी. आमचा वॉशिंग एक्सपर्ट तुमचे वाहन चालवणार किंवा हलवणार नाही.",
     home: "होम मेड", wash: "कार वॉश",
+    travel: "प्रवास शुल्क", soon: "लवकरच तुमच्या भागात येत आहोत", changeAddr: "पत्ता बदला",
+    travelInfo: "तुमचा परिसर थोडा लांब आहे. हे संपूर्ण शुल्क एक्सपर्टला जाते, जे तुमच्या घरी येण्यासाठी जास्त प्रवास करतात.",
   },
 };
 const fill = (s: string, k: string, v: string | number) => s.replace(`{${k}}`, String(v));
@@ -91,7 +96,11 @@ export function BookingSummaryScreen({
 
   const gstPercent = useBookingGstPercent(service.id);
   const price = Number(service.price);
-  const bill = billBreakdown(price, gstPercent, coupon?.discount ?? 0);
+  const { data: zone, isPending: zonePending } = useZone(address.latitude, address.longitude);
+  const notServiceable = !zonePending && zone?.zone_type === "not_serviceable";
+  const travelFee = travelFeeFor(zone, isWash ? "auto_care" : "clean");
+  const [feeInfoOpen, setFeeInfoOpen] = useState(false);
+  const bill = billBreakdown(price, gstPercent, coupon?.discount ?? 0, travelFee);
   const { data: balance = 0 } = useQuery({ queryKey: ["my_coin_balance"], queryFn: fetchMyCoinBalance, staleTime: 30_000 });
   const walletUsed = redeemCoins ? Math.max(0, Math.min(balance, bill.total)) : 0;
   const total = Math.max(0, bill.total - walletUsed);
@@ -205,6 +214,14 @@ export function BookingSummaryScreen({
           <p className="text-sm font-extrabold text-foreground">{s.bill}</p>
           {row(s.price, `₹${rs(price)}`)}
           {bill.discount > 0 && row(s.coupon, `−₹${rs(Math.round(bill.discount))}`, true)}
+          {travelFee > 0 && (
+            <div className="mt-2 flex items-center justify-between text-sm">
+              <button type="button" onClick={() => setFeeInfoOpen(true)} className="flex items-center gap-1 text-muted-foreground">
+                {s.travel}<Info className="h-3.5 w-3.5" aria-label="Info" />
+              </button>
+              <span className="text-foreground">₹{rs(travelFee)}</span>
+            </div>
+          )}
           {row(fill(s.gst, "p", gstPercent), `₹${rs(bill.gst)}`)}
           {bill.roundOff !== 0 && row(s.round, `${bill.roundOff > 0 ? "+" : "−"}₹${Math.abs(bill.roundOff).toFixed(2)}`)}
           {walletUsed > 0 && row(s.walletLine, `−₹${rs(walletUsed)}`, true)}
@@ -229,13 +246,32 @@ export function BookingSummaryScreen({
 
       {/* 7. Pay bar */}
       <div className="fixed inset-x-0 bottom-0 z-10 bg-card shadow-[0_-4px_16px_rgba(0,0,0,0.06)] safe-bottom">
+        {notServiceable && (
+          <div className="mx-auto flex w-full max-w-md items-center justify-between gap-3 px-4 pt-3">
+            <p className="text-sm font-bold text-foreground">{s.soon}</p>
+            <button type="button" onClick={onEditAddress} className="shrink-0 text-sm font-extrabold text-primary">{s.changeAddr}</button>
+          </div>
+        )}
         <div className="mx-auto flex w-full max-w-md items-center gap-4 px-4 py-3">
-          <button type="button" onClick={() => { void hapticImpact("medium"); onProceedToPay(); }}
-            className="flex-1 rounded-[14px] bg-primary py-3.5 text-base font-extrabold text-primary-foreground active:scale-[0.99]">
+          <button type="button" disabled={notServiceable || zonePending && address.latitude != null}
+            onClick={() => { void hapticImpact("medium"); onProceedToPay(); }}
+            className="flex-1 rounded-[14px] bg-primary py-3.5 text-base font-extrabold text-primary-foreground active:scale-[0.99] disabled:opacity-50">
             {total === 0 && walletUsed > 0 ? s.payWallet : fill(s.pay, "n", rs(total))}
           </button>
         </div>
       </div>
+
+      {feeInfoOpen && (
+        <div className="fixed inset-0 z-50 flex items-end bg-foreground/40" onClick={() => setFeeInfoOpen(false)}>
+          <div className="mx-auto w-full max-w-md rounded-t-[20px] bg-card p-5 safe-bottom" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <p className="text-base font-extrabold text-foreground">{s.travel}</p>
+              <button type="button" onClick={() => setFeeInfoOpen(false)} aria-label="Close"><X className="h-5 w-5 text-muted-foreground" /></button>
+            </div>
+            <p className="mt-2 text-sm leading-relaxed text-foreground">{s.travelInfo}</p>
+          </div>
+        </div>
+      )}
 
       {couponOpen && (
         <CouponSheet

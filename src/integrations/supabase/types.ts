@@ -847,6 +847,9 @@ export type Database = {
           started_at: string | null
           status: string
           total_amount: number
+          travel_expert_share_pct: number | null
+          travel_fee: number
+          travel_fee_gst: number
           updated_at: string | null
           user_id: string | null
           zone_id: string | null
@@ -922,6 +925,9 @@ export type Database = {
           started_at?: string | null
           status?: string
           total_amount?: number
+          travel_expert_share_pct?: number | null
+          travel_fee?: number
+          travel_fee_gst?: number
           updated_at?: string | null
           user_id?: string | null
           zone_id?: string | null
@@ -997,6 +1003,9 @@ export type Database = {
           started_at?: string | null
           status?: string
           total_amount?: number
+          travel_expert_share_pct?: number | null
+          travel_fee?: number
+          travel_fee_gst?: number
           updated_at?: string | null
           user_id?: string | null
           zone_id?: string | null
@@ -12224,8 +12233,10 @@ export type Database = {
           delete_reason: string | null
           deleted_at: string | null
           deleted_by: string | null
+          expert_share_pct: number
           geom: unknown
           id: string
+          is_active: boolean
           is_off: boolean
           name: string
           off_by: string | null
@@ -12233,7 +12244,10 @@ export type Database = {
           off_until: string | null
           segment_id: string
           status: string
+          travel_fee: number
+          travel_fee_services: string[]
           version: number
+          zone_type: string
         }
         Insert: {
           boundary: Json
@@ -12244,8 +12258,10 @@ export type Database = {
           delete_reason?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
+          expert_share_pct?: number
           geom?: unknown
           id?: string
+          is_active?: boolean
           is_off?: boolean
           name: string
           off_by?: string | null
@@ -12253,7 +12269,10 @@ export type Database = {
           off_until?: string | null
           segment_id: string
           status?: string
+          travel_fee?: number
+          travel_fee_services?: string[]
           version?: number
+          zone_type?: string
         }
         Update: {
           boundary?: Json
@@ -12264,8 +12283,10 @@ export type Database = {
           delete_reason?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
+          expert_share_pct?: number
           geom?: unknown
           id?: string
+          is_active?: boolean
           is_off?: boolean
           name?: string
           off_by?: string | null
@@ -12273,7 +12294,10 @@ export type Database = {
           off_until?: string | null
           segment_id?: string
           status?: string
+          travel_fee?: number
+          travel_fee_services?: string[]
           version?: number
+          zone_type?: string
         }
         Relationships: [
           {
@@ -12587,6 +12611,9 @@ export type Database = {
           started_at: string | null
           status: string
           total_amount: number
+          travel_expert_share_pct: number | null
+          travel_fee: number
+          travel_fee_gst: number
           updated_at: string | null
           user_id: string | null
           zone_id: string | null
@@ -12810,6 +12837,7 @@ export type Database = {
         Args: { _booking_id: string }
         Returns: number
       }
+      booking_travel_payout: { Args: { _booking_id: string }; Returns: number }
       booking_verify_job_secret: { Args: { _secret: string }; Returns: boolean }
       broadcast_booking_to_experts: {
         Args: { _booking_id: string; _radius?: number }
@@ -13231,6 +13259,9 @@ export type Database = {
           started_at: string | null
           status: string
           total_amount: number
+          travel_expert_share_pct: number | null
+          travel_fee: number
+          travel_fee_gst: number
           updated_at: string | null
           user_id: string | null
           zone_id: string | null
@@ -14543,6 +14574,10 @@ export type Database = {
         Args: { _lat: number; _lng: number; _poly: Json }
         Returns: boolean
       }
+      point_in_ring: {
+        Args: { _lat: number; _lng: number; _ring: Json }
+        Returns: boolean
+      }
       product_upsert_core: {
         Args: {
           _payload: Json
@@ -14639,6 +14674,7 @@ export type Database = {
           rule_id: string
         }[]
       }
+      resolve_zone: { Args: { _lat: number; _lng: number }; Returns: Json }
       resolve_zone_for_point: {
         Args: { _lat: number; _lng: number }
         Returns: string
@@ -16119,6 +16155,17 @@ export type Database = {
           _off: boolean
           _reason?: string
           _until?: string
+        }
+        Returns: Json
+      }
+      staff_set_zone_pricing: {
+        Args: {
+          _cell: string
+          _expert_share_pct: number
+          _is_active: boolean
+          _services: string[]
+          _travel_fee: number
+          _zone_type: string
         }
         Returns: Json
       }
