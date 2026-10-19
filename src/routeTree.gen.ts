@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as InviteCodeRouteImport } from './routes/invite.$code'
 import { Route as StoreSlugRouteImport } from './routes/store.$slug'
+import { Route as ApiPublicExpandMapLinkRouteImport } from './routes/api/public/expand-map-link'
 import { Route as ApiPublicGeocodeSearchRouteImport } from './routes/api/public/geocode-search'
 import { Route as ApiPublicHasLoginPinRouteImport } from './routes/api/public/has-login-pin'
 import { Route as ApiPublicPlacesSearchRouteImport } from './routes/api/public/places-search'
@@ -45,6 +46,11 @@ const InviteCodeRoute = InviteCodeRouteImport.update({
 const StoreSlugRoute = StoreSlugRouteImport.update({
   id: '/store/$slug',
   path: '/store/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicExpandMapLinkRoute = ApiPublicExpandMapLinkRouteImport.update({
+  id: '/api/public/expand-map-link',
+  path: '/api/public/expand-map-link',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicGeocodeSearchRoute = ApiPublicGeocodeSearchRouteImport.update({
@@ -157,6 +163,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/invite/$code': typeof InviteCodeRoute
   '/store/$slug': typeof StoreSlugRoute
+  '/api/public/expand-map-link': typeof ApiPublicExpandMapLinkRoute
   '/api/public/geocode-search': typeof ApiPublicGeocodeSearchRoute
   '/api/public/has-login-pin': typeof ApiPublicHasLoginPinRoute
   '/api/public/places-search': typeof ApiPublicPlacesSearchRoute
@@ -181,6 +188,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/invite/$code': typeof InviteCodeRoute
   '/store/$slug': typeof StoreSlugRoute
+  '/api/public/expand-map-link': typeof ApiPublicExpandMapLinkRoute
   '/api/public/geocode-search': typeof ApiPublicGeocodeSearchRoute
   '/api/public/has-login-pin': typeof ApiPublicHasLoginPinRoute
   '/api/public/places-search': typeof ApiPublicPlacesSearchRoute
@@ -206,6 +214,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/invite/$code': typeof InviteCodeRoute
   '/store/$slug': typeof StoreSlugRoute
+  '/api/public/expand-map-link': typeof ApiPublicExpandMapLinkRoute
   '/api/public/geocode-search': typeof ApiPublicGeocodeSearchRoute
   '/api/public/has-login-pin': typeof ApiPublicHasLoginPinRoute
   '/api/public/places-search': typeof ApiPublicPlacesSearchRoute
@@ -232,6 +241,7 @@ export interface FileRouteTypes {
     | '/'
     | '/invite/$code'
     | '/store/$slug'
+    | '/api/public/expand-map-link'
     | '/api/public/geocode-search'
     | '/api/public/has-login-pin'
     | '/api/public/places-search'
@@ -256,6 +266,7 @@ export interface FileRouteTypes {
     | '/'
     | '/invite/$code'
     | '/store/$slug'
+    | '/api/public/expand-map-link'
     | '/api/public/geocode-search'
     | '/api/public/has-login-pin'
     | '/api/public/places-search'
@@ -280,6 +291,7 @@ export interface FileRouteTypes {
     | '/'
     | '/invite/$code'
     | '/store/$slug'
+    | '/api/public/expand-map-link'
     | '/api/public/geocode-search'
     | '/api/public/has-login-pin'
     | '/api/public/places-search'
@@ -305,6 +317,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   InviteCodeRoute: typeof InviteCodeRoute
   StoreSlugRoute: typeof StoreSlugRoute
+  ApiPublicExpandMapLinkRoute: typeof ApiPublicExpandMapLinkRoute
   ApiPublicGeocodeSearchRoute: typeof ApiPublicGeocodeSearchRoute
   ApiPublicHasLoginPinRoute: typeof ApiPublicHasLoginPinRoute
   ApiPublicPlacesSearchRoute: typeof ApiPublicPlacesSearchRoute
@@ -347,6 +360,13 @@ declare module '@tanstack/react-router' {
       path: '/store/$slug'
       fullPath: '/store/$slug'
       preLoaderRoute: typeof StoreSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/expand-map-link': {
+      id: '/api/public/expand-map-link'
+      path: '/api/public/expand-map-link'
+      fullPath: '/api/public/expand-map-link'
+      preLoaderRoute: typeof ApiPublicExpandMapLinkRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/geocode-search': {
@@ -489,6 +509,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   InviteCodeRoute: InviteCodeRoute,
   StoreSlugRoute: StoreSlugRoute,
+  ApiPublicExpandMapLinkRoute: ApiPublicExpandMapLinkRoute,
   ApiPublicGeocodeSearchRoute: ApiPublicGeocodeSearchRoute,
   ApiPublicHasLoginPinRoute: ApiPublicHasLoginPinRoute,
   ApiPublicPlacesSearchRoute: ApiPublicPlacesSearchRoute,
