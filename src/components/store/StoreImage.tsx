@@ -41,6 +41,7 @@ export function StoreImage({
   // hasn't arrived quickly, switch to the original, which is served in ~100ms.
   useEffect(() => {
     if (loaded || step !== 0 || !path) return;
+    if (/^https?:\/\//i.test(path) && !path.startsWith(`${CATALOG_BASE}/`)) return;
     const t = setTimeout(() => setStep((s) => (s === 0 ? 1 : s)), 900);
     return () => clearTimeout(t);
   }, [loaded, step, path]);
