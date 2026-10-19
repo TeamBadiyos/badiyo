@@ -813,6 +813,7 @@ export type Database = {
           no_expert_alert_sent: boolean
           on_the_way_at: string | null
           onway_alert_sent: boolean
+          outside_zone: boolean
           paid_at: string | null
           partner_payout_batch_id: string | null
           price: number
@@ -891,6 +892,7 @@ export type Database = {
           no_expert_alert_sent?: boolean
           on_the_way_at?: string | null
           onway_alert_sent?: boolean
+          outside_zone?: boolean
           paid_at?: string | null
           partner_payout_batch_id?: string | null
           price: number
@@ -969,6 +971,7 @@ export type Database = {
           no_expert_alert_sent?: boolean
           on_the_way_at?: string | null
           onway_alert_sent?: boolean
+          outside_zone?: boolean
           paid_at?: string | null
           partner_payout_batch_id?: string | null
           price?: number
@@ -12577,6 +12580,7 @@ export type Database = {
           no_expert_alert_sent: boolean
           on_the_way_at: string | null
           onway_alert_sent: boolean
+          outside_zone: boolean
           paid_at: string | null
           partner_payout_batch_id: string | null
           price: number
@@ -13225,6 +13229,7 @@ export type Database = {
           no_expert_alert_sent: boolean
           on_the_way_at: string | null
           onway_alert_sent: boolean
+          outside_zone: boolean
           paid_at: string | null
           partner_payout_batch_id: string | null
           price: number
@@ -14498,6 +14503,7 @@ export type Database = {
         Args: { _cap: number; _count: number }
         Returns: undefined
       }
+      outside_zone_policy: { Args: { _city: string }; Returns: string }
       pan_key: { Args: never; Returns: string }
       partner_assert_draft: { Args: { _batch_id: string }; Returns: undefined }
       partner_daily_lifecycle: { Args: never; Returns: undefined }
@@ -15607,6 +15613,13 @@ export type Database = {
         Args: { _party_id: string; _party_type: string }
         Returns: Json
       }
+      staff_payout_batch_travel: {
+        Args: { _batch_id: string }
+        Returns: {
+          owner_id: string
+          travel: number
+        }[]
+      }
       staff_permanently_delete_user: {
         Args: { _confirm_phone: string; _user_id: string }
         Returns: Json
@@ -16051,6 +16064,10 @@ export type Database = {
       staff_set_ops_setting: {
         Args: { _key: string; _value: string }
         Returns: undefined
+      }
+      staff_set_outside_zone_policy: {
+        Args: { _city: string; _policy: string }
+        Returns: string
       }
       staff_set_pan: {
         Args: { _owner_id: string; _owner_type: string; _pan: string }
@@ -16964,6 +16981,10 @@ export type Database = {
         }
         Returns: Json
       }
+      zone_decide: {
+        Args: { _city: string; _lat: number; _lng: number }
+        Returns: Json
+      }
       zone_delete_impact: { Args: { _zone_id: string }; Returns: Json }
       zone_is_off_at: { Args: { _lat: number; _lng: number }; Returns: boolean }
       zone_lookup: { Args: { _lat: number; _lng: number }; Returns: Json }
@@ -17006,6 +17027,7 @@ export type Database = {
         Returns: string
       }
       zv2_normalize: { Args: { _city: string }; Returns: number }
+      zv2_outside_zone_bookings: { Args: { _city: string }; Returns: Json }
       zv2_remap_zone: {
         Args: { _new: string; _old: string }
         Returns: undefined
@@ -17033,6 +17055,17 @@ export type Database = {
         }
         Returns: Json
       }
+      zv2_save_zone_confirmed: {
+        Args: {
+          _cell: string
+          _city: string
+          _colour: string
+          _geojson: Json
+          _name: string
+          _reason: string
+        }
+        Returns: Json
+      }
       zv2_set_cell_geom: {
         Args: { _cell: string; _geojson: Json }
         Returns: Json
@@ -17047,6 +17080,10 @@ export type Database = {
       zv2_switchover_preview: { Args: { _city: string }; Returns: Json }
       zv2_sync_live: { Args: { _cell: string }; Returns: undefined }
       zv2_to_jsonb: { Args: { _g: unknown }; Returns: Json }
+      zv2_trim_preview: {
+        Args: { _cell: string; _city: string; _geojson: Json }
+        Returns: Json
+      }
       zv2_undo: { Args: { _city: string }; Returns: Json }
       zv2_update_cell: {
         Args: { _cell: string; _colour: string; _name: string }
