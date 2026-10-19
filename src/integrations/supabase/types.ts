@@ -12255,6 +12255,8 @@ export type Database = {
           off_by: string | null
           off_reason: string | null
           off_until: string | null
+          outer_pocket_fee: number
+          outer_pockets: Json
           segment_id: string
           status: string
           travel_fee: number
@@ -12280,6 +12282,8 @@ export type Database = {
           off_by?: string | null
           off_reason?: string | null
           off_until?: string | null
+          outer_pocket_fee?: number
+          outer_pockets?: Json
           segment_id: string
           status?: string
           travel_fee?: number
@@ -12305,6 +12309,8 @@ export type Database = {
           off_by?: string | null
           off_reason?: string | null
           off_until?: string | null
+          outer_pocket_fee?: number
+          outer_pockets?: Json
           segment_id?: string
           status?: string
           travel_fee?: number
@@ -16189,6 +16195,10 @@ export type Database = {
         }
         Returns: Json
       }
+      staff_set_zone_outer_pockets: {
+        Args: { _cell: string; _fee: number; _pockets: Json }
+        Returns: Json
+      }
       staff_set_zone_pricing: {
         Args: {
           _cell: string
@@ -17000,6 +17010,10 @@ export type Database = {
         Returns: Json
       }
       zone_delete_impact: { Args: { _zone_id: string }; Returns: Json }
+      zone_in_pocket: {
+        Args: { _lat: number; _lng: number; _pockets: Json }
+        Returns: boolean
+      }
       zone_is_off_at: { Args: { _lat: number; _lng: number }; Returns: boolean }
       zone_lookup: { Args: { _lat: number; _lng: number }; Returns: Json }
       zv2_assert_no_overlap: { Args: { _city: string }; Returns: undefined }
@@ -17041,6 +17055,7 @@ export type Database = {
         Returns: string
       }
       zv2_normalize: { Args: { _city: string }; Returns: number }
+      zv2_outer_pockets: { Args: { _city: string }; Returns: Json }
       zv2_outside_zone_bookings: { Args: { _city: string }; Returns: Json }
       zv2_remap_zone: {
         Args: { _new: string; _old: string }
