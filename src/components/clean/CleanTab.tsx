@@ -127,13 +127,21 @@ export function CleanTab({
     }
     return "";
   }).filter(Boolean);
-  const toItem = (card: ContentCard, image: string): DetailItem => ({
-    image,
-    title: pick(lang, card.title, card.title_mr),
-    included: lines(lang === "mr" && card.included_mr?.length ? card.included_mr : card.included),
-    notIncluded: lines(lang === "mr" && card.not_included_mr?.length ? card.not_included_mr : card.not_included),
-    optionId: card.price_option_id ?? null,
-  });
+  const normT = (x?: string | null) => (x ?? "").toLowerCase().replace(/\s+/g, " ").trim();
+  const toItem = (card: ContentCard, image: string, isWash = false): DetailItem => {
+    // Wash: inclusions/exclusions come only from the CC Services item (service_price_options).
+    const opt = isWash
+      ? washOptions.find((o) => o.id === card.price_option_id) ??
+        washOptions.find((o) => normT(card.title).startsWith(normT(o.duration_label)))
+      : undefined;
+    return {
+      image,
+      title: pick(lang, card.title, card.title_mr),
+      included: isWash ? lines(opt?.inclusions ?? []) : lines(lang === "mr" && card.included_mr?.length ? card.included_mr : card.included),
+      notIncluded: isWash ? lines(opt?.exclusions ?? []) : lines(lang === "mr" && card.not_included_mr?.length ? card.not_included_mr : card.not_included),
+      optionId: opt?.id ?? card.price_option_id ?? null,
+    };
+  };
   const maidImg = (card: ContentCard, i: number) => card.image_url || MAID_IMG[i % MAID_IMG.length];
   const washImg = (card: ContentCard) => card.image_url || washOptions.find((o) => o.id === card.price_option_id)?.image_url || washImage(card.title ?? "");
   const openDetail = (key: CleanServiceKey, index: number) => setDetail({

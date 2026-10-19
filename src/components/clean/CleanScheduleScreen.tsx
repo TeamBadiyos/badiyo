@@ -219,13 +219,9 @@ export function CleanScheduleScreen({
 /** What's included / not included for the chosen vehicle, from Command Center content. */
 function IncludedCard({ serviceKey, option, lang }: { serviceKey: CleanServiceKey; option: SegmentService | null; lang: string }) {
   const { data: content } = useServiceContent(serviceKey);
-  if (!option || !content?.cards?.length) return null;
+  if (!option) return null;
   const mr = lang === "mr";
-  const norm = (x?: string | null) => (x ?? "").toLowerCase().replace(/\s+/g, " ").trim();
-  const card =
-    content.cards.find((c) => c.price_option_id === option.id) ??
-    content.cards.find((c) => norm(c.title).startsWith(norm(option.duration_label)));
-  if (!card) return null;
+  const card = { title: option.duration_label, title_mr: (option as { duration_label_mr?: string | null }).duration_label_mr ?? null };
   const lines = (arr: unknown): string[] => (Array.isArray(arr) ? arr : []).map((x) => {
     if (typeof x === "string") return x.trim();
     if (x && typeof x === "object") {
@@ -236,8 +232,9 @@ function IncludedCard({ serviceKey, option, lang }: { serviceKey: CleanServiceKe
     }
     return "";
   }).filter(Boolean);
-  const inc = lines(mr && card.included_mr?.length ? card.included_mr : card.included);
-  const exc = lines(mr && card.not_included_mr?.length ? card.not_included_mr : card.not_included);
+  // Only source: the CC Services item (service_price_options inclusions/exclusions).
+  const inc = lines(option.inclusions);
+  const exc = lines(option.exclusions);
   const d = content.details;
   const t = (en?: string | null, m?: string | null, fb = "") => ((mr && m?.trim() ? m : en)?.trim() || fb);
   const note = t(d?.note, d?.note_mr);
