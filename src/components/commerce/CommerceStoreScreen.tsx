@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Check, Minus, Plus, Search, Star, UtensilsCrossed, X } from "lucide-react";
+import { ArrowLeft, Check, Minus, Plus, Search, Star, UtensilsCrossed, X, ZoomIn } from "lucide-react";
+import { ImageViewer } from "@/components/store/ImageViewer";
 import { toast } from "sonner";
 import { useLanguage } from "@/i18n";
 import { supabase } from "@/integrations/supabase/client";
@@ -97,6 +98,7 @@ export function CommerceStoreScreen({
   const [pending, setPending] = useState<null | { item: CommerceItem; opts?: CartOptions }>(null);
   useBackHandler(!!sheetItem, () => setSheetItem(null));
   const [q, setQ] = useState("");
+  const [viewItem, setViewItem] = useState<CommerceItem | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   useBackHandler(menuOpen, () => setMenuOpen(false));
 
@@ -176,7 +178,7 @@ export function CommerceStoreScreen({
 
   const km = formatKm(distanceKm ?? store.distance_km ?? null);
   const recommended = (data?.recommended ?? []).slice(0, 6);
-  const props = { lang, c, cart, canAdd, onAdd, onDec: (id: string) => cart.decrement(id) };
+  const props = { lang, c, cart, canAdd, onAdd, onDec: (id: string) => cart.decrement(id), onView: (i: CommerceItem) => setViewItem(i) };
 
   return (
     <main className="min-h-screen w-full bg-background pb-32 momentum-scroll">
@@ -220,8 +222,10 @@ export function CommerceStoreScreen({
               <div className="grid grid-cols-3 gap-2.5">
                 {recommended.map((it) => (
                   <div key={`r-${it.id}`} className={`flex min-w-0 flex-col rounded-[14px] border border-border bg-card p-2 ${it.in_stock ? "" : "opacity-50 grayscale"}`}>
-                    <StoreImage path={it.photo_url} alt={it.name} className="aspect-square h-auto w-full rounded-[10px]" />
-                    <p className="mt-1.5 line-clamp-2 text-[12px] font-bold leading-tight text-foreground">{it.name}</p>
+                    <button type="button" onClick={() => setViewItem(it)} className="text-left">
+                      <StoreImage path={it.photo_url} alt={it.name} className="aspect-square h-auto w-full rounded-[10px]" />
+                      <p className="mt-1.5 line-clamp-2 text-[12px] font-bold leading-tight text-foreground">{it.name}</p>
+                    </button>
                     <div className="mt-0.5 text-[12px]"><Price item={it} /></div>
                     <div className="mt-auto flex justify-center pt-1.5"><AddControl item={it} {...props} /></div>
                   </div>
@@ -261,6 +265,8 @@ export function CommerceStoreScreen({
       )}
 
       <CartBar onOpenCart={onOpenCart} />
+
+      {viewItem && <ItemDetailSheet item={viewItem} onClose={() => setViewItem(null)} {...props} />}
 
       {sheetItem && (
         <OptionsSheet
@@ -329,6 +335,7 @@ type ItemProps = {
   canAdd: boolean;
   onAdd: (i: CommerceItem) => void;
   onDec: (id: string) => void;
+  onView?: (i: CommerceItem) => void;
 };
 
 function Price({ item }: { item: CommerceItem }) {
@@ -387,12 +394,40 @@ function ItemDesc({ text, lang }: { text: string; lang: string }) {
   );
 }
 
+function ItemDetailSheet({ item, onClose, ...rest }: Omit<ItemProps, "items"> & { item: CommerceItem; onClose: () => void }) {
+  const [zoom, setZoom] = useState(false);
+  useBackHandler(!zoom, onClose);
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/50" onClick={onClose}>
+      <div className="max-h-[92vh] w-full max-w-md overflow-y-auto rounded-t-[24px] bg-card pb-[max(env(safe-area-inset-bottom),16px)]" onClick={(e) => e.stopPropagation()}>
+        <div className="relative">
+          <button type="button" onClick={() => setZoom(true)} className="relative block w-full bg-muted">
+            <StoreImage path={item.photo_url} alt={item.name} size="full" className="aspect-square h-auto w-full !rounded-none !object-contain" />
+            <span className="absolute bottom-3 right-3 flex h-9 w-9 items-center justify-center rounded-full bg-card shadow-md"><ZoomIn className="h-4 w-4 text-foreground" /></span>
+          </button>
+          <button type="button" onClick={onClose} aria-label="Close" className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-card shadow-md">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="px-5 pt-4">
+          <p className="text-lg font-extrabold leading-snug text-foreground">{item.name}</p>
+          {item.size && <span className="mt-1.5 inline-block rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">{item.size}</span>}
+          <div className="mt-2 text-lg"><Price item={item} /></div>
+          {item.description && <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-muted-foreground">{item.description}</p>}
+          <div className="mt-5 flex justify-end"><AddControl item={item} {...rest} wide /></div>
+        </div>
+      </div>
+      <ImageViewer path={item.photo_url} alt={item.name} open={zoom} onClose={() => setZoom(false)} />
+    </div>
+  );
+}
+
 function FoodList({ items, ...rest }: ItemProps) {
   return (
     <div className="divide-y divide-dashed divide-border">
       {items.map((it) => (
         <div key={it.id} className={`flex gap-3 py-4 ${it.in_stock ? "" : "opacity-50 grayscale"}`}>
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 flex-1" onClick={() => rest.onView?.(it)}>
             <p className="text-[16px] font-extrabold leading-snug text-foreground">{it.name}</p>
             {it.size && <p className="text-[12px] text-muted-foreground">{it.size}</p>}
             <div className="mt-1">
@@ -401,7 +436,7 @@ function FoodList({ items, ...rest }: ItemProps) {
             {it.description && <ItemDesc text={it.description} lang={rest.lang} />}
           </div>
           <div className="flex w-[118px] shrink-0 flex-col items-center">
-            {it.photo_url ? <StoreImage path={it.photo_url} alt={it.name} className="h-[110px] w-[118px] rounded-[16px]" /> : null}
+            {it.photo_url ? <button type="button" onClick={() => rest.onView?.(it)}><StoreImage path={it.photo_url} alt={it.name} className="h-[110px] w-[118px] rounded-[16px]" /></button> : null}
             <div className={it.photo_url ? "-mt-4" : "mt-2"}>
               <AddControl item={it} {...rest} wide />
             </div>
