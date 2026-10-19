@@ -20,7 +20,7 @@ export function ImageViewer({ path, alt, open, onClose }: { path: string | null 
             </div>
             <TransformComponent wrapperStyle={{ width: "100%", height: "100%" }} contentStyle={{ width: "100%", height: "100%" }}>
               <div className="flex h-full w-full items-center justify-center">
-                <StoreImage path={path} alt={alt} size="full" className="!h-auto max-h-[85vh] w-full !rounded-none !bg-transparent !object-contain" />
+                <StoreImage path={path ?? null} alt={alt} size="full" className="!h-auto max-h-[85vh] w-full !rounded-none !bg-transparent !object-contain" />
               </div>
             </TransformComponent>
             <div className="absolute inset-x-0 bottom-0 z-10 flex justify-center gap-3 p-4 pb-[calc(var(--app-safe-bottom,0px)+20px)]">
