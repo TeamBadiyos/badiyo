@@ -217,6 +217,23 @@ export function ServiceInProgressScreen({
     refetchIntervalInBackground: false,
   });
 
+  // Safety net: if the check-out code is missing, ask the server to create it.
+  const missingEndOtp = !!timing && timing.status === "in_progress" && !timing.end_otp;
+  useEffect(() => {
+    if (!bookingId || !missingEndOtp) return;
+    supabase.rpc("ensure_end_otp" as never, { _booking_id: bookingId } as never).then(({ data, error }) => {
+      if (error) {
+        console.error("ensure_end_otp failed:", error);
+        return;
+      }
+      const code = (data as unknown as string | null) ?? null;
+      if (!code) return;
+      qc.setQueryData<BookingTiming | null>(["booking-timing", bookingId], (prev) =>
+        prev ? { ...prev, end_otp: code } : prev,
+      );
+    });
+  }, [bookingId, missingEndOtp, qc]);
+
   const { data: expert } = useQuery({
     queryKey: ["booking-expert-profile", bookingId],
     queryFn: () => fetchExpertProfile(bookingId!),
@@ -479,7 +496,7 @@ export function ServiceInProgressScreen({
   }
 
   const canExtend = timing?.status === "in_progress" && (remainingSec > 0 || graceOpen);
-  const otp = timing?.end_otp ?? null;
+  const otp = timing?.end_otp || null;
 
   function shareOtpOnWhatsApp() {
     const message = [
@@ -587,14 +604,20 @@ export function ServiceInProgressScreen({
               </div>
             </div>
             <div className="flex shrink-0 gap-1.5">
-              {(otp ?? "----").split("").map((d, i) => (
-                <span
-                  key={i}
-                  className="flex h-11 w-9 items-center justify-center rounded-[10px] bg-foreground text-lg font-bold text-background"
-                >
-                  {d}
+              {otp ? (
+                otp.split("").map((d, i) => (
+                  <span
+                    key={i}
+                    className="flex h-11 w-9 items-center justify-center rounded-[10px] bg-foreground text-lg font-bold text-background"
+                  >
+                    {d}
+                  </span>
+                ))
+              ) : (
+                <span className="flex h-11 items-center gap-2 px-2 text-xs text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" /> Getting code…
                 </span>
-              ))}
+              )}
             </div>
           </div>
 
