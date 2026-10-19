@@ -2978,6 +2978,7 @@ export type Database = {
           description: string | null
           discount_type: string
           discount_value: number
+          free_price_option_id: string | null
           id: string
           is_active: boolean
           max_discount: number | null
@@ -3001,6 +3002,7 @@ export type Database = {
           description?: string | null
           discount_type?: string
           discount_value?: number
+          free_price_option_id?: string | null
           id?: string
           is_active?: boolean
           max_discount?: number | null
@@ -3024,6 +3026,7 @@ export type Database = {
           description?: string | null
           discount_type?: string
           discount_value?: number
+          free_price_option_id?: string | null
           id?: string
           is_active?: boolean
           max_discount?: number | null
@@ -3043,6 +3046,13 @@ export type Database = {
             columns: ["city_id"]
             isOneToOne: false
             referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coupons_free_price_option_id_fkey"
+            columns: ["free_price_option_id"]
+            isOneToOne: false
+            referencedRelation: "service_price_options"
             referencedColumns: ["id"]
           },
         ]
@@ -15973,6 +15983,10 @@ export type Database = {
       }
       staff_set_coupon_categories: {
         Args: { _category_ids: string[]; _id: string }
+        Returns: undefined
+      }
+      staff_set_coupon_free_service: {
+        Args: { _id: string; _price_option_id: string }
         Returns: undefined
       }
       staff_set_delivery_status: {
