@@ -14924,6 +14924,7 @@ export type Database = {
         Args: { _address_id: string }
         Returns: boolean
       }
+      staff_delete_event_offer: { Args: { _id: string }; Returns: undefined }
       staff_delete_rejected_merchant: {
         Args: { _merchant_id: string; _reason: string }
         Returns: undefined
@@ -14934,6 +14935,10 @@ export type Database = {
       }
       staff_delete_service_catalogue_row: {
         Args: { _id: string }
+        Returns: undefined
+      }
+      staff_delete_spin_event: {
+        Args: { _event_id: string }
         Returns: undefined
       }
       staff_delivery_gst_check: {
