@@ -146,7 +146,7 @@ export function CleanTab({
   const washImg = (card: ContentCard) => card.image_url || washOptions.find((o) => o.id === card.price_option_id)?.image_url || washImage(card.title ?? "");
   const openDetail = (key: CleanServiceKey, index: number) => setDetail({
     key, index,
-    items: key === "wash" ? washCards.map((cd) => toItem(cd, washImg(cd))) : maidCards.map((cd, i) => toItem(cd, maidImg(cd, i))),
+    items: key === "wash" ? washCards.map((cd) => toItem(cd, washImg(cd), true)) : maidCards.map((cd, i) => toItem(cd, maidImg(cd, i))),
   });
 
   const { data: bookNow } = useBookNowAllowed("clean");
