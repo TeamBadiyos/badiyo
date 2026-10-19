@@ -30,13 +30,18 @@ export function billBreakdown(
   base: number,
   percent: number,
   discount = 0,
-): BillBreakdown {
+  travelFee = 0,
+): BillBreakdown & { travelFee: number; travelGst: number } {
   const safeBase = Math.max(Number(base) || 0, 0);
   const disc = Math.min(Math.max(Number(discount) || 0, 0), safeBase);
   const taxable = Math.round((safeBase - disc) * 100) / 100;
-  const gst = gstAmount(taxable, percent);
-  const subtotal = Math.round((taxable + gst) * 100) / 100;
-  const total = Math.round(subtotal);
+  const tf = Math.max(Number(travelFee) || 0, 0);
+  // Same as the server: travel fee GST is rounded on its own; GST line includes it.
+  const travelGst = Math.round(tf * percent) / 100;
+  const exact = taxable + (taxable * percent) / 100 + tf + travelGst;
+  const total = Math.round(exact);
+  const gst = Math.round((gstAmount(taxable, percent) + travelGst) * 100) / 100;
+  const subtotal = Math.round((taxable + tf + gst) * 100) / 100;
   return {
     base: safeBase,
     discount: disc,
@@ -45,6 +50,8 @@ export function billBreakdown(
     subtotal,
     roundOff: Math.round((total - subtotal) * 100) / 100,
     total,
+    travelFee: tf,
+    travelGst,
   };
 }
 
