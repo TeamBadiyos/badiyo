@@ -13880,6 +13880,7 @@ export type Database = {
         Args: { _city: string; _svc: string }
         Returns: number
       }
+      ensure_end_otp: { Args: { _booking_id: string }; Returns: string }
       ensure_start_otp: { Args: { _booking_id: string }; Returns: string }
       evaluate_reward_triggers: {
         Args: {
