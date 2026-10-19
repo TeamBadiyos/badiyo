@@ -11,6 +11,7 @@ import {
   type AddressSuggestion,
 } from "@/lib/addressSearch";
 import { PlaceSuggestionList } from "./PlaceSuggestionList";
+import { addRecentPlace, clearRecentPlaces, getRecentPlaces } from "@/lib/recentSearches";
 import { useT } from "@/i18n";
 import {
   getCurrentCoords,
@@ -81,6 +82,10 @@ export function LocationPickerSheet({
   const [editing, setEditing] = useState<SavedAddress | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<SavedAddress | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [recents, setRecents] = useState<AddressSuggestion[]>([]);
+  useEffect(() => {
+    if (open) setRecents(getRecentPlaces());
+  }, [open]);
 
   const { data: addresses = [], isLoading } = useQuery({
     queryKey: ["addresses"],
@@ -155,6 +160,7 @@ export function LocationPickerSheet({
     setResolvingId(s.id);
     resolveSuggestion(s)
       .then((p) => {
+        addRecentPlace(s, p.lat, p.lng);
         // Close the suggestion list as soon as a place is chosen.
         setQuery("");
         setResults([]);
@@ -473,6 +479,20 @@ export function LocationPickerSheet({
                     busyId={resolvingId}
                     onPick={handlePickSuggestion}
                   />
+                </div>
+              </div>
+            )}
+
+            {q.length < 3 && recents.length > 0 && (
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Recent searches</span>
+                  <button type="button" className="text-xs font-semibold text-primary" onClick={() => { clearRecentPlaces(); setRecents([]); }}>
+                    Clear
+                  </button>
+                </div>
+                <div className="mt-2 overflow-hidden rounded-[16px] border border-border bg-card">
+                  <PlaceSuggestionList suggestions={recents} searching={false} message={null} busyId={resolvingId} onPick={handlePickSuggestion} />
                 </div>
               </div>
             )}
