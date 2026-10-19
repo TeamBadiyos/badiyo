@@ -232,6 +232,22 @@ export function haversineKm(
 
 // ------------------------------------------------------------------- api
 
+/** Detects typed coordinates like "18.4088, 76.5604", "18.4088 76.5604" or "18.4088°N 76.5604°E". */
+export function parseLatLng(input: string): { lat: number; lng: number } | null {
+  const s = input.trim().replace(/[()]/g, "");
+  const m = s.match(
+    /^(-?\d{1,2}(?:\.\d+)?)\s*°?\s*([NS])?\s*[,;\s]\s*(-?\d{1,3}(?:\.\d+)?)\s*°?\s*([EW])?$/i,
+  );
+  if (!m) return null;
+  let lat = Number(m[1]);
+  let lng = Number(m[3]);
+  if (m[2]?.toUpperCase() === "S") lat = -Math.abs(lat);
+  if (m[4]?.toUpperCase() === "W") lng = -Math.abs(lng);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  if (Math.abs(lat) > 90 || Math.abs(lng) > 180) return null;
+  return { lat, lng };
+}
+
 /** Places first, Geocoding second, Maps SDK last. Minimum 3 characters. */
 export async function searchPlaceSuggestions(
   query: string,
@@ -239,6 +255,20 @@ export async function searchPlaceSuggestions(
 ): Promise<AddressSuggestion[]> {
   const q = query.trim();
   if (q.length < 3) return [];
+  const coords = parseLatLng(q);
+  if (coords) {
+    const label = `${coords.lat.toFixed(6)}, ${coords.lng.toFixed(6)}`;
+    return [{
+      id: `coords-${label}`,
+      title: label,
+      area: "Pinned location (latitude, longitude)",
+      distanceKm: near ? haversineKm(near, coords) : null,
+      placeId: null,
+      lat: coords.lat,
+      lng: coords.lng,
+      pincode: null,
+    }];
+  }
   const key = cacheKey(q, near);
   const cached = suggestionCache.get(key);
   if (cached) return cached;
