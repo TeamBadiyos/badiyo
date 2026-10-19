@@ -1,0 +1,1 @@
+REVOKE ALL ON FUNCTION public.bookings_fill_missing_otps() FROM PUBLIC, anon, authenticated;
