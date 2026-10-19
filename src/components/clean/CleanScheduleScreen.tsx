@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Check, Droplets, Package, X } from "lucide-react";
 import { toast } from "sonner";
 import { useCustomerCityId } from "@/lib/customerCity";
 import { ensureSignedIn } from "@/lib/authGate";
@@ -8,7 +8,7 @@ import { useBackHandler } from "@/lib/backHandler";
 import { useLanguage } from "@/i18n";
 import { getAllHourSlots, getNext7DayOptions, isHourBookable } from "@/lib/hourSlots";
 import { notifyMeForService, slotFitsWindow, timeToMinutes } from "@/lib/serviceHours";
-import { fetchAppFullySlots, useBookNowAllowed, useServiceHours, type CleanServiceKey } from "@/lib/serviceSettings";
+import { fetchAppFullySlots, pick, useBookNowAllowed, useServiceContent, useServiceHours, type CleanServiceKey } from "@/lib/serviceSettings";
 import type { SegmentService } from "@/lib/segments";
 import type { SelectedSlot } from "@/lib/bookingTypes";
 import { AddressLine, DayCard, FullCalendarArt, OptionImageCard } from "./parts";
@@ -203,6 +203,8 @@ export function CleanScheduleScreen({
             ))}
           </>
         )}
+
+        {isAuto && <IncludedCard serviceKey={serviceKey} option={option} lang={lang} />}
       </div>
 
       <div className="fixed inset-x-0 bottom-0 border-t border-border bg-background px-5 py-3 safe-bottom">
@@ -210,6 +212,58 @@ export function CleanScheduleScreen({
           {busy ? "…" : <>{s.cont}{option ? ` · ₹${Number(option.price)}` : ""}</>}
         </button>
       </div>
+    </div>
+  );
+}
+
+/** What's included / not included for the chosen vehicle, from Command Center content. */
+function IncludedCard({ serviceKey, option, lang }: { serviceKey: CleanServiceKey; option: SegmentService | null; lang: string }) {
+  const { data: content } = useServiceContent(serviceKey);
+  if (!option || !content?.cards?.length) return null;
+  const mr = lang === "mr";
+  const norm = (x?: string | null) => (x ?? "").toLowerCase().replace(/\s+/g, " ").trim();
+  const card =
+    content.cards.find((c) => c.price_option_id === option.id) ??
+    content.cards.find((c) => norm(c.title).startsWith(norm(option.duration_label)));
+  if (!card) return null;
+  const lines = (arr: unknown): string[] => (Array.isArray(arr) ? arr : []).map((x) => {
+    if (typeof x === "string") return x.trim();
+    if (x && typeof x === "object") {
+      const o = x as { en?: unknown; mr?: unknown };
+      const en = typeof o.en === "string" ? o.en.trim() : "";
+      const m = typeof o.mr === "string" ? o.mr.trim() : "";
+      return mr ? m || en : en || m;
+    }
+    return "";
+  }).filter(Boolean);
+  const inc = lines(mr && card.included_mr?.length ? card.included_mr : card.included);
+  const exc = lines(mr && card.not_included_mr?.length ? card.not_included_mr : card.not_included);
+  const d = content.details;
+  const t = (en?: string | null, m?: string | null, fb = "") => ((mr && m?.trim() ? m : en)?.trim() || fb);
+  const note = t(d?.note, d?.note_mr);
+  const NoteIcon = d?.note_icon === "water" ? Droplets : Package;
+  if (!inc.length && !exc.length && !note) return null;
+  return (
+    <div className="mt-8 rounded-[20px] border border-border bg-card p-4">
+      <p className="text-base font-extrabold text-foreground">{mr ? "यात काय समाविष्ट आहे?" : "What's included?"} · {pick(lang, card.title, card.title_mr)}</p>
+      {inc.length > 0 && (
+        <div className="mt-3">
+          <p className="text-sm font-extrabold text-foreground">{t(d?.included_title, d?.included_title_mr, mr ? "समाविष्ट" : "Included")}</p>
+          <ul className="mt-1.5 space-y-1.5">{inc.map((x, i) => <li key={i} className="flex gap-2 text-sm text-foreground"><Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />{x}</li>)}</ul>
+        </div>
+      )}
+      {exc.length > 0 && (
+        <div className="mt-4">
+          <p className="text-sm font-extrabold text-foreground">{t(d?.excluded_title, d?.excluded_title_mr, mr ? "समाविष्ट नाही" : "Not included")}</p>
+          <ul className="mt-1.5 space-y-1.5">{exc.map((x, i) => <li key={i} className="flex gap-2 text-sm text-muted-foreground"><X className="mt-0.5 h-4 w-4 shrink-0 text-warning" />{x}</li>)}</ul>
+        </div>
+      )}
+      {note && (
+        <div className="mt-4 flex items-start gap-3 rounded-[14px] bg-surface-soft p-3">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary"><NoteIcon className="h-4 w-4" /></span>
+          <p className="text-sm font-semibold text-foreground">{note}</p>
+        </div>
+      )}
     </div>
   );
 }
