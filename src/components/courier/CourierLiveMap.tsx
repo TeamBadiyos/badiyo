@@ -43,6 +43,7 @@ export function CourierLiveMap({
   const mapDivRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
   const riderMarkerRef = useRef<any>(null);
+  const glideRef = useRef(0);
   const routeLineRef = useRef<any>(null);
   const baseLineRef = useRef<any>(null);
   const [ready, setReady] = useState(false);
@@ -213,7 +214,21 @@ export function CourierLiveMap({
         icon,
       });
     } else {
-      riderMarkerRef.current.setPosition(riderPos);
+      // Glide from the last position instead of jumping.
+      const marker = riderMarkerRef.current;
+      const from = marker.getPosition();
+      cancelAnimationFrame(glideRef.current);
+      if (from) {
+        const a = { lat: from.lat(), lng: from.lng() };
+        const start = performance.now();
+        const step = (now: number) => {
+          const k = Math.min(1, (now - start) / 1500);
+          const e = k * (2 - k);
+          marker.setPosition({ lat: a.lat + (riderPos.lat - a.lat) * e, lng: a.lng + (riderPos.lng - a.lng) * e });
+          if (k < 1) glideRef.current = requestAnimationFrame(step);
+        };
+        glideRef.current = requestAnimationFrame(step);
+      } else marker.setPosition(riderPos);
       riderMarkerRef.current.setOpacity(riderStale ? 0.55 : 1);
       riderMarkerRef.current.setIcon(icon);
     }

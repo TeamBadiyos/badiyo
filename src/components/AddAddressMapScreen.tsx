@@ -21,6 +21,8 @@ import {
   type AddressSuggestion,
 } from "@/lib/addressSearch";
 import { PlaceSuggestionList } from "./PlaceSuggestionList";
+import { addRecentPlace } from "@/lib/recentSearches";
+import { hapticSelection } from "@/lib/haptics";
 import { pushBackHandler } from "@/lib/backHandler";
 import { useT } from "@/i18n";
 import { resolveAddress } from "@/lib/reverseGeocode";
@@ -171,6 +173,7 @@ export function AddAddressMapScreen({
   const justPickedRef = useRef(false);
   const [picked, setPicked] = useState(false);
   const [geocodeNonce, setGeocodeNonce] = useState(0);
+  const [dragging, setDragging] = useState(false);
 
   // Debounced place search: Google Places first (shop / hospital names with
   // distance), Geocoding as the fallback. Minimum 3 characters, 300ms idle.
@@ -229,6 +232,7 @@ export function AddAddressMapScreen({
         setSearchError(null);
         justPickedRef.current = true;
         setQuery(s.title);
+        addRecentPlace(s, p.lat, p.lng);
         const next = { lat: p.lat, lng: p.lng };
         if (mapRef.current) mapRef.current.panTo(next);
         setCenter(next);
@@ -261,6 +265,11 @@ export function AddAddressMapScreen({
         });
         mapRef.current = map;
         setMapReady(true);
+        map.addListener("dragstart", () => setDragging(true));
+        map.addListener("dragend", () => {
+          setDragging(false);
+          void hapticSelection();
+        });
         map.addListener("idle", () => {
           const c = map.getCenter();
           if (!c) return;
@@ -637,7 +646,14 @@ export function AddAddressMapScreen({
             searchResultsOpen ? "opacity-0" : "opacity-100"
           }`}
         >
-          <MapPin className="h-10 w-10 text-primary drop-shadow" strokeWidth={2.5} fill="currentColor" />
+          <MapPin
+            className={`h-10 w-10 text-primary drop-shadow transition-transform duration-200 ${dragging ? "-translate-y-3 scale-110" : "translate-y-0 animate-[pin-drop_300ms_ease-out]"}`}
+            strokeWidth={2.5}
+            fill="currentColor"
+          />
+          <span
+            className={`absolute left-1/2 top-full -ml-2 -mt-1 block h-1.5 w-4 rounded-full bg-foreground/30 blur-[1px] transition-all duration-200 ${dragging ? "scale-150 opacity-40" : "scale-100 opacity-70"}`}
+          />
         </div>
 
         {/* Detecting banner (shown while the GPS fix is being taken) */}

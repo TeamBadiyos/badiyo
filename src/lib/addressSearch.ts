@@ -13,6 +13,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { loadMapsScript } from "./googleMapsLoader";
 import { isNativeShell, REMOTE_SERVER_FN_ORIGIN } from "./nativeServerFn";
+import { coordsFromMapsUrl, decodePlusCode, findMapsUrl, findPlusCode, isShortMapsUrl, placeTextFromMapsUrl } from "./mapLinks";
 
 export type AddressSuggestion = {
   /** Stable key for lists. */
@@ -253,21 +254,57 @@ export async function searchPlaceSuggestions(
   query: string,
   near?: { lat: number; lng: number },
 ): Promise<AddressSuggestion[]> {
-  const q = query.trim();
+  let q = query.trim();
   if (q.length < 3) return [];
+  const pinAt = (c: { lat: number; lng: number }, title: string, area: string): AddressSuggestion[] => [{
+    id: `coords-${c.lat.toFixed(6)},${c.lng.toFixed(6)}`,
+    title,
+    area,
+    distanceKm: near ? haversineKm(near, c) : null,
+    placeId: null,
+    lat: c.lat,
+    lng: c.lng,
+    pincode: null,
+  }];
+  const label = (c: { lat: number; lng: number }) => `${c.lat.toFixed(6)}, ${c.lng.toFixed(6)}`;
   const coords = parseLatLng(q);
-  if (coords) {
-    const label = `${coords.lat.toFixed(6)}, ${coords.lng.toFixed(6)}`;
-    return [{
-      id: `coords-${label}`,
-      title: label,
-      area: "Pinned location (latitude, longitude)",
-      distanceKm: near ? haversineKm(near, coords) : null,
-      placeId: null,
-      lat: coords.lat,
-      lng: coords.lng,
-      pincode: null,
-    }];
+  if (coords) return pinAt(coords, label(coords), "Pinned location (latitude, longitude)");
+
+  // Pasted Google Maps link (WhatsApp / Maps share).
+  let url = findMapsUrl(q);
+  if (url) {
+    if (isShortMapsUrl(url)) {
+      try {
+        const res = await withTimeout(
+          fetch(`${base()}/api/public/expand-map-link`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url }),
+            credentials: "omit",
+          }),
+          8000,
+          "map link",
+        );
+        const body = (await res.json().catch(() => ({}))) as { url?: string };
+        if (body.url) url = body.url;
+      } catch (e) {
+        console.error("[address] map link expand failed:", (e as Error)?.message);
+      }
+    }
+    const c = coordsFromMapsUrl(url);
+    if (c) return pinAt(c, "Shared map location", label(c));
+    const text = placeTextFromMapsUrl(url);
+    if (!text) return [];
+    const inner = parseLatLng(text);
+    if (inner) return pinAt(inner, "Shared map location", label(inner));
+    q = text;
+  }
+
+  // Plus Code, e.g. "8V8V+77 Latur" or "7JF88V8V+77".
+  const plus = findPlusCode(q);
+  if (plus) {
+    const c = decodePlusCode(plus.code, near ?? { lat: 18.4088, lng: 76.5604 });
+    if (c) return pinAt(c, plus.code, `Plus Code${plus.rest ? ` · ${plus.rest}` : ""}`);
   }
   const key = cacheKey(q, near);
   const cached = suggestionCache.get(key);
