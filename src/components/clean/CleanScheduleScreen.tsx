@@ -235,7 +235,7 @@ function IncludedCard({ serviceKey, option, lang }: { serviceKey: CleanServiceKe
   // Only source: the CC Services item (service_price_options inclusions/exclusions).
   const inc = lines(option.inclusions);
   const exc = lines(option.exclusions);
-  const d = content.details;
+  const d = content?.details;
   const t = (en?: string | null, m?: string | null, fb = "") => ((mr && m?.trim() ? m : en)?.trim() || fb);
   const note = t(d?.note, d?.note_mr);
   const NoteIcon = d?.note_icon === "water" ? Droplets : Package;
