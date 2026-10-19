@@ -564,3 +564,4 @@ select,
 @keyframes festive-twinkle { 0%,100% { opacity: .3; transform: scale(.8); } 50% { opacity: 1; transform: scale(1.15); } }
 .festive-spin { animation: festive-rot 9s linear infinite; }
 @keyframes festive-rot { to { transform: rotate(360deg); } }
+@keyframes pin-drop { 0% { transform: translateY(-12px); } 60% { transform: translateY(2px); } 100% { transform: translateY(0); } }
