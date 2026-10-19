@@ -12,6 +12,8 @@ type SendBody = {
   title?: string;
   body?: string;
   data?: Record<string, unknown> | null;
+  image?: string | null;
+  image_url?: string | null;
 };
 
 type ServiceAccount = {
@@ -174,6 +176,14 @@ export const Route = createFileRoute("/api/public/push/send")({
         }
 
         const dataPayload = stringifyData(payload.data, payload.alert_type);
+        // Campaign photo: only public https URLs (FCM rejects anything else).
+        const imgCandidate = [payload.image, payload.image_url, dataPayload.image, dataPayload.image_url]
+          .find((v) => typeof v === "string" && v.trim() !== "");
+        const imageUrl = imgCandidate && /^https:\/\//i.test(imgCandidate.trim()) ? imgCandidate.trim() : null;
+        if (imageUrl) {
+          dataPayload.image = imageUrl;
+          dataPayload.image_url = imageUrl;
+        }
         const endpoint = `https://fcm.googleapis.com/v1/projects/${sa.project_id}/messages:send`;
 
         let sent = 0;
@@ -191,14 +201,25 @@ export const Route = createFileRoute("/api/public/push/send")({
               body: JSON.stringify({
                 message: {
                   token: row.fcm_token,
-                  notification: { title, body: bodyText },
+                  notification: imageUrl ? { title, body: bodyText, image: imageUrl } : { title, body: bodyText },
                   data: dataPayload,
                   android: {
                     priority: "HIGH",
-                    notification: { channel_id: "customer_alerts", sound: "default" },
+                    notification: {
+                      channel_id: "customer_alerts",
+                      sound: "default",
+                      ...(imageUrl ? { image: imageUrl } : {}),
+                    },
                   },
                   apns: {
-                    payload: { aps: { sound: "default", "content-available": 1 } },
+                    payload: {
+                      aps: {
+                        sound: "default",
+                        "content-available": 1,
+                        ...(imageUrl ? { "mutable-content": 1 } : {}),
+                      },
+                    },
+                    ...(imageUrl ? { fcm_options: { image: imageUrl } } : {}),
                   },
                 },
               }),

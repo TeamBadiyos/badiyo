@@ -19,11 +19,14 @@ if (firebaseConfig.apiKey) {
 
   messaging.onBackgroundMessage((payload) => {
     const title = (payload.notification && payload.notification.title) || "badiyo";
+    const d = payload.data || {};
+    const image = (payload.notification && payload.notification.image) || d.image || d.image_url;
     const options = {
       body: (payload.notification && payload.notification.body) || "",
       icon: "/favicon.ico",
-      data: payload.data || {},
+      data: d,
     };
+    if (image) options.image = image;
     self.registration.showNotification(title, options);
   });
 }
