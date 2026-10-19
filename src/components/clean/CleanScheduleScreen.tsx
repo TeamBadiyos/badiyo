@@ -56,7 +56,7 @@ export function CleanScheduleScreen({
   const cityId = useCustomerCityId();
   const days = useMemo(() => getNext7DayOptions().slice(0, 3), []);
   const [optionId, setOptionId] = useState<string | null>(
-    draft.optionId ?? (options.find((o) => Number(o.duration_minutes) === 120) ?? options[0])?.id ?? null,
+    draft.optionId ?? (options.find((o) => Number(o.duration_minutes) === 60) ?? options[0])?.id ?? null,
   );
   const [day, setDay] = useState<string>(draft.day && days.some((d) => d.key === draft.day) ? draft.day : days[0].key);
   const [slotMins, setSlotMins] = useState<number | null>(draft.slotMins);
