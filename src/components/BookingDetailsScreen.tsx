@@ -199,6 +199,9 @@ export function BookingDetailsScreen({
           <h3 className="text-sm font-bold text-foreground">Price breakdown</h3>
           <div className="mt-3 space-y-2 text-sm">
             <Row label="Service" value={`₹${booking.price}`} />
+            {Number((booking as { travel_fee?: number | null }).travel_fee ?? 0) > 0 && (
+              <Row label={lang === "mr" ? "प्रवास शुल्क" : "Travel Fee"} value={`₹${Number((booking as { travel_fee?: number | null }).travel_fee)}`} />
+            )}
             <Row
               label={`GST (${Number(booking.gst_percent ?? 0)}%)`}
               value={`₹${Number(booking.gst_amount ?? 0)}`}
