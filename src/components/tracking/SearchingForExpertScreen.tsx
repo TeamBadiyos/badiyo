@@ -1,4 +1,6 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
+import { LocationPickerSheet } from "../LocationPickerSheet";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { MapPin, Search, Clock, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -145,6 +147,10 @@ export function SearchingForExpertScreen({
   }, [booking, onExpertAssigned, onCancelled]);
 
   const status = booking?.status ?? currentStatus ?? "accepted";
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [override, setOverride] = useState<SelectedAddress | null>(null);
+  const shownAddr = (override ?? address) as SelectedAddress & { id?: string };
 
   return (
     <main className="min-h-screen w-full bg-background pb-8">
@@ -231,11 +237,36 @@ export function SearchingForExpertScreen({
           )}
           <div className="mt-3 flex items-start gap-1.5 text-xs text-muted-foreground">
             <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
-            <span className="line-clamp-2">
-              {address.label ? `${address.label} · ` : ""}
-              {address.full_address}
+            <span className="line-clamp-2 flex-1">
+              {shownAddr.label ? `${shownAddr.label} · ` : ""}
+              {shownAddr.full_address}
             </span>
+            {bookingId && !booking?.assigned_expert_id && ["pending", "accepted", "confirmed"].includes(status) && (
+              <button
+                onClick={() => setPickerOpen(true)}
+                disabled={saving}
+                className="shrink-0 rounded-full border border-primary/40 px-3 py-1 text-xs font-bold text-primary disabled:opacity-50"
+              >
+                {saving ? "…" : "Change"}
+              </button>
+            )}
           </div>
+          <LocationPickerSheet
+            open={pickerOpen}
+            activeId={shownAddr.id ?? null}
+            title="Change service address"
+            onClose={() => setPickerOpen(false)}
+            onSelect={async (a) => {
+              setPickerOpen(false);
+              if (!bookingId || a.id === shownAddr.id) return;
+              setSaving(true);
+              const { error } = await supabase.rpc("app_change_booking_address" as never, { _booking_id: bookingId, _address_id: a.id } as never);
+              setSaving(false);
+              if (error) { toast.error(error.message || "Could not change address"); return; }
+              setOverride({ ...shownAddr, ...a } as SelectedAddress);
+              toast.success("Address updated");
+            }}
+          />
         </section>
 
         <CancelBookingButton
