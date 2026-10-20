@@ -12684,6 +12684,10 @@ export type Database = {
         Args: { _city_id?: string; _kind: string }
         Returns: Json
       }
+      app_change_booking_address: {
+        Args: { _address_id: string; _booking_id: string }
+        Returns: Json
+      }
       app_checkout_coupons: {
         Args: {
           _base_amount: number
