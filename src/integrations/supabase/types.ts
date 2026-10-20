@@ -395,6 +395,10 @@ export type Database = {
       app_config: {
         Row: {
           current_version: string
+          expert_latest_version: string | null
+          expert_latest_version_code: number | null
+          expert_min_version_code: number
+          expert_play_store_url: string
           id: number
           latest_version_code: number
           min_supported_version: string
@@ -404,6 +408,10 @@ export type Database = {
         }
         Insert: {
           current_version?: string
+          expert_latest_version?: string | null
+          expert_latest_version_code?: number | null
+          expert_min_version_code?: number
+          expert_play_store_url?: string
           id?: number
           latest_version_code?: number
           min_supported_version?: string
@@ -413,6 +421,10 @@ export type Database = {
         }
         Update: {
           current_version?: string
+          expert_latest_version?: string | null
+          expert_latest_version_code?: number | null
+          expert_min_version_code?: number
+          expert_play_store_url?: string
           id?: number
           latest_version_code?: number
           min_supported_version?: string
@@ -848,6 +860,7 @@ export type Database = {
           started_at: string | null
           status: string
           total_amount: number
+          training_expert_ids: string[]
           travel_expert_share_pct: number | null
           travel_fee: number
           travel_fee_gst: number
@@ -927,6 +940,7 @@ export type Database = {
           started_at?: string | null
           status?: string
           total_amount?: number
+          training_expert_ids?: string[]
           travel_expert_share_pct?: number | null
           travel_fee?: number
           travel_fee_gst?: number
@@ -1006,6 +1020,7 @@ export type Database = {
           started_at?: string | null
           status?: string
           total_amount?: number
+          training_expert_ids?: string[]
           travel_expert_share_pct?: number | null
           travel_fee?: number
           travel_fee_gst?: number
@@ -3535,6 +3550,7 @@ export type Database = {
           stops_fee: number
           store_order_id: string | null
           total_amount: number
+          training_expert_ids: string[]
           updated_at: string
           vehicle_type_id: string
           wallet_amount: number
@@ -3620,6 +3636,7 @@ export type Database = {
           stops_fee?: number
           store_order_id?: string | null
           total_amount?: number
+          training_expert_ids?: string[]
           updated_at?: string
           vehicle_type_id: string
           wallet_amount?: number
@@ -3705,6 +3722,7 @@ export type Database = {
           stops_fee?: number
           store_order_id?: string | null
           total_amount?: number
+          training_expert_ids?: string[]
           updated_at?: string
           vehicle_type_id?: string
           wallet_amount?: number
@@ -4474,6 +4492,7 @@ export type Database = {
       }
       device_tokens: {
         Row: {
+          app_version: string | null
           created_at: string
           fcm_token: string
           id: string
@@ -4482,8 +4501,10 @@ export type Database = {
           updated_at: string
           user_id: string
           user_type: string
+          version_code: number | null
         }
         Insert: {
+          app_version?: string | null
           created_at?: string
           fcm_token: string
           id?: string
@@ -4492,8 +4513,10 @@ export type Database = {
           updated_at?: string
           user_id: string
           user_type: string
+          version_code?: number | null
         }
         Update: {
+          app_version?: string | null
           created_at?: string
           fcm_token?: string
           id?: string
@@ -4502,6 +4525,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
           user_type?: string
+          version_code?: number | null
         }
         Relationships: []
       }
@@ -5125,6 +5149,9 @@ export type Database = {
       experts: {
         Row: {
           address: string | null
+          app_version: string | null
+          app_version_code: number | null
+          app_version_updated_at: string | null
           approved_by: string | null
           auth_user_id: string | null
           bank_account_holder_name: string | null
@@ -5154,6 +5181,7 @@ export type Database = {
           offline_after_job: boolean
           onboarded_by: string | null
           onboarded_by_partner_id: string | null
+          online_at: string | null
           pan_encrypted: string | null
           pan_last4: string | null
           pan_updated_at: string | null
@@ -5172,6 +5200,9 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          app_version?: string | null
+          app_version_code?: number | null
+          app_version_updated_at?: string | null
           approved_by?: string | null
           auth_user_id?: string | null
           bank_account_holder_name?: string | null
@@ -5201,6 +5232,7 @@ export type Database = {
           offline_after_job?: boolean
           onboarded_by?: string | null
           onboarded_by_partner_id?: string | null
+          online_at?: string | null
           pan_encrypted?: string | null
           pan_last4?: string | null
           pan_updated_at?: string | null
@@ -5219,6 +5251,9 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          app_version?: string | null
+          app_version_code?: number | null
+          app_version_updated_at?: string | null
           approved_by?: string | null
           auth_user_id?: string | null
           bank_account_holder_name?: string | null
@@ -5248,6 +5283,7 @@ export type Database = {
           offline_after_job?: boolean
           onboarded_by?: string | null
           onboarded_by_partner_id?: string | null
+          online_at?: string | null
           pan_encrypted?: string | null
           pan_last4?: string | null
           pan_updated_at?: string | null
@@ -6418,6 +6454,7 @@ export type Database = {
           tds_amount: number
           total_amount: number
           total_payable: number | null
+          training_expert_ids: string[]
           updated_at: string
           user_id: string | null
           wallet_used: number
@@ -6488,6 +6525,7 @@ export type Database = {
           tds_amount?: number
           total_amount?: number
           total_payable?: number | null
+          training_expert_ids?: string[]
           updated_at?: string
           user_id?: string | null
           wallet_used?: number
@@ -6558,6 +6596,7 @@ export type Database = {
           tds_amount?: number
           total_amount?: number
           total_payable?: number | null
+          training_expert_ids?: string[]
           updated_at?: string
           user_id?: string | null
           wallet_used?: number
@@ -12631,6 +12670,7 @@ export type Database = {
           started_at: string | null
           status: string
           total_amount: number
+          training_expert_ids: string[]
           travel_expert_share_pct: number | null
           travel_fee: number
           travel_fee_gst: number
@@ -13284,6 +13324,7 @@ export type Database = {
           started_at: string | null
           status: string
           total_amount: number
+          training_expert_ids: string[]
           travel_expert_share_pct: number | null
           travel_fee: number
           travel_fee_gst: number
@@ -13599,6 +13640,7 @@ export type Database = {
           stops_fee: number
           store_order_id: string | null
           total_amount: number
+          training_expert_ids: string[]
           updated_at: string
           vehicle_type_id: string
           wallet_amount: number
@@ -13937,6 +13979,7 @@ export type Database = {
           phone: string
         }[]
       }
+      expert_has_active_job: { Args: { _e: string }; Returns: boolean }
       expert_has_push_device: { Args: { _expert_id: string }; Returns: boolean }
       expert_job_details: { Args: { _booking_id: string }; Returns: Json }
       expert_mark_arrived: { Args: { p_booking_id: string }; Returns: string }
@@ -14652,7 +14695,12 @@ export type Database = {
       }
       referral_phone10: { Args: { _phone: string }; Returns: string }
       register_device_token: {
-        Args: { p_fcm_token: string; p_platform: string }
+        Args: {
+          p_app_version?: string
+          p_fcm_token: string
+          p_platform: string
+          p_version_code?: number
+        }
         Returns: string
       }
       release_my_coin_redemption: {
@@ -15080,6 +15128,10 @@ export type Database = {
         }
         Returns: Json
       }
+      staff_cancel_training_booking: {
+        Args: { _actor: string; _booking_id: string }
+        Returns: Json
+      }
       staff_category_copy_default: {
         Args: { _city_id: string; _kind: string }
         Returns: number
@@ -15267,6 +15319,18 @@ export type Database = {
         Args: { _payload: Json }
         Returns: string
       }
+      staff_create_training_broadcast: {
+        Args: {
+          _actor: string
+          _address: Json
+          _expert_ids: string[]
+          _price_option_id: string
+          _scheduled_date: string
+          _scheduled_time_slot: string
+          _visible_cities: string[]
+        }
+        Returns: Json
+      }
       staff_customer_brief: {
         Args: { _ids: string[] }
         Returns: {
@@ -15360,6 +15424,10 @@ export type Database = {
           _reason: string
         }
         Returns: undefined
+      }
+      staff_expert_app_version_summary: {
+        Args: { _min_code?: number }
+        Returns: Json
       }
       staff_expert_kyc_decision: {
         Args: { _decision: string; _expert_id: string; _reason: string }
@@ -15823,6 +15891,7 @@ export type Database = {
         }
         Returns: Json
       }
+      staff_save_app_versions: { Args: { _patch: Json }; Returns: undefined }
       staff_save_banner: { Args: { _p: Json }; Returns: string }
       staff_save_capacity_message: {
         Args: { _payload: Json }
@@ -16581,6 +16650,10 @@ export type Database = {
           _vehicle_type: string
         }
         Returns: Json
+      }
+      staff_validate_training_experts: {
+        Args: { _city?: string; _ids: string[] }
+        Returns: undefined
       }
       staff_verify_end_otp: {
         Args: { _booking_id: string; _otp: string }
