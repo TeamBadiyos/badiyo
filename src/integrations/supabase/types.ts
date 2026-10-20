@@ -14725,6 +14725,7 @@ export type Database = {
         Returns: undefined
       }
       request_instant_settlement: { Args: { _store_id: string }; Returns: Json }
+      require_staff: { Args: never; Returns: undefined }
       resolve_booking_payouts: {
         Args: { _booking_id: string }
         Returns: {
