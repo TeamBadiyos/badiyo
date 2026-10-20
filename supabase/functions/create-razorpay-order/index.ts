@@ -93,7 +93,26 @@ Deno.serve(async (req) => {
     // Extension and tip payments for running orders are never blocked.
     // Fail-open: if the check itself errors, payment proceeds.
     if (purpose === "booking" || purpose === "courier") {
-      const serviceKey = purpose === "courier" ? "courier" : "clean";
+      // Wash (Car/Bike) must be judged against Wash hours/slots, never Clean.
+      let serviceKey = purpose === "courier" ? "courier" : "clean";
+      if (purpose === "booking") {
+        try {
+          let catId: string | null = null;
+          if (itemId) {
+            const { data: opt } = await supabase
+              .from("service_price_options")
+              .select("services(category_id)")
+              .eq("id", itemId)
+              .maybeSingle();
+            catId = ((opt as Record<string, unknown> | null)?.services as { category_id?: string } | null)?.category_id ?? null;
+          }
+          const { data: grp } = await supabase.rpc("booking_capacity_group", {
+            _category_id: catId,
+            _label: body?.booking_draft?.service_label ?? null,
+          });
+          if (grp === "wash") serviceKey = "wash";
+        } catch (_) { /* fall back to clean */ }
+      }
       const draftForSlot = body?.booking_draft;
       const isScheduled =
         purpose === "booking" &&
