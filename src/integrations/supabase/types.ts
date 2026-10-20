@@ -14428,6 +14428,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      notify_data_push: {
+        Args: { _data: Json; _user_id: string; _user_type: string }
+        Returns: undefined
+      }
       notify_expert_alert: {
         Args: {
           _alert_type: string
