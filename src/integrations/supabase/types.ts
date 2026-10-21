@@ -14800,6 +14800,7 @@ export type Database = {
       seal_luhn_ok: { Args: { _raw: string }; Returns: boolean }
       seal_printed_text: { Args: { _code: string }; Returns: string }
       send_completion_reminders: { Args: never; Returns: number }
+      send_daily_go_live_reminder: { Args: never; Returns: number }
       send_scheduled_booking_reminders: { Args: never; Returns: number }
       service_can_order: {
         Args: { _at?: string; _service_key: string }
