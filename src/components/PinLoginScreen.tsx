@@ -1,30 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Fingerprint } from "lucide-react";
 import { BadiyoLogo } from "./BadiyoLogo";
 import { supabase } from "@/integrations/supabase/client";
 import { getErrorMessage } from "@/lib/errorMessage";
-import { authenticateBiometric, checkBiometric } from "@/lib/biometric";
-import { loadDevicePin, clearDevicePin } from "@/lib/pinStorage";
-
-function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
-  return new Promise((resolve) => {
-    const timer = window.setTimeout(() => resolve(fallback), ms);
-    promise
-      .then((value) => {
-        window.clearTimeout(timer);
-        resolve(value);
-      })
-      .catch(() => {
-        window.clearTimeout(timer);
-        resolve(fallback);
-      });
-  });
-}
 
 /**
- * PIN entry screen for returning customers. Auto-triggers a biometric prompt
- * on mount when hardware is available AND a device-stored PIN exists — the
- * user never types anything. Falls back to manual 4-digit entry. Handles
+ * PIN entry screen for returning customers: the user types the 4-digit PIN,
+ * which is checked server-side by verify-pin-login. Nothing is stored. Handles
  * lockout responses from verify-pin-login (429) and offers OTP fallback.
  */
 export function PinLoginScreen({
@@ -44,11 +25,7 @@ export function PinLoginScreen({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [locked, setLocked] = useState<number>(0); // seconds remaining
-  const [biometricStatus, setBiometricStatus] = useState<
-    "checking" | "prompting" | "unavailable" | "failed" | "success"
-  >("checking");
   const inputs = useRef<Array<HTMLInputElement | null>>([]);
-  const autoTriedRef = useRef(false);
   const submittingRef = useRef(false);
 
   const submit = useCallback(
@@ -119,33 +96,6 @@ export function PinLoginScreen({
     return () => clearTimeout(t);
   }, [locked]);
 
-  // Biometric-first: try immediately on mount.
-  useEffect(() => {
-    if (autoTriedRef.current) return;
-    autoTriedRef.current = true;
-    (async () => {
-      const stored = await withTimeout(loadDevicePin(phone), 5000, null);
-      if (!stored) {
-        setBiometricStatus("unavailable");
-        return;
-      }
-      const status = await checkBiometric();
-      if (status !== "available") {
-        setBiometricStatus("unavailable");
-        return;
-      }
-      setBiometricStatus("prompting");
-      const ok = await authenticateBiometric("Log in to badiyos", 8000);
-      if (ok) {
-        setBiometricStatus("success");
-        await submit(stored);
-      } else {
-        setBiometricStatus("failed");
-        setTimeout(() => inputs.current[0]?.focus(), 50);
-      }
-    })();
-  }, [phone, submit]);
-
   const handleChange = (i: number, val: string) => {
     if (locked > 0) return;
     const v = val.replace(/\D/g, "").slice(-1);
@@ -160,18 +110,10 @@ export function PinLoginScreen({
     if (e.key === "Backspace" && !digits[i] && i > 0) inputs.current[i - 1]?.focus();
   };
 
-  const retryBiometric = async () => {
-    const stored = await withTimeout(loadDevicePin(phone), 5000, null);
-    if (!stored) return;
-    const ok = await authenticateBiometric("Log in to badiyos");
-    if (ok) void submit(stored);
-  };
-
   const handleForgotPin = () => {
     setError(null);
     setDigits(["", "", "", ""]);
     onForgotPin();
-    void withTimeout(clearDevicePin(phone), 1500, undefined);
   };
 
   return (
@@ -190,13 +132,6 @@ export function PinLoginScreen({
             Sign in as <span className="font-semibold text-foreground">+91 {phone}</span>
           </p>
         </div>
-
-        {biometricStatus === "prompting" && (
-          <div className="mt-8 flex flex-col items-center gap-2 text-muted-foreground">
-            <Fingerprint className="h-10 w-10 text-primary" />
-            <p className="text-sm">Use biometric unlock, or enter your PIN below.</p>
-          </div>
-        )}
 
         <p className="mt-8 text-center text-sm font-semibold text-foreground">
           Enter your 4-digit PIN
@@ -219,19 +154,6 @@ export function PinLoginScreen({
             />
           ))}
         </div>
-        {biometricStatus !== "checking" && biometricStatus !== "unavailable" && (
-          <div className="mt-4 flex justify-center">
-            <button
-              type="button"
-              onClick={retryBiometric}
-              disabled={loading || locked > 0 || biometricStatus === "prompting"}
-              className="flex items-center gap-2 text-sm font-semibold text-primary disabled:opacity-50"
-            >
-              <Fingerprint className="h-4 w-4" /> Use biometric
-            </button>
-          </div>
-        )}
-
         {error && (
           <p className="mt-4 text-center text-sm font-medium text-destructive">{error}</p>
         )}

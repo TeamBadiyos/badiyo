@@ -2,17 +2,15 @@ import { useEffect, useRef, useState } from "react";
 import { BadiyoLogo } from "./BadiyoLogo";
 import { supabase } from "@/integrations/supabase/client";
 import { getErrorMessage } from "@/lib/errorMessage";
-import { saveDevicePin } from "@/lib/pinStorage";
 
 /**
  * Mandatory 4-digit PIN setup after first-time OTP verification.
- * On submit, calls set_login_pin(p_pin) and stores the PIN in
- * device-secure storage so biometric unlock can auto-submit it later.
+ * On submit, calls set_login_pin(p_pin). The PIN is never stored on the device.
  */
 export function PinSetScreen({
   phone,
   title = "Set your 4-digit PIN",
-  subtitle = "You'll use this (or fingerprint) to log in next time.",
+  subtitle = "You'll use this PIN to log in next time.",
   onDone,
 }: {
   phone: string; // 10-digit
@@ -71,11 +69,6 @@ export function PinSetScreen({
         new Promise((_, rej) => setTimeout(() => rej(new Error("Network timeout. Please try again.")), 12000)),
       ])) as { error: unknown };
       if (rpcErr) throw rpcErr;
-      // Don't block navigation on device secure-storage — it can hang on some devices.
-      void Promise.race([
-        saveDevicePin(phone, first),
-        new Promise((res) => setTimeout(res, 1500)),
-      ]).catch(() => {});
       onDone();
     } catch (err) {
       console.error("set_login_pin failed", err);
