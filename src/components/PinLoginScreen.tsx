@@ -59,7 +59,8 @@ export function PinLoginScreen({
       setError(null);
       try {
         const { data, error: fnErr } = await supabase.functions.invoke("verify-pin-login", {
-          body: { phone, pin: code },
+          // The live function rejects requests without user_type ("Invalid request").
+          body: { phone, pin: code, user_type: "customer" },
         });
         // supabase.functions.invoke throws FunctionsHttpError for non-2xx,
         // but the JSON body still comes back in the error's context.

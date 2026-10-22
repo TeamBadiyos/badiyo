@@ -767,11 +767,13 @@ function Index() {
         settled = true;
         clearTimeout(splashCap);
         void cleanReady.then(() => { if (!cancelled) enterAppAfterAuth("home"); });
-        // Validate the stored token with the auth server; stale JWT → refresh, else sign out.
-        void supabase.auth.getUser().then(({ error }) => {
+        // Validate the stored token with the auth server; stale JWT → refresh, else
+        // local sign-out — but only if this is still the same session.
+        const checkedToken = data.session.access_token;
+        void supabase.auth.getUser(checkedToken).then(({ error }) => {
           const status = (error as { status?: number } | null)?.status;
           if (error && (status === 401 || status === 403 || /jwt/i.test(error.message))) {
-            void import("@/integrations/supabase/client").then((m) => m.refreshOrSignOut());
+            void import("@/integrations/supabase/client").then((m) => m.refreshOrSignOut(checkedToken));
           }
         }).catch(() => {});
         // Account housekeeping is not needed to draw Home, so it waits until
