@@ -83,7 +83,12 @@ export function CleanScheduleScreen({
     queryFn: () => fetchAppFullySlots(serviceKey, days[0].key, days[days.length - 1].key),
   });
   const visible = allSlots.filter((x) => isHourBookable(day, x.mins) && slotFitsWindow(state, x.mins, mins));
-  const isFull = (m: number) => m !== NOW && (fullSlots?.has(`${day}|${m}`) ?? false);
+  // A slot is full when ANY 30-min block the job would occupy is full — not just its start.
+  const isFull = (m: number) => {
+    if (m === NOW || !fullSlots) return false;
+    for (let t = m; t < m + mins; t += 30) if (fullSlots.has(`${day}|${t}`)) return true;
+    return false;
+  };
   const loaded = !!option && !!fullSlots && !isFetching;
   const dayFull = loaded && !nowOk && visible.every((x) => isFull(x.mins));
 
