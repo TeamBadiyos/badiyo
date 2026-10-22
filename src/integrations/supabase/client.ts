@@ -132,6 +132,8 @@ function createSupabaseClient() {
     },
     auth: {
       storage: brokeredPreviewStorage(),
+      // Pinned: must never be derived from the URL (keeps sessions across host moves).
+      storageKey: 'sb-dkneclwmmjlqswovtqno-auth-token',
       persistSession: true,
       autoRefreshToken: true,
     }
