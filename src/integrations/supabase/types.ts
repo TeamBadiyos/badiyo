@@ -12051,34 +12051,46 @@ export type Database = {
       }
       wallet_ledger: {
         Row: {
+          adjustment_date: string | null
           amount: number
           created_at: string
           created_by: string | null
+          effective_at: string | null
           id: string
           owner_id: string
           owner_type: string
+          pnl_expense_category: string | null
+          pnl_tag: string | null
           reason: string
           type: string
           wallet_type: string
         }
         Insert: {
+          adjustment_date?: string | null
           amount: number
           created_at?: string
           created_by?: string | null
+          effective_at?: string | null
           id?: string
           owner_id: string
           owner_type: string
+          pnl_expense_category?: string | null
+          pnl_tag?: string | null
           reason: string
           type: string
           wallet_type?: string
         }
         Update: {
+          adjustment_date?: string | null
           amount?: number
           created_at?: string
           created_by?: string | null
+          effective_at?: string | null
           id?: string
           owner_id?: string
           owner_type?: string
+          pnl_expense_category?: string | null
+          pnl_tag?: string | null
           reason?: string
           type?: string
           wallet_type?: string
@@ -15390,6 +15402,10 @@ export type Database = {
         Args: { _event_id: string }
         Returns: undefined
       }
+      staff_delete_wallet_adjustment: {
+        Args: { _expected: Json; _ledger_id: string; _reason: string }
+        Returns: undefined
+      }
       staff_delivery_gst_check: {
         Args: { _from: string; _to: string }
         Returns: Json
@@ -15424,6 +15440,17 @@ export type Database = {
           _gross: number
           _item_id: string
           _reason: string
+        }
+        Returns: undefined
+      }
+      staff_edit_wallet_adjustment: {
+        Args: {
+          _adjustment_date: string
+          _amount: number
+          _expected: Json
+          _ledger_id: string
+          _reason: string
+          _type: string
         }
         Returns: undefined
       }
@@ -15492,6 +15519,10 @@ export type Database = {
         Returns: Json
       }
       staff_insurance_stats: { Args: never; Returns: Json }
+      staff_latest_my_adjustment: {
+        Args: { _owner_id: string }
+        Returns: string
+      }
       staff_list_bulk_plans: { Args: never; Returns: Json }
       staff_list_category_suggestions: {
         Args: { _service: string }
@@ -15561,6 +15592,10 @@ export type Database = {
       staff_lucky_draw_save_prize: {
         Args: { _campaign_id: string; _id: string; _payload: Json }
         Returns: string
+      }
+      staff_manual_adjustment_ids: {
+        Args: { _owner_id: string }
+        Returns: string[]
       }
       staff_mark_agreement_paper: {
         Args: { _agreement_id: string; _path: string }
@@ -16351,6 +16386,10 @@ export type Database = {
       }
       staff_store_reassign: { Args: { _order_id: string }; Returns: Json }
       staff_sync_notifications: { Args: never; Returns: undefined }
+      staff_tag_wallet_adjustment: {
+        Args: { _expense_category: string; _ledger_id: string; _tag: string }
+        Returns: undefined
+      }
       staff_tax_report: { Args: { _month: string }; Returns: Json }
       staff_tax_report_ext: { Args: { _month: string }; Returns: Json }
       staff_tds_report: {
@@ -16668,6 +16707,17 @@ export type Database = {
       staff_wallet_adjust:
         | {
             Args: {
+              _amount: number
+              _owner_id: string
+              _owner_type: string
+              _reason: string
+              _type: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              _adjustment_date: string
               _amount: number
               _owner_id: string
               _owner_type: string
