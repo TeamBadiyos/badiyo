@@ -16,7 +16,13 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { phone, pin } = await req.json().catch(() => ({}));
+    const { phone, pin, user_type } = await req.json().catch(() => ({}));
+    // user_type is optional for backward compatibility with installed apps
+    // that never sent it; default to "customer".
+    const userType = user_type == null || user_type === "" ? "customer" : String(user_type);
+    if (userType !== "customer") {
+      return json({ error: "Invalid request" }, 400);
+    }
     const digits = String(phone ?? "").replace(/\D/g, "").slice(-10);
     const pinStr = String(pin ?? "").trim();
     if (digits.length !== 10 || !/^\d{4}$/.test(pinStr)) {
@@ -33,7 +39,7 @@ Deno.serve(async (req) => {
     const { data: rows, error: rpcErr } = await admin.rpc("verify_login_pin", {
       p_phone: fullPhone,
       p_pin: pinStr,
-      p_user_type: "customer",
+      p_user_type: userType,
     });
     if (rpcErr) {
       console.error("verify_login_pin failed", rpcErr);
