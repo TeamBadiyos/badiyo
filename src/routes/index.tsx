@@ -834,6 +834,7 @@ function Index() {
       sub.subscription.unsubscribe();
       window.removeEventListener("online", goOnline);
       window.removeEventListener("offline", goOffline);
+      window.removeEventListener("badiyos:session-expired", onSessionExpired);
     };
   }, []);
 
