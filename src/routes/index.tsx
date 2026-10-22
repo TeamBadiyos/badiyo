@@ -192,6 +192,7 @@ async function loadUsableAddress(id: string, segmentId: string | null): Promise<
   return addr as SelectedAddress;
 }
 import { invokeFunction } from "@/lib/invokeFunction";
+import { purgeLegacyDevicePins } from "@/lib/pinStorage";
 
 /** Full-screen brand placeholder shown while a lazy screen chunk loads. */
 function ScreenFallback() {
@@ -306,6 +307,10 @@ function Index() {
   const signedInRef = useRef(false);
   const afterLoginRef = useRef<Phase | null>(null);
   const [showFirstOpen, setShowFirstOpen] = useState(false);
+  // One-time safe cleanup: the PIN must never live on the device.
+  useEffect(() => {
+    void purgeLegacyDevicePins().catch(() => {});
+  }, []);
   useEffect(() => {
     const onNeedLogin = () => {
       const cur = phaseRef.current;
