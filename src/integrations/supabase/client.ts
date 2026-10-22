@@ -28,6 +28,49 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
   };
 }
 
+// ---- Silent session refresh on 401 (single-flight, one retry per request) ----
+export const SESSION_EXPIRED_EVENT = 'badiyos:session-expired';
+let refreshInFlight: Promise<string | null> | null = null;
+
+/** Refresh once for all concurrent callers; on failure sign out and notify the app. */
+export function refreshOrSignOut(): Promise<string | null> {
+  if (!refreshInFlight) {
+    refreshInFlight = (async () => {
+      try {
+        const { data, error } = await supabase.auth.refreshSession();
+        const token = data.session?.access_token ?? null;
+        if (!error && token) return token;
+      } catch { /* fall through to sign out */ }
+      try { await supabase.auth.signOut(); } catch { /* ignore */ }
+      if (typeof window !== 'undefined') window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));
+      return null;
+    })().finally(() => { refreshInFlight = null; });
+  }
+  return refreshInFlight;
+}
+
+function withSessionRetry(base: typeof fetch, supabaseKey: string): typeof fetch {
+  return async (input, init) => {
+    // Clone up front so a body-carrying Request can be replayed.
+    const replay = typeof Request !== 'undefined' && input instanceof Request ? input.clone() : input;
+    const res = await base(input, init);
+    if (res.status !== 401 || typeof window === 'undefined') return res;
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    if (url.includes('/auth/v1/')) return res;
+    // Anonymous (no user token) calls are not session problems.
+    const sent = new Headers(replay instanceof Request ? replay.headers : undefined);
+    if (init?.headers) new Headers(init.headers).forEach((v, k) => sent.set(k, v));
+    const auth = sent.get('Authorization');
+    if (!auth || auth === `Bearer ${supabaseKey}`) return res;
+
+    const token = await refreshOrSignOut();
+    if (!token) return res;
+    sent.set('Authorization', `Bearer ${token}`);
+    return base(replay, { ...init, headers: sent }); // single retry, never loops
+  };
+}
+
+
 
 function createSupabaseClient() {
   // Use import.meta.env for client-side (Vite build-time replacement)
@@ -49,7 +92,7 @@ function createSupabaseClient() {
 
   return createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     global: {
-      fetch: createSupabaseFetch(SUPABASE_PUBLISHABLE_KEY),
+      fetch: withSessionRetry(createSupabaseFetch(SUPABASE_PUBLISHABLE_KEY), SUPABASE_PUBLISHABLE_KEY),
     },
     auth: {
       storage: brokeredPreviewStorage(),
