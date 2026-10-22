@@ -7,10 +7,22 @@ const LABEL_KEY = "badiyo.device_label";
 let cached: string | null = null;
 
 async function ss() {
+  // SecureStorage is a Capacitor proxy; returning it from an async function on
+  // web triggers "SecureStorage.then() is not implemented". Use it on native
+  // only, and wrap it so the proxy itself never crosses an await.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const cap = (globalThis as any).Capacitor;
+  if (!cap?.isNativePlatform?.()) return null;
   try {
     const mod = await import("@aparajita/capacitor-secure-storage");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (mod as any).SecureStorage ?? null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const S = (mod as any).SecureStorage;
+    if (!S) return null;
+    return {
+      get: (k: string) => S.get(k),
+      set: (k: string, v: string, a: boolean, b: boolean) => S.set(k, v, a, b),
+    };
   } catch {
     return null;
   }
