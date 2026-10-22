@@ -108,6 +108,37 @@ function withSessionRetry(base: typeof fetch): typeof fetch {
 
 
 
+// ---- One-time session migration from the old URL-derived key ----
+const SESSION_STORAGE_KEY = 'sb-dkneclwmmjlqswovtqno-auth-token';
+const LEGACY_SESSION_KEY = 'sb-api-auth-token';
+type AuthStorage = NonNullable<ReturnType<typeof brokeredPreviewStorage>>;
+
+function withLegacySessionMigration(base: AuthStorage | undefined): AuthStorage | undefined {
+  if (!base) return base;
+  return {
+    getItem: async (key) => {
+      const value = await base.getItem(key);
+      if (key !== SESSION_STORAGE_KEY || value) return value;
+      // Old session may sit in the adapter or directly in localStorage (native WebView too).
+      let legacy: string | null = null;
+      try { legacy = await base.getItem(LEGACY_SESSION_KEY); } catch { /* ignore */ }
+      let fromLocal = false;
+      if (!legacy) {
+        try { legacy = localStorage.getItem(LEGACY_SESSION_KEY); fromLocal = !!legacy; } catch { /* ignore */ }
+      }
+      if (!legacy) return value;
+      try { await base.setItem(SESSION_STORAGE_KEY, legacy); } catch { /* ignore */ }
+      try { await base.removeItem(LEGACY_SESSION_KEY); } catch { /* ignore */ }
+      if (fromLocal || base !== localStorage) {
+        try { localStorage.removeItem(LEGACY_SESSION_KEY); } catch { /* ignore */ }
+      }
+      return legacy;
+    },
+    setItem: (key, value) => base.setItem(key, value),
+    removeItem: (key) => base.removeItem(key),
+  };
+}
+
 function createSupabaseClient() {
   // Use import.meta.env for client-side (Vite build-time replacement)
   // Fall back to process.env for SSR (server-side rendering)
@@ -131,9 +162,9 @@ function createSupabaseClient() {
       fetch: withSessionRetry(createSupabaseFetch(SUPABASE_PUBLISHABLE_KEY)),
     },
     auth: {
-      storage: brokeredPreviewStorage(),
+      storage: withLegacySessionMigration(brokeredPreviewStorage()),
       // Pinned: must never be derived from the URL (keeps sessions across host moves).
-      storageKey: 'sb-dkneclwmmjlqswovtqno-auth-token',
+      storageKey: SESSION_STORAGE_KEY,
       persistSession: true,
       autoRefreshToken: true,
     }
