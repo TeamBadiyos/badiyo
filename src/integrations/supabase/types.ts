@@ -14656,6 +14656,7 @@ export type Database = {
         Args: { _batch_id: string }
         Returns: undefined
       }
+      phone_std: { Args: { _p: string }; Returns: string }
       point_in_polygon: {
         Args: { _lat: number; _lng: number; _poly: Json }
         Returns: boolean
