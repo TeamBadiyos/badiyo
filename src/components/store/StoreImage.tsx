@@ -7,11 +7,10 @@ import { ImageIcon, Store as StoreIcon } from "lucide-react";
  * lightweight WebP thumbnail; full-size views use the original.
  *
  * Fallback chain:
- *   thumb → original → legacy /api/public/store-image proxy → placeholder
- *   full  → legacy proxy → placeholder
+ *   thumb → original → placeholder
+ *   full  → placeholder
  */
 const CATALOG_BASE = "https://api.badiyos.com/storage/v1/object/public/catalog-images";
-const RENDER_BASE = "https://api.badiyos.com/storage/v1/render/image/public/catalog-images";
 
 export function StoreImage({
   path,
@@ -37,14 +36,14 @@ export function StoreImage({
     setLoaded(false);
   }, [path, size]);
 
-  // The resize CDN takes ~2.5s on a cold (uncached) photo. If the small copy
-  // hasn't arrived quickly, switch to the original, which is served in ~100ms.
+  // Give the lightweight thumbnail time to arrive on slow networks before
+  // falling back to the heavier original. Full-size views have no fallback.
   useEffect(() => {
-    if (loaded || step !== 0 || !path) return;
+    if (loaded || step !== 0 || !path || size === "full") return;
     if (/^https?:\/\//i.test(path) && !path.startsWith(`${CATALOG_BASE}/`)) return;
-    const t = setTimeout(() => setStep((s) => (s === 0 ? 1 : s)), 900);
+    const t = setTimeout(() => setStep((s) => (s === 0 ? 1 : s)), 3000);
     return () => clearTimeout(t);
-  }, [loaded, step, path]);
+  }, [loaded, step, path, size]);
 
   if (!path) {
     return (
@@ -54,18 +53,18 @@ export function StoreImage({
     );
   }
 
-  // Catalog photos (full URL or bucket path) go through the resize CDN: small
-  // WebP for lists (~20–100 KB instead of multi-MB originals).
+  // Catalog photos use pre-made WebP thumbnails for lists and originals for
+  // full-size views, preserving the original path's URL encoding.
   const external = /^https?:\/\//i.test(path);
   const catalogPrefix = `${CATALOG_BASE}/`;
   const isCatalogUrl = external && path.startsWith(catalogPrefix);
   const clean = (isCatalogUrl ? path.slice(catalogPrefix.length) : path).replace(/^\/+/, "");
-  const resized = (w: number) => `${RENDER_BASE}/${clean}?width=${w}&height=${w}&resize=contain&quality=70`;
+  const thumb = clean.startsWith("_thumbs/") ? clean : `_thumbs/${clean}.webp`;
   const sources: string[] = external && !isCatalogUrl
     ? [path]
     : size === "full"
-      ? [resized(800), `${CATALOG_BASE}/${clean}`]
-      : [resized(300), `${CATALOG_BASE}/${clean}`];
+      ? [`${CATALOG_BASE}/${clean}`]
+      : [`${CATALOG_BASE}/${thumb}`, `${CATALOG_BASE}/${clean}`];
 
   if (step >= sources.length) {
     return (
