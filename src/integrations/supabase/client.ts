@@ -108,9 +108,13 @@ function withSessionRetry(base: typeof fetch): typeof fetch {
 
 
 
-// ---- One-time session migration from the old URL-derived key ----
+// ---- One-time session migration from old URL-derived keys ----
 const SESSION_STORAGE_KEY = 'sb-dkneclwmmjlqswovtqno-auth-token';
-const LEGACY_SESSION_KEY = 'sb-api-auth-token';
+// Checked in order; the first one found is moved into the pinned key.
+const LEGACY_SESSION_KEYS = [
+  'sb-emclphebsmdkiisqsxhc-auth-token', // written by the template client live after the reconnect
+  'sb-api-auth-token',
+];
 type AuthStorage = NonNullable<ReturnType<typeof brokeredPreviewStorage>>;
 
 function withLegacySessionMigration(base: AuthStorage | undefined): AuthStorage | undefined {
@@ -119,20 +123,23 @@ function withLegacySessionMigration(base: AuthStorage | undefined): AuthStorage 
     getItem: async (key) => {
       const value = await base.getItem(key);
       if (key !== SESSION_STORAGE_KEY || value) return value;
-      // Old session may sit in the adapter or directly in localStorage (native WebView too).
-      let legacy: string | null = null;
-      try { legacy = await base.getItem(LEGACY_SESSION_KEY); } catch { /* ignore */ }
-      let fromLocal = false;
-      if (!legacy) {
-        try { legacy = localStorage.getItem(LEGACY_SESSION_KEY); fromLocal = !!legacy; } catch { /* ignore */ }
+      // An old session may sit in the adapter or directly in localStorage (native WebView too).
+      for (const legacyKey of LEGACY_SESSION_KEYS) {
+        let legacy: string | null = null;
+        try { legacy = await base.getItem(legacyKey); } catch { /* ignore */ }
+        let fromLocal = false;
+        if (!legacy) {
+          try { legacy = localStorage.getItem(legacyKey); fromLocal = !!legacy; } catch { /* ignore */ }
+        }
+        if (!legacy) continue;
+        try { await base.setItem(SESSION_STORAGE_KEY, legacy); } catch { /* ignore */ }
+        try { await base.removeItem(legacyKey); } catch { /* ignore */ }
+        if (fromLocal || base !== localStorage) {
+          try { localStorage.removeItem(legacyKey); } catch { /* ignore */ }
+        }
+        return legacy;
       }
-      if (!legacy) return value;
-      try { await base.setItem(SESSION_STORAGE_KEY, legacy); } catch { /* ignore */ }
-      try { await base.removeItem(LEGACY_SESSION_KEY); } catch { /* ignore */ }
-      if (fromLocal || base !== localStorage) {
-        try { localStorage.removeItem(LEGACY_SESSION_KEY); } catch { /* ignore */ }
-      }
-      return legacy;
+      return value;
     },
     setItem: (key, value) => base.setItem(key, value),
     removeItem: (key) => base.removeItem(key),
