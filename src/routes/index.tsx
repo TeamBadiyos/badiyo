@@ -1183,7 +1183,7 @@ function Index() {
           />
         </div>
       )}
-      {phase === "expert-assigned" && selectedAddress && (
+      {phase === "expert-assigned" && (
         <div className="animate-fade-slide-in">
           <ExpertAssignedScreen
             bookingId={activeBookingId}
