@@ -1,3 +1,4 @@
+import { fetchBookingOtps } from "@/lib/bookingOtp";
 import { useEffect, useRef, useState } from "react";
 import { ShieldCheck, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,30 +37,10 @@ export function OtpScreen({
     let cancelled = false;
     (async () => {
       try {
-        if (kind === "start") {
-          const { data, error: rpcErr } = await supabase.rpc("ensure_start_otp", {
-            _booking_id: bookingId,
-          });
-          if (rpcErr) throw rpcErr;
-          if (!cancelled) setCode((data as string) ?? null);
-        } else {
-          const { data, error: qErr } = await supabase
-            .from("bookings")
-            .select("end_otp, status")
-            .eq("id", bookingId)
-            .maybeSingle();
-          if (qErr) throw qErr;
-          let end = (data as { end_otp: string | null } | null)?.end_otp || null;
-          if (!end) {
-            const { data: made, error: mErr } = await supabase.rpc(
-              "ensure_end_otp" as never,
-              { _booking_id: bookingId } as never,
-            );
-            if (mErr) throw mErr;
-            end = (made as unknown as string | null) ?? null;
-          }
-          if (!cancelled) setCode(end);
-        }
+        const o = await fetchBookingOtps(bookingId);
+        const c = kind === "start" ? o.start_otp : o.end_otp;
+        if (!c) throw new Error("OTP load nahi hua");
+        if (!cancelled) setCode(c);
       } catch (e) {
         if (!cancelled) setError(await getErrorMessage(e));
       }

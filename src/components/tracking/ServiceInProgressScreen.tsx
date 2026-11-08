@@ -40,7 +40,6 @@ type BookingTiming = {
   service_duration_minutes: number;
   service_end_at: string | null;
   started_at: string | null;
-  end_otp: string | null;
   deleted_at: string | null;
 };
 
