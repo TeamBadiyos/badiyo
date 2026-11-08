@@ -29,6 +29,7 @@ export function OtpScreen({
 
   const [code, setCode] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
   const advancedRef = useRef(false);
 
   // Load / generate the OTP for this booking.
@@ -48,7 +49,7 @@ export function OtpScreen({
     return () => {
       cancelled = true;
     };
-  }, [bookingId, kind]);
+  }, [bookingId, kind, attempt]);
 
   // Realtime: advance when the expert verifies (status flips server-side).
   useEffect(() => {
@@ -119,7 +120,16 @@ export function OtpScreen({
         </div>
 
         {error && (
-          <p className="mt-4 text-center text-xs text-destructive">{error}</p>
+          <div className="mt-4 text-center">
+            <p className="text-sm font-semibold text-foreground">OTP load nahi hua</p>
+            <button
+              type="button"
+              onClick={() => { setError(null); setAttempt((n) => n + 1); }}
+              className="mt-2 rounded-full bg-primary px-5 py-2 text-xs font-bold text-primary-foreground"
+            >
+              Retry
+            </button>
+          </div>
         )}
 
         <p className="mt-4 text-center text-xs text-muted-foreground">
