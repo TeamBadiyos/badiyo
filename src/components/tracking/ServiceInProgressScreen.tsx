@@ -13,6 +13,7 @@ import {
   CalendarClock,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { BookingOtpCard } from "@/lib/bookingOtp";
 import { useT } from "@/i18n";
 import { getErrorMessage } from "@/lib/errorMessage";
 import { usePullToRefresh, PullToRefreshIndicator } from "@/lib/usePullToRefresh";
@@ -39,7 +40,6 @@ type BookingTiming = {
   service_duration_minutes: number;
   service_end_at: string | null;
   started_at: string | null;
-  end_otp: string | null;
   deleted_at: string | null;
 };
 
@@ -105,7 +105,7 @@ function beep(kind: "warning" | "end") {
 async function fetchBookingTiming(id: string): Promise<BookingTiming | null> {
   const { data, error } = await supabase
     .from("bookings")
-    .select("id, status, service_duration_minutes, service_end_at, started_at, end_otp, deleted_at")
+    .select("id, status, service_duration_minutes, service_end_at, started_at, deleted_at")
     .eq("id", id)
     .maybeSingle();
   if (error) {
@@ -216,23 +216,6 @@ export function ServiceInProgressScreen({
     refetchInterval: 4000,
     refetchIntervalInBackground: false,
   });
-
-  // Safety net: if the check-out code is missing, ask the server to create it.
-  const missingEndOtp = !!timing && timing.status === "in_progress" && !timing.end_otp;
-  useEffect(() => {
-    if (!bookingId || !missingEndOtp) return;
-    supabase.rpc("ensure_end_otp" as never, { _booking_id: bookingId } as never).then(({ data, error }) => {
-      if (error) {
-        console.error("ensure_end_otp failed:", error);
-        return;
-      }
-      const code = (data as unknown as string | null) ?? null;
-      if (!code) return;
-      qc.setQueryData<BookingTiming | null>(["booking-timing", bookingId], (prev) =>
-        prev ? { ...prev, end_otp: code } : prev,
-      );
-    });
-  }, [bookingId, missingEndOtp, qc]);
 
   const { data: expert } = useQuery({
     queryKey: ["booking-expert-profile", bookingId],
@@ -496,28 +479,6 @@ export function ServiceInProgressScreen({
   }
 
   const canExtend = timing?.status === "in_progress" && (remainingSec > 0 || graceOpen);
-  const otp = timing?.end_otp || null;
-
-  function shareOtpOnWhatsApp() {
-    const message = [
-      "Hi 👋",
-      "",
-      "Your service is currently in progress.",
-      "",
-      `🔹 *Expert Name:* ${expert?.name ?? "Your expert"}`,
-      "",
-      `🔹 *Duration:* ${totalDurationMin} min`,
-      "",
-      `🔹 *Started at:* ${formatDayTime(startMs)}`,
-      "",
-      `⏱️ Your job ends at ${formatDayTime(endMs)}.`,
-      "",
-      `⏱️ Once done, please share this *Check-Out OTP* to end the service: *${otp ?? "----"}*`,
-      "",
-      "Thank you for choosing badiyos!",
-    ].join("\n");
-    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
-  }
 
   return (
     <main className="min-h-screen w-full bg-background pb-28">
@@ -596,44 +557,8 @@ export function ServiceInProgressScreen({
 
         {/* Check-out OTP */}
         <section className="mt-4 overflow-hidden rounded-[20px] border border-border bg-card">
-          <div className="flex items-center justify-between gap-3 p-5">
-            <div className="min-w-0">
-              <div className="text-base font-bold text-foreground">Check-out OTP</div>
-              <div className="mt-0.5 text-xs text-muted-foreground">
-                Share with expert to end service
-              </div>
-            </div>
-            <div className="flex shrink-0 gap-1.5">
-              {otp ? (
-                otp.split("").map((d, i) => (
-                  <span
-                    key={i}
-                    className="flex h-11 w-9 items-center justify-center rounded-[10px] bg-foreground text-lg font-bold text-background"
-                  >
-                    {d}
-                  </span>
-                ))
-              ) : (
-                <span className="flex h-11 items-center gap-2 px-2 text-xs text-muted-foreground">
-                  <Loader2 className="h-4 w-4 animate-spin" /> Getting code…
-                </span>
-              )}
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between gap-3 border-t border-border px-5 py-4">
-            <span className="text-sm text-foreground">Booked for someone else?</span>
-            <button
-              type="button"
-              onClick={shareOtpOnWhatsApp}
-              disabled={!otp}
-              className="flex items-center gap-2 text-sm font-bold text-foreground disabled:opacity-50"
-            >
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#25D366]">
-                <WhatsAppGlyph />
-              </span>
-              Share OTP
-            </button>
+          <div className="p-4">
+            <BookingOtpCard bookingId={bookingId} status={timing?.status ?? "in_progress"} />
           </div>
 
           {onShowEndOtp && (

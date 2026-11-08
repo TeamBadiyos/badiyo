@@ -7,6 +7,7 @@ import {
   useActiveBooking,
   useNow,
 } from "@/lib/liveService";
+import { OtpInline, openBookingScreen, useOtpActiveBooking } from "@/lib/bookingOtp";
 
 /**
  * Slim sticky bar shown on every screen while a service is running.
@@ -23,12 +24,35 @@ export function LiveServiceBar({
   bottomOffset?: number;
 }) {
   const booking = useActiveBooking(enabled);
+  const { data: otpBooking } = useOtpActiveBooking(enabled);
   const now = useNow(!!booking && enabled);
 
-  if (!enabled || !booking) return null;
+  if (!enabled) return null;
 
-  const endMs = booking.service_end_at ? Date.parse(booking.service_end_at) : null;
-  if (endMs == null) return null;
+  const endMs = booking?.service_end_at ? Date.parse(booking.service_end_at) : null;
+  if (!booking || endMs == null) {
+    if (!otpBooking || otpBooking.status === "in_progress") return null;
+    return (
+      <div
+        className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center"
+        style={{ paddingBottom: `calc(var(--app-safe-bottom) + ${bottomOffset}px)` }}
+      >
+        <button
+          type="button"
+          onClick={() => openBookingScreen(otpBooking.id)}
+          className="pointer-events-auto m-3 flex w-full max-w-md items-center gap-3 rounded-[16px] bg-foreground px-4 py-3 text-left shadow-lg active:scale-[0.99]"
+        >
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-sm font-bold text-background">
+              <OtpInline bookingId={otpBooking.id} status={otpBooking.status} />
+            </div>
+            <div className="truncate text-xs text-background/70">Expert ko batayein · tap to track</div>
+          </div>
+          <ChevronRight className="h-4 w-4 shrink-0 text-background" />
+        </button>
+      </div>
+    );
+  }
 
   const totalSec = Math.max(1, (booking.service_duration_minutes ?? 0) * 60);
   const remainingSec = Math.max(0, Math.floor((endMs - now) / 1000));
@@ -84,7 +108,7 @@ export function LiveServiceBar({
             {remainingSec === 0 ? "Service time is over" : "Service Ending Soon"}
           </div>
           <div className="truncate text-xs text-background/70">
-            Ends at {formatClock(endMs)}
+            Ends at {formatClock(endMs)} · <OtpInline bookingId={booking.id} status="in_progress" />
           </div>
         </div>
         <span

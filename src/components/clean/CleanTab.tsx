@@ -1,3 +1,4 @@
+import { ActiveBookingHomeCard } from "@/lib/bookingOtp";
 import { BrandWatermark } from "@/components/BrandWatermark";
 import { localSrc, syncImages } from "@/lib/imageStore";
 import { useEffect, useState } from "react";
@@ -201,6 +202,7 @@ export function CleanTab({
 
       <div className="relative -mx-5 -mt-8 rounded-t-[28px] bg-background px-5 pt-3">
         {loading ? <CleanSkeleton /> : (<>
+        <ActiveBookingHomeCard />
         <div className="grid grid-cols-2 gap-3 pt-[34px]">
           <ServiceCard title={pick(lang, maidContent?.hero?.card_title, maidContent?.hero?.card_title_mr) || s.maid} status={statusLine(maidState)} closed={!maidState || closed} img={maidContent?.hero?.image_url || ""} onClick={() => openBooking(false)} />
           {washOptions.length > 0 && (

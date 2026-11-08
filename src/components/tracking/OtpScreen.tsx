@@ -1,3 +1,4 @@
+import { fetchBookingOtps } from "@/lib/bookingOtp";
 import { useEffect, useRef, useState } from "react";
 import { ShieldCheck, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,6 +29,7 @@ export function OtpScreen({
 
   const [code, setCode] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
   const advancedRef = useRef(false);
 
   // Load / generate the OTP for this booking.
@@ -36,30 +38,10 @@ export function OtpScreen({
     let cancelled = false;
     (async () => {
       try {
-        if (kind === "start") {
-          const { data, error: rpcErr } = await supabase.rpc("ensure_start_otp", {
-            _booking_id: bookingId,
-          });
-          if (rpcErr) throw rpcErr;
-          if (!cancelled) setCode((data as string) ?? null);
-        } else {
-          const { data, error: qErr } = await supabase
-            .from("bookings")
-            .select("end_otp, status")
-            .eq("id", bookingId)
-            .maybeSingle();
-          if (qErr) throw qErr;
-          let end = (data as { end_otp: string | null } | null)?.end_otp || null;
-          if (!end) {
-            const { data: made, error: mErr } = await supabase.rpc(
-              "ensure_end_otp" as never,
-              { _booking_id: bookingId } as never,
-            );
-            if (mErr) throw mErr;
-            end = (made as unknown as string | null) ?? null;
-          }
-          if (!cancelled) setCode(end);
-        }
+        const o = await fetchBookingOtps(bookingId);
+        const c = kind === "start" ? o.start_otp : o.end_otp;
+        if (!c) throw new Error("OTP load nahi hua");
+        if (!cancelled) setCode(c);
       } catch (e) {
         if (!cancelled) setError(await getErrorMessage(e));
       }
@@ -67,7 +49,7 @@ export function OtpScreen({
     return () => {
       cancelled = true;
     };
-  }, [bookingId, kind]);
+  }, [bookingId, kind, attempt]);
 
   // Realtime: advance when the expert verifies (status flips server-side).
   useEffect(() => {
@@ -138,7 +120,16 @@ export function OtpScreen({
         </div>
 
         {error && (
-          <p className="mt-4 text-center text-xs text-destructive">{error}</p>
+          <div className="mt-4 text-center">
+            <p className="text-sm font-semibold text-foreground">OTP load nahi hua</p>
+            <button
+              type="button"
+              onClick={() => { setError(null); setAttempt((n) => n + 1); }}
+              className="mt-2 rounded-full bg-primary px-5 py-2 text-xs font-bold text-primary-foreground"
+            >
+              Retry
+            </button>
+          </div>
         )}
 
         <p className="mt-4 text-center text-xs text-muted-foreground">

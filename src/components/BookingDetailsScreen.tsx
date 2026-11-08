@@ -1,3 +1,4 @@
+import { BookingOtpCard } from "@/lib/bookingOtp";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Clock, Calendar, Home as HomeIcon, Star } from "lucide-react";
@@ -138,6 +139,10 @@ export function BookingDetailsScreen({
           >
             {statusLabel(status)}
           </span>
+        </div>
+
+        <div className="mt-3">
+          <BookingOtpCard bookingId={booking.id} status={status} />
         </div>
 
         {/* Service */}
