@@ -8,6 +8,7 @@ import { usePullToRefresh, PullToRefreshIndicator } from "@/lib/usePullToRefresh
 import { ServiceLocationMap } from "./ServiceLocationMap";
 import { CancelBookingButton } from "./CancelBookingButton";
 import { useT } from "@/i18n";
+import { BookingOtpCard } from "@/lib/bookingOtp";
 import { lazy, Suspense } from "react";
 import type { RiderLocation } from "../courier/courierData";
 import riderMarkerImage from "@/assets/map-rider-worker.webp";
@@ -92,13 +93,23 @@ type ExpertInfo = {
 type BookingRow = {
   status: string;
   assigned_expert_id: string | null;
-  start_otp: string | null;
   deleted_at: string | null;
   price: number | null;
   service_category_id?: string | null;
   service_categories?: { slug: string | null } | null;
-  experts: ExpertInfo;
+  address_id?: string | null;
+  addresses?: {
+    label: string | null; full_address: string; area: string | null; city: string | null;
+    latitude: number | null; longitude: number | null; is_default: boolean | null;
+  } | null;
 };
+
+async function fetchExpertProfile(bookingId: string): Promise<ExpertInfo> {
+  const { data, error } = await supabase.rpc("get_assigned_expert_profile", { _booking_id: bookingId });
+  if (error) throw error;
+  const row = Array.isArray(data) ? data[0] : data;
+  return (row as ExpertInfo | undefined) ?? null;
+}
 
 /** Categories whose expert travels on a two-wheeler; everything else is a maid. */
 const RIDER_CATEGORY_SLUGS = ["car-bike-wash", "courier"];
@@ -108,7 +119,7 @@ async function fetchBookingRow(bookingId: string): Promise<BookingRow | null> {
   const { data, error } = await supabase
     .from("bookings")
     .select(
-      "status, assigned_expert_id, start_otp, deleted_at, price, service_category_id, service_categories!bookings_service_category_id_fkey ( slug ), experts:assigned_expert_id ( id, name, phone, photo_url )",
+      "status, assigned_expert_id, deleted_at, price, service_category_id, address_id, service_categories!bookings_service_category_id_fkey ( slug ), addresses(label, full_address, area, city, latitude, longitude, is_default)",
     )
     .eq("id", bookingId)
     .maybeSingle();
@@ -122,7 +133,7 @@ async function fetchBookingRow(bookingId: string): Promise<BookingRow | null> {
 
 export function ExpertAssignedScreen({
   bookingId,
-  address,
+  address: addressProp,
   currentStatus,
   onShowStartOtp,
   onAdvanceInProgress,
@@ -131,7 +142,7 @@ export function ExpertAssignedScreen({
   onBack,
 }: {
   bookingId: string | null;
-  address: SelectedAddress;
+  address?: SelectedAddress | null;
   currentStatus?: string;
   onShowStartOtp?: () => void;
   onAdvanceInProgress?: () => void;
@@ -151,10 +162,8 @@ export function ExpertAssignedScreen({
       ? ({
           status: currentStatus,
           assigned_expert_id: null,
-          start_otp: null,
           deleted_at: null,
           price: null,
-          experts: null,
         } as BookingRow)
       : undefined,
 
@@ -165,31 +174,27 @@ export function ExpertAssignedScreen({
   });
 
   const status = booking?.status ?? currentStatus ?? "confirmed";
-  const expert = booking?.experts ?? null;
+  const { data: expert = null } = useQuery({
+    queryKey: ["assigned-expert-profile", bookingId, booking?.assigned_expert_id ?? null],
+    queryFn: () => fetchExpertProfile(bookingId!),
+    enabled: !!bookingId && !!booking?.assigned_expert_id,
+    staleTime: 60_000,
+  });
+  const a = booking?.addresses;
+  const address: SelectedAddress | null =
+    addressProp ??
+    (a
+      ? ({
+          id: booking?.address_id ?? "",
+          label: a.label, full_address: a.full_address, area: a.area, city: a.city,
+          is_default: a.is_default, latitude: a.latitude, longitude: a.longitude,
+        } as SelectedAddress)
+      : null);
   const categorySlug = booking?.service_categories?.slug ?? null;
   const usesRiderIcon =
     (categorySlug != null && RIDER_CATEGORY_SLUGS.includes(categorySlug)) ||
     booking?.service_category_id === CAR_BIKE_WASH_CATEGORY_ID;
   const expertMarkerIcon = usesRiderIcon ? riderMarkerImage : womanMarkerImage;
-
-  // When status reaches expert_assigned and no otp yet, ensure one exists so the customer
-  // can already read it aloud without tapping anything.
-  useEffect(() => {
-    if (!bookingId) return;
-    if (!["expert_assigned", "on_the_way", "arrived"].includes(status)) return;
-    if (booking?.start_otp) return;
-    supabase.rpc("ensure_start_otp", { _booking_id: bookingId }).then(({ data, error }) => {
-      if (error) {
-        console.error("ensure_start_otp failed:", error);
-        return;
-      }
-      const code = (data as string | null) ?? null;
-      if (!code) return;
-      qc.setQueryData<BookingRow | undefined>(queryKey, (prev) =>
-        prev ? { ...prev, start_otp: code } : prev,
-      );
-    });
-  }, [bookingId, status, booking?.start_otp, qc, queryKey]);
 
   // Realtime: react instantly to status/soft-delete changes on this booking.
   const advancedRef = useRef<string | null>(null);
@@ -294,25 +299,9 @@ export function ExpertAssignedScreen({
       >
         {isArrived ? t("journey.tellOtp") : t("track.startCode")}
       </div>
-      <div
-        className={`mt-2 flex items-center justify-center gap-2 font-mono font-bold text-primary ${
-          isArrived ? "text-6xl tracking-[0.3em]" : "text-3xl tracking-[0.35em]"
-        }`}
-      >
-        {booking?.start_otp ? (
-          booking.start_otp
-        ) : (
-          <>
-            <Loader2 className="h-5 w-5 animate-spin" />
-            <span className="text-sm font-medium text-muted-foreground">
-              {t("track.preparingCode")}
-            </span>
-          </>
-        )}
+      <div className="mt-2">
+        <BookingOtpCard bookingId={bookingId} status={status} compact={!isArrived} />
       </div>
-      {!isArrived && (
-        <p className="mt-2 text-[11px] text-muted-foreground">{t("track.showToExpert")}</p>
-      )}
       {onShowStartOtp && (
         <button
           type="button"
@@ -350,7 +339,7 @@ export function ExpertAssignedScreen({
 
         {isArrived && otpBlock}
 
-        {isOnWay && bookingId && (
+        {isOnWay && bookingId && address && (
           <ExpertLiveMap
             bookingId={bookingId}
             address={address}
@@ -420,7 +409,7 @@ export function ExpertAssignedScreen({
           </section>
         )}
 
-        {!isOnWay && !isArrived && (
+        {!isOnWay && !isArrived && address && (
           <ServiceLocationMap address={address} bookingId={bookingId} />
         )}
 
