@@ -621,48 +621,61 @@ function Index() {
         (route.startsWith("/booking/") ? route.slice("/booking/".length) : null);
       if (!bookingId) return;
 
-      setActiveBookingId(bookingId);
-      // Open the screen that matches the booking's real state.
-      void (async () => {
-        const { data: b } = await supabase
-          .from("bookings")
-          .select(
-            "id, status, address_id, addresses(label, full_address, area, city, is_default, latitude, longitude)",
-          )
-          .eq("id", bookingId)
-          .maybeSingle();
-
-        const addr = (b as { addresses?: Omit<SelectedAddress, "id"> | null } | null)
-          ?.addresses;
-
-        if (addr) {
-          setSelectedAddress({
-            id: (b as { address_id?: string | null }).address_id ?? "",
-            label: addr.label,
-            full_address: addr.full_address,
-            area: addr.area,
-            city: addr.city,
-            is_default: addr.is_default,
-            latitude: addr.latitude,
-            longitude: addr.longitude,
-          });
-        }
-
-        const status = (b as { status?: string } | null)?.status ?? "expert_assigned";
-        setActiveBookingStatus(status);
-        if (status === "in_progress") setPhase("in-progress");
-        else if (status === "completed") setPhase("rate-review");
-        else if (status === "accepted" || status === "confirmed" || status === "pending")
-          setPhase("searching-expert");
-        else if (status === "cancelled" || status === "rejected") setPhase("my-bookings");
-        else setPhase("expert-assigned");
-      })();
+      openBookingByIdRef.current(bookingId);
     });
 
     return () => setPushNavigator(null);
   }, [setPhase, setCourierTrackFrom]);
 
 
+
+  const openBookingByIdRef = useRef<(id: string) => void>(() => {});
+  openBookingByIdRef.current = (bookingId: string) => {
+    void (async () => {
+        setActiveBookingId(bookingId);
+        // Open the screen that matches the booking's real state.
+          const { data: b } = await supabase
+            .from("bookings")
+            .select(
+              "id, status, address_id, addresses(label, full_address, area, city, is_default, latitude, longitude)",
+            )
+            .eq("id", bookingId)
+            .maybeSingle();
+
+          const addr = (b as { addresses?: Omit<SelectedAddress, "id"> | null } | null)
+            ?.addresses;
+
+          if (addr) {
+            setSelectedAddress({
+              id: (b as { address_id?: string | null }).address_id ?? "",
+              label: addr.label,
+              full_address: addr.full_address,
+              area: addr.area,
+              city: addr.city,
+              is_default: addr.is_default,
+              latitude: addr.latitude,
+              longitude: addr.longitude,
+            });
+          }
+
+          const status = (b as { status?: string } | null)?.status ?? "expert_assigned";
+          setActiveBookingStatus(status);
+          if (status === "in_progress") setPhase("in-progress");
+          else if (status === "completed") setPhase("rate-review");
+          else if (status === "accepted" || status === "confirmed" || status === "pending")
+            setPhase("searching-expert");
+          else if (status === "cancelled" || status === "rejected") setPhase("my-bookings");
+          else setPhase("expert-assigned");
+    })();
+  };
+  useEffect(() => {
+    const h = (e: Event) => {
+      const id = (e as CustomEvent<string>).detail;
+      if (id) openBookingByIdRef.current(id);
+    };
+    window.addEventListener("badiyos:open-booking", h);
+    return () => window.removeEventListener("badiyos:open-booking", h);
+  }, []);
 
   // Play Store install attribution + verified app links opened inside the app.
   useEffect(() => {
