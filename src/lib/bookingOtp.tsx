@@ -116,3 +116,65 @@ export function BookingOtpCard({
     </div>
   );
 }
+
+/** Customer's newest booking that currently has an OTP (assigned → in progress). */
+export function useOtpActiveBooking(enabled = true) {
+  return useQuery({
+    queryKey: ["otp-active-booking"],
+    enabled,
+    staleTime: 10_000,
+    refetchInterval: 20_000,
+    refetchOnWindowFocus: true,
+    queryFn: async () => {
+      const { data: u } = await supabase.auth.getSession();
+      const uid = u.session?.user.id;
+      if (!uid) return null;
+      const { data, error } = await supabase
+        .from("bookings")
+        .select("id, status, service_label")
+        .eq("user_id", uid)
+        .in("status", OTP_STATUSES)
+        .is("deleted_at", null)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return (data as { id: string; status: string; service_label: string | null } | null) ?? null;
+    },
+  });
+}
+
+export function openBookingScreen(bookingId: string) {
+  window.dispatchEvent(new CustomEvent("badiyos:open-booking", { detail: bookingId }));
+}
+
+/** Home (Clean tab) card for the live booking, with the big OTP. */
+export function ActiveBookingHomeCard() {
+  const { data: b } = useOtpActiveBooking();
+  if (!b) return null;
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={() => openBookingScreen(b.id)}
+      className="mt-4 rounded-[20px] border-2 border-primary/40 bg-primary/5 p-4 text-left shadow-sm"
+    >
+      <div className="flex items-center justify-between gap-2">
+        <span className="truncate text-sm font-bold text-foreground">{b.service_label ?? "Your booking"}</span>
+        <span className="shrink-0 text-xs font-bold text-primary">Track →</span>
+      </div>
+      <div className="mt-3">
+        <BookingOtpCard bookingId={b.id} status={b.status} compact />
+      </div>
+    </div>
+  );
+}
+
+/** One-line OTP text for the sticky strip. */
+export function OtpInline({ bookingId, status }: { bookingId: string; status: string }) {
+  const q = useBookingOtps(bookingId, status);
+  if (q.isError) return <>OTP load nahi hua · tap to retry</>;
+  const cur = currentOtp(q.data);
+  if (!cur) return <>OTP load ho raha hai…</>;
+  return <>{cur.kind === "start" ? "Start OTP" : "End OTP"} <b className="tracking-[0.2em]">{cur.code}</b></>;
+}
