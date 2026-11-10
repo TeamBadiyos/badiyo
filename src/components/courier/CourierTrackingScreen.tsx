@@ -141,7 +141,7 @@ export function CourierTrackingScreen({
   });
 
   const otpPurpose: Purpose | null =
-    status === "ARRIVED_PICKUP"
+    status === "ARRIVED_PICKUP" || status === "DRIVER_ASSIGNED"
       ? "pickup"
       : status === "PICKED_UP" || status === "IN_TRANSIT"
         ? "delivery"
@@ -160,8 +160,9 @@ export function CourierTrackingScreen({
       return issued?.otp ?? null;
     },
     enabled: !!otpPurpose,
-    refetchInterval: 60_000,
-    staleTime: 30_000,
+    refetchInterval: 15_000,
+    staleTime: 10_000,
+    retry: 3,
   });
 
   const [cancelling, setCancelling] = useState(false);

@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Copy, Loader2, MessageCircle, RotateCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -22,14 +23,20 @@ export async function fetchBookingOtps(bookingId: string): Promise<BookingOtps> 
 /** status is used only as a refetch trigger so the code flips Start → End instantly. */
 export function useBookingOtps(bookingId: string | null, status?: string | null) {
   const enabled = !!bookingId && (status == null || OTP_STATUSES.includes(status));
-  return useQuery({
-    queryKey: [...bookingOtpKey(bookingId), status ?? null],
+  const q = useQuery({
+    queryKey: bookingOtpKey(bookingId),
     queryFn: () => fetchBookingOtps(bookingId!),
     enabled,
     staleTime: 5_000,
     refetchInterval: 15_000,
-    retry: 2,
+    retry: 3,
   });
+  // Keep the old code on screen and refresh quietly when the stage changes.
+  const { refetch } = q;
+  useEffect(() => {
+    if (enabled) void refetch();
+  }, [status, enabled, refetch]);
+  return q;
 }
 
 /** Which code to show right now (Start before service begins, End while it runs). */
