@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { Copy, Loader2, RotateCw } from "lucide-react";
+import { Copy, Loader2, MessageCircle, RotateCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -54,10 +55,12 @@ export function BookingOtpCard({
   bookingId,
   status,
   compact = false,
+  whatsappShareDetails,
 }: {
   bookingId: string | null;
   status?: string | null;
   compact?: boolean;
+  whatsappShareDetails?: { expertName?: string; durationMinutes?: number; startTime?: string; endTime?: string };
 }) {
   const q = useBookingOtps(bookingId, status);
   if (!bookingId || (status && !OTP_STATUSES.includes(status))) return null;
@@ -113,6 +116,29 @@ export function BookingOtpCard({
       <p className="mt-1 text-[11px] text-muted-foreground">
         {cur.kind === "start" ? "Expert ko kaam shuru karne ke liye batayein" : "Kaam khatam hone par expert ko batayein"}
       </p>
+      {whatsappShareDetails && cur.kind === "end" && (
+        <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+          <span className="text-xs text-muted-foreground">Booked for someone else?</span>
+          <Button asChild size="sm" variant="outline">
+            <a
+              href={`https://wa.me/?text=${encodeURIComponent([
+                "badiyos — Check-out OTP",
+                `Expert: ${whatsappShareDetails.expertName ?? "Your expert"}`,
+                whatsappShareDetails.durationMinutes ? `Duration: ${whatsappShareDetails.durationMinutes} minutes` : null,
+                whatsappShareDetails.startTime ? `Started at: ${whatsappShareDetails.startTime}` : null,
+                whatsappShareDetails.endTime ? `Ends at: ${whatsappShareDetails.endTime}` : null,
+                `End OTP: *${cur.code}*`,
+                "Share this code with the expert only after the service is finished.",
+              ].filter(Boolean).join("\n"))}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Share OTP on WhatsApp"
+            >
+              <MessageCircle /> Share OTP
+            </a>
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
