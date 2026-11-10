@@ -558,7 +558,16 @@ export function ServiceInProgressScreen({
         {/* Check-out OTP */}
         <section className="mt-4 overflow-hidden rounded-[20px] border border-border bg-card">
           <div className="p-4">
-            <BookingOtpCard bookingId={bookingId} status={timing?.status ?? "in_progress"} />
+            <BookingOtpCard
+              bookingId={bookingId}
+              status={timing?.status ?? "in_progress"}
+              whatsappShareDetails={{
+                expertName: expert?.name,
+                durationMinutes: totalDurationMin,
+                startTime: startMs != null ? formatClock(startMs) : undefined,
+                endTime: endMs != null ? formatClock(endMs) : undefined,
+              }}
+            />
           </div>
 
           {onShowEndOtp && (
