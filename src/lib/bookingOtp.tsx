@@ -23,7 +23,7 @@ export async function fetchBookingOtps(bookingId: string): Promise<BookingOtps> 
 export function useBookingOtps(bookingId: string | null, status?: string | null) {
   const enabled = !!bookingId && (status == null || OTP_STATUSES.includes(status));
   return useQuery({
-    queryKey: [...bookingOtpKey(bookingId), status ?? null],
+    queryKey: bookingOtpKey(bookingId),
     queryFn: () => fetchBookingOtps(bookingId!),
     enabled,
     staleTime: 5_000,
