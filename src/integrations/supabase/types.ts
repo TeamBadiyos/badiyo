@@ -3847,6 +3847,82 @@ export type Database = {
         }
         Relationships: []
       }
+      courier_staff_overrides: {
+        Row: {
+          action: string
+          after_state: Json
+          before_state: Json
+          city_id: string | null
+          created_at: string
+          id: string
+          note: string | null
+          order_id: string
+          photo_path: string | null
+          reason: string
+          staff_id: string
+          staff_name: string
+          stop_id: string | null
+          undone_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          action: string
+          after_state: Json
+          before_state: Json
+          city_id?: string | null
+          created_at?: string
+          id?: string
+          note?: string | null
+          order_id: string
+          photo_path?: string | null
+          reason: string
+          staff_id: string
+          staff_name: string
+          stop_id?: string | null
+          undone_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          action?: string
+          after_state?: Json
+          before_state?: Json
+          city_id?: string | null
+          created_at?: string
+          id?: string
+          note?: string | null
+          order_id?: string
+          photo_path?: string | null
+          reason?: string
+          staff_id?: string
+          staff_name?: string
+          stop_id?: string | null
+          undone_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "courier_staff_overrides_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "courier_staff_overrides_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "courier_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "courier_staff_overrides_stop_id_fkey"
+            columns: ["stop_id"]
+            isOneToOne: false
+            referencedRelation: "courier_order_stops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       courier_stop_secrets: {
         Row: {
           attempts: number
@@ -14232,6 +14308,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      courier_override_snapshot: { Args: { _order: string }; Returns: Json }
       courier_plan_stops: { Args: { _stops: Json }; Returns: Json }
       courier_quote_internal: {
         Args: {
@@ -14343,6 +14420,29 @@ export type Database = {
         Returns: string
       }
       courier_settle_order: { Args: { _order_id: string }; Returns: undefined }
+      courier_staff_arrive_internal: {
+        Args: {
+          _accuracy_m?: number
+          _fix_at?: string
+          _lat?: number
+          _lng?: number
+          _stop_id: string
+        }
+        Returns: Json
+      }
+      courier_staff_assign_internal: {
+        Args: { _expert_id: string; _order_id: string }
+        Returns: Json
+      }
+      courier_staff_fail_internal: {
+        Args: {
+          _notes?: string
+          _reason_code: string
+          _return_distances?: Json
+          _stop_id: string
+        }
+        Returns: Json
+      }
       courier_start_dispatch: {
         Args: { _order_id: string }
         Returns: undefined
@@ -15893,6 +15993,20 @@ export type Database = {
       staff_courier_confirm_rate: { Args: { _id: string }; Returns: undefined }
       staff_courier_force_cancel: {
         Args: { _order_id: string; _reason: string; _refund_amount?: number }
+        Returns: Json
+      }
+      staff_courier_override: {
+        Args: {
+          _action: string
+          _expert_id?: string
+          _next_status?: string
+          _note?: string
+          _order_id: string
+          _photo_path?: string
+          _reason: string
+          _return_distances?: Json
+          _stop_id?: string
+        }
         Returns: Json
       }
       staff_courier_reassign_rider: {
