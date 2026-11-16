@@ -15995,20 +15995,36 @@ export type Database = {
         Args: { _order_id: string; _reason: string; _refund_amount?: number }
         Returns: Json
       }
-      staff_courier_override: {
-        Args: {
-          _action: string
-          _expert_id?: string
-          _next_status?: string
-          _note?: string
-          _order_id: string
-          _photo_path?: string
-          _reason: string
-          _return_distances?: Json
-          _stop_id?: string
-        }
-        Returns: Json
-      }
+      staff_courier_override:
+        | {
+            Args: {
+              _action: string
+              _expert_id?: string
+              _next_status?: string
+              _note?: string
+              _order_id: string
+              _photo_path?: string
+              _reason: string
+              _return_distances?: Json
+              _stop_id?: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              _action: string
+              _expert_id?: string
+              _next_status?: string
+              _note?: string
+              _order_id: string
+              _photo_path?: string
+              _reason: string
+              _return_distances?: Json
+              _staff_id?: string
+              _stop_id?: string
+            }
+            Returns: Json
+          }
       staff_courier_reassign_rider: {
         Args: { _expert_id: string; _order_id: string }
         Returns: Json
