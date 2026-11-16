@@ -1,11 +1,11 @@
 # Roadmap
 
 ## Customer parcel OTP visibility
-- [ ] Regenerate active pickup and pending drop codes after Vault restoration; rerun live SQL checks
+- [x] Regenerate active pickup and pending drop codes after Vault restoration; rerun live SQL checks
 - [x] Owner-only unified OTP RPC with missing/expired code recovery
 - [x] Shared pickup/drop OTP controls on strip, Parcel, Orders and tracking/details
 - [x] Safe notification text and regression tests
-- [ ] Restore existing courier_otp_hmac_key in Supabase Vault — absent after project move; signing-dependent live SQL tests failed
+- [x] Confirm restored courier_otp_hmac_key in Supabase Vault and passing live owner/visibility/code-stability SQL checks
 - [ ] Live customer status/reopen checks — externally managed Supabase session unavailable
 
 ## Coupon + wallet booking fix
