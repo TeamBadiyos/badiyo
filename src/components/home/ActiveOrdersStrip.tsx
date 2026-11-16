@@ -7,6 +7,8 @@ import { ACTIVE_TRACKING_STATUSES } from "@/lib/bookingStatus";
 import { COURIER_PAST_STATUSES } from "@/components/courier/courierData";
 import { fetchMyStoreOrders, isStoreOrderActive } from "@/lib/storeOrders";
 import { openAppRoute } from "@/lib/push";
+import { CourierOtpCard } from "@/lib/courierOtp";
+import { Button } from "@/components/ui/button";
 
 type ActiveItem = {
   key: string;
@@ -111,21 +113,22 @@ export function ActiveOrdersStrip({ onOpenStoreOrder }: { onOpenStoreOrder?: (id
           {items.map((it) => {
             const Icon = ICONS[it.kind];
             return (
-              <button
+              <div
                 key={it.key}
-                type="button"
-                onClick={() => open(it)}
-                className="flex w-full shrink-0 snap-center items-center gap-3 rounded-[20px] bg-foreground px-4 py-3 text-left shadow-lg active:scale-[0.99]"
+                className="w-full shrink-0 snap-center rounded-[20px] bg-card px-4 py-3 text-left shadow-lg border border-border max-h-[35dvh] overflow-y-auto"
               >
+                <Button variant="ghost" onClick={() => open(it)} className="h-auto w-full justify-start gap-3 p-0 text-left whitespace-normal">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
                   <Icon className="h-5 w-5" />
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-extrabold text-background">{it.status}</span>
-                  <span className="block truncate text-xs text-background/70">{it.title} · Tap to track</span>
+                  <span className="block truncate text-sm font-extrabold text-foreground">{it.status}</span>
+                  <span className="block truncate text-xs text-muted-foreground">{it.title} · Tap to track</span>
                 </span>
-                <ChevronRight className="h-5 w-5 shrink-0 text-background/70" />
-              </button>
+                <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
+                </Button>
+                {it.kind === "parcel" && <CourierOtpCard orderId={it.id} compact />}
+              </div>
             );
           })}
         </div>

@@ -1,4 +1,5 @@
 import { BookingOtpCard } from "@/lib/bookingOtp";
+import { CourierOtpCard } from "@/lib/courierOtp";
 import { getAuthUser } from "@/lib/authUser";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { usePullToRefresh, PullToRefreshIndicator } from "@/lib/usePullToRefresh";
@@ -497,6 +498,7 @@ export function OrdersScreen({
                     </span>
                   </div>
                     <ParcelChips parcel={item.parcel} returnPending={pendingReturnIds.includes(item.parcel.id)} />
+                  <CourierOtpCard orderId={item.parcel.id} status={item.parcel.status} compact />
                   <button
                     onClick={() => openParcel(item.parcel)}
                     className="mt-4 w-full rounded-[14px] bg-primary py-3 text-sm font-bold text-primary-foreground shadow-sm transition active:scale-[0.99]"

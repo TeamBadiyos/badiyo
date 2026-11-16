@@ -1,9 +1,9 @@
 # Roadmap
 
 ## Customer parcel OTP visibility
-- [ ] Owner-only unified OTP RPC with missing/expired code recovery
-- [ ] Shared pickup/drop OTP controls on strip, Parcel, Orders and tracking/details
-- [ ] Safe notification text and regression tests
+- [x] Owner-only unified OTP RPC with missing/expired code recovery
+- [x] Shared pickup/drop OTP controls on strip, Parcel, Orders and tracking/details
+- [x] Safe notification text and regression tests
 - [ ] Live customer status/reopen checks — externally managed Supabase session unavailable
 
 ## Coupon + wallet booking fix

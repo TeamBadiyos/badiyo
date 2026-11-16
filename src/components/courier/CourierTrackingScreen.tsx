@@ -8,11 +8,9 @@ import {
   CheckCircle2,
   ChevronRight,
   Loader2,
-  MessageCircle,
   Package,
   Phone,
   ReceiptText,
-  ShieldCheck,
   UserRound,
   XCircle,
 } from "lucide-react";
@@ -30,9 +28,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
-import { refreshCourierOtp } from "@/lib/courierOtp.functions";
+import { CourierOtpCard } from "@/lib/courierOtp";
 import { CourierLiveMap } from "./CourierLiveMap";
-import { courierGetOrderOtps } from "@/lib/courier.functions";
 import {
   StopsTimeline,
   ReturnChargeCard,
@@ -40,7 +37,6 @@ import {
 } from "./StopsTimeline";
 import {
   fetchCourierOrder,
-  fetchCourierOtp,
   fetchRiderInfo,
   fetchCourierStops,
   fetchCourierParcels,
@@ -49,52 +45,7 @@ import {
   courierStageIndex,
   courierBillLines,
 } from "./courierData";
-import { useT, type TFunction } from "@/i18n";
-
-type Purpose = "pickup" | "delivery";
-
-function OtpDigits({ code }: { code: string | null }) {
-  const digits = (code ?? "••••").split("");
-  return (
-    <div className="mt-4 flex justify-center gap-3">
-      {digits.map((d, i) => (
-        <div
-          key={i}
-          className="flex h-14 w-12 items-center justify-center rounded-2xl border-2 border-primary/30 bg-primary/5 text-2xl font-extrabold text-primary"
-        >
-          {d}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-/** Turn any stored phone into a WhatsApp-ready number (91XXXXXXXXXX). */
-function waNumber(raw?: string | null): string | null {
-  const digits = (raw ?? "").replace(/\D/g, "");
-  if (!digits) return null;
-  if (digits.length === 10) return `91${digits}`;
-  if (digits.length === 12 && digits.startsWith("91")) return digits;
-  if (digits.length === 11 && digits.startsWith("0")) return `91${digits.slice(1)}`;
-  return digits;
-}
-
-function pickupWhatsappText(name: string | null | undefined, code: string, t: TFunction) {
-  const who = (name ?? "").trim();
-  return t("courier.whatsappPickup", { who: who ? ` ${who}` : "", code });
-}
-
-function deliveryWhatsappText(senderName: string | null | undefined, code: string, t: TFunction) {
-  const sender = (senderName ?? "").trim() || t("courier.contactPickupRole");
-  return t("courier.whatsappDelivery", { sender, code });
-}
-
-function openWhatsapp(phone: string | null, text: string) {
-  const url = phone
-    ? `https://wa.me/${phone}?text=${encodeURIComponent(text)}`
-    : `https://wa.me/?text=${encodeURIComponent(text)}`;
-  window.open(url, "_blank", "noopener,noreferrer");
-}
+import { useT } from "@/i18n";
 
 export function CourierTrackingScreen({
   orderId,
@@ -140,31 +91,6 @@ export function CourierTrackingScreen({
     staleTime: 60_000,
   });
 
-  const otpPurpose: Purpose | null =
-    status === "ARRIVED_PICKUP" || status === "DRIVER_ASSIGNED"
-      ? "pickup"
-      : status === "PICKED_UP" || status === "IN_TRANSIT"
-        ? "delivery"
-        : null;
-
-  // The code is pulled straight into the app — no WhatsApp step needed.
-  const { data: otp } = useQuery({
-    queryKey: ["courier-otp", orderId, otpPurpose],
-    queryFn: async () => {
-      if (!otpPurpose) return null;
-      const existing = await fetchCourierOtp(orderId, otpPurpose);
-      if (existing) return existing;
-      const issued = await refreshCourierOtp({
-        data: { order_id: orderId, purpose: otpPurpose },
-      });
-      return issued?.otp ?? null;
-    },
-    enabled: !!otpPurpose,
-    refetchInterval: 15_000,
-    staleTime: 10_000,
-    retry: 3,
-  });
-
   const [cancelling, setCancelling] = useState(false);
   const [billOpen, setBillOpen] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
@@ -189,19 +115,6 @@ export function CourierTrackingScreen({
     refetchInterval: (q) =>
       (q.state.data ?? []).some((c) => c.status === "pending") ? 10_000 : 30_000,
   });
-  const { data: stopOtps = {} } = useQuery({
-    queryKey: ["courier-order-otps", orderId, status],
-    queryFn: async () => {
-      const rows = (await courierGetOrderOtps({ data: { order_id: orderId } })) as Array<{
-        stop_id: string;
-        otp: string | null;
-      }>;
-      return Object.fromEntries(rows.map((r) => [r.stop_id, r.otp])) as Record<string, string | null>;
-    },
-    enabled: isMultiOrder,
-    refetchInterval: 15_000,
-  });
-
   const stageIdx = useMemo(() => courierStageIndex(status), [status]);
   const failedDelivery = status === "FAILED_DELIVERY";
   const cancelled =
@@ -424,55 +337,14 @@ export function CourierTrackingScreen({
           <StopsTimeline
             orderId={orderId}
             stops={stops}
-            otps={stopOtps}
+            otps={{}}
             orderCode={order.order_code}
             currentId={curStop}
             editable={!cancelled && !done}
           />
         )}
 
-        {/* Big in-app OTP */}
-        {otpPurpose && !isMultiOrder && (
-          <div className="rounded-[20px] border-2 border-primary/30 bg-card p-5 text-center">
-            <div className="flex items-center justify-center gap-2 text-primary">
-              <ShieldCheck className="h-5 w-5" />
-              <p className="text-sm font-bold">
-                {otpPurpose === "pickup" ? t("courier.pickupCode") : t("courier.deliveryCode")}
-              </p>
-            </div>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {otpPurpose === "pickup"
-                ? t("courier.otpPickupHint")
-                : t("courier.otpDeliveryHint")}
-            </p>
-            <OtpDigits code={otp ?? null} />
-            {otp && (
-              <button
-                type="button"
-                onClick={() => {
-                  if (otpPurpose === "pickup") {
-                    openWhatsapp(
-                      waNumber(order.pickup_contact_phone),
-                      pickupWhatsappText(order.pickup_contact_name, otp, t),
-                    );
-                  } else {
-                    openWhatsapp(
-                      waNumber(order.drop_contact_phone),
-                      deliveryWhatsappText(order.pickup_contact_name, otp, t),
-                    );
-                  }
-                }}
-                className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#25D366] px-5 py-3 text-sm font-semibold text-white"
-              >
-                <MessageCircle className="h-4 w-4" />
-                {otpPurpose === "pickup" ? t("courier.shareWhatsapp") : t("courier.sendCodeWhatsapp")}
-              </button>
-            )}
-            <p className="mt-3 text-[11px] text-muted-foreground">
-              {t("courier.otpSafety")}
-            </p>
-          </div>
-        )}
+        <CourierOtpCard orderId={orderId} status={status} />
 
         {/* Rider card */}
         {rider?.available && !cancelled && (
