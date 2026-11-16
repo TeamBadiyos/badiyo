@@ -12,6 +12,7 @@ import { useLanguage } from "@/i18n";
 import { formatNextOpen, useServiceState } from "@/lib/serviceHours";
 import { fetchCourierEnabled } from "@/components/courier/courierData";
 import { getAuthUser } from "@/lib/authUser";
+import { ActiveCourierCards } from "@/lib/courierOtp";
 import { useBackHandler } from "@/lib/backHandler";
 import { fill, useParcelCopy } from "./parcelCopy";
 import {
@@ -149,6 +150,7 @@ export function ParcelHome({
       </section>
 
       <div className="relative -mx-5 -mt-8 rounded-t-[28px] bg-background px-5 pt-5">
+        <ActiveCourierCards />
         {/* Porter-style unified pickup / drop card */}
         <div className="service-glow rounded-[20px] border border-primary/20 p-4 shadow-soft">
           <button type="button" onClick={() => openRow("pickup")} className="flex w-full items-center gap-3 text-left">
