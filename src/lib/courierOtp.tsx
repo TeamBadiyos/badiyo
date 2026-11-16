@@ -42,7 +42,7 @@ export function useCourierOtps(orderId: string, status?: string) {
     let removeListener: (() => Promise<void>) | undefined;
     if (Capacitor.isNativePlatform()) void App.addListener("appStateChange", ({ isActive }) => { if (isActive) refresh(); }).then((listener) => {
       if (disposed) void listener.remove(); else removeListener = () => listener.remove();
-    });
+    }).catch(() => { /* Polling and reconnect refresh remain available. */ });
     return () => { disposed = true; void supabase.removeChannel(channel); void removeListener?.(); };
   }, [orderId, enabled, qc]);
   return q;
@@ -52,7 +52,7 @@ export function CourierOtpCard({ orderId, status, compact = false }: { orderId: 
   const q = useCourierOtps(orderId, status);
   if (status && !courierOtpActive(status)) return null;
   const stops = visibleCourierOtps(q.data, status);
-  const failed = q.isError || (!q.isPending && !q.isFetching && (!q.data || (stops.length === 0 && courierOtpActive(q.data.status) && q.data.stops.length > 0))) || stops.some((s) => !(s.pickup_otp ?? s.drop_otp));
+  const failed = q.isError || (!q.isPending && !q.isFetching && !q.data) || stops.some((s) => !(s.pickup_otp ?? s.drop_otp));
   return (
     <div className="space-y-2 text-foreground" onClick={(e) => e.stopPropagation()}>
       {q.isPending && <p className="flex items-center justify-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> OTP load ho raha hai…</p>}
