@@ -14840,6 +14840,7 @@ export type Database = {
         Returns: Json
       }
       get_my_booking_otps: { Args: { _booking_id: string }; Returns: Json }
+      get_my_courier_otps: { Args: { _order_id: string }; Returns: Json }
       get_offer_remaining: { Args: { p_offer_id: string }; Returns: number }
       get_ops_flag: { Args: { _key: string }; Returns: boolean }
       get_ops_num: { Args: { _default: number; _key: string }; Returns: number }
@@ -15995,20 +15996,36 @@ export type Database = {
         Args: { _order_id: string; _reason: string; _refund_amount?: number }
         Returns: Json
       }
-      staff_courier_override: {
-        Args: {
-          _action: string
-          _expert_id?: string
-          _next_status?: string
-          _note?: string
-          _order_id: string
-          _photo_path?: string
-          _reason: string
-          _return_distances?: Json
-          _stop_id?: string
-        }
-        Returns: Json
-      }
+      staff_courier_override:
+        | {
+            Args: {
+              _action: string
+              _expert_id?: string
+              _next_status?: string
+              _note?: string
+              _order_id: string
+              _photo_path?: string
+              _reason: string
+              _return_distances?: Json
+              _stop_id?: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              _action: string
+              _expert_id?: string
+              _next_status?: string
+              _note?: string
+              _order_id: string
+              _photo_path?: string
+              _reason: string
+              _return_distances?: Json
+              _staff_id?: string
+              _stop_id?: string
+            }
+            Returns: Json
+          }
       staff_courier_reassign_rider: {
         Args: { _expert_id: string; _order_id: string }
         Returns: Json
