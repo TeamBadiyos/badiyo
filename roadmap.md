@@ -1,6 +1,7 @@
 # Roadmap
 
 ## Customer parcel OTP visibility
+- [ ] Regenerate active pickup and pending drop codes after Vault restoration; rerun live SQL checks
 - [x] Owner-only unified OTP RPC with missing/expired code recovery
 - [x] Shared pickup/drop OTP controls on strip, Parcel, Orders and tracking/details
 - [x] Safe notification text and regression tests
